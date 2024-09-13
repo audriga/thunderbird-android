@@ -52,7 +52,7 @@ class MessageWebView : WebView, KoinComponent {
 
             disableDisplayZoomControls()
 
-            javaScriptEnabled = false
+            javaScriptEnabled = true
             loadsImagesAutomatically = true
             setRenderPriority(RenderPriority.HIGH)
 
