@@ -95,6 +95,8 @@ timber = "5.0.1"
 tokenautocomplete = "4.0.0-beta01-k9mail02"
 turbine = "0.13.0"
 xmlpull = "1.0"
+compiler = "0.9.14"
+barber = "2024.04.03.174754-97b01fc"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
@@ -231,6 +233,8 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tokenautocomplete = { module = "de.cketti.temp:tokenautocomplete", version.ref = "tokenautocomplete" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 xmlpull = { module = "com.github.cketti:xmlpull-extracted-from-android", version.ref = "xmlpull" }
+compiler = { group = "com.github.spullara.mustache.java", name = "compiler", version.ref = "compiler" }
+barber = { group = "app.cash.barber", name = "barber", version.ref = "barber" }
 
 [bundles]
 shared-jvm-main = [

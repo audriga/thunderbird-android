@@ -183,6 +183,7 @@ dependencies {
     implementation(projects.feature.widget.messageList)
     implementation(projects.feature.widget.shortcut)
     implementation(projects.feature.widget.unread)
+    implementation(libs.compiler)
 
     debugImplementation(projects.feature.telemetry.noop)
     releaseImplementation(projects.feature.telemetry.glean)

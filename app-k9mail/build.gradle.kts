@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.androidx.work.runtime)
 
     implementation(projects.feature.autodiscovery.api)
+    implementation(libs.compiler)
     debugImplementation(projects.backend.demo)
     debugImplementation(projects.feature.autodiscovery.demo)
 
