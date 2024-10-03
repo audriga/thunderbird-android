@@ -12,6 +12,9 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import timber.log.Timber
 
+import android.content.Intent
+import android.net.Uri
+
 class MessageWebView : WebView, KoinComponent {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -27,6 +30,40 @@ class MessageWebView : WebView, KoinComponent {
             Timber.e(e, "Failed to unblock network loads. Missing INTERNET permission?")
         }
     }
+
+
+
+    /*
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+            val url = request?.url.toString()
+        view?.loadUrl(url)
+    }*/
+
+    // https://stackoverflow.com/questions/47872078/how-to-load-an-url-inside-a-webview-using-android-kotlin
+    /*
+    override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+
+        // https://github.com/Tamsiree/RxTool/blob/fa5f88c24594a562c2a9047c40ceeb94de297428/RxKit/src/main/java/com/tamsiree/rxkit/RxWebViewTool.kt#L104
+        // allow the OS to handle things like tel, mailto, etc.
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // https://stackoverflow.com/questions/60641759/how-to-open-webview-links-within-app-android-kotlin
+         if (url.contains("stackoverflow.com")) {
+            view.loadUrl(url)
+        } else {
+            val i = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(i)
+        }
+
+        //view?.loadUrl(url)
+        // return super.shouldOverrideUrlLoading(view, request)
+        return true
+    }*/
 
     fun configure(config: WebViewConfig) {
         isVerticalScrollBarEnabled = true

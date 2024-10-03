@@ -36,6 +36,9 @@ dependencies {
     implementation(libs.mime4j.core)
     implementation(libs.mime4j.dom)
 
+    implementation(libs.mustache)
+    implementation(libs.jackson)
+
     testApi(projects.core.testing)
     testApi(projects.core.android.testing)
     testImplementation(projects.feature.telemetry.noop)

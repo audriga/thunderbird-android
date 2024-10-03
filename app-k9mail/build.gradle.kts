@@ -28,7 +28,9 @@ dependencies {
     implementation(libs.androidx.work.runtime)
 
     implementation(projects.feature.autodiscovery.api)
-    implementation(libs.compiler)
+    implementation(libs.mustache)
+    implementation(libs.jackson)
+
     debugImplementation(projects.backend.demo)
     debugImplementation(projects.feature.autodiscovery.demo)
 
