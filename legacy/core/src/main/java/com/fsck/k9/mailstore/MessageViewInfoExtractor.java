@@ -12,7 +12,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
+import app.k9mail.legacy.account.Account;
+import app.k9mail.legacy.di.DI;
 import com.fsck.k9.CoreResourceProvider;
+import com.fsck.k9.Preferences;
+import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.crypto.MessageCryptoStructureDetector;
 import com.fsck.k9.helper.ListUnsubscribeHelper;
 import com.fsck.k9.helper.UnsubscribeUri;
@@ -153,7 +157,11 @@ public class MessageViewInfoExtractor {
                 !message.isSet(Flag.X_DOWNLOADED_FULL) || MessageExtractor.hasMissingParts(message);
 
         UnsubscribeUri preferredUnsubscribeUri = ListUnsubscribeHelper.INSTANCE.getPreferredListUnsubscribeUri(message);
-
+//        //Send on render
+//        MessagingController mc = DI.get(MessagingController.class);
+//        Preferences preferences = DI.get(Preferences.class);
+//        Account account = preferences.getDefaultAccount();
+//        mc.sendMessageBlocking(account, message);
         return MessageViewInfo.createWithExtractedContent(
                 message, contentPart, isMessageIncomplete, viewable.html, attachmentInfos, attachmentResolver,
                 preferredUnsubscribeUri);
