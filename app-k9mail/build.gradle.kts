@@ -30,6 +30,9 @@ dependencies {
     implementation(projects.feature.autodiscovery.api)
     implementation(libs.mustache)
     implementation(libs.jackson)
+    //implementation(libs.ical4j)
+    //implementation(libs.ical4jvcard)
+    //implementation(libs.ical4jserializer)
 
     debugImplementation(projects.backend.demo)
     debugImplementation(projects.feature.autodiscovery.demo)

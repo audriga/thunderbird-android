@@ -98,6 +98,9 @@ xmlpull = "1.0"
 mustache = "0.9.14"
 barber = "2024.04.03.174754-97b01fc"
 jackson = "2.17.2"
+ical4j = "4.0.4"
+ical4jvcard = "2.0.0-rc2"
+ical4jserializer = "0.3.2"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
@@ -237,6 +240,9 @@ xmlpull = { module = "com.github.cketti:xmlpull-extracted-from-android", version
 mustache = { group = "com.github.spullara.mustache.java", name = "compiler", version.ref = "mustache" }
 barber = { group = "app.cash.barber", name = "barber", version.ref = "barber" }
 jackson = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
+ical4j = { group = "org.mnode.ical4j", name = "ical4j", version.ref = "ical4j" }
+ical4jvcard = { group = "org.mnode.ical4j", name = "ical4j-vcard", version.ref = "ical4jvcard" }
+ical4jserializer = { group = "org.ical4j", name = "ical4j-serializer", version.ref = "ical4jserializer" }
 
 [bundles]
 shared-jvm-main = [

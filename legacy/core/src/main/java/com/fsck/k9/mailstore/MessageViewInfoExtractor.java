@@ -283,7 +283,7 @@ public class MessageViewInfoExtractor {
                     String snippet2 = " ";
                     */
 
-                    String linx = "<br>LINX: <a href=\"tel:124\">TEL</a><br><a href=\"file:blubb\">FILE</a><br>";
+                    String linx = "<br>LINX: <a href=\"tel:124\">TEL</a><br><a href=\"file:blubb\">FILE</a><br><a href=\"xmail:blupp\">xmail</a><br><hr><br><br>";
 
                     sanitizedHtml = css + result + linx + sanitizedHtml;
                     //sanitizedHtml = css + snippet1 + snippet2 + linx + sanitizedHtml;

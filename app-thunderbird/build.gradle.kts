@@ -185,6 +185,9 @@ dependencies {
     implementation(projects.feature.widget.unread)
     implementation(libs.mustache)
     implementation(libs.jackson)
+    //implementation(libs.ical4j)
+    //implementation(libs.ical4jvcard)
+    //implementation(libs.ical4jserializer)
 
     debugImplementation(projects.feature.telemetry.noop)
     releaseImplementation(projects.feature.telemetry.glean)

@@ -102,7 +102,7 @@ class MessageWebView : WebView, KoinComponent {
         }
 
         // Disable network images by default. This is overridden by preferences.
-        blockNetworkData(true)
+        blockNetworkData(false)
     }
 
     private fun disableDisplayZoomControls() {

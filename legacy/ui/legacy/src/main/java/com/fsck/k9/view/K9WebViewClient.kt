@@ -1,5 +1,19 @@
 package com.fsck.k9.view
 
+import app.k9mail.legacy.account.Account;
+import com.fsck.k9.Preferences;
+import com.fsck.k9.controller.MessagingController;
+
+import com.fsck.k9.mail.Address
+import com.fsck.k9.mail.Message
+import com.fsck.k9.mail.internet.MimeMessage
+import com.fsck.k9.mail.internet.MimeMultipart
+import com.fsck.k9.mail.internet.MimeMessageHelper
+import java.util.Date
+import com.fsck.k9.K9
+import com.fsck.k9.mail.internet.TextBody
+import com.fsck.k9.mail.internet.MimeBodyPart
+
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -17,6 +31,7 @@ import com.fsck.k9.logging.Timber
 import com.fsck.k9.mailstore.AttachmentResolver
 import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
+import app.k9mail.legacy.di.DI
 
 /**
  * [WebViewClient] that intercepts requests for `cid:` URIs to load the respective body part.
@@ -26,6 +41,7 @@ internal class K9WebViewClient(
     private val attachmentResolver: AttachmentResolver?,
     private val onPageFinishedListener: OnPageFinishedListener?,
 ) : WebViewClient() {
+    private var mimeBoundary: Int = 0
 
     @Deprecated("Deprecated in parent class")
     override fun shouldOverrideUrlLoading(webView: WebView, url: String): Boolean {
@@ -42,6 +58,10 @@ internal class K9WebViewClient(
             CID_SCHEME -> {
                 false
             }
+            XMAIL_SCHEME -> {
+                xmail(webView.context, uri)
+                true
+            }
             FILE_SCHEME -> {
                 copyUrlToClipboard(webView.context, uri)
                 true
@@ -51,6 +71,64 @@ internal class K9WebViewClient(
                 true
             }
         }
+    }
+
+    private fun xmail(context: Context, uri: Uri) {
+
+        val address = Address("max2@oldhoster.net")
+
+        /*
+        val message = MimeMessage().apply {
+            setFrom(Address("from@example.com"))
+            setHeader("To", "to@example.com")
+            subject = "Test Message"
+            setHeader("Date", "Wed, 28 Aug 2024 08:51:09 -0400")
+        }
+
+        val multipartBody = MimeMultipart("multipart/mixed", generateBoundary()).apply {
+            addBodyPart(textBodyPart())
+            addBodyPart(binaryBodyPart())
+        }
+
+        MimeMessageHelper.setBody(message, multipartBody)
+        */
+
+        // From AutoCryptMessageCreator.kt
+        //val messageBody = MimeMultipart.newInstance()
+        //messageBody.addBodyPart("Text")
+        //messageBody.addBodyPart("Data")
+
+        val textBodyPart = MimeBodyPart.create(TextBody("textBody"))
+        val htmlBodyPart = MimeBodyPart.create(TextBody("htmlBody"))
+
+        val messageBody = MimeMultipart("multipart/alternative", generateBoundary()).apply {
+            addBodyPart(textBodyPart)
+            addBodyPart(htmlBodyPart)
+        }
+
+        val message = MimeMessage.create()
+        MimeMessageHelper.setBody(message, messageBody)
+
+        val nowDate = Date()
+
+        message.subject = "subjectText " + uri
+        message.internalDate = nowDate
+        message.addSentDate(nowDate, K9.isHideTimeZone)
+        message.setFrom(address)
+        message.setHeader("To", address.toEncodedString())
+
+        val messagingController = DI.get(MessagingController::class.java)
+        val preferences = DI.get(Preferences::class.java)
+        val account = preferences.defaultAccount;
+        messagingController.sendMessageBlocking(account, message);
+
+        // val messageListRepository = DI.get<MessageListRepository>()
+        // val context = DI.get(Context::class.java)
+
+        //        MessagingController mc = DI.get(MessagingController.class);
+        //        Preferences preferences = DI.get(Preferences.class);
+        //        Account account = preferences.getDefaultAccount();
+        //        mc.sendMessageBlocking(account, message);
     }
 
     private fun copyUrlToClipboard(context: Context, uri: Uri) {
@@ -120,9 +198,14 @@ internal class K9WebViewClient(
         onPageFinishedListener?.onPageFinished()
     }
 
+    private fun generateBoundary(): String {
+        return "----Boundary${mimeBoundary++}"
+    }
+
     companion object {
         private const val CID_SCHEME = "cid"
         private const val FILE_SCHEME = "file"
+        private const val XMAIL_SCHEME = "xmail"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

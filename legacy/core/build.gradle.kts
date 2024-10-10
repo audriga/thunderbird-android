@@ -38,6 +38,9 @@ dependencies {
 
     implementation(libs.mustache)
     implementation(libs.jackson)
+    //implementation(libs.ical4j)
+    //implementation(libs.ical4jvcard)
+    //implementation(libs.ical4jserializer)
 
     testApi(projects.core.testing)
     testApi(projects.core.android.testing)
