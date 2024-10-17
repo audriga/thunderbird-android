@@ -189,6 +189,12 @@ dependencies {
     //implementation(libs.ical4jvcard)
     //implementation(libs.ical4jserializer)
 
+    implementation(files("../libs/h2lj.jar"))
+    implementation(files("../libs/hetc.jar"))
+    //implementation(files("../libs/ld2h.jar"))
+
+    //implementation files('libs/h2lj.jar', 'libs/hetc.jar', 'libs/ld2h.jar')
+
     debugImplementation(projects.feature.telemetry.noop)
     releaseImplementation(projects.feature.telemetry.glean)
     "betaImplementation"(projects.feature.telemetry.glean)

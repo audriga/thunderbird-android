@@ -14,6 +14,11 @@ import com.fsck.k9.K9
 import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.mail.internet.MimeBodyPart
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import android.webkit.ValueCallback
+import android.graphics.Bitmap
+import android.webkit.WebResourceError
+
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -32,6 +37,8 @@ import com.fsck.k9.mailstore.AttachmentResolver
 import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import app.k9mail.legacy.di.DI
+
+// import android.R.style
 
 /**
  * [WebViewClient] that intercepts requests for `cid:` URIs to load the respective body part.
@@ -62,6 +69,18 @@ internal class K9WebViewClient(
                 xmail(webView.context, uri)
                 true
             }
+            XALERT_SCHEME -> {
+                xalert(webView.context, "" + uri)
+                true
+            }
+            XJS_SCHEME -> {
+                xjs(webView, uri)
+                true
+            }
+            XSTORY_SCHEME -> {
+                xstory(webView.context, uri)
+                true
+            }
             FILE_SCHEME -> {
                 copyUrlToClipboard(webView.context, uri)
                 true
@@ -72,6 +91,129 @@ internal class K9WebViewClient(
             }
         }
     }
+
+    private fun showToast(context: Context, message: String) {
+
+        //Toast.makeText(context, R.string.error_activity_not_found, Toast.LENGTH_LONG).show()
+
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun xstory(context: Context, uri: Uri) {
+
+        // https://www.geeksforgeeks.org/android-webview-in-kotlin/
+        // https://stackoverflow.com/questions/5448841/what-do-setusewideviewport-and-setloadwithoverviewmode-precisely-do
+
+        // https://stackoverflow.com/questions/47872078/how-to-load-an-url-inside-a-webview-using-android-kotlin
+        // https://stackoverflow.com/questions/20333047/checking-internet-connection-in-webview
+
+        var xwebView = WebView(context) // findViewById(R.id.webview)
+        //webView.settings.setJavaScriptEnabled(true)
+        //xwebView.setPrefSize(200, 200)
+        xwebView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                view?.loadUrl("" + url)
+                return true
+            }
+
+            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                showToast(context, "load: " + url)
+                super.onPageStarted(view, url, favicon)
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                showToast(context, "done: " + url);
+                super.onPageFinished(view, url)
+            }
+
+            override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+                val errorMessage = "Got Error! $error"
+                showToast(context, errorMessage)
+                super.onReceivedError(view, request, error)
+            }
+
+        }
+        xwebView.settings.javaScriptEnabled = true
+        xwebView.loadUrl("" + uri.fragment)
+
+        // R.style.FullscreenDialogStyle
+        // android.R.style.Theme_Black_NoTitleBar_Fullscreen
+        var dialogAlert = MaterialAlertDialogBuilder(context)
+          .setView(xwebView)
+        //.setTitle("title")
+        //.setMessage("msg: " + s)
+        .setPositiveButton("Close", null)
+        .setCancelable(false)
+        .create()
+        .apply {
+            setCanceledOnTouchOutside(false)
+            show()
+        }
+
+
+    }
+
+     private fun xjs(webView: WebView, uri: Uri) {
+
+        webView.evaluateJavascript("(function() { return 'this'; })();",
+            object : ValueCallback<String?> {
+                override fun onReceiveValue(value: String?) {
+                    xalert(webView.context, "" + value);
+                }
+            })
+
+     }
+
+
+    /*
+    import android.view.LayoutInflater
+    import android.view.View
+    import com.google.android.material.dialog.MaterialAlertDialogBuilder
+    import com.fsck.k9.ui.base.R as BaseR
+    import app.k9mail.feature.settings.importing.R
+    */
+
+    private fun xalert(context: Context, s: String) {
+
+        //https://developer.android.com/reference/com/google/android/material/dialog/MaterialAlertDialogBuilder
+        // https://stackoverflow.com/questions/56098162/how-to-use-materialalertdialogbuilder-fine
+        // https://medium.com/codex/optimized-androids-dialogs-management-1b899ecaedb6
+
+        /*
+        MaterialAlertDialogBuilder(this)
+            .setMessage("This is a test of MaterialAlertDialogBuilder")
+            .setPositiveButton("Ok", null)
+            .show()
+        */
+
+        // R.style.FullscreenDialogStyle
+        // android.R.style.Theme_Black_NoTitleBar_Fullscreen
+        var dialogAlert = MaterialAlertDialogBuilder(context)
+         // .setView(xwebView)
+        .setTitle("title")
+        .setMessage("msg: " + s)
+        .setPositiveButton("Close", null)
+        .setCancelable(false)
+        .create()
+        .apply {
+            setCanceledOnTouchOutside(false)
+            show()
+        }
+
+        /*
+        var dialogView =  createView();
+
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .setPositiveButton(BaseR.string.okay_action, null)
+            .setNegativeButton(BaseR.string.cancel_action, null)
+            .create()
+        */
+
+    }
+
+
 
     private fun xmail(context: Context, uri: Uri) {
 
@@ -206,6 +348,9 @@ internal class K9WebViewClient(
         private const val CID_SCHEME = "cid"
         private const val FILE_SCHEME = "file"
         private const val XMAIL_SCHEME = "xmail"
+        private const val XALERT_SCHEME = "xalert"
+        private const val XJS_SCHEME = "xjs"
+        private const val XSTORY_SCHEME = "xstory"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

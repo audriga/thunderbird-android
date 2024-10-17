@@ -255,6 +255,8 @@ public class MessageViewInfoExtractor {
                 }
             }
 
+            String video = "<video controls height=\"150\" poster=\"https://is1-ssl.mzstatic.com/image/thumb/Video124/v4/5c/d0/fc/5cd0fc4a-714c-e24f-e287-1361bf9c69d6/GB1108700010.sca1.jpg/640x480mv.jpg\" src=\"https://video-ssl.itunes.apple.com/itunes-assets/Video124/v4/25/c0/a7/25c0a7ef-34a6-c36d-c921-ad3d90cec9d6/mzvf_18388793884790474945.640x480.h264lc.U.p.m4v\"></video>\r\n<br/><br/>\r\n<audio controls style=\"width: 200px; height: 20px;\" src=\"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/b0/d8/aa/b0d8aa8e-1a38-6287-508d-27693174249e/mzaf_13677213744690699536.plus.aac.ep.m4a\">boo</audio>";
+
             String htmlString = html.toString();
             String sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + htmlProcessor.processForDisplay(htmlString);
             String[] split1 = htmlString.split("<script type=\"application/ld\\+json\">", 2);
@@ -283,9 +285,15 @@ public class MessageViewInfoExtractor {
                     String snippet2 = " ";
                     */
 
-                    String linx = "<br>LINX: <a href=\"tel:124\">TEL</a><br><a href=\"file:blubb\">FILE</a><br><a href=\"xmail:blupp\">xmail</a><br><hr><br><br>";
+                    String url_story = "https://cdn.prod.www.spiegel.de/stories/117130/index.amp.html";
 
-                    sanitizedHtml = css + result + linx + sanitizedHtml;
+                    String linx = "<br>LINX: <a href=\"tel:124\">TEL</a><br><a href=\"file:blubb\">FILE</a><br><a href=\"xmail:blupp\">xmail</a><br><a href=\"xalert:xblupp\">xalert</a><br><a href=\"xjs:xjs\">xjs</a>"
+                    + "<br><a href=\"xstory:xstory:https://www.broken.com\">x_broken</a>"
+                    + "<br><a href=\"xstory:#https://www.google.com\">x_google</a>"
+                    + "<br><a href=\"xstory:#" + url_story + "\">xstory</a>"
+                    + "<br><hr><br><br>";
+
+                    sanitizedHtml = css + result + linx + video + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
                     //sanitizedHtml = css + snippet1 + snippet2 + linx + sanitizedHtml;
                 }
             }

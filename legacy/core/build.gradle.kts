@@ -42,6 +42,12 @@ dependencies {
     //implementation(libs.ical4jvcard)
     //implementation(libs.ical4jserializer)
 
+    implementation(files("../../libs/h2lj.jar"))
+    implementation(files("../../libs/hetc.jar"))
+    //implementation(files("../../libs/ld2h.jar"))
+
+    //implementation files('libs/h2lj.jar', 'libs/hetc.jar', 'libs/ld2h.jar')
+
     testApi(projects.core.testing)
     testApi(projects.core.android.testing)
     testImplementation(projects.feature.telemetry.noop)
