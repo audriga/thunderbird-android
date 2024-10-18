@@ -191,7 +191,7 @@ dependencies {
 
     implementation(files("../libs/h2lj.jar"))
     implementation(files("../libs/hetc.jar"))
-    //implementation(files("../libs/ld2h.jar"))
+    implementation(files("../libs/ld2h.jar"))
 
     //implementation files('libs/h2lj.jar', 'libs/hetc.jar', 'libs/ld2h.jar')
 
