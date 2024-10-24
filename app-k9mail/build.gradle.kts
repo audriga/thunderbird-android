@@ -30,9 +30,18 @@ dependencies {
     implementation(projects.feature.autodiscovery.api)
     implementation(libs.mustache)
     implementation(libs.jackson)
+
+    // ./gradlew app-k9mail:dependencies > dependencies.log
+    // https://stackoverflow.com/questions/21645071/using-gradle-to-find-dependency-tree
+
+    // Exclude: https://stackoverflow.com/questions/56027250/how-to-resolve-duplicate-class-error-in-gradle-build
+
+    // https://stackoverflow.com/questions/56695106/duplicated-classes-found-in-modules-classes-jar
+
+    // TODO
     //implementation(libs.ical4j)
     //implementation(libs.ical4jvcard)
-    //implementation(libs.ical4jserializer)
+    implementation(libs.ical4jserializer)
 
     implementation(files("../libs/h2lj.jar"))
     implementation(files("../libs/hetc.jar"))
@@ -153,6 +162,7 @@ android {
             excludes += listOf(
                 "META-INF/*.kotlin_module",
                 "META-INF/*.version",
+                "META-INF/*.md", // TODO
                 "kotlin/**",
                 "DebugProbesKt.bin",
             )

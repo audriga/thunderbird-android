@@ -58,6 +58,12 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
+    implementation(libs.jackson)
+    // TODO
+    //implementation(libs.ical4j)
+    //implementation(libs.ical4jvcard)
+    implementation(libs.ical4jserializer)
+
     implementation(libs.glide)
     annotationProcessor(libs.glide.compiler)
 

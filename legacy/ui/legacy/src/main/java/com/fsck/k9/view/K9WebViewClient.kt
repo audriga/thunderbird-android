@@ -14,10 +14,13 @@ import com.fsck.k9.K9
 import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.mail.internet.MimeBodyPart
 
+import android.view.ViewGroup
+
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.webkit.ValueCallback
 import android.graphics.Bitmap
 import android.webkit.WebResourceError
+import android.webkit.RenderProcessGoneDetail
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -121,16 +124,44 @@ internal class K9WebViewClient(
                 super.onPageStarted(view, url, favicon)
             }
 
+            // https://stackoverflow.com/questions/18282892/android-webview-onpagefinished-called-twice
+            //
+
             override fun onPageFinished(view: WebView?, url: String?) {
-                showToast(context, "done: " + url);
+                showToast(context, "done: " + view?.progress + " / " + view?.contentHeight
+                + " / " + view?.title + " / " + url);
                 super.onPageFinished(view, url)
             }
 
+            override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) {
+                val errorMessage = "got HTTP Error!"
+                showToast(context, errorMessage)
+                super.onReceivedHttpError(view, request, response)
+            }
+
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-                val errorMessage = "Got Error! $error"
+                val errorMessage = "got Error! $error"
                 showToast(context, errorMessage)
                 super.onReceivedError(view, request, error)
             }
+
+            override fun onRenderProcessGone(view: WebView, detail:     RenderProcessGoneDetail): Boolean {
+
+                val errorMessage = "onRenderProcessGone"
+                showToast(context, errorMessage)
+
+                return super.onRenderProcessGone(view, detail)
+            }
+
+            override fun shouldOverrideUrlLoading(webView: WebView, request: WebResourceRequest): Boolean {
+
+                val errorMessage = "onOverride " + request.url
+                showToast(context, errorMessage)
+                return shouldOverrideUrlLoading(webView, request.url)
+            }
+
+
+            // https://stackoverflow.com/questions/8200945/how-to-get-html-content-from-a-webview
 
         }
         xwebView.settings.javaScriptEnabled = true
@@ -149,6 +180,10 @@ internal class K9WebViewClient(
             setCanceledOnTouchOutside(false)
             show()
         }
+
+        // Make Fullscreen
+        // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
+        dialogAlert.window?.setLayout(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT)
 
 
     }

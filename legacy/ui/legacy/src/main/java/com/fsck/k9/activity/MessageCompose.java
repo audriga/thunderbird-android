@@ -122,6 +122,16 @@ import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpIntentStarter;
 import timber.log.Timber;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import net.fortuna.ical4j.data.CalendarBuilder;
+import net.fortuna.ical4j.data.ParserException;
+import net.fortuna.ical4j.model.Calendar;
+import net.fortuna.ical4j.model.component.VEvent;
+import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
+
+import java.io.IOException;
+import java.io.StringReader;
 
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
 public class MessageCompose extends K9Activity implements OnClickListener,
@@ -705,6 +715,65 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             recipientPresenter.builderSetProperties(builder);
         }
 
+        String msgText = "" + messageContentView.getText();
+        if (msgText.startsWith("https://")) {
+
+            String oriURL = msgText;
+
+            String sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"EventReservation\",\r\n  \"reservationNumber\": \"1234567\",\r\n  \"reservationStatus\": \"http://schema.org/Confirmed\",\r\n  \"modifyReservationUrl\": \"https://www.eventbrite.com/mytickets/123?utm_campaign=order_confirm&amp;utm_medium=email&amp;ref=eemailordconf&amp;utm_source=eb_email&amp;utm_term=googlenow\",\r\n  \"underName\": {\r\n    \"@type\": \"Person\",\r\n    \"name\": \"Peter Meier\"\r\n  },\r\n  \"reservationFor\": {\r\n    \"@type\": \"Event\",\r\n    \"name\": \"Calendar and Scheduling Developer Day Zurich\",\r\n    \"startDate\": \"2019-02-04T09:00:00+01:00\",\r\n    \"endDate\": \"2019-02-04T17:30:00+01:00\",\r\n    \"location\": {\r\n      \"@type\": \"Place\",\r\n      \"name\": \"Google Zürich - Europaalle campus\",\r\n      \"address\": {\r\n        \"@type\": \"PostalAddress\",\r\n        \"streetAddress\": \"Lagerstrasse 1008004 Zürich\",\r\n        \"addressLocality\": \"Zürich\",\r\n        \"addressRegion\": \"ZH\",\r\n        \"postalCode\": \"8004\",\r\n        \"addressCountry\": \"CH\"\r\n      }\r\n    }\r\n  }\r\n}";
+
+            String smlScript = "<script type=\"application/ld+json\">" + sml + "</script>";
+
+            msgText = "<html><body>" + smlScript + "<b>Bold</b>Text / " + oriURL + "</body></html>";
+
+            currentMessageFormat = SimpleMessageFormat.HTML;
+        } else if (msgText.startsWith("ICAL")) {
+
+            try {
+
+                String myCalendarString = "BEGIN:VCALENDAR\n" +
+                        "VERSION:2.0\n" +
+                        "CALSCALE:GREGORIAN\n" +
+                        "BEGIN:VEVENT\n" +
+                        "SUMMARY:Access-A-Ride Pickup\n" +
+                        "UID:uid1@example.com\n" +
+                        "DTSTART;TZID=America/New_York:20130802T103400\n" +
+                        "DTEND;TZID=America/New_York:20130802T110400\n" +
+                        "LOCATION:1000 Broadway Ave.\\, Brooklyn\n" +
+                        "DESCRIPTION: Access-A-Ride trip to 900 Jay St.\\, Brooklyn\n" +
+                        "STATUS:CONFIRMED\n" +
+                        "SEQUENCE:3\n" +
+                        "BEGIN:VALARM\n" +
+                        "TRIGGER:-PT10M\n" +
+                        "DESCRIPTION:Pickup Reminder\n" +
+                        "ACTION:DISPLAY\n" +
+                        "END:VALARM\n" +
+                        "END:VEVENT\n" +
+                        "BEGIN:VEVENT\n" +
+                        "END:VEVENT\n" +
+                        "END:VCALENDAR";
+                StringReader sin = new StringReader(myCalendarString);
+                CalendarBuilder cbuilder = new CalendarBuilder();
+                Calendar cal = cbuilder.build(sin);
+
+                System.out.println(cal.getUid());
+                VEvent event = (VEvent) cal.getComponents().get(0);
+
+                SimpleModule module = new SimpleModule();
+                module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(module);
+
+                String serialized = mapper.writeValueAsString(event);
+
+                msgText = serialized;
+
+            } catch (Exception e){
+                msgText = e.getMessage();
+            }
+        }
+
+
         builder.setSubject(Utility.stripNewLines(subjectView.getText().toString()))
                 .setSentDate(new Date())
                 .setHideTimeZone(K9.isHideTimeZone())
@@ -713,8 +782,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 .setRequestReadReceipt(requestReadReceipt)
                 .setIdentity(identity)
                 .setReplyTo(replyToPresenter.getAddresses())
+
                 .setMessageFormat(currentMessageFormat)
-                .setText(CrLfConverter.toCrLf(messageContentView.getText()))
+                .setText(CrLfConverter.toCrLf(msgText))
                 .setAttachments(attachmentPresenter.getAttachments())
                 .setInlineAttachments(attachmentPresenter.getInlineAttachments())
                 .setSignature(CrLfConverter.toCrLf(signatureView.getText()))

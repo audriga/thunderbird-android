@@ -38,9 +38,11 @@ dependencies {
 
     implementation(libs.mustache)
     implementation(libs.jackson)
+
+    // TODO
     //implementation(libs.ical4j)
     //implementation(libs.ical4jvcard)
-    //implementation(libs.ical4jserializer)
+    implementation(libs.ical4jserializer)
 
     implementation(files("../../libs/h2lj.jar"))
     implementation(files("../../libs/hetc.jar"))

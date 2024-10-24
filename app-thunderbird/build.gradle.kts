@@ -162,6 +162,7 @@ android {
             excludes += listOf(
                 "META-INF/*.kotlin_module",
                 "META-INF/*.version",
+                 "META-INF/*.md", // TODO
                 "kotlin/**",
                 "DebugProbesKt.bin",
             )
@@ -185,9 +186,11 @@ dependencies {
     implementation(projects.feature.widget.unread)
     implementation(libs.mustache)
     implementation(libs.jackson)
+
+    // TODO
     //implementation(libs.ical4j)
     //implementation(libs.ical4jvcard)
-    //implementation(libs.ical4jserializer)
+    implementation(libs.ical4jserializer)
 
     implementation(files("../libs/h2lj.jar"))
     implementation(files("../libs/hetc.jar"))
