@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Patterns;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -120,6 +121,10 @@ import com.google.android.material.textview.MaterialTextView;
 import org.openintents.openpgp.OpenPgpApiManager;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpIntentStarter;
+//import okhttp3.OkHttpClient;
+//import okhttp3.Request;
+//import okhttp3.Response;
+////import com.audriga.jakarta.sml.h2lj.parser;
 import timber.log.Timber;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -522,6 +527,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             if (intent.getData() != null) {
                 Uri uri = intent.getData();
                 if (MailTo.isMailTo(uri)) {
+                    // todo: This is the mailto entrypoint
                     MailTo mailTo = MailTo.parse(uri);
                     initializeFromMailto(mailTo);
                 }
@@ -551,6 +557,22 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             // Only use EXTRA_TEXT if the body hasn't already been set by the mailto URI
             if (text != null && messageContentView.getText().length() == 0) {
                 messageContentView.setText(CrLfConverter.toLf(text));
+
+                if (Patterns.WEB_URL.matcher(text).matches()) {
+////                    messageContentView.setText("That is an URL!!" + text);
+                    /*
+                    Received url via android share-in
+                    Todo: use OkHttp to fetch it
+                    OkHttpClient client = new OkHttpClient();
+                    Request request = new Request.Builder()
+                        .url(text)
+                        .build();
+
+                    try (Response response = client.newCall(request).execute()) {
+                        String body = response.body().string();
+                    }
+                     */
+                }
             }
 
             String type = intent.getType();
