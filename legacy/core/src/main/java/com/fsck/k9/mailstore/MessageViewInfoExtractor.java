@@ -329,11 +329,16 @@ public class MessageViewInfoExtractor {
                     */
 
                     String url_story = "https://cdn.prod.www.spiegel.de/stories/117130/index.amp.html";
+                    String url_story2 = "https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html";
+                    String url_story3 = "http://www.audriga.eu/test/web-stories/amp_story.html";
+
 
                     String linx = "<br>LINX: <a href=\"tel:124\">TEL</a><br><a href=\"file:blubb\">FILE</a><br><a href=\"xmail:blupp\">xmail</a><br><a href=\"xalert:xblupp\">xalert</a><br><a href=\"xjs:xjs\">xjs</a>"
                     + "<br><a href=\"xstory:xstory:https://www.broken.com\">x_broken</a>"
                     + "<br><a href=\"xstory:#https://www.google.com\">x_google</a>"
                     + "<br><a href=\"xstory:#" + url_story + "\">xstory</a>"
+                    + "<br><a href=\"xstory:#" + url_story2 + "\">xstory2</a>"
+                    + "<br><a href=\"xstory:#" + url_story3 + "\">xstory3</a>"
                     + "<br><hr><br><br>";
 
                     sanitizedHtml = css + result + linx + video + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);

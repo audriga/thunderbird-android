@@ -718,15 +718,40 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         String msgText = "" + messageContentView.getText();
         if (msgText.startsWith("https://")) {
 
+            //https://www.http4k.org/
+            //import org.http4k.core.Request
+            //import org.http4k.core.Response
+            //import org.http4k.core.Call
+
+        import okhttp3.Request;
+        import okhttp3.Response;
+        import okhttp3.Call;
+
             String oriURL = msgText;
+            Request request = new Request.Builder()
+                .url(oriURL).build();
+            Call call = client.newCall(request);
+            Response response = call.execute();
+            String htmlSrc = response.body().string();
 
             String sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"EventReservation\",\r\n  \"reservationNumber\": \"1234567\",\r\n  \"reservationStatus\": \"http://schema.org/Confirmed\",\r\n  \"modifyReservationUrl\": \"https://www.eventbrite.com/mytickets/123?utm_campaign=order_confirm&amp;utm_medium=email&amp;ref=eemailordconf&amp;utm_source=eb_email&amp;utm_term=googlenow\",\r\n  \"underName\": {\r\n    \"@type\": \"Person\",\r\n    \"name\": \"Peter Meier\"\r\n  },\r\n  \"reservationFor\": {\r\n    \"@type\": \"Event\",\r\n    \"name\": \"Calendar and Scheduling Developer Day Zurich\",\r\n    \"startDate\": \"2019-02-04T09:00:00+01:00\",\r\n    \"endDate\": \"2019-02-04T17:30:00+01:00\",\r\n    \"location\": {\r\n      \"@type\": \"Place\",\r\n      \"name\": \"Google Zürich - Europaalle campus\",\r\n      \"address\": {\r\n        \"@type\": \"PostalAddress\",\r\n        \"streetAddress\": \"Lagerstrasse 1008004 Zürich\",\r\n        \"addressLocality\": \"Zürich\",\r\n        \"addressRegion\": \"ZH\",\r\n        \"postalCode\": \"8004\",\r\n        \"addressCountry\": \"CH\"\r\n      }\r\n    }\r\n  }\r\n}";
 
+            // TODO
+            String jStart = "<script type=\"application/ld+json\">";
+            String jStop = "</script">
+            if (htmlSrc.contains("ld+json")){
+                int indexOf = htmlSrc.indexOf(jStart);
+                sml = htmlSrc.substring(indexOf+jStart.length, htmlSrc.indexOf(jStop, indexOf);
+                oriURL = oriURL + " (EXTRACTED!)";
+            }
+
             String smlScript = "<script type=\"application/ld+json\">" + sml + "</script>";
 
-            msgText = "<html><body>" + smlScript + "<b>Bold</b>Text / " + oriURL + "</body></html>";
+            //msgText = "<html><body>" + smlScript + "<b>Bold</b>Text / " + oriURL + "</body></html>";
+            msgText = smlScript + "<b>Bold</b>Text /" + oriURL + "(END)";
 
             currentMessageFormat = SimpleMessageFormat.HTML;
+
         } else if (msgText.startsWith("ICAL")) {
 
             try {
@@ -767,6 +792,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 String serialized = mapper.writeValueAsString(event);
 
                 msgText = serialized;
+
+                currentMessageFormat = SimpleMessageFormat.HTML;
 
             } catch (Exception e){
                 msgText = e.getMessage();

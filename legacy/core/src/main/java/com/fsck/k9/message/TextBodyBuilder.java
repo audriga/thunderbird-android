@@ -101,7 +101,10 @@ class TextBodyBuilder {
 
         } else {
             // Convert the text to HTML
-            text = textToHtmlFragment(text);
+
+            if (!text.contains("schema.org")){
+                text = textToHtmlFragment(text);
+            }
 
             composedMessageLength = text.length();
             composedMessageOffset = HTML_AND_BODY_START.length();

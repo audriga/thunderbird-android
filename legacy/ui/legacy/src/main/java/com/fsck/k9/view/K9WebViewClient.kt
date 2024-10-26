@@ -22,6 +22,10 @@ import android.graphics.Bitmap
 import android.webkit.WebResourceError
 import android.webkit.RenderProcessGoneDetail
 
+
+import android.graphics.Color
+import android.view.View
+
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -112,7 +116,8 @@ internal class K9WebViewClient(
 
         var xwebView = WebView(context) // findViewById(R.id.webview)
         //webView.settings.setJavaScriptEnabled(true)
-        //xwebView.setPrefSize(200, 200)
+        xwebView.setBackgroundColor(Color.RED);
+        xwebView.setVisibility(View.VISIBLE);
         xwebView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                 view?.loadUrl("" + url)
@@ -165,6 +170,7 @@ internal class K9WebViewClient(
 
         }
         xwebView.settings.javaScriptEnabled = true
+        xwebView.settings.domStorageEnabled = true
         xwebView.loadUrl("" + uri.fragment)
 
         // R.style.FullscreenDialogStyle
