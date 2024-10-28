@@ -58,8 +58,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
-    implementation(libs.http4k.core)
-    implementation(libs.http4k.client.okhttp)
+    implementation(libs.okhttp)
+
+    //implementation(libs.http4k.core)
+    //implementation(libs.http4k.client.okhttp)
 
     implementation(libs.jackson)
     // TODO
