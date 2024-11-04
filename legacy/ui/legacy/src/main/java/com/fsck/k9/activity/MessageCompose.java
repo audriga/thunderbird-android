@@ -742,6 +742,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
         String msgText = "" + messageContentView.getText();
+
+        if (msgText.startsWith("<")) msgText = msgText.substring(1, msgText.length());
+        if (msgText.endsWith(">")) msgText = msgText.substring(0, msgText.length()-1);
+
         if (msgText.startsWith("https://")) {
 
             //https://www.http4k.org/
