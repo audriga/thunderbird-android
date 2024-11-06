@@ -154,6 +154,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private static final int DIALOG_CONFIRM_DISCARD = 4;
 
     public static final String ACTION_COMPOSE = "com.fsck.k9.intent.action.COMPOSE";
+    public static final String ACTION_COMPOSE_APPROVE = "com.fsck.k9.intent.action.COMPOSE_APPROVE";
     public static final String ACTION_REPLY = "com.fsck.k9.intent.action.REPLY";
     public static final String ACTION_REPLY_ALL = "com.fsck.k9.intent.action.REPLY_ALL";
     public static final String ACTION_FORWARD = "com.fsck.k9.intent.action.FORWARD";
@@ -523,6 +524,40 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private boolean initFromIntent(final Intent intent) {
         boolean startedByExternalIntent = false;
         final String action = intent.getAction();
+
+
+        if (ACTION_COMPOSE_APPROVE.equals(action)) {
+            if (intent.getExtras() != null) {
+                Uri uri = intent.getData();
+                if (MailTo.isMailTo(uri)) {
+                    // todo: This is the mailto entrypoint
+                    MailTo mailTo = MailTo.parse(uri);
+                    initializeFromMailto(mailTo);
+                }
+            }
+            if (intent.getData() != null) {
+                Bundle extras = intent.getExtras();
+//                String recipient = extras.getString("recipient");
+                String requestAction = extras.getString("requestAction");
+                String sml;
+                if ("ConfirmAction".equals(requestAction)) {
+                    sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}";
+                    subjectView.setText("Approve");
+//                    currentMessageBuilder.setSubject("Approve");
+                } else if ("CancelAction".equals(requestAction)) {
+                    sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n}";
+                    subjectView.setText("Deny");
+//                    currentMessageBuilder.setSubject("Deny");
+                } else {
+                    return false;
+                }
+                String smlScript = "<script type=\"application/ld+json\">" + sml + "</script>"+ "(End)";
+//               currentMessageBuilder.setText(smlScript);
+                messageContentView.setText(smlScript);
+                currentMessageFormat = SimpleMessageFormat.HTML;
+                return false;
+            }
+        }
 
         if (Intent.ACTION_VIEW.equals(action) || Intent.ACTION_SENDTO.equals(action) || NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
             /*

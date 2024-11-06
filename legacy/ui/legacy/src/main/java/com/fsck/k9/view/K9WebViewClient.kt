@@ -1,49 +1,43 @@
 package com.fsck.k9.view
 
-import app.k9mail.legacy.account.Account;
-import com.fsck.k9.Preferences;
-import com.fsck.k9.controller.MessagingController;
-
-import com.fsck.k9.mail.Address
-import com.fsck.k9.mail.Message
-import com.fsck.k9.mail.internet.MimeMessage
-import com.fsck.k9.mail.internet.MimeMultipart
-import com.fsck.k9.mail.internet.MimeMessageHelper
-import java.util.Date
-import com.fsck.k9.K9
-import com.fsck.k9.mail.internet.TextBody
-import com.fsck.k9.mail.internet.MimeBodyPart
-
-import android.view.ViewGroup
-
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import android.webkit.ValueCallback
-import android.graphics.Bitmap
-import android.webkit.WebResourceError
-import android.webkit.RenderProcessGoneDetail
-
-
-import android.graphics.Color
-import android.view.View
-
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.Browser
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.RenderProcessGoneDetail
+import android.webkit.ValueCallback
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import app.k9mail.legacy.di.DI
+import com.fsck.k9.K9
+import com.fsck.k9.Preferences
+import com.fsck.k9.activity.MessageCompose
+import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.logging.Timber
+import com.fsck.k9.mail.Address
+import com.fsck.k9.mail.internet.MimeBodyPart
+import com.fsck.k9.mail.internet.MimeMessage
+import com.fsck.k9.mail.internet.MimeMessageHelper
+import com.fsck.k9.mail.internet.MimeMultipart
+import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.mailstore.AttachmentResolver
 import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
-import app.k9mail.legacy.di.DI
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.util.Date
 
 // import android.R.style
 
@@ -90,6 +84,27 @@ internal class K9WebViewClient(
             }
             FILE_SCHEME -> {
                 copyUrlToClipboard(webView.context, uri)
+                true
+            }
+            MAILTO_SCHEME -> {
+//                val actionQuery = uri.getQueryParameters("action") //for some reason this throws an exception
+                val query = uri.query;
+                if (query != null && query.contains("action")) {
+                    val schemaSpecific = uri.schemeSpecificPart
+                    val end = schemaSpecific.indexOf('?')
+                    val recipient = Uri.decode(schemaSpecific.substring(0, end))
+                    val requestAction = query.substring(query.indexOf('=')+1, query.length)
+//                    val bundle = Bundle();
+//                    bundle.putString("recipient", recipient)
+//                    bundle.putString("action", requestAction)
+                    val intent = Intent(webView.context, MessageCompose::class.java).apply {
+                        action = MessageCompose.ACTION_COMPOSE_APPROVE
+                        data = uri
+                    }.putExtra("recipient", recipient).putExtra("requestAction", requestAction)
+                    webView.context.startActivity(intent)
+                } else {
+                    openUrl(webView.context, uri)
+                }
                 true
             }
             else -> {
@@ -144,8 +159,11 @@ internal class K9WebViewClient(
             //
 
             override fun onPageFinished(view: WebView?, url: String?) {
-                showToast(context, "done: " + view?.progress + " / " + view?.contentHeight
-                + " / " + view?.title + " / " + url);
+                showToast(
+                    context,
+                    "done: " + view?.progress + " / " + view?.contentHeight
+                        + " / " + view?.title + " / " + url,
+                );
                 super.onPageFinished(view, url)
             }
 
@@ -207,12 +225,14 @@ internal class K9WebViewClient(
 
      private fun xjs(webView: WebView, uri: Uri) {
 
-        webView.evaluateJavascript("(function() { return 'this'; })();",
+        webView.evaluateJavascript(
+            "(function() { return 'this'; })();",
             object : ValueCallback<String?> {
                 override fun onReceiveValue(value: String?) {
                     xalert(webView.context, "" + value);
                 }
-            })
+            },
+        )
 
      }
 
@@ -403,6 +423,7 @@ internal class K9WebViewClient(
         private const val XALERT_SCHEME = "xalert"
         private const val XJS_SCHEME = "xjs"
         private const val XSTORY_SCHEME = "xstory"
+        private const val MAILTO_SCHEME = "mailto"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)
