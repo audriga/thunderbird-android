@@ -4,7 +4,12 @@ package com.fsck.k9.mailstore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import android.text.TextUtils;
 
@@ -14,12 +19,12 @@ import androidx.annotation.WorkerThread;
 
 import app.k9mail.legacy.account.Account;
 import app.k9mail.legacy.di.DI;
-//import com.audriga.jakarta.sml.h2lj.model.StructuredData;
-//import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
-//import org.audriga.ld2h.JsonLdDeserializer;
+import com.audriga.jakarta.sml.h2lj.model.StructuredData;
+import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
+import org.audriga.ld2h.JsonLdDeserializer;
 //import org.audriga.ld2h.JsonLd;
-//import org.audriga.ld2h.MustacheRenderer;
-//import org.audriga.ld2h.TemplateLoader;
+//import org.audriga.ld2h.MustacheRenderer; // todo this version causes an exception when created
+import org.audriga.ld2h.TemplateLoader;
 import com.fsck.k9.CoreResourceProvider;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.crypto.MessageCryptoStructureDetector;
@@ -37,6 +42,9 @@ import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.message.html.HtmlConverter;
 import app.k9mail.html.cleaner.HtmlProcessor;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openintents.openpgp.util.OpenPgpUtils;
 import timber.log.Timber;
 //import app.cash.barber.Barber;
@@ -52,6 +60,8 @@ import static com.fsck.k9.mail.internet.Viewable.Html;
 import static com.fsck.k9.mail.internet.Viewable.MessageHeader;
 import static com.fsck.k9.mail.internet.Viewable.Text;
 import static com.fsck.k9.mail.internet.Viewable.Textual;
+import static org.json.JSONObject.NULL;
+
 
 public class MessageViewInfoExtractor {
     private static final String TEXT_DIVIDER =
@@ -274,57 +284,36 @@ public class MessageViewInfoExtractor {
             String video = "<video controls height=\"150\" poster=\"https://is1-ssl.mzstatic.com/image/thumb/Video124/v4/5c/d0/fc/5cd0fc4a-714c-e24f-e287-1361bf9c69d6/GB1108700010.sca1.jpg/640x480mv.jpg\" src=\"https://video-ssl.itunes.apple.com/itunes-assets/Video124/v4/25/c0/a7/25c0a7ef-34a6-c36d-c921-ad3d90cec9d6/mzvf_18388793884790474945.640x480.h264lc.U.p.m4v\"></video>\r\n<br/><br/>\r\n<audio controls style=\"width: 200px; height: 20px;\" src=\"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/b0/d8/aa/b0d8aa8e-1a38-6287-508d-27693174249e/mzaf_13677213744690699536.plus.aac.ep.m4a\">boo</audio>";
 
             String htmlString = html.toString();
-            /***
-             * Todo: Once Interface between extractor and LD2H is fixed, replace with the code below
-             String htmlString = html.toString();
-             String sanitizedHtml = htmlProcessor.processForDisplay(htmlString);
-             List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.JSON_LD);
-             if (data.isEmpty()) {
-             data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.MICRODATA);
-             }
-             if (data.isEmpty()) {
-             sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
-             } else {
-             // NEW: use Java Mustache
-             MustacheRenderer renderer = new MustacheRenderer();
 
-             ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
-             for (StructuredData structuredData: data) {
-             String result = renderer.render(structuredData.getJson());
-             renderedHTMLs.add(result);
-             }
+            String sanitizedHtml = htmlProcessor.processForDisplay(htmlString);
+            List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.JSON_LD);
+            if (data.isEmpty()) {
+                data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.MICRODATA);
+            }
+            if (data.isEmpty()) {
+                sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
+            } else {
+                String css =  MustacheRenderer.CSS_HEAD;
+                //String css = " <style>\n" + MustacheRenderer.CSS + "\n</style>";
+                sanitizedHtml = sanitizedHtml +css + s2;
 
-             String result = String.join("\n", renderedHTMLs);
+                // todo this is not yet org.audriga.ld2h.MustacheRenderer. Since that version causes an exception.
+                MustacheRenderer renderer = new MustacheRenderer();
 
-             String url_story = "https://cdn.prod.www.spiegel.de/stories/117130/index.amp.html";
+                ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
+                for (StructuredData structuredData: data) {
 
-             String linx = "<br>LINX: <a href=\"tel:124\">TEL</a><br><a href=\"file:blubb\">FILE</a><br><a href=\"xmail:blupp\">xmail</a><br><a href=\"xalert:xblupp\">xalert</a><br><a href=\"xjs:xjs\">xjs</a>"
-             + "<br><a href=\"xstory:xstory:https://www.broken.com\">x_broken</a>"
-             + "<br><a href=\"xstory:#https://www.google.com\">x_google</a>"
-             + "<br><a href=\"xstory:#" + url_story + "\">xstory</a>"
-             + "<br><hr><br><br>";
+                    JSONObject jsonObject = structuredData.getJson();
+                    Map<String, Object> jsonMap = toMap(jsonObject);
+                    JsonLd jsonLd = new JsonLd();
+                    jsonLd.setData(jsonMap);
 
-             sanitizedHtml = result + linx + video + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
-             }
-             */
-
-            String css =  MustacheRenderer.CSS_HEAD;
-            //String css = " <style>\n" + MustacheRenderer.CSS + "\n</style>";
-
-            String sanitizedHtml = css + s2 + "<br><b>NO STRUCTURED DATA FOUND</b><br>" + htmlProcessor.processForDisplay(htmlString);
-            String[] split1 = htmlString.split("<script type=\"application/ld\\+json\">", 2);
-            if (split1.length > 1) {
-                String partContainingJson = split1[1];
-                String[] split2 = partContainingJson.split("</script>", 2);
-                if (split2.length > 0) {
-                    String jsonld = split2[0];
-
-                    // NEW: use Java Mustache
-                    MustacheRenderer renderer = new MustacheRenderer();
-                    JsonLdDeserializer deserializer = new JsonLdDeserializer();
-
-                    JsonLd jsonLd = deserializer.deserialize(jsonld);
                     String result = renderer.render(jsonLd);
+                    renderedHTMLs.add(result);
+                }
+
+                String result = String.join("\n", renderedHTMLs);
+
 
 
                     /*
@@ -350,7 +339,6 @@ public class MessageViewInfoExtractor {
                     //sanitizedHtml = css + result + linx + video + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" +
                     sanitizedHtml = css + s2 + "<br><br>SML:<br>" + result + "<br>XSML<br>" + linx + "<br>" + s1 + "<br>" + s3 + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
                     //sanitizedHtml = css + snippet1 + snippet2 + linx + sanitizedHtml;
-                }
             }
 
             return new ViewableExtractedText(text.toString(), sanitizedHtml);
@@ -666,5 +654,45 @@ public class MessageViewInfoExtractor {
             this.text = text;
             this.html = html;
         }
+    }
+
+
+    public Map<String, Object> toMap(JSONObject json) throws JSONException {
+        Map<String, Object> results = new HashMap<String, Object>();
+        Iterator<String> keys = json.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            Object value;
+            if (NULL.equals(json.get(key))) {
+                value = null;
+            } else if (json.get(key) instanceof JSONObject) {
+                value = toMap((JSONObject) json.get(key));
+            } else if (json.get(key) instanceof JSONArray) {
+                value = toList((JSONArray) json.get(key));
+            } else {
+                value = json.get(key);
+            }
+            results.put(key, value);
+        }
+        return results;
+    }
+
+
+    public List<Object> toList(JSONArray json) throws JSONException {
+        List<Object> results = new LinkedList<>();
+        for (int i = 0; i < json.length(); i++) {
+            Object value;
+            if (NULL.equals(json.get(i))) {
+                value = null;
+            } else if (json.get(i) instanceof JSONObject) {
+                value = toMap((JSONObject) json.get(i));
+            } else if (json.get(i) instanceof JSONArray) {
+                value = toList((JSONArray) json.get(i));
+            } else {
+                value = json.get(i);
+            }
+            results.add(value);
+        }
+        return results;
     }
 }
