@@ -115,7 +115,18 @@ internal class K9WebViewClient(
         // https://stackoverflow.com/questions/20333047/checking-internet-connection-in-webview
 
         var xwebView = WebView(context) // findViewById(R.id.webview)
-        //webView.settings.setJavaScriptEnabled(true)
+
+
+//        xwebView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+//        xwebView.forceLayout()
+//        xwebView.settings.javaScriptEnabled = true
+//        xwebView.settings.mediaPlaybackRequiresUserGesture = false
+//        xwebView.settings.useWideViewPort = true
+//        xwebView.settings.loadWithOverviewMode = true
+//        xwebView.settings.javaScriptCanOpenWindowsAutomatically = true;
+//        xwebView.settings.setSupportMultipleWindows(true)
+//        xwebView.layout(0,0,-1,-1)
+//        xwebView.layoutMode = -1
         xwebView.setBackgroundColor(Color.RED);
         xwebView.setVisibility(View.VISIBLE);
         xwebView.webViewClient = object : WebViewClient() {
@@ -189,7 +200,7 @@ internal class K9WebViewClient(
 
         // Make Fullscreen
         // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
-        dialogAlert.window?.setLayout(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT)
+        dialogAlert.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 
 
     }
