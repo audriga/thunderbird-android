@@ -25,7 +25,7 @@ class MessageWebView : WebView, KoinComponent {
     fun blockNetworkData(shouldBlockNetworkData: Boolean) {
         // Images with content: URIs will not be blocked, nor will network images that are already in the WebView cache.
         try {
-            settings.blockNetworkLoads = shouldBlockNetworkData
+            settings.blockNetworkLoads = false
         } catch (e: SecurityException) {
             Timber.e(e, "Failed to unblock network loads. Missing INTERNET permission?")
         }
@@ -91,6 +91,8 @@ class MessageWebView : WebView, KoinComponent {
 
             javaScriptEnabled = true
             loadsImagesAutomatically = true
+            blockNetworkLoads =false
+            blockNetworkImage  = false
             setRenderPriority(RenderPriority.HIGH)
 
             // TODO: Review alternatives. NARROW_COLUMNS is deprecated on KITKAT
