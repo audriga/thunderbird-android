@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-    <style name="Theme.Thunderbird.Startup" parent="Theme2.Thunderbird.Dark">
+    <style name="Theme.Yatagarasu.Startup" parent="Theme2.Yatagarasu.Dark">
         <item name="android:windowBackground">@android:color/black</item>
     </style>
 
-    <style name="Theme.Thunderbird.Light" parent="Theme2.Thunderbird.Light">
+    <style name="Theme.Yatagarasu.Light" parent="Theme2.Yatagarasu.Light">
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
         <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
@@ -51,7 +51,7 @@
         <item name="materialDrawerHeaderStyle">@style/Widget.MaterialDrawerHeaderStyle.K9.Light</item>
     </style>
 
-    <style name="Theme.Thunderbird.Dark" parent="Theme2.Thunderbird.Dark">
+    <style name="Theme.Yatagarasu.Dark" parent="Theme2.Yatagarasu.Dark">
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
         <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
@@ -98,10 +98,10 @@
         <item name="materialDrawerHeaderStyle">@style/Widget.MaterialDrawerHeaderStyle.K9.Dark</item>
     </style>
 
-    <style name="Theme.Thunderbird.Light.Dialog" parent="Theme.Thunderbird.Light" />
-    <style name="Theme.Thunderbird.Dark.Dialog" parent="Theme.Thunderbird.Dark" />
+    <style name="Theme.Yatagarasu.Light.Dialog" parent="Theme.Yatagarasu.Light" />
+    <style name="Theme.Yatagarasu.Dark.Dialog" parent="Theme.Yatagarasu.Dark" />
 
-    <style name="Theme.Thunderbird.Light.Dialog.Translucent" parent="Theme.Material3.Light.Dialog">
+    <style name="Theme.Yatagarasu.Light.Dialog.Translucent" parent="Theme.Material3.Light.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
         <item name="android:windowIsTranslucent">true</item>
@@ -115,7 +115,7 @@
         <item name="tintColorBulletPointNeutral">#bbb</item>
     </style>
 
-    <style name="Theme.Thunderbird.Dark.Dialog.Translucent" parent="Theme.Material3.Dark.Dialog">
+    <style name="Theme.Yatagarasu.Dark.Dialog.Translucent" parent="Theme.Material3.Dark.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
         <item name="android:windowIsTranslucent">true</item>
@@ -129,7 +129,7 @@
         <item name="tintColorBulletPointNeutral">#bbb</item>
     </style>
 
-    <style name="Theme.Thunderbird.DayNight" parent="Theme.Thunderbird.Light" />
-    <style name="Theme.Thunderbird.DayNight.Dialog" parent="Theme.Thunderbird.Light.Dialog" />
-    <style name="Theme.Thunderbird.DayNight.Dialog.Translucent" parent="Theme.Thunderbird.Light.Dialog.Translucent" />
+    <style name="Theme.Yatagarasu.DayNight" parent="Theme.Yatagarasu.Light" />
+    <style name="Theme.Yatagarasu.DayNight.Dialog" parent="Theme.Yatagarasu.Light.Dialog" />
+    <style name="Theme.Yatagarasu.DayNight.Dialog.Translucent" parent="Theme.Yatagarasu.Light.Dialog.Translucent" />
 </resources>

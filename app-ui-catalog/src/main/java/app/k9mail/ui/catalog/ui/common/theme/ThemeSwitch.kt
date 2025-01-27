@@ -2,7 +2,7 @@ package app.k9mail.ui.catalog.ui.common.theme
 
 import androidx.compose.runtime.Composable
 import app.k9mail.core.ui.compose.theme2.k9mail.K9MailTheme2
-import app.k9mail.core.ui.compose.theme2.thunderbird.ThunderbirdTheme2
+import app.k9mail.core.ui.compose.theme2.yatagarasu.ThunderbirdTheme2
 import app.k9mail.ui.catalog.ui.CatalogContract.Theme
 import app.k9mail.ui.catalog.ui.CatalogContract.ThemeVariant
 

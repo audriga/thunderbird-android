@@ -23,9 +23,8 @@ rootProject.name = "k-9"
 
 include(
     ":app-k9mail",
-    ":app-thunderbird",
+//    ":app-thunderbird",
     ":app-yatagarasu",
-    // TODO
     ":app-ui-catalog",
 )
 
@@ -95,12 +94,14 @@ include(
     ":core:ui:compose:designsystem",
     ":core:ui:compose:theme2:common",
     ":core:ui:compose:theme2:k9mail",
-    ":core:ui:compose:theme2:thunderbird",
+//    ":core:ui:compose:theme2:thunderbird",
+    ":core:ui:compose:theme2:yatagarasu",
     ":core:ui:compose:testing",
     ":core:ui:legacy:designsystem",
     ":core:ui:legacy:theme2:common",
     ":core:ui:legacy:theme2:k9mail",
-    ":core:ui:legacy:theme2:thunderbird",
+//    ":core:ui:legacy:theme2:thunderbird",
+    ":core:ui:legacy:theme2:yatagarasu",
     ":core:ui:theme:api",
 )
 

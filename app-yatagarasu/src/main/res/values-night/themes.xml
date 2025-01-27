@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Thunderbird.DayNight" parent="Theme.Thunderbird.Dark" />
-    <style name="Theme.Thunderbird.DayNight.Dialog" parent="Theme.Thunderbird.Dark.Dialog" />
-    <style name="Theme.Thunderbird.DayNight.Dialog.Translucent" parent="Theme.Thunderbird.Dark.Dialog.Translucent" />
+    <style name="Theme.Yatagarasu.DayNight" parent="Theme.Yatagarasu.Dark" />
+    <style name="Theme.Yatagarasu.DayNight.Dialog" parent="Theme.Yatagarasu.Dark.Dialog" />
+    <style name="Theme.Yatagarasu.DayNight.Dialog.Translucent" parent="Theme.Yatagarasu.Dark.Dialog.Translucent" />
 
 </resources>

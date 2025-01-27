@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.audriga.yatagarasu.android"
-        testApplicationId = "com.audriga.yatagarasu.android.tests"
+        testApplicationId = "com.audriga.yatagarasu.tests"
 
         versionCode = 2
         versionName = "0.1"
@@ -76,7 +76,7 @@ android {
             ),
         )
 
-        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Thunderbird\"")
+        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Yatagarasu Mail\"")
     }
 
     signingConfigs {
@@ -172,8 +172,8 @@ android {
 
 dependencies {
     implementation(projects.appCommon)
-    implementation(projects.core.ui.compose.theme2.thunderbird)
-    implementation(projects.core.ui.legacy.theme2.thunderbird)
+    implementation(projects.core.ui.compose.theme2.yatagarasu)
+    implementation(projects.core.ui.legacy.theme2.yatagarasu)
     implementation(projects.feature.launcher)
 
     implementation(projects.legacy.core)
