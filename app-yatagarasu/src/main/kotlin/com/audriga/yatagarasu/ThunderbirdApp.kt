@@ -1,6 +1,5 @@
-package com.audriga.yatagarasu.android
+package com.audriga.yatagarasu
 
-import app.k9mail.feature.telemetry.api.TelemetryManager
 import com.fsck.k9.CommonApp
 import org.koin.core.module.Module
 

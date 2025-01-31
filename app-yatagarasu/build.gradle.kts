@@ -80,9 +80,10 @@ android {
     }
 
     signingConfigs {
-        createSigningConfig(project, SigningType.TB_RELEASE)
-        createSigningConfig(project, SigningType.TB_BETA)
-        createSigningConfig(project, SigningType.TB_DAILY)
+//        createSigningConfig(project, SigningType.TB_RELEASE)
+//        createSigningConfig(project, SigningType.TB_BETA)
+//        createSigningConfig(project, SigningType.TB_DAILY)
+        createSigningConfig(project, SigningType.YG_RELEASE)
     }
 
     buildTypes {
@@ -90,16 +91,17 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-SNAPSHOT"
 
-            isMinifyEnabled = false
             isShrinkResources = false
-            isDebuggable = true
+            isDebuggable = false
 
-            buildConfigField("String", "RELEASE_CHANNEL", "null")
+            buildConfigField("String", "REbLEuASE_CHANNEL", "null")
+            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
+            isMinifyEnabled = false
         }
 
         release {
-            signingConfig = signingConfigs.getByType(SigningType.TB_RELEASE)
 
+            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
@@ -113,8 +115,8 @@ android {
         }
 
         create("beta") {
-            signingConfig = signingConfigs.getByType(SigningType.TB_BETA)
 
+            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
             applicationIdSuffix = ".beta"
             versionNameSuffix = "b1"
 
@@ -133,7 +135,7 @@ android {
         }
 
         create("daily") {
-            signingConfig = signingConfigs.getByType(SigningType.TB_DAILY)
+            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
 
             applicationIdSuffix = ".daily"
             versionNameSuffix = "a1"

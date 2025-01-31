@@ -1,4 +1,4 @@
-package com.audriga.yatagarasu.android
+package com.audriga.yatagarasu
 
 import app.k9mail.core.common.oauth.OAuthConfigurationFactory
 import app.k9mail.core.common.provider.AppNameProvider
@@ -7,6 +7,7 @@ import app.k9mail.core.ui.theme.api.FeatureThemeProvider
 import app.k9mail.core.ui.theme.api.ThemeProvider
 import app.k9mail.feature.telemetry.telemetryModule
 import app.k9mail.feature.widget.shortcut.LauncherShortcutActivity
+import com.audriga.yatagarasu.android.BuildConfig
 import com.fsck.k9.AppConfig
 import com.fsck.k9.activity.MessageCompose
 import com.audriga.yatagarasu.auth.TbOAuthConfigurationFactory

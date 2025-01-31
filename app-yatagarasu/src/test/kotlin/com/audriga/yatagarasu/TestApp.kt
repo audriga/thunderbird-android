@@ -1,6 +1,5 @@
 package com.audriga.yatagarasu
 
-import com.audriga.yatagarasu.android.appModule
 import com.fsck.k9.CommonApp
 import org.koin.core.module.Module
 

@@ -7,4 +7,5 @@ enum class SigningType(
     TB_RELEASE(app = "tb", type = "release"),
     TB_BETA(app = "tb", type = "beta"),
     TB_DAILY(app = "tb", type = "daily"),
+    YG_RELEASE(app = "yg", type = "release"),
 }
