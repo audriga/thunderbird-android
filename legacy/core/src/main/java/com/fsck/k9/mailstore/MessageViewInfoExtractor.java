@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -188,13 +189,26 @@ public class MessageViewInfoExtractor {
             List<AttachmentViewInfo> attachmentInfos) throws MessagingException {
         ArrayList<Viewable> viewableParts = new ArrayList<>();
         ArrayList<Part> attachments = new ArrayList<>();
+        ArrayList<Part> parseableParts = new ArrayList<>();
+        ArrayList<AttachmentViewInfo> parseableAttachments = new ArrayList<>();
 
         for (Part part : parts) {
-            MessageExtractor.findViewablesAndAttachments(part, viewableParts, attachments);
+            MessageExtractor.findViewablesAndAttachments(part, viewableParts, attachments, parseableParts);
         }
 
         attachmentInfos.addAll(attachmentInfoExtractor.extractAttachmentInfoForView(attachments));
-        return extractTextFromViewables(viewableParts);
+        for (AttachmentViewInfo attachmentViewInfo :
+            attachmentInfos) {
+            String filename = attachmentViewInfo.displayName;
+            if (filename != null && filename.lastIndexOf('.') != -1) {
+                String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.US);
+                ArrayList<String> extensionsOfParseable = new ArrayList<>(List.of("pkpass", "vcard", "ics"));
+                if (extensionsOfParseable.contains(extension)) {
+                    parseableAttachments.add(attachmentViewInfo);
+                }
+            }
+        }
+        return extractTextFromViewables(viewableParts, parseableParts, parseableAttachments);
     }
 
     /**
@@ -207,7 +221,7 @@ public class MessageViewInfoExtractor {
      *          In case of an error.
      */
     @VisibleForTesting
-    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables)
+    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables, @Nullable ArrayList<Part> parseableParts, @Nullable ArrayList<AttachmentViewInfo> parseableAttachments)
             throws MessagingException {
         try {
             // Collect all viewable parts

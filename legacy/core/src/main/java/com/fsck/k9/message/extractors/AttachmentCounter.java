@@ -18,7 +18,7 @@ public class AttachmentCounter {
 
     public int getAttachmentCount(Message message) throws MessagingException {
         List<Part> attachmentParts = new ArrayList<>();
-        MessageExtractor.findViewablesAndAttachments(message, null, attachmentParts);
+        MessageExtractor.findViewablesAndAttachments(message, null, attachmentParts, null);
 
         return attachmentParts.size();
     }

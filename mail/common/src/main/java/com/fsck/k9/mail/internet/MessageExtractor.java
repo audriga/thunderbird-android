@@ -145,10 +145,11 @@ public class MessageExtractor {
 
     /** Traverse the MIME tree of a message and extract viewable parts. */
     public static void findViewablesAndAttachments(Part part,
-                @Nullable List<Viewable> outputViewableParts, @Nullable List<Part> outputNonViewableParts)
+                @Nullable List<Viewable> outputViewableParts, @Nullable List<Part> outputNonViewableParts, @Nullable List<Part> outputParseableParts)
             throws MessagingException {
         boolean skipSavingNonViewableParts = outputNonViewableParts == null;
         boolean skipSavingViewableParts = outputViewableParts == null;
+        boolean skipSavingParseableParts = outputParseableParts == null;
         if (skipSavingNonViewableParts && skipSavingViewableParts) {
             throw new IllegalArgumentException("method was called but no output is to be collected - this a bug!");
         }
@@ -164,8 +165,10 @@ public class MessageExtractor {
                 List<Viewable> text = findTextPart(multipart, true);
 
                 Set<Part> knownTextParts = getParts(text);
-                List<Viewable> html = findHtmlPart(multipart, knownTextParts, outputNonViewableParts, true);
-
+                List<Viewable> html = findHtmlPart(multipart, knownTextParts, outputNonViewableParts, outputParseableParts, true);
+//                if (!skipSavingParseableParts) {
+//                    multipart.getBodyParts().forEach(bodyPart -> bodyPart.getMimeType());
+//                }
                 if (skipSavingViewableParts) {
                     return;
                 }
@@ -176,12 +179,19 @@ public class MessageExtractor {
             } else if (isSameMimeType(part.getMimeType(), "multipart/signed")) {
                 if (multipart.getCount() > 0) {
                     BodyPart bodyPart = multipart.getBodyPart(0);
-                    findViewablesAndAttachments(bodyPart, outputViewableParts, outputNonViewableParts);
+                    findViewablesAndAttachments(bodyPart, outputViewableParts, outputNonViewableParts, outputParseableParts);
+                }
+            }  else if (!skipSavingParseableParts && isSameMimeType(part.getMimeType(), "multipart/related")) {
+                for (Part bodyPart : multipart.getBodyParts()) {
+                    if (isSameMimeType(bodyPart.getMimeType(), "application/ld+json")) {
+                        outputParseableParts.add(bodyPart);
+                    }
+                    findViewablesAndAttachments(bodyPart, outputViewableParts, outputNonViewableParts, outputParseableParts);
                 }
             } else {
                 // For all other multipart parts we recurse to grab all viewable children.
                 for (Part bodyPart : multipart.getBodyParts()) {
-                    findViewablesAndAttachments(bodyPart, outputViewableParts, outputNonViewableParts);
+                    findViewablesAndAttachments(bodyPart, outputViewableParts, outputNonViewableParts, outputParseableParts);
                 }
             }
         } else if (body instanceof Message &&
@@ -199,7 +209,7 @@ public class MessageExtractor {
             outputViewableParts.add(new MessageHeader(part, message));
 
             // Recurse to grab all viewable parts and attachments from that message.
-            findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts);
+            findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts, outputParseableParts);
         } else if (isPartTextualBody(part)) {
             if (skipSavingViewableParts) {
                 return;
@@ -220,6 +230,10 @@ public class MessageExtractor {
             if (skipSavingNonViewableParts) {
                 return;
             }
+//            // Special Parseable attachments
+//            if (isSameMimeType(part.getMimeType(), "text/rfc822-headers")) {
+//
+//            }
             // Everything else is treated as attachment.
             outputNonViewableParts.add(part);
         }
@@ -228,7 +242,7 @@ public class MessageExtractor {
     public static Set<Part> getTextParts(Part part) throws MessagingException {
         List<Viewable> viewableParts = new ArrayList<>();
         List<Part> nonViewableParts = new ArrayList<>();
-        findViewablesAndAttachments(part, viewableParts, nonViewableParts);
+        findViewablesAndAttachments(part, viewableParts, nonViewableParts, null);
         return getParts(viewableParts);
     }
 
@@ -328,8 +342,9 @@ public class MessageExtractor {
      * @throws MessagingException In case of an error.
      */
     private static List<Viewable> findHtmlPart(Multipart multipart, Set<Part> knownTextParts,
-            @Nullable List<Part> outputNonViewableParts, boolean directChild) throws MessagingException {
+            @Nullable List<Part> outputNonViewableParts, @Nullable List<Part> outputParseableParts, boolean directChild) throws MessagingException {
         boolean saveNonViewableParts = outputNonViewableParts != null;
+        boolean skipSavingParseableParts = outputParseableParts == null;
         List<Viewable> viewables = new ArrayList<>();
 
         boolean partFound = false;
@@ -357,7 +372,7 @@ public class MessageExtractor {
                      * 1.3. image/jpeg
                      */
                     List<Viewable> htmlViewables = findHtmlPart(innerMultipart, knownTextParts,
-                            outputNonViewableParts, false);
+                            outputNonViewableParts, outputParseableParts, false);
 
                     if (!htmlViewables.isEmpty()) {
                         partFound = true;
@@ -369,10 +384,16 @@ public class MessageExtractor {
                 Html html = new Html(part);
                 viewables.add(html);
                 partFound = true;
-            } else if (!knownTextParts.contains(part)) {
-                if (saveNonViewableParts) {
-                    // Only add this part as attachment if it's not a viewable text/plain part found earlier
-                    outputNonViewableParts.add(part);
+            } else {
+                if (!skipSavingParseableParts &&
+                    isSameMimeType(part.getMimeType(), "application/ld+json")) {
+                    outputParseableParts.add(part);
+                }
+                if (!knownTextParts.contains(part)) {
+                    if (saveNonViewableParts) {
+                        // Only add this part as attachment if it's not a viewable text/plain part found earlier
+                        outputNonViewableParts.add(part);
+                    }
                 }
             }
         }
@@ -412,7 +433,7 @@ public class MessageExtractor {
      *
      * @return The set of viewable {@code Part}s.
      *
-     * @see MessageExtractor#findHtmlPart(Multipart, Set, List, boolean)
+     * @see MessageExtractor#findHtmlPart(Multipart, Set, List, List, boolean)
      * @see MessageExtractor#findAttachments(Multipart, Set, List)
      */
     private static Set<Part> getParts(List<Viewable> viewables) {

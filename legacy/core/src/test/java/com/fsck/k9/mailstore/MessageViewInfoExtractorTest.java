@@ -102,9 +102,9 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
         // Extract text
         List<Part> outputNonViewableParts = new ArrayList<>();
         ArrayList<Viewable> outputViewableParts = new ArrayList<>();
-        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts);
+        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts, null);
         ViewableExtractedText viewableExtractedText =
-                messageViewInfoExtractor.extractTextFromViewables(outputViewableParts);
+                messageViewInfoExtractor.extractTextFromViewables(outputViewableParts, null, null);
 
         assertSame(value, viewableExtractedText.html);
     }
@@ -122,8 +122,8 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
         // Extract text
         List<Part> outputNonViewableParts = new ArrayList<>();
         ArrayList<Viewable> outputViewableParts = new ArrayList<>();
-        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts);
-        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts);
+        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts, null);
+        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts, null, null);
 
         String expectedHtml =
                 "<pre class=\"k9mail\">" +
@@ -147,8 +147,8 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
         // Extract text
         List<Part> outputNonViewableParts = new ArrayList<>();
         ArrayList<Viewable> outputViewableParts = new ArrayList<>();
-        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts);
-        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts);
+        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts, null);
+        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts, null, null);
 
         String expectedText = "K-9 Mail rocks :> flowed line\r\n" +
                 "not flowed line";
@@ -177,9 +177,9 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
 
         // Extract text
         ArrayList<Viewable> outputViewableParts = new ArrayList<>();
-        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, null);
+        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, null, null);
         assertEquals(outputViewableParts.size(), 1);
-        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts);
+        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts, null, null);
 
         assertEquals(BODY_TEXT, container.text);
         assertEquals(bodyText, container.html);
@@ -208,8 +208,8 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
         // Extract text
         List<Part> outputNonViewableParts = new ArrayList<>();
         ArrayList<Viewable> outputViewableParts = new ArrayList<>();
-        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts);
-        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts);
+        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts, null);
+        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts, null, null);
 
         String expectedText =
                 bodyText1 + "\r\n\r\n" +
@@ -271,8 +271,8 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
         // Extract text
         List<Part> outputNonViewableParts = new ArrayList<>();
         ArrayList<Viewable> outputViewableParts = new ArrayList<>();
-        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts);
-        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts);
+        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts, null);
+        ViewableExtractedText container = messageViewInfoExtractor.extractTextFromViewables(outputViewableParts, null, null);
 
         String expectedText =
                 BODY_TEXT +
@@ -349,7 +349,7 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
         // Extract text
         List<Part> outputNonViewableParts = new ArrayList<>();
         ArrayList<Viewable> outputViewableParts = new ArrayList<>();
-        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts);
+        MessageExtractor.findViewablesAndAttachments(message, outputViewableParts, outputNonViewableParts, null);
 
         String expectedExtractedText = "Subject: (No subject)\r\n" +
                 "\r\n" +
@@ -384,7 +384,7 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
         assertEquals("subject of second message", ((MessageHeader) outputViewableParts.get(2)).getMessage().getSubject());
 
         ViewableExtractedText firstMessageExtractedText =
-                messageViewInfoExtractor.extractTextFromViewables(outputViewableParts);
+                messageViewInfoExtractor.extractTextFromViewables(outputViewableParts, null, null);
         assertEquals(expectedExtractedText, firstMessageExtractedText.text);
         assertEquals(expectedHtmlText, firstMessageExtractedText.html);
     }
