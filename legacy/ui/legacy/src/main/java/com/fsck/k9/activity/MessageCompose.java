@@ -7,9 +7,12 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -124,6 +127,8 @@ import com.fsck.k9.ui.helper.SizeFormatter;
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
+import org.audriga.hetc.MustacheRenderer;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openintents.openpgp.OpenPgpApiManager;
@@ -148,7 +153,7 @@ import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
 
 import java.io.StringReader;
 
-
+import static org.json.JSONObject.NULL;
 
 
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
@@ -655,36 +660,36 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                         if (data.isEmpty()) {
                             // No structured data found, todo: treat link as normal?
                         } else {
-//                            // todo this s not yet org.audriga.ld2h.MustacheRenderer. Since that version causes an exception.
-////                            MustacheRenderer renderer = null;
-////                            try {
-////                                renderer = new MustacheRenderer();
-////                            } catch (IOException e) {
-////                                throw new RuntimeException(e);
-////                            }
+                           // Using org.audriga.hetc.MustacheRenderer
+                            MustacheRenderer renderer;
+                            renderer = new MustacheRenderer();
 
                             ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
+                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
                             for (StructuredData structuredData: data) {
 
                                 JSONObject jsonObject = structuredData.getJson();
                                 String renderResult = null;
+                                String encodedJsonLd;
+                                encodedJsonLd = jsonObject.toString();
                                 try {
-                                    renderResult = jsonObject.toString(2);
-                                } catch (JSONException e) {
+                                    renderResult = renderer.render(jsonObject);
+                                } catch (IOException | JSONException e) {
                                     // todo handle
-//                                    throw new RuntimeException(e);
                                 }
-//                                Map<String, Object> jsonMap = toMap(jsonObject);
-//                                JsonLd jsonLd = new JsonLd();
-//                                jsonLd.setData(jsonMap);
+
 //
 //                                String result = renderer.render(jsonLd);
+                                if (!encodedJsonLd.isEmpty()) {
+                                    encodedJsonLds.add(encodedJsonLd);
+                                }
                                 if (renderResult != null) {
                                     renderedHTMLs.add(renderResult);
                                 }
                             }
-                            if (!renderedHTMLs.isEmpty()) {
+                            if (!renderedHTMLs.isEmpty() || !encodedJsonLds.isEmpty()) {
                                 String joinedHTMLRenderResults = String.join("\n", renderedHTMLs);
+                                String joinedEncodedJsonLds = String.join(",", renderedHTMLs); // todo: 1. Use this and include in email to send. 2. If there are more than one element, make it a json array by sourrounding it with [], otherwise don't.
                                 messageContentView.setVisibility(View.GONE);
                                 messageContentViewSML.setVisibility(View.VISIBLE);
                                 messageContentViewSML.displayHtmlContentWithInlineAttachments(joinedHTMLRenderResults, null, null);
