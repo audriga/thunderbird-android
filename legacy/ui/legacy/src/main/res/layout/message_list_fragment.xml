@@ -40,4 +40,17 @@
         app:srcCompat="@drawable/ic_edit"
         />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floating_action_button_sml"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="@dimen/floatingActionButtonMargin"
+        android:contentDescription="@string/compose_action_sml"
+        app:layout_behavior="com.fsck.k9.ui.fab.HideFabOnScrollBehavior"
+        android:src="@drawable/btn_select_star"
+        android:focusable="true"
+        android:clickable="true"
+        />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

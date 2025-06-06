@@ -94,6 +94,7 @@ class MessageListFragment :
     private var itemTouchHelper: ItemTouchHelper? = null
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
     private var floatingActionButton: FloatingActionButton? = null
+    private var floatingActionButtonSML: FloatingActionButton? = null
 
     private lateinit var adapter: MessageListAdapter
 
@@ -310,17 +311,24 @@ class MessageListFragment :
 
     private fun enableFloatingActionButton(view: View) {
         val floatingActionButton = view.findViewById<FloatingActionButton>(R.id.floating_action_button)
+        val floatingActionButtonSML = view.findViewById<FloatingActionButton>(R.id.floating_action_button_sml)
 
         floatingActionButton.setOnClickListener {
             onCompose()
         }
+        floatingActionButtonSML.setOnClickListener {
+            onCompose(sml = true)
+        }
 
         this.floatingActionButton = floatingActionButton
+        this.floatingActionButtonSML = floatingActionButtonSML
     }
 
     private fun disableFloatingActionButton(view: View) {
         val floatingActionButton = view.findViewById<FloatingActionButton>(R.id.floating_action_button)
+        val floatingActionButtonSML = view.findViewById<FloatingActionButton>(R.id.floating_action_button_sml)
         floatingActionButton.isGone = true
+        floatingActionButtonSML.isGone = true
     }
 
     private fun initializeRecyclerView(view: View) {
@@ -601,11 +609,11 @@ class MessageListFragment :
         fragmentListener.goBack()
     }
 
-    fun onCompose() {
+    fun onCompose(sml: Boolean = false) {
         if (!isSingleAccountMode) {
-            fragmentListener.onCompose(null)
+            fragmentListener.onCompose(null, sml)
         } else {
-            fragmentListener.onCompose(account)
+            fragmentListener.onCompose(account, sml)
         }
     }
 
@@ -2060,7 +2068,7 @@ class MessageListFragment :
         fun showThread(account: Account, threadRootId: Long)
         fun openMessage(messageReference: MessageReference)
         fun setMessageListTitle(title: String, subtitle: String? = null)
-        fun onCompose(account: Account?)
+        fun onCompose(account: Account?, sml: Boolean = false)
         fun startSearch(query: String, account: Account?, folderId: Long?): Boolean
         fun startSupportActionMode(callback: ActionMode.Callback): ActionMode?
         fun goBack()

@@ -59,6 +59,7 @@
     <string name="filter_folders_action">Ordner suchen</string>
     <string name="add_account_action">Konto hinzufügen</string>
     <string name="compose_action">Verfassen</string>
+    <string name="compose_action_sml">Verfassen (SML)</string>
     <string name="search_action">Suchen</string>
     <string name="search_everywhere_action">Überall suchen</string>
     <string name="search_results">Suchergebnisse</string>

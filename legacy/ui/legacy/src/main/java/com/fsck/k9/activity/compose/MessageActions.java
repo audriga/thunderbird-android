@@ -16,7 +16,7 @@ public class MessageActions {
      * will be used. If there is no default account set, user will be sent to AccountSetup
      * activity.
      */
-    public static void actionCompose(Context context, Account account) {
+    public static void actionCompose(Context context, Account account, boolean sml) {
         Account defaultAccount = Preferences.getPreferences().getDefaultAccount();
         if (account == null && defaultAccount == null) {
             FeatureLauncherActivity.launchSetupAccount(context);
@@ -27,6 +27,7 @@ public class MessageActions {
 
             Intent i = new Intent(context, MessageCompose.class);
             i.putExtra(MessageCompose.EXTRA_ACCOUNT, accountUuid);
+            i.putExtra(MessageCompose.EXTRA_ACCOUNT_IS_SML, sml);
             i.setAction(MessageCompose.ACTION_COMPOSE);
             context.startActivity(i);
         }

@@ -1086,8 +1086,8 @@ open class MessageList :
         MessageActions.actionReply(this, messageReference, true, decryptionResultForReply)
     }
 
-    override fun onCompose(account: Account?) {
-        MessageActions.actionCompose(this, account)
+    override fun onCompose(account: Account?, sml: Boolean) {
+        MessageActions.actionCompose(this, account, sml)
     }
 
     override fun onBackStackChanged() {

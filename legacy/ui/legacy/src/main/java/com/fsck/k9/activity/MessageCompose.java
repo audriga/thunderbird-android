@@ -163,6 +163,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private static final String ACTION_AUTOCRYPT_PEER = "org.autocrypt.PEER_ACTION";
 
     public static final String EXTRA_ACCOUNT = "account";
+    public static final String EXTRA_ACCOUNT_IS_SML = "isSML";
     public static final String EXTRA_MESSAGE_REFERENCE = "message_reference";
     public static final String EXTRA_MESSAGE_DECRYPTION_RESULT = "message_decryption_result";
 
@@ -499,6 +500,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         if (currentMessageBuilder != null) {
             setProgressBarIndeterminateVisibility(true);
             currentMessageBuilder.reattachCallback(this);
+        }
+
+        if (intent.getBooleanExtra(EXTRA_ACCOUNT_IS_SML, false)) {
+            subjectView.setText("SML Mail");
         }
     }
 
