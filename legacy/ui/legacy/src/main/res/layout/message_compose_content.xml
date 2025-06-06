@@ -75,6 +75,7 @@ the 'composer theme' setting).
             android:id="@+id/message_content_sml"
             android:layout_height="wrap_content"
             android:layout_width="fill_parent"
+            android:visibility="gone"
             />
 
         <EditText
