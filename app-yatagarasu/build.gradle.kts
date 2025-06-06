@@ -92,9 +92,9 @@ android {
             versionNameSuffix = "-SNAPSHOT"
 
             isShrinkResources = false
-            isDebuggable = false
+            isDebuggable = true
 
-            buildConfigField("String", "REbLEuASE_CHANNEL", "null")
+            buildConfigField("String", "RELEASE_CHANNEL", "null")
             signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
             isMinifyEnabled = false
         }
@@ -102,8 +102,8 @@ android {
         release {
 
             signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             isDebuggable = false
 
             proguardFiles(
