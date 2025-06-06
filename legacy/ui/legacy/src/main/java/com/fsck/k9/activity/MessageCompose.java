@@ -609,7 +609,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 messageContentView.setText(CrLfConverter.toLf(text));
 
                 if (Patterns.WEB_URL.matcher(text).matches()) {
-////                    messageContentView.setText("That is an URL!!" + text);
+//                   messageContentView.setText("That is a URL!!" + text);
                     /*
                     Received url via android share-in
                     Todo: use OkHttp to fetch it
@@ -622,6 +622,26 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                         String body = response.body().string();
                     }
                      */
+                    OkHttpClient client = new OkHttpClient();
+                    String htmlSrc = null;
+                    String okErr = null;
+                    String oriURL = (String) text;
+                    Request request = new Request.Builder()
+                        .url(oriURL).build();
+                    try (Response response = client. newCall(request).execute()) {
+                        if (response.body() != null) {
+                            htmlSrc = response.body().string();
+                        }
+
+                    } catch (Exception e){
+                        okErr = e.getMessage();
+                        // todo log err
+                    }
+                    if (htmlSrc != null) {
+                        messageContentView.setVisibility(View.GONE);
+                        messageContentViewSML.setVisibility(View.VISIBLE);
+                        messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlSrc, null, null);
+                    }
                 }
             }
 
