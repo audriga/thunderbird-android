@@ -1,5 +1,6 @@
 package com.fsck.k9.activity;
 
+import com.fsck.k9.view.MessageWebView;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Call;
@@ -249,6 +250,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private EditText subjectView;
     private EditText signatureView;
     private EditText messageContentView;
+    private MessageWebView messageContentViewSML;
     private LinearLayout attachmentsView;
 
     private String referencedMessageIds;
@@ -352,6 +354,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         messageContentView.getInputExtras(true).putBoolean("allowEmoji", true);
 
         attachmentsView = findViewById(R.id.attachments);
+
+        messageContentViewSML = findViewById(R.id.message_content_sml);
+
 
         TextWatcher draftNeedsChangingTextWatcher = new SimpleTextWatcher() {
             @Override
@@ -503,7 +508,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
         if (intent.getBooleanExtra(EXTRA_ACCOUNT_IS_SML, false)) {
+            messageContentView.setVisibility(View.GONE);
             subjectView.setText("SML Mail");
+            messageContentViewSML.setVisibility(View.VISIBLE);
+            messageContentViewSML.displayHtmlContentWithInlineAttachments("<b>Testing</b>", null, null);
         }
     }
 

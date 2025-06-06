@@ -71,6 +71,11 @@ the 'composer theme' setting).
             android:textAppearance="?attr/textAppearanceBodyLarge"
             tools:ignore="InefficientWeight"
             />
+        <com.fsck.k9.view.MessageWebView
+            android:id="@+id/message_content_sml"
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent"
+            />
 
         <EditText
             android:id="@+id/upper_signature"
