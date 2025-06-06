@@ -60,6 +60,12 @@ dependencies {
 
     implementation(libs.okhttp)
 
+    implementation(libs.mustache)
+    implementation(libs.jackson)
+    implementation(libs.ical4jserializer)
+    implementation(files("../../../libs/h2lj.jar"))
+    implementation(files("../../../libs/hetc.jar"))
+    implementation(files("../../../libs/ld2h.jar"))
     //implementation(libs.http4k.core)
     //implementation(libs.http4k.client.okhttp)
 

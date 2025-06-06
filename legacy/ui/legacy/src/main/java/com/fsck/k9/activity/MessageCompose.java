@@ -7,6 +7,7 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -123,6 +124,8 @@ import com.fsck.k9.ui.helper.SizeFormatter;
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openintents.openpgp.OpenPgpApiManager;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpIntentStarter;
@@ -132,6 +135,10 @@ import org.openintents.openpgp.util.OpenPgpIntentStarter;
 ////import com.audriga.jakarta.sml.h2lj.parser;
 import timber.log.Timber;
 
+import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils;
+import com.audriga.jakarta.sml.h2lj.model.StructuredData;
+import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.fortuna.ical4j.data.CalendarBuilder;
@@ -140,6 +147,9 @@ import net.fortuna.ical4j.model.component.VEvent;
 import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
 
 import java.io.StringReader;
+
+
+
 
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
 public class MessageCompose extends K9Activity implements OnClickListener,
@@ -638,9 +648,48 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                         // todo log err
                     }
                     if (htmlSrc != null) {
-                        messageContentView.setVisibility(View.GONE);
-                        messageContentViewSML.setVisibility(View.VISIBLE);
-                        messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlSrc, null, null);
+                        List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
+                        if (data.isEmpty()) {
+                            data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
+                        }
+                        if (data.isEmpty()) {
+                            // No structured data found, todo: treat link as normal?
+                        } else {
+//                            // todo this s not yet org.audriga.ld2h.MustacheRenderer. Since that version causes an exception.
+////                            MustacheRenderer renderer = null;
+////                            try {
+////                                renderer = new MustacheRenderer();
+////                            } catch (IOException e) {
+////                                throw new RuntimeException(e);
+////                            }
+
+                            ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
+                            for (StructuredData structuredData: data) {
+
+                                JSONObject jsonObject = structuredData.getJson();
+                                String renderResult = null;
+                                try {
+                                    renderResult = jsonObject.toString(2);
+                                } catch (JSONException e) {
+                                    // todo handle
+//                                    throw new RuntimeException(e);
+                                }
+//                                Map<String, Object> jsonMap = toMap(jsonObject);
+//                                JsonLd jsonLd = new JsonLd();
+//                                jsonLd.setData(jsonMap);
+//
+//                                String result = renderer.render(jsonLd);
+                                if (renderResult != null) {
+                                    renderedHTMLs.add(renderResult);
+                                }
+                            }
+                            if (!renderedHTMLs.isEmpty()) {
+                                String joinedHTMLRenderResults = String.join("\n", renderedHTMLs);
+                                messageContentView.setVisibility(View.GONE);
+                                messageContentViewSML.setVisibility(View.VISIBLE);
+                                messageContentViewSML.displayHtmlContentWithInlineAttachments(joinedHTMLRenderResults, null, null);
+                            }
+                        }
                     }
                 }
             }
