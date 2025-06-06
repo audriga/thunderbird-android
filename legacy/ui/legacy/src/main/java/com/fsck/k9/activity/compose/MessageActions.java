@@ -27,7 +27,7 @@ public class MessageActions {
 
             Intent i = new Intent(context, MessageCompose.class);
             i.putExtra(MessageCompose.EXTRA_ACCOUNT, accountUuid);
-            i.putExtra(MessageCompose.EXTRA_ACCOUNT_IS_SML, sml);
+            i.putExtra(MessageCompose.IS_SML, sml);
             i.setAction(MessageCompose.ACTION_COMPOSE);
             context.startActivity(i);
         }

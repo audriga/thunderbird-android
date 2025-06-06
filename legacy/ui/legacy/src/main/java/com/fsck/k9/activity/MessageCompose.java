@@ -135,12 +135,10 @@ import timber.log.Timber;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.fortuna.ical4j.data.CalendarBuilder;
-import net.fortuna.ical4j.data.ParserException;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
 
-import java.io.IOException;
 import java.io.StringReader;
 
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
@@ -164,7 +162,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private static final String ACTION_AUTOCRYPT_PEER = "org.autocrypt.PEER_ACTION";
 
     public static final String EXTRA_ACCOUNT = "account";
-    public static final String EXTRA_ACCOUNT_IS_SML = "isSML";
+    public static final String IS_SML = "isSML";
     public static final String EXTRA_MESSAGE_REFERENCE = "message_reference";
     public static final String EXTRA_MESSAGE_DECRYPTION_RESULT = "message_decryption_result";
 
@@ -507,7 +505,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             currentMessageBuilder.reattachCallback(this);
         }
 
-        if (intent.getBooleanExtra(EXTRA_ACCOUNT_IS_SML, false)) {
+        if (intent.getBooleanExtra(IS_SML, false)) {
             messageContentView.setVisibility(View.GONE);
             subjectView.setText("SML Mail");
             messageContentViewSML.setVisibility(View.VISIBLE);
