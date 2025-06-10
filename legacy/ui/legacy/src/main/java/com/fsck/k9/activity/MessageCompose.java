@@ -1,7 +1,12 @@
 package com.fsck.k9.activity;
 
+import app.k9mail.core.ui.legacy.designsystem.atom.icon.Icons.Outlined;
+import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentsChangedListener;
+import com.fsck.k9.message.Attachment.LoadingState;
+import com.fsck.k9.message.MessageBuilder.Callback;
 import com.fsck.k9.view.MessageWebView;
 import okhttp3.Request;
+import okhttp3.Request.Builder;
 import okhttp3.Response;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -127,7 +132,9 @@ import com.fsck.k9.ui.helper.SizeFormatter;
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
+import org.audriga.hetc.*;
 import org.audriga.hetc.MustacheRenderer;
+import org.audriga.ld2h.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -159,8 +166,8 @@ import static org.json.JSONObject.NULL;
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
 public class MessageCompose extends K9Activity implements OnClickListener,
         CancelListener, AttachmentDownloadCancelListener, OnFocusChangeListener,
-        OnOpenPgpInlineChangeListener, OnOpenPgpSignOnlyChangeListener, MessageBuilder.Callback,
-        AttachmentPresenter.AttachmentsChangedListener, OnOpenPgpDisableListener {
+        OnOpenPgpInlineChangeListener, OnOpenPgpSignOnlyChangeListener, Callback,
+        AttachmentsChangedListener, OnOpenPgpDisableListener {
 
     private static final int DIALOG_SAVE_OR_DISCARD_DRAFT_MESSAGE = 1;
     private static final int DIALOG_CONFIRM_DISCARD_ON_BACK = 2;
@@ -268,6 +275,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     private String referencedMessageIds;
     private String repliedToMessageId;
+
+    // SML
+    private String smlJsonLd = null;
 
     // The currently used message format.
     private SimpleMessageFormat currentMessageFormat;
@@ -641,7 +651,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     String htmlSrc = null;
                     String okErr = null;
                     String oriURL = (String) text;
-                    Request request = new Request.Builder()
+                    Request request = new Builder()
                         .url(oriURL).build();
                     try (Response response = client. newCall(request).execute()) {
                         if (response.body() != null) {
@@ -661,19 +671,31 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                             // No structured data found, todo: treat link as normal?
                         } else {
                            // Using org.audriga.hetc.MustacheRenderer
-                            MustacheRenderer renderer;
-                            renderer = new MustacheRenderer();
+                            MustacheRenderer hetcRenderer;
+                            hetcRenderer = new MustacheRenderer();
+                            org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
+                            try {
+                                ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
+                            } catch (IOException e) {
+                                //throw new RuntimeException(e);
+                            }
 
-                            ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
+                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
+                            ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
                             ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
                             for (StructuredData structuredData: data) {
 
                                 JSONObject jsonObject = structuredData.getJson();
-                                String renderResult = null;
+                                String hetcRenderResult = null;
+                                String ld2hRenderResult = null;
                                 String encodedJsonLd;
                                 encodedJsonLd = jsonObject.toString();
                                 try {
-                                    renderResult = renderer.render(jsonObject);
+                                    hetcRenderResult = hetcRenderer.render(jsonObject);
+                                    Map<String, Object> jsonMap = hetcRenderer.toMap(jsonObject); // todo the toMap function should not be a non-static method of the hetc renderer, put it someplace else
+                                    JsonLd jsonLd = new JsonLd();
+                                    jsonLd.setData(jsonMap);
+                                    ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonLd) : null;
                                 } catch (IOException | JSONException e) {
                                     // todo handle
                                 }
@@ -683,16 +705,26 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                                 if (!encodedJsonLd.isEmpty()) {
                                     encodedJsonLds.add(encodedJsonLd);
                                 }
-                                if (renderResult != null) {
-                                    renderedHTMLs.add(renderResult);
+                                if (hetcRenderResult != null) {
+                                    renderedEmailHTMLs.add(hetcRenderResult);
+                                }
+                                if (ld2hRenderResult != null) {
+                                    renderedDisplayHTMLs.add(ld2hRenderResult);
                                 }
                             }
-                            if (!renderedHTMLs.isEmpty() || !encodedJsonLds.isEmpty()) {
-                                String joinedHTMLRenderResults = String.join("\n", renderedHTMLs);
-                                String joinedEncodedJsonLds = String.join(",", renderedHTMLs); // todo: 1. Use this and include in email to send. 2. If there are more than one element, make it a json array by sourrounding it with [], otherwise don't.
+                            if (!renderedEmailHTMLs.isEmpty() || !encodedJsonLds.isEmpty()) {
+                                String joinedEmailHTMLRenderResults = String.join("\n", renderedEmailHTMLs);
+                                String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
+                                // This jsonld could be manually included in the html email to be sent, but it might make more sense to fix hetc to actually also include the jsonld.
+                                if (encodedJsonLds.size() == 1) {
+                                    smlJsonLd = encodedJsonLds.get(0);
+                                } else if (encodedJsonLds.size() > 1) {
+                                    smlJsonLd = "[" + String.join(",", encodedJsonLds) + "]";
+                                }
+                                messageContentView.setText(joinedEmailHTMLRenderResults);
                                 messageContentView.setVisibility(View.GONE);
                                 messageContentViewSML.setVisibility(View.VISIBLE);
-                                messageContentViewSML.displayHtmlContentWithInlineAttachments(joinedHTMLRenderResults, null, null);
+                                messageContentViewSML.displayHtmlContentWithInlineAttachments(joinedDisplayHTMLRenderResults, null, null);
                             }
                         }
                     }
@@ -861,6 +893,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             recipientPresenter.builderSetProperties(builder);
         }
 
+        // todo: Note this only gets executed on send/ save-as-draft.
+        //       I don't see why we would do this transformation so late.
+        //       Is this on purpose or a mistake?
         String msgText = "" + messageContentView.getText();
 
         if (msgText.startsWith("<")) msgText = msgText.substring(1, msgText.length());
