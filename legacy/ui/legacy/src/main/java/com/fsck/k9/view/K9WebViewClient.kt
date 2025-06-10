@@ -101,6 +101,7 @@ internal class K9WebViewClient(
                         action = MessageCompose.ACTION_COMPOSE_APPROVE
                         data = uri
                     }.putExtra("recipient", recipient).putExtra("requestAction", requestAction)
+//                        .putExtra(MessageCompose.IS_SML, true)
                     webView.context.startActivity(intent)
                 } else {
                     openUrl(webView.context, uri)

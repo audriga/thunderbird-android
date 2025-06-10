@@ -133,7 +133,6 @@ import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
 import org.audriga.hetc.*;
-import org.audriga.hetc.MustacheRenderer;
 import org.audriga.ld2h.*;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -532,7 +531,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
         if (intent.getBooleanExtra(IS_SML, false)) {
             messageContentView.setVisibility(View.GONE);
-            subjectView.setText("SML Mail");
+            if (subjectView.getText().length() > 0) {
+                subjectView.setText("SML Mail");
+            }
             messageContentViewSML.setVisibility(View.VISIBLE);
             messageContentViewSML.displayHtmlContentWithInlineAttachments("<b>Testing</b>", null, null);
         }
@@ -575,21 +576,44 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 Bundle extras = intent.getExtras();
 //                String recipient = extras.getString("recipient");
                 String requestAction = extras.getString("requestAction");
-                String sml;
                 if ("ConfirmAction".equals(requestAction)) {
-                    sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}";
+                    smlJsonLd = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}";
                     subjectView.setText("Approve");
 //                    currentMessageBuilder.setSubject("Approve");
                 } else if ("CancelAction".equals(requestAction)) {
-                    sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n}";
+                    smlJsonLd = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n}";
                     subjectView.setText("Deny");
 //                    currentMessageBuilder.setSubject("Deny");
                 } else {
                     return false;
                 }
-                String smlScript = "<script type=\"application/ld+json\">" + sml + "</script>"+ "(End)";
+                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>"+ "(End)";
+                // todo: deduplicate with url processing
+                org.audriga.hetc.MustacheRenderer hetcRenderer;
+                hetcRenderer = new org.audriga.hetc.MustacheRenderer();
+                org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
+                try {
+                    ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
+                } catch (IOException e) {
+                    //throw new RuntimeException(e);
+                }
+                JSONObject smlJSONObject = org.audriga.hetc.JsonLdDeserializer.deserialize(smlJsonLd).get(0);
+                String hetcRenderResult = null;
+                String ld2hRenderResult = null;
+                try {
+                    hetcRenderResult = hetcRenderer.render(smlJSONObject);
+                    JsonLd jsonLd = (new org.audriga.ld2h.JsonLdDeserializer()).deserialize(smlJsonLd);
+                    ld2hRenderResult =  (ld2hRenderer != null) ? ld2hRenderer.render(jsonLd): null;
+                } catch (JSONException | IOException e) {
+                    //throw new RuntimeException(e);
+                }
+                messageContentView.setText(hetcRenderResult);
+                messageContentView.setVisibility(View.GONE);
+                messageContentViewSML.setVisibility(View.VISIBLE);
+                if (ld2hRenderResult != null) {
+                    messageContentViewSML.displayHtmlContentWithInlineAttachments(ld2hRenderResult, null, null);
+                }
 //               currentMessageBuilder.setText(smlScript);
-                messageContentView.setText(smlScript);
                 currentMessageFormat = SimpleMessageFormat.HTML;
                 return false;
             }
@@ -671,8 +695,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                             // No structured data found, todo: treat link as normal?
                         } else {
                            // Using org.audriga.hetc.MustacheRenderer
-                            MustacheRenderer hetcRenderer;
-                            hetcRenderer = new MustacheRenderer();
+                            org.audriga.hetc.MustacheRenderer hetcRenderer;
+                            hetcRenderer = new org.audriga.hetc.MustacheRenderer();
                             org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
                             try {
                                 ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
