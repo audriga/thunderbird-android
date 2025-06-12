@@ -658,34 +658,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 messageContentView.setText(CrLfConverter.toLf(text));
 
                 if (Patterns.WEB_URL.matcher(text).matches()) {
-//                   messageContentView.setText("That is a URL!!" + text);
-                    /*
-                    Received url via android share-in
-                    Todo: use OkHttp to fetch it
-                    OkHttpClient client = new OkHttpClient();
-                    Request request = new Request.Builder()
-                        .url(text)
-                        .build();
-
-                    try (Response response = client.newCall(request).execute()) {
-                        String body = response.body().string();
-                    }
-                     */
-                    OkHttpClient client = new OkHttpClient();
-                    String htmlSrc = null;
-                    String okErr = null;
-                    String oriURL = (String) text;
-                    Request request = new Builder()
-                        .url(oriURL).build();
-                    try (Response response = client. newCall(request).execute()) {
-                        if (response.body() != null) {
-                            htmlSrc = response.body().string();
-                        }
-
-                    } catch (Exception e){
-                        okErr = e.getMessage();
-                        // todo log err
-                    }
+                    // Input is exactl one url
+                    String htmlSrc = downloadHTML((String) text);
                     if (htmlSrc != null) {
                         List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
                         if (data.isEmpty()) {
@@ -927,26 +901,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
         if (msgText.startsWith("https://")) {
 
-            //https://www.http4k.org/
-            //import org.http4k.core.Request
-            //import org.http4k.core.Response
-            //import org.http4k.core.Call
-            OkHttpClient client = new OkHttpClient();
 
-
-            String htmlSrc = "";
-            String okErr = null;
             String oriURL = msgText;
-            try {
-                Request request = new Request.Builder()
-                    .url(oriURL).build();
-                Call call = client.newCall(request);
-                Response response = call.execute();
-                htmlSrc = response.body().string();
-
-            } catch (Exception e){
-                okErr = e.getMessage();
-            }
+            String htmlSrc = downloadHTML(oriURL);
 
             String sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"EventReservation\",\r\n  \"reservationNumber\": \"1234567\",\r\n  \"reservationStatus\": \"http://schema.org/Confirmed\",\r\n  \"modifyReservationUrl\": \"https://www.eventbrite.com/mytickets/123?utm_campaign=order_confirm&amp;utm_medium=email&amp;ref=eemailordconf&amp;utm_source=eb_email&amp;utm_term=googlenow\",\r\n  \"underName\": {\r\n    \"@type\": \"Person\",\r\n    \"name\": \"Peter Meier\"\r\n  },\r\n  \"reservationFor\": {\r\n    \"@type\": \"Event\",\r\n    \"name\": \"Calendar and Scheduling Developer Day Zurich\",\r\n    \"startDate\": \"2019-02-04T09:00:00+01:00\",\r\n    \"endDate\": \"2019-02-04T17:30:00+01:00\",\r\n    \"location\": {\r\n      \"@type\": \"Place\",\r\n      \"name\": \"Google Zürich - Europaalle campus\",\r\n      \"address\": {\r\n        \"@type\": \"PostalAddress\",\r\n        \"streetAddress\": \"Lagerstrasse 1008004 Zürich\",\r\n        \"addressLocality\": \"Zürich\",\r\n        \"addressRegion\": \"ZH\",\r\n        \"postalCode\": \"8004\",\r\n        \"addressCountry\": \"CH\"\r\n      }\r\n    }\r\n  }\r\n}";
 
@@ -958,11 +915,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 sml = htmlSrc.substring(indexOf+jStart.length(), htmlSrc.indexOf(jStop, indexOf));
                 oriURL = oriURL + " (EXTRACTED!)";
             } else {
-                if (okErr != null){
-                    oriURL = oriURL + " / Error: " + okErr;
-                } else {
-                    oriURL = oriURL + " (NOTHING FOUND TO EXTRACT!)";
-                }
+                oriURL = oriURL + " (NOTHING FOUND TO EXTRACT!)";
 
             }
 
@@ -2262,5 +2215,25 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         public int getTitleResource() {
             return titleResource;
         }
+    }
+
+
+    @Nullable
+    private static String downloadHTML(String url) {
+        OkHttpClient client = new OkHttpClient();
+        String htmlSrc = null;
+        String okErr = null;
+        Request request = new Builder()
+            .url(url).build();
+        try (Response response = client. newCall(request).execute()) {
+            if (response.body() != null) {
+                htmlSrc = response.body().string();
+            }
+
+        } catch (Exception e){
+            okErr = e.getMessage();
+            // todo log err
+        }
+        return htmlSrc;
     }
 }
