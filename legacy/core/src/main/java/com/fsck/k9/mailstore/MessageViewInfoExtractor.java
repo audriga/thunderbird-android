@@ -307,7 +307,10 @@ public class MessageViewInfoExtractor {
             if (data.isEmpty()) {
                 sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
             } else {
-                String css = TemplateLoader.loadTemplate("static/css/default_card.css");
+                String css = "<head>\n" +
+                    "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
+                    "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                    "</head>";
                 MustacheRenderer renderer = new MustacheRenderer();
 
                 ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
@@ -343,7 +346,7 @@ public class MessageViewInfoExtractor {
 
 
 //                    sanitizedHtml = css + s2 + "<br><br>SML:<br>" + result + "<br>XSML<br>" + linx + "<br>" + s1 + "<br>" + s3 + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
-                    sanitizedHtml = result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
+                    sanitizedHtml = css + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
 
             }
 
