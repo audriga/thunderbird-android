@@ -602,8 +602,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 String ld2hRenderResult = null;
                 try {
                     hetcRenderResult = hetcRenderer.render(smlJSONObject);
-                    JsonLd jsonLd = (new org.audriga.ld2h.JsonLdDeserializer()).deserialize(smlJsonLd);
-                    ld2hRenderResult =  (ld2hRenderer != null) ? ld2hRenderer.render(jsonLd): null;
+                    ld2hRenderResult =  (ld2hRenderer != null) ? ld2hRenderer.render(smlJSONObject): null;
                 } catch (JSONException | IOException e) {
                     //throw new RuntimeException(e);
                 }
@@ -690,10 +689,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                                 encodedJsonLd = jsonObject.toString();
                                 try {
                                     hetcRenderResult = hetcRenderer.render(jsonObject);
-                                    Map<String, Object> jsonMap = hetcRenderer.toMap(jsonObject); // todo the toMap function should not be a non-static method of the hetc renderer, put it someplace else
-                                    JsonLd jsonLd = new JsonLd();
-                                    jsonLd.setData(jsonMap);
-                                    ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonLd) : null;
+                                    ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
                                 } catch (IOException | JSONException e) {
                                     // todo handle
                                 }

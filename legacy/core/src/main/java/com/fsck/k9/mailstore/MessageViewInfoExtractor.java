@@ -312,13 +312,8 @@ public class MessageViewInfoExtractor {
 
                 ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
                 for (StructuredData structuredData: data) {
-
                     JSONObject jsonObject = structuredData.getJson();
-                    Map<String, Object> jsonMap = toMap(jsonObject);
-                    JsonLd jsonLd = new JsonLd();
-                    jsonLd.setData(jsonMap);
-
-                    String result = renderer.render(jsonLd);
+                    String result = renderer.render(jsonObject);
                     renderedHTMLs.add(result);
                 }
 
@@ -348,7 +343,7 @@ public class MessageViewInfoExtractor {
 
 
 //                    sanitizedHtml = css + s2 + "<br><br>SML:<br>" + result + "<br>XSML<br>" + linx + "<br>" + s1 + "<br>" + s3 + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
-                    sanitizedHtml ="<html><head><style>" + css + "</head></style><body>" + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString) + "</body></html>";
+                    sanitizedHtml = result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
 
             }
 
@@ -665,46 +660,5 @@ public class MessageViewInfoExtractor {
             this.text = text;
             this.html = html;
         }
-    }
-
-
-    // todo move these into ld2h jar
-    public Map<String, Object> toMap(JSONObject json) throws JSONException {
-        Map<String, Object> results = new HashMap<String, Object>();
-        Iterator<String> keys = json.keys();
-        while (keys.hasNext()) {
-            String key = keys.next();
-            Object value;
-            if (NULL.equals(json.get(key))) {
-                value = null;
-            } else if (json.get(key) instanceof JSONObject) {
-                value = toMap((JSONObject) json.get(key));
-            } else if (json.get(key) instanceof JSONArray) {
-                value = toList((JSONArray) json.get(key));
-            } else {
-                value = json.get(key);
-            }
-            results.put(key, value);
-        }
-        return results;
-    }
-
-
-    public List<Object> toList(JSONArray json) throws JSONException {
-        List<Object> results = new LinkedList<>();
-        for (int i = 0; i < json.length(); i++) {
-            Object value;
-            if (NULL.equals(json.get(i))) {
-                value = null;
-            } else if (json.get(i) instanceof JSONObject) {
-                value = toMap((JSONObject) json.get(i));
-            } else if (json.get(i) instanceof JSONArray) {
-                value = toList((JSONArray) json.get(i));
-            } else {
-                value = json.get(i);
-            }
-            results.add(value);
-        }
-        return results;
     }
 }
