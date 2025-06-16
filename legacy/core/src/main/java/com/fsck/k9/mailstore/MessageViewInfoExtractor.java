@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import android.os.Build.VERSION;
@@ -338,6 +340,8 @@ public class MessageViewInfoExtractor {
 //            String video = "<video controls height=\"150\" poster=\"https://is1-ssl.mzstatic.com/image/thumb/Video124/v4/5c/d0/fc/5cd0fc4a-714c-e24f-e287-1361bf9c69d6/GB1108700010.sca1.jpg/640x480mv.jpg\" src=\"https://video-ssl.itunes.apple.com/itunes-assets/Video124/v4/25/c0/a7/25c0a7ef-34a6-c36d-c921-ad3d90cec9d6/mzvf_18388793884790474945.640x480.h264lc.U.p.m4v\"></video>\r\n<br/><br/>\r\n<audio controls style=\"width: 200px; height: 20px;\" src=\"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/b0/d8/aa/b0d8aa8e-1a38-6287-508d-27693174249e/mzaf_13677213744690699536.plus.aac.ep.m4a\">boo</audio>";
 
             String htmlString = html.toString();
+            String textString = text.toString();
+            JSONObject extracted = tryExtract(textString, htmlString);
 
             String sanitizedHtml = htmlProcessor.processForDisplay(htmlString);
             List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.JSON_LD);
@@ -383,7 +387,7 @@ public class MessageViewInfoExtractor {
 
             }
 
-            if (data.isEmpty()) {
+            if (data.isEmpty() && extracted == null) {
                 sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
             } else {
                 String css = "<head>\n" +
@@ -396,6 +400,10 @@ public class MessageViewInfoExtractor {
                 for (StructuredData structuredData: data) {
                     JSONObject jsonObject = structuredData.getJson();
                     String result = renderer.render(jsonObject);
+                    renderedHTMLs.add(result);
+                }
+                if (extracted != null) {
+                    String result = renderer.render(extracted);
                     renderedHTMLs.add(result);
                 }
 
@@ -429,7 +437,7 @@ public class MessageViewInfoExtractor {
 
             }
 
-            return new ViewableExtractedText(text.toString(), sanitizedHtml);
+            return new ViewableExtractedText(textString, sanitizedHtml);
         } catch (Exception e) {
             throw new MessagingException("Couldn't extract viewable parts", e);
         }
@@ -742,5 +750,27 @@ public class MessageViewInfoExtractor {
             this.text = text;
             this.html = html;
         }
+    }
+
+    @Nullable
+    static JSONObject tryExtract(String text, String html) throws JSONException {
+        Pattern pattern = Pattern.compile("[0-9]{6}");
+        Matcher textMatcher = pattern.matcher(text);
+        Matcher htmlMatcher = pattern.matcher(html);
+        if (textMatcher.find() && htmlMatcher.find()) {
+            String textMatch = textMatcher.group();
+//            String htmlMatch = htmlMatcher.group();
+//            if (textMatch.equals(htmlMatch)) {
+               return new JSONObject()
+                   .put("@context", "https://schema.org")
+                   .put("@type", "EmailMessage")
+                   .put("description", "Copy the confirmation code " + textMatch)
+                   .put("potentialAction", new JSONObject()
+                       .put("@type", "CopyToClipboardAction")
+                       .put( "name", "Confirmation code")
+                       .put("description", textMatch));
+//            }
+        }
+        return null;
     }
 }
