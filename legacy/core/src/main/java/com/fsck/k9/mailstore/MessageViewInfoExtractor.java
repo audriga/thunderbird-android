@@ -1,6 +1,10 @@
 package com.fsck.k9.mailstore;
 
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -11,7 +15,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
@@ -20,8 +27,18 @@ import androidx.annotation.WorkerThread;
 
 import app.k9mail.legacy.account.Account;
 import app.k9mail.legacy.di.DI;
+import app.k9mail.legacy.message.controller.SimpleMessagingListener;
 import com.audriga.jakarta.sml.h2lj.model.StructuredData;
 import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fsck.k9.Preferences;
+import com.fsck.k9.mail.Body;
+import com.fsck.k9.mail.internet.TextBody;
+import net.fortuna.ical4j.data.CalendarBuilder;
+import net.fortuna.ical4j.model.Calendar;
+import net.fortuna.ical4j.model.component.VEvent;
+import org.apache.james.mime4j.util.MimeUtil;
 import org.audriga.ld2h.JsonLdDeserializer;
 import org.audriga.ld2h.JsonLd;
 import org.audriga.ld2h.MustacheRenderer; // todo this version causes an exception when created
@@ -46,6 +63,7 @@ import app.k9mail.html.cleaner.HtmlProcessor;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
 import org.openintents.openpgp.util.OpenPgpUtils;
 import timber.log.Timber;
 //import app.cash.barber.Barber;
@@ -61,6 +79,8 @@ import static com.fsck.k9.mail.internet.Viewable.Html;
 import static com.fsck.k9.mail.internet.Viewable.MessageHeader;
 import static com.fsck.k9.mail.internet.Viewable.Text;
 import static com.fsck.k9.mail.internet.Viewable.Textual;
+import static org.apache.commons.io.IOUtils.close;
+import org.apache.james.mime4j.codec.Base64InputStream;
 import static org.json.JSONObject.NULL;
 
 
@@ -187,10 +207,11 @@ public class MessageViewInfoExtractor {
 
     private ViewableExtractedText extractViewableAndAttachments(List<Part> parts,
             List<AttachmentViewInfo> attachmentInfos) throws MessagingException {
+        MessagingController mc = DI.get(MessagingController.class);
         ArrayList<Viewable> viewableParts = new ArrayList<>();
         ArrayList<Part> attachments = new ArrayList<>();
         ArrayList<Part> parseableParts = new ArrayList<>();
-        ArrayList<AttachmentViewInfo> parseableAttachments = new ArrayList<>();
+        HashMap<AttachmentViewInfo, String> parseableAttachments = new HashMap<>();
 
         for (Part part : parts) {
             MessageExtractor.findViewablesAndAttachments(part, viewableParts, attachments, parseableParts);
@@ -204,7 +225,26 @@ public class MessageViewInfoExtractor {
                 String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.US);
                 ArrayList<String> extensionsOfParseable = new ArrayList<>(List.of("pkpass", "vcard", "ics"));
                 if (extensionsOfParseable.contains(extension)) {
-                    parseableAttachments.add(attachmentViewInfo);
+                    if (!attachmentViewInfo.isContentAvailable()) {
+                        LocalPart localPart = (LocalPart) attachmentViewInfo.part;
+                        String accountUuid = localPart.getAccountUuid();
+                        Account account = Preferences.getPreferences().getAccount(accountUuid);
+                        LocalMessage message = localPart.getMessage();
+                        // this copies parts of downloadAttachment, from AttachmentController
+                        mc.loadAttachment(account, message, attachmentViewInfo.part, new SimpleMessagingListener() {
+                            @Override
+                            public void loadAttachmentFinished(Account account, Message message, Part part) {
+                                attachmentViewInfo.setContentAvailable();
+                            }
+
+                            @Override
+                            public void loadAttachmentFailed(Account account, Message message, Part part, String reason) {
+                                //
+                            }
+                        });
+                    }
+                    // todo: Wait until all attachments have loaded(?)
+                    parseableAttachments.put(attachmentViewInfo, extension);
                 }
             }
         }
@@ -221,7 +261,7 @@ public class MessageViewInfoExtractor {
      *          In case of an error.
      */
     @VisibleForTesting
-    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables, @Nullable ArrayList<Part> parseableParts, @Nullable ArrayList<AttachmentViewInfo> parseableAttachments)
+    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables, @Nullable ArrayList<Part> parseableParts, @Nullable HashMap<AttachmentViewInfo, String> parseableAttachments)
             throws MessagingException {
         try {
             // Collect all viewable parts
@@ -304,6 +344,52 @@ public class MessageViewInfoExtractor {
             if (data.isEmpty()) {
                 data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.MICRODATA);
             }
+
+            if (parseableAttachments != null) {
+
+                for (Map.Entry<AttachmentViewInfo, String> parseableAttachment: parseableAttachments.entrySet()) {
+                    String ext = parseableAttachment.getValue();
+                    AttachmentViewInfo attachment = parseableAttachment.getKey();
+                    switch (ext) {
+                        case "ics": {
+                            //attachment.isContentAvailable();
+                            Body body = attachment.part.getBody();
+                            InputStream is = body.getInputStream();
+                            // Do we really need to do all of this ourselves here? Or does there already exist some K9 helper method/ some method of attachment
+                            if (body instanceof BinaryMemoryBody) {
+                                String encoding = ((BinaryMemoryBody) body).getEncoding();
+                                if (encoding.equals(MimeUtil.ENC_BASE64)) {
+                                    is = new Base64InputStream(is); // todo I don't think this closes the original stream on close
+                                }
+                            }
+
+//                            BufferedReader r = new BufferedReader(new InputStreamReader(is));
+//                            StringBuilder total = new StringBuilder();
+//                            for (String line; (line = r.readLine()) != null; ) {
+//                                total.append(line).append('\n');
+//                            }
+//                            String icsContent = total.toString();
+                            CalendarBuilder cbuilder = new CalendarBuilder();
+                            Calendar cal = cbuilder.build(is);
+
+                            System.out.println(cal.getUid());
+                            VEvent event = (VEvent) cal.getComponents().get(0);
+
+                            SimpleModule module = new SimpleModule();
+                            module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
+                            ObjectMapper mapper = new ObjectMapper();
+                            mapper.registerModule(module);
+
+                            String serialized = mapper.writeValueAsString(event);
+                            data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized));
+                        }
+                        case "vcard": {}
+                        case "pkpass": {}
+                    }
+                }
+
+            }
+
             if (data.isEmpty()) {
                 sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
             } else {
