@@ -354,14 +354,7 @@ public class MessageViewInfoExtractor {
                         case "ics": {
                             //attachment.isContentAvailable();
                             Body body = attachment.part.getBody();
-                            InputStream is = body.getInputStream();
-                            // Do we really need to do all of this ourselves here? Or does there already exist some K9 helper method/ some method of attachment
-                            if (body instanceof BinaryMemoryBody) {
-                                String encoding = ((BinaryMemoryBody) body).getEncoding();
-                                if (encoding.equals(MimeUtil.ENC_BASE64)) {
-                                    is = new Base64InputStream(is); // todo I don't think this closes the original stream on close
-                                }
-                            }
+                            InputStream is = MimeUtility.decodeBody(body);
 
 //                            BufferedReader r = new BufferedReader(new InputStreamReader(is));
 //                            StringBuilder total = new StringBuilder();
