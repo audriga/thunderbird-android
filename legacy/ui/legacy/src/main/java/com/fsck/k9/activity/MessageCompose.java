@@ -587,7 +587,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 } else {
                     return false;
                 }
-                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>"+ "(End)";
+                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
                 // todo: deduplicate with url processing
                 org.audriga.hetc.MustacheRenderer hetcRenderer;
                 hetcRenderer = new org.audriga.hetc.MustacheRenderer();
@@ -606,14 +606,20 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 } catch (JSONException | IOException e) {
                     //throw new RuntimeException(e);
                 }
-                messageContentView.setText(hetcRenderResult);
+                String htmlEmail = "<html><head>"+ smlScript + "</head><body>"+ hetcRenderResult +"</body></html>";
+                // todo this currently sets both text/plain and text/html parts.
+                currentMessageFormat = SimpleMessageFormat.HTML;
+                messageContentView.setText(htmlEmail);
                 messageContentView.setVisibility(View.GONE);
                 messageContentViewSML.setVisibility(View.VISIBLE);
                 if (ld2hRenderResult != null) {
-                    messageContentViewSML.displayHtmlContentWithInlineAttachments(ld2hRenderResult, null, null);
+                    String css = "<head>\n" +
+                        "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
+                        "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                        "</head>";
+                    String htmlDisplay  = css + ld2hRenderResult;
+                    messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
                 }
-//               currentMessageBuilder.setText(smlScript);
-                currentMessageFormat = SimpleMessageFormat.HTML;
                 return false;
             }
         }
@@ -715,10 +721,21 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                                 } else if (encodedJsonLds.size() > 1) {
                                     smlJsonLd = "[" + String.join(",", encodedJsonLds) + "]";
                                 }
-                                messageContentView.setText(joinedEmailHTMLRenderResults);
+
+                                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
+                                String htmlEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
+                                // todo this currently sets both text/plain and text/html parts.
+                                // todo: Maybe only set the html on send (but show preview here already)?
+                                messageContentView.setText(htmlEmail);
+                                currentMessageFormat = SimpleMessageFormat.HTML;
+                                String css = "<head>\n" +
+                                    "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
+                                    "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                                    "</head>";
+                                String htmlDisplay  = css + joinedDisplayHTMLRenderResults;
                                 messageContentView.setVisibility(View.GONE);
                                 messageContentViewSML.setVisibility(View.VISIBLE);
-                                messageContentViewSML.displayHtmlContentWithInlineAttachments(joinedDisplayHTMLRenderResults, null, null);
+                                messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
                             }
                         }
                     }
@@ -892,83 +909,84 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         //       Is this on purpose or a mistake?
         String msgText = "" + messageContentView.getText();
 
-        if (msgText.startsWith("<")) msgText = msgText.substring(1, msgText.length());
-        if (msgText.endsWith(">")) msgText = msgText.substring(0, msgText.length()-1);
+        // This messes up html if there is any
+//        if (msgText.startsWith("<")) msgText = msgText.substring(1, msgText.length());
+//        if (msgText.endsWith(">")) msgText = msgText.substring(0, msgText.length()-1);
 
-        if (msgText.startsWith("https://")) {
-
-
-            String oriURL = msgText;
-            String htmlSrc = downloadHTML(oriURL);
-
-            String sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"EventReservation\",\r\n  \"reservationNumber\": \"1234567\",\r\n  \"reservationStatus\": \"http://schema.org/Confirmed\",\r\n  \"modifyReservationUrl\": \"https://www.eventbrite.com/mytickets/123?utm_campaign=order_confirm&amp;utm_medium=email&amp;ref=eemailordconf&amp;utm_source=eb_email&amp;utm_term=googlenow\",\r\n  \"underName\": {\r\n    \"@type\": \"Person\",\r\n    \"name\": \"Peter Meier\"\r\n  },\r\n  \"reservationFor\": {\r\n    \"@type\": \"Event\",\r\n    \"name\": \"Calendar and Scheduling Developer Day Zurich\",\r\n    \"startDate\": \"2019-02-04T09:00:00+01:00\",\r\n    \"endDate\": \"2019-02-04T17:30:00+01:00\",\r\n    \"location\": {\r\n      \"@type\": \"Place\",\r\n      \"name\": \"Google Zürich - Europaalle campus\",\r\n      \"address\": {\r\n        \"@type\": \"PostalAddress\",\r\n        \"streetAddress\": \"Lagerstrasse 1008004 Zürich\",\r\n        \"addressLocality\": \"Zürich\",\r\n        \"addressRegion\": \"ZH\",\r\n        \"postalCode\": \"8004\",\r\n        \"addressCountry\": \"CH\"\r\n      }\r\n    }\r\n  }\r\n}";
-
-            // TODO - perhaps use H2LJ?
-            String jStart = "<script type=\"application/ld+json\">";
-            String jStop = "</script>";
-            if (htmlSrc.contains("ld+json")){
-                int indexOf = htmlSrc.indexOf(jStart);
-                sml = htmlSrc.substring(indexOf+jStart.length(), htmlSrc.indexOf(jStop, indexOf));
-                oriURL = oriURL + " (EXTRACTED!)";
-            } else {
-                oriURL = oriURL + " (NOTHING FOUND TO EXTRACT!)";
-
-            }
-
-            String smlScript = "<script type=\"application/ld+json\">" + sml + "</script>";
-
-            //msgText = "<html><body>" + smlScript + "<b>Bold</b>Text / " + oriURL + "</body></html>";
-            msgText = smlScript + "<b>Bold</b>Text /" + oriURL + "(END)";
-
-            currentMessageFormat = SimpleMessageFormat.HTML;
-
-        } else if (msgText.startsWith("ICAL")) {
-
-            try {
-
-                String myCalendarString = "BEGIN:VCALENDAR\n" +
-                        "VERSION:2.0\n" +
-                        "CALSCALE:GREGORIAN\n" +
-                        "BEGIN:VEVENT\n" +
-                        "SUMMARY:Access-A-Ride Pickup\n" +
-                        "UID:uid1@example.com\n" +
-                        "DTSTART;TZID=America/New_York:20130802T103400\n" +
-                        "DTEND;TZID=America/New_York:20130802T110400\n" +
-                        "LOCATION:1000 Broadway Ave.\\, Brooklyn\n" +
-                        "DESCRIPTION: Access-A-Ride trip to 900 Jay St.\\, Brooklyn\n" +
-                        "STATUS:CONFIRMED\n" +
-                        "SEQUENCE:3\n" +
-                        "BEGIN:VALARM\n" +
-                        "TRIGGER:-PT10M\n" +
-                        "DESCRIPTION:Pickup Reminder\n" +
-                        "ACTION:DISPLAY\n" +
-                        "END:VALARM\n" +
-                        "END:VEVENT\n" +
-                        "BEGIN:VEVENT\n" +
-                        "END:VEVENT\n" +
-                        "END:VCALENDAR";
-                StringReader sin = new StringReader(myCalendarString);
-                CalendarBuilder cbuilder = new CalendarBuilder();
-                Calendar cal = cbuilder.build(sin);
-
-                System.out.println(cal.getUid());
-                VEvent event = (VEvent) cal.getComponents().get(0);
-
-                SimpleModule module = new SimpleModule();
-                module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.registerModule(module);
-
-                String serialized = mapper.writeValueAsString(event);
-
-                msgText = serialized;
-
-                currentMessageFormat = SimpleMessageFormat.HTML;
-
-            } catch (Exception e){
-                msgText = e.getMessage();
-            }
-        }
+//        if (msgText.startsWith("https://")) {
+//
+//
+//            String oriURL = msgText;
+//            String htmlSrc = downloadHTML(oriURL);
+//
+//            String sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"EventReservation\",\r\n  \"reservationNumber\": \"1234567\",\r\n  \"reservationStatus\": \"http://schema.org/Confirmed\",\r\n  \"modifyReservationUrl\": \"https://www.eventbrite.com/mytickets/123?utm_campaign=order_confirm&amp;utm_medium=email&amp;ref=eemailordconf&amp;utm_source=eb_email&amp;utm_term=googlenow\",\r\n  \"underName\": {\r\n    \"@type\": \"Person\",\r\n    \"name\": \"Peter Meier\"\r\n  },\r\n  \"reservationFor\": {\r\n    \"@type\": \"Event\",\r\n    \"name\": \"Calendar and Scheduling Developer Day Zurich\",\r\n    \"startDate\": \"2019-02-04T09:00:00+01:00\",\r\n    \"endDate\": \"2019-02-04T17:30:00+01:00\",\r\n    \"location\": {\r\n      \"@type\": \"Place\",\r\n      \"name\": \"Google Zürich - Europaalle campus\",\r\n      \"address\": {\r\n        \"@type\": \"PostalAddress\",\r\n        \"streetAddress\": \"Lagerstrasse 1008004 Zürich\",\r\n        \"addressLocality\": \"Zürich\",\r\n        \"addressRegion\": \"ZH\",\r\n        \"postalCode\": \"8004\",\r\n        \"addressCountry\": \"CH\"\r\n      }\r\n    }\r\n  }\r\n}";
+//
+//            // TODO - perhaps use H2LJ?
+//            String jStart = "<script type=\"application/ld+json\">";
+//            String jStop = "</script>";
+//            if (htmlSrc.contains("ld+json")){
+//                int indexOf = htmlSrc.indexOf(jStart);
+//                sml = htmlSrc.substring(indexOf+jStart.length(), htmlSrc.indexOf(jStop, indexOf));
+//                oriURL = oriURL + " (EXTRACTED!)";
+//            } else {
+//                oriURL = oriURL + " (NOTHING FOUND TO EXTRACT!)";
+//
+//            }
+//
+//            String smlScript = "<script type=\"application/ld+json\">" + sml + "</script>";
+//
+//            //msgText = "<html><body>" + smlScript + "<b>Bold</b>Text / " + oriURL + "</body></html>";
+//            msgText = smlScript + "<b>Bold</b>Text /" + oriURL + "(END)";
+//
+//            currentMessageFormat = SimpleMessageFormat.HTML;
+//
+//        } else if (msgText.startsWith("ICAL")) {
+//
+//            try {
+//
+//                String myCalendarString = "BEGIN:VCALENDAR\n" +
+//                        "VERSION:2.0\n" +
+//                        "CALSCALE:GREGORIAN\n" +
+//                        "BEGIN:VEVENT\n" +
+//                        "SUMMARY:Access-A-Ride Pickup\n" +
+//                        "UID:uid1@example.com\n" +
+//                        "DTSTART;TZID=America/New_York:20130802T103400\n" +
+//                        "DTEND;TZID=America/New_York:20130802T110400\n" +
+//                        "LOCATION:1000 Broadway Ave.\\, Brooklyn\n" +
+//                        "DESCRIPTION: Access-A-Ride trip to 900 Jay St.\\, Brooklyn\n" +
+//                        "STATUS:CONFIRMED\n" +
+//                        "SEQUENCE:3\n" +
+//                        "BEGIN:VALARM\n" +
+//                        "TRIGGER:-PT10M\n" +
+//                        "DESCRIPTION:Pickup Reminder\n" +
+//                        "ACTION:DISPLAY\n" +
+//                        "END:VALARM\n" +
+//                        "END:VEVENT\n" +
+//                        "BEGIN:VEVENT\n" +
+//                        "END:VEVENT\n" +
+//                        "END:VCALENDAR";
+//                StringReader sin = new StringReader(myCalendarString);
+//                CalendarBuilder cbuilder = new CalendarBuilder();
+//                Calendar cal = cbuilder.build(sin);
+//
+//                System.out.println(cal.getUid());
+//                VEvent event = (VEvent) cal.getComponents().get(0);
+//
+//                SimpleModule module = new SimpleModule();
+//                module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
+//                ObjectMapper mapper = new ObjectMapper();
+//                mapper.registerModule(module);
+//
+//                String serialized = mapper.writeValueAsString(event);
+//
+//                msgText = serialized;
+//
+//                currentMessageFormat = SimpleMessageFormat.HTML;
+//
+//            } catch (Exception e){
+//                msgText = e.getMessage();
+//            }
+//        }
 
 
         builder.setSubject(Utility.stripNewLines(subjectView.getText().toString()))
