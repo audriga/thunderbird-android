@@ -5,6 +5,7 @@ import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentsChangedListen
 import com.fsck.k9.message.Attachment.LoadingState;
 import com.fsck.k9.message.MessageBuilder.Callback;
 import com.fsck.k9.view.MessageWebView;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import okhttp3.Request;
 import okhttp3.Request.Builder;
 import okhttp3.Response;
@@ -53,6 +54,7 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -270,6 +272,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private EditText signatureView;
     private EditText messageContentView;
     private MessageWebView messageContentViewSML;
+    private MaterialSwitch smlModeSwitch;
     private LinearLayout attachmentsView;
 
     private String referencedMessageIds;
@@ -277,6 +280,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     // SML
     private String smlJsonLd = null;
+    private String smlHTMLEmail = null;
 
     // The currently used message format.
     private SimpleMessageFormat currentMessageFormat;
@@ -378,6 +382,16 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         attachmentsView = findViewById(R.id.attachments);
 
         messageContentViewSML = findViewById(R.id.message_content_sml);
+        smlModeSwitch = findViewById(R.id.sml_switch);
+        smlModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                messageContentView.setVisibility(View.GONE);
+                messageContentViewSML.setVisibility(View.VISIBLE);
+            } else {
+                messageContentView.setVisibility(View.VISIBLE);
+                messageContentViewSML.setVisibility(View.GONE);
+            }
+        });
 
 
         TextWatcher draftNeedsChangingTextWatcher = new SimpleTextWatcher() {
@@ -606,10 +620,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 } catch (JSONException | IOException e) {
                     //throw new RuntimeException(e);
                 }
-                String htmlEmail = "<html><head>"+ smlScript + "</head><body>"+ hetcRenderResult +"</body></html>";
-                // todo this currently sets both text/plain and text/html parts.
-                currentMessageFormat = SimpleMessageFormat.HTML;
-                messageContentView.setText(htmlEmail);
+                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ hetcRenderResult +"</body></html>";
+                // Will set format and html text on send.
+//                currentMessageFormat = SimpleMessageFormat.HTML;
+//                messageContentView.setText(htmlEmail);
                 messageContentView.setVisibility(View.GONE);
                 messageContentViewSML.setVisibility(View.VISIBLE);
                 if (ld2hRenderResult != null) {
@@ -619,6 +633,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                         "</head>";
                     String htmlDisplay  = css + ld2hRenderResult;
                     messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
+                    smlModeSwitch.setVisibility(View.VISIBLE);
+                    smlModeSwitch.setChecked(true);
                 }
                 return false;
             }
@@ -723,11 +739,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                                 }
 
                                 String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
-                                String htmlEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
-                                // todo this currently sets both text/plain and text/html parts.
-                                // todo: Maybe only set the html on send (but show preview here already)?
-                                messageContentView.setText(htmlEmail);
-                                currentMessageFormat = SimpleMessageFormat.HTML;
+                                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
+                                // Will set format and html text on send.
+//                                messageContentView.setText(htmlEmail);
+//                                currentMessageFormat = SimpleMessageFormat.HTML;
                                 String css = "<head>\n" +
                                     "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
                                     "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
@@ -736,6 +751,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                                 messageContentView.setVisibility(View.GONE);
                                 messageContentViewSML.setVisibility(View.VISIBLE);
                                 messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
+                                smlModeSwitch.setVisibility(View.VISIBLE);
+                                smlModeSwitch.setChecked(true);
                             }
                         }
                     }
@@ -904,11 +921,18 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             recipientPresenter.builderSetProperties(builder);
         }
 
-        // todo: Note this only gets executed on send/ save-as-draft.
+
+        String msgText = "" + messageContentView.getText();
+        // Sharing an url and the like before will have filled the smlJsonLd variable and enabled the switch.
+        // We already showed the user a preview, but have not set the actual text to the hetc result yet
+        if (!isDraft && smlJsonLd != null && smlHTMLEmail != null && smlModeSwitch.isChecked()) {
+            msgText = smlHTMLEmail;
+            currentMessageFormat = SimpleMessageFormat.HTML;
+        }
+
+        // Note this only gets executed on send/ save-as-draft.
         //       I don't see why we would do this transformation so late.
         //       Is this on purpose or a mistake?
-        String msgText = "" + messageContentView.getText();
-
         // This messes up html if there is any
 //        if (msgText.startsWith("<")) msgText = msgText.substring(1, msgText.length());
 //        if (msgText.endsWith(">")) msgText = msgText.substring(0, msgText.length()-1);
@@ -999,6 +1023,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 .setReplyTo(replyToPresenter.getAddresses())
 
                 .setMessageFormat(currentMessageFormat)
+            // todo this currently sets both text/plain and text/html parts.
                 .setText(CrLfConverter.toCrLf(msgText))
                 .setAttachments(attachmentPresenter.getAttachments())
                 .setInlineAttachments(attachmentPresenter.getInlineAttachments())

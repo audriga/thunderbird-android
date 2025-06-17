@@ -933,4 +933,5 @@ Du kannst diese Nachricht aufheben und sie als Backup für deinen geheimen Schl�
     <string name="about_title">Über <xliff:g id="app_name">%s</xliff:g></string>
     <string name="push_info_notification_explanation_text">Wenn Push verwendet wird, hält <xliff:g id="app_name">%1$s</xliff:g> eine Verbindung zum Mailserver aufrecht. Bei Android muss eine laufende Benachrichtigung angezeigt werden, während die App im Hintergrund aktiv ist. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
     <string name="about_app_authors_thunderbird">Thunderbird Mobile Team</string>
+    <string name="sml_switch_text">Sende inhalt als SML</string>
 </resources>
