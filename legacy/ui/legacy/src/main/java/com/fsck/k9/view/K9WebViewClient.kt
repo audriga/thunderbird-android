@@ -86,6 +86,10 @@ internal class K9WebViewClient(
                 copyUrlToClipboard(webView.context, uri)
                 true
             }
+            XCLIPBOARD_SCHEME -> {
+                copyToClipboard(webView.context, uri)
+                true
+            }
             MAILTO_SCHEME -> {
 //                val actionQuery = uri.getQueryParameters("action") //for some reason this throws an exception
                 val query = uri.query;
@@ -350,6 +354,11 @@ internal class K9WebViewClient(
         val label = context.getString(R.string.webview_contextmenu_link_clipboard_label)
         clipboardManager.setText(label, uri.toString())
     }
+    private fun copyToClipboard(context: Context, uri: Uri) {
+        val content = uri.schemeSpecificPart;
+        val label = "Copied $content";
+        clipboardManager.setText(label, content)
+    }
 
     private fun openUrl(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
@@ -424,6 +433,7 @@ internal class K9WebViewClient(
         private const val XALERT_SCHEME = "xalert"
         private const val XJS_SCHEME = "xjs"
         private const val XSTORY_SCHEME = "xstory"
+        private const val XCLIPBOARD_SCHEME = "xclipboard"
         private const val MAILTO_SCHEME = "mailto"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
