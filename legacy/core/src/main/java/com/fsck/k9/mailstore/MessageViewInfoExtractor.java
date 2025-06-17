@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.text.TextUtils;
+import android.util.Pair;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -41,6 +42,7 @@ import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.james.mime4j.util.MimeUtil;
+import org.audriga.ld2h.ButtonDescription;
 import org.audriga.ld2h.JsonLdDeserializer;
 import org.audriga.ld2h.JsonLd;
 import org.audriga.ld2h.MustacheRenderer; // todo this version causes an exception when created
@@ -399,11 +401,13 @@ public class MessageViewInfoExtractor {
                 ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
                 for (StructuredData structuredData: data) {
                     JSONObject jsonObject = structuredData.getJson();
-                    String result = renderer.render(jsonObject);
+                    List<ButtonDescription> buttons = getButtons(jsonObject);
+                    String result = renderer.render(jsonObject, buttons);
                     renderedHTMLs.add(result);
                 }
                 if (extracted != null) {
-                    String result = renderer.render(extracted);
+                    List<ButtonDescription> buttonsForExtracted = getButtons(extracted);
+                    String result = renderer.render(extracted, buttonsForExtracted);
                     renderedHTMLs.add(result);
                 }
 
@@ -441,6 +445,18 @@ public class MessageViewInfoExtractor {
         } catch (Exception e) {
             throw new MessagingException("Couldn't extract viewable parts", e);
         }
+    }
+
+    /**
+     * Creates descriptions of buttons to be included in a rendered card.
+     * @param jsonObject the cards schema
+     * @return the button descriptions
+     */
+    static private List<ButtonDescription> getButtons(JSONObject jsonObject) {
+        List<ButtonDescription> buttons = new ArrayList<>();
+        buttons.add(new ButtonDescription("Call", "tel:124"));
+        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
+        return  buttons;
     }
 
     /**
