@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 
 import com.fsck.k9.CoreResourceProvider;
+import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.internet.AddressHeaderBuilder;
 import com.fsck.k9.mail.internet.Headers;
 import timber.log.Timber;
@@ -56,7 +57,11 @@ public abstract class SmlMessageBuilder {
     private boolean requestReadReceipt;
     private Identity identity;
     private SimpleMessageFormat messageFormat;
-    private String text;
+    private String plainText;
+    private String htmlText;
+    // For the multipart variant, should we have a jsonld parameter and create the part here
+    // or should we get an already created part?
+    private BodyPart additionalAlternatePart;
     private List<Attachment> attachments;
     private Map<String, Attachment> inlineAttachments;
     private String signature;
@@ -149,67 +154,56 @@ public abstract class SmlMessageBuilder {
         return new MimeMultipart(boundary);
     }
 
+
+    // todo: instead of a copy, extend the other message builder
     private void buildBody(MimeMessage message) throws MessagingException {
         // Build the body.
-        // TODO FIXME - body can be either an HTML or Text part, depending on whether we're in
-        // HTML mode or not.  Should probably fix this so we don't mix up html and text parts.
-        TextBody body = buildText(isDraft);
 
-        // text/plain part when messageFormat == MessageFormat.HTML
-        TextBody bodyPlain = null;
+        TextBody bodyPlain = buildText(isDraft);
 
         final boolean hasAttachments = !attachments.isEmpty();
 
-        if (messageFormat == SimpleMessageFormat.HTML) {
-            // HTML message (with alternative text part)
+        // HTML message (with alternative text part)
 
-            // This is the compiled MIME part for an HTML message.
-            MimeMultipart composedMimeMessage = createMimeMultipart();
-            composedMimeMessage.setSubType("alternative");
-            // Let the receiver select either the text or the HTML part.
-            bodyPlain = buildText(isDraft, SimpleMessageFormat.TEXT);
-            composedMimeMessage.addBodyPart(MimeBodyPart.create(bodyPlain, "text/plain"));
-            MimeBodyPart htmlPart = MimeBodyPart.create(body, "text/html");
-            if (inlineAttachments != null && inlineAttachments.size() > 0) {
-                MimeMultipart htmlPartWithInlineImages = new MimeMultipart("multipart/related",
-                        boundaryGenerator.generateBoundary());
-                htmlPartWithInlineImages.addBodyPart(htmlPart);
-                addInlineAttachmentsToMessage(htmlPartWithInlineImages);
-                composedMimeMessage.addBodyPart(MimeBodyPart.create(htmlPartWithInlineImages));
-            } else {
-                composedMimeMessage.addBodyPart(htmlPart);
-            }
+        // This is the compiled MIME part for an HTML message.
+        MimeMultipart composedMimeMessage = createMimeMultipart();
+        composedMimeMessage.setSubType("alternative");
+        // Let the receiver select either the text or the HTML part.
+        bodyPlain = buildText(isDraft, SimpleMessageFormat.TEXT);
+        composedMimeMessage.addBodyPart(MimeBodyPart.create(bodyPlain, "text/plain"));
+        TextBody bodyHTML = buildText(isDraft, SimpleMessageFormat.HTML);
+        MimeBodyPart htmlPart = MimeBodyPart.create(bodyHTML, "text/html");
+        if (inlineAttachments != null && inlineAttachments.size() > 0) {
+            MimeMultipart htmlPartWithInlineImages = new MimeMultipart("multipart/related",
+                boundaryGenerator.generateBoundary());
+            htmlPartWithInlineImages.addBodyPart(htmlPart);
+            addInlineAttachmentsToMessage(htmlPartWithInlineImages);
+            composedMimeMessage.addBodyPart(MimeBodyPart.create(htmlPartWithInlineImages));
+        } else {
+            composedMimeMessage.addBodyPart(htmlPart);
+        }
+        if (additionalAlternatePart != null) {
+            composedMimeMessage.addBodyPart(additionalAlternatePart);
+        }
 
-            if (hasAttachments) {
-                // If we're HTML and have attachments, we have a MimeMultipart container to hold the
-                // whole message (mp here), of which one part is a MimeMultipart container
-                // (composedMimeMessage) with the user's composed messages, and subsequent parts for
-                // the attachments.
-                MimeMultipart mp = createMimeMultipart();
-                mp.addBodyPart(MimeBodyPart.create(composedMimeMessage));
-                addAttachmentsToMessage(mp);
-                MimeMessageHelper.setBody(message, mp);
-            } else {
-                // If no attachments, our multipart/alternative part is the only one we need.
-                MimeMessageHelper.setBody(message, composedMimeMessage);
-            }
-        } else if (messageFormat == SimpleMessageFormat.TEXT) {
-            // Text-only message.
-            if (hasAttachments) {
-                MimeMultipart mp = createMimeMultipart();
-                mp.addBodyPart(MimeBodyPart.create(body, "text/plain"));
-                addAttachmentsToMessage(mp);
-                MimeMessageHelper.setBody(message, mp);
-            } else {
-                // No attachments to include, just stick the text body in the message and call it good.
-                MimeMessageHelper.setBody(message, body);
-            }
+        if (hasAttachments) {
+            // If we're HTML and have attachments, we have a MimeMultipart container to hold the
+            // whole message (mp here), of which one part is a MimeMultipart container
+            // (composedMimeMessage) with the user's composed messages, and subsequent parts for
+            // the attachments.
+            MimeMultipart mp = createMimeMultipart();
+            mp.addBodyPart(MimeBodyPart.create(composedMimeMessage));
+            addAttachmentsToMessage(mp);
+            MimeMessageHelper.setBody(message, mp);
+        } else {
+            // If no attachments, our multipart/alternative part is the only one we need.
+            MimeMessageHelper.setBody(message, composedMimeMessage);
         }
 
         // If this is a draft, add metadata for thawing.
         if (isDraft) {
             // Add the identity to the message.
-            message.addHeader(K9.IDENTITY_HEADER, buildIdentityHeader(body, bodyPlain));
+            message.addHeader(K9.IDENTITY_HEADER, buildIdentityHeader(bodyHTML, bodyPlain));
         }
     }
 
@@ -311,7 +305,14 @@ public abstract class SmlMessageBuilder {
      *         original message.
      */
     private TextBody buildText(boolean isDraft, SimpleMessageFormat simpleMessageFormat) {
-        TextBodyBuilder textBodyBuilder = new TextBodyBuilder(text);
+        TextBodyBuilder textBodyBuilder;
+        if (simpleMessageFormat == SimpleMessageFormat.TEXT) {
+            textBodyBuilder = new TextBodyBuilder(plainText);
+        } else {
+            // don't care about quoted/ signature etc right now, and would need to edit TextBodyBuilder, to not break HTML,
+            // if we wanted to use it as it has been.
+            return new TextBody(htmlText);
+        }
 
         /*
          * Find out if we need to include the original message as quoted text.
@@ -423,8 +424,18 @@ public abstract class SmlMessageBuilder {
         return this;
     }
 
-    public SmlMessageBuilder setText(String text) {
-        this.text = text;
+    public SmlMessageBuilder setPlainText(String plainText) {
+        this.plainText = plainText;
+        return this;
+    }
+
+    public SmlMessageBuilder setHtmlText(String htmlText) {
+        this.htmlText = htmlText;
+        return this;
+    }
+
+    public SmlMessageBuilder setAdditionalAlternatePart(BodyPart additionalAlternatePart) {
+        this.additionalAlternatePart = additionalAlternatePart;
         return this;
     }
 
