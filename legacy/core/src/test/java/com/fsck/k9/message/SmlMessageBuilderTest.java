@@ -60,7 +60,14 @@ public class SmlMessageBuilderTest extends RobolectricTest {
         "Best regards,\n" +
         "The Event Team";
     private static final String TEST_HTML_TEXT = "" +
-    "<h1>Event Reservation Confirmation</h1>\n" +
+    "<!DOCTYPE html>\n" +
+        "<html>\n" +
+        "<head>\n" +
+        "    <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n" +
+        "    <title>Event Reservation</title>\n" +
+        "</head>\n" +
+        "<body>\n" +
+        "<h1>Event Reservation Confirmation</h1>\n" +
         "<p>Dear Noah Baumbach,</p>\n" +
         "<p>Thank you for your reservation. Here are the details:</p>\n" +
         "<table>\n" +
@@ -87,7 +94,9 @@ public class SmlMessageBuilderTest extends RobolectricTest {
         "    </tr>\n" +
         "</table>\n" +
         "<p>We look forward to seeing you at the event!</p>\n" +
-        "<p>Best regards,<br>The Event Team</p>";
+        "<p>Best regards,<br>The Event Team</p>\n" +
+        "</body>\n" +
+        "</html>";
 
     private static final String TEST_SUBJECT = "Make Email Better Again!";
     private static final Address TEST_IDENTITY_ADDRESS = new Address("test@example.org", "tester");
@@ -348,6 +357,14 @@ public class SmlMessageBuilderTest extends RobolectricTest {
         " charset=utf-8\r\n" +
         "Content-Transfer-Encoding: quoted-printable\r\n" +
         "\r\n" +
+        "<!DOCTYPE html>\r\n" +
+        "<html>\r\n" +
+        "<head>\r\n" +
+        "    <meta http-equiv=3D\"content-type\" content=3D\"text/html; charset=3DUTF-=\r\n" +
+        "8\">\r\n" +
+        "    <title>Event Reservation</title>\r\n" +
+        "</head>\r\n" +
+        "<body>\r\n" +
         "<h1>Event Reservation Confirmation</h1>\r\n" +
         "<p>Dear Noah Baumbach,</p>\r\n" +
         "<p>Thank you for your reservation=2E Here are the details:</p>\r\n" +
@@ -376,6 +393,8 @@ public class SmlMessageBuilderTest extends RobolectricTest {
         "</table>\r\n" +
         "<p>We look forward to seeing you at the event!</p>\r\n" +
         "<p>Best regards,<br>The Event Team</p>\r\n" +
+        "</body>\r\n" +
+        "</html>\r\n" +
         "------boundary1\r\n";
 
     private static final String ALTERNATIVE_PART_CONTENTS = ""  +
