@@ -608,8 +608,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 }
 //                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
                 // todo: deduplicate with url processing
-                org.audriga.hetc.MustacheRenderer hetcRenderer;
-                hetcRenderer = new org.audriga.hetc.MustacheRenderer();
+//                org.audriga.hetc.MustacheRenderer hetcRenderer;
+//                hetcRenderer = new org.audriga.hetc.MustacheRenderer();
                 org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
                 try {
                     ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();

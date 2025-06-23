@@ -1,5 +1,6 @@
 package com.fsck.k9.view
 
+import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -7,7 +8,6 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.provider.Browser
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +20,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
@@ -28,12 +29,16 @@ import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.logging.Timber
 import com.fsck.k9.mail.Address
+import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.internet.MimeBodyPart
 import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mail.internet.MimeMessageHelper
 import com.fsck.k9.mail.internet.MimeMultipart
 import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.mailstore.AttachmentResolver
+import com.fsck.k9.message.MessageBuilder
+import com.fsck.k9.message.MessageBuilder.Callback
+import com.fsck.k9.message.SmlMessageUtil
 import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -98,15 +103,56 @@ internal class K9WebViewClient(
                     val end = schemaSpecific.indexOf('?')
                     val recipient = Uri.decode(schemaSpecific.substring(0, end))
                     val requestAction = query.substring(query.indexOf('=')+1, query.length)
-//                    val bundle = Bundle();
-//                    bundle.putString("recipient", recipient)
-//                    bundle.putString("action", requestAction)
-                    val intent = Intent(webView.context, MessageCompose::class.java).apply {
-                        action = MessageCompose.ACTION_COMPOSE_APPROVE
-                        data = uri
-                    }.putExtra("recipient", recipient).putExtra("requestAction", requestAction)
-//                        .putExtra(MessageCompose.IS_SML, true)
-                    webView.context.startActivity(intent)
+                    val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction);
+                    if (smlPayload != null) {
+                        val mc = DI.get(MessagingController::class.java)
+                        val preferences = DI.get(Preferences::class.java)
+                        val account: Account? = preferences.defaultAccount
+                        if (account != null) {
+                            val builder = SmlMessageUtil.createSMLMessageBuilder(listOf(smlPayload), SmlMessageUtil.getSmlVariantFromAccount(account))
+                            val to = Address.parse(recipient) // todo error handling for this
+                            builder.setTo(to.toList())
+                            builder.setSubject(requestAction)
+                            builder.setIdentity(account.identities.first()) // todo this also is not clean, but we want no interaction, so how would we pick the identity
+                            builder.buildAsync(object : Callback {
+                                override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
+                                    mc.sendMessage(account, message, requestAction, null)
+                                    Toast.makeText(webView.context, "Sent $requestAction", Toast.LENGTH_SHORT).show()
+                                    //todo show success when done
+                                }
+
+                                override fun onMessageBuildCancel() {
+//                                    TODO("Not yet implemented")
+                                }
+
+                                override fun onMessageBuildException(exception: MessagingException?) {
+//                                    TODO("Not yet implemented")
+                                }
+
+                                override fun onMessageBuildReturnPendingIntent(
+                                    pendingIntent: PendingIntent?,
+                                    requestCode: Int,
+                                ) {
+//                                    TODO("Not yet implemented")
+                                }
+                            })
+
+                        } else {
+                            // todo show non-success
+                        }
+                    } else {
+                        // todo show non-success
+                    }
+
+////                    val bundle = Bundle();
+////                    bundle.putString("recipient", recipient)
+////                    bundle.putString("action", requestAction)
+//                    val intent = Intent(webView.context, MessageCompose::class.java).apply {
+//                        action = MessageCompose.ACTION_COMPOSE_APPROVE
+//                        data = uri
+//                    }.putExtra("recipient", recipient).putExtra("requestAction", requestAction)
+////                        .putExtra(MessageCompose.IS_SML, true)
+//                    webView.context.startActivity(intent)
                 } else {
                     openUrl(webView.context, uri)
                 }

@@ -131,6 +131,19 @@ abstract class SmlMessageUtil {
             Account.SmlVariant.SML_IN_HTML -> SmlStandardVariant.SML_IN_HTML
             Account.SmlVariant.DEDICATED_MULTIPART -> SmlStandardVariant.DEDICATED_MULTIPART
         }
+
+        @JvmStatic
+        fun getApproveDenyPayload(requestAction: String): JSONObject? = when (requestAction) {
+            "ConfirmAction" -> {
+                JSONObject("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}");
+            }
+            "CancelAction" -> {
+                JSONObject("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n})");
+            }
+            else -> {
+                null;
+            }
+        }
     }
 }
 
