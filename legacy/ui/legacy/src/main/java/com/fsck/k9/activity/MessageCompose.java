@@ -917,7 +917,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             // We already showed the user a preview, but by using the sml builder we actually build the sml message,
             // including the html fallback
             if (smlPayload != null && smlModeSwitch.isChecked()) {
-                builder = SmlMessageUtil.createSMLMessageBuilder(smlPayload, SmlStandardVariant.DEDICATED_MULTIPART);
+                builder = SmlMessageUtil.createSMLMessageBuilder(smlPayload, SmlMessageUtil.getSmlVariantFromAccount(account));
             } else {
                 builder = SimpleMessageBuilder.newInstance();
             }

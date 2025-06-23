@@ -2,6 +2,7 @@ package com.fsck.k9.message
 
 //import com.fsck.k9.mail.internet.MimeMessage
 import android.R.attr.mimeType
+import app.k9mail.legacy.account.Account
 import com.fsck.k9.K9.isHideTimeZone
 import com.fsck.k9.helper.toCrLf
 import com.fsck.k9.mail.BodyPart
@@ -120,6 +121,15 @@ abstract class SmlMessageUtil {
                 builderToUse.setAdditionalAlternatePart(dedicatedJsonMultipart)
             }
             return builderToUse
+        }
+
+        // todo converting between two enum classes that have the same values isn't super nice...
+        // However I am not sure if we actually will keep the variant setting in the account settings and this way
+        // it will be easier to change.
+        @JvmStatic
+        fun getSmlVariantFromAccount(account: Account) : SmlStandardVariant = when (account.smlVariant) {
+            Account.SmlVariant.SML_IN_HTML -> SmlStandardVariant.SML_IN_HTML
+            Account.SmlVariant.DEDICATED_MULTIPART -> SmlStandardVariant.DEDICATED_MULTIPART
         }
     }
 }
