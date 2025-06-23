@@ -40,7 +40,7 @@ import org.apache.james.mime4j.util.MimeUtil;
 
 public abstract class MessageBuilder {
     private final MessageIdGenerator messageIdGenerator;
-    private final BoundaryGenerator boundaryGenerator;
+    protected final BoundaryGenerator boundaryGenerator;
     protected final CoreResourceProvider resourceProvider;
 
 
@@ -54,23 +54,23 @@ public abstract class MessageBuilder {
     private String inReplyTo;
     private String references;
     private boolean requestReadReceipt;
-    private Identity identity;
-    private SimpleMessageFormat messageFormat;
+    protected Identity identity;
+    protected SimpleMessageFormat messageFormat;
     private String text;
-    private List<Attachment> attachments;
-    private Map<String, Attachment> inlineAttachments;
-    private String signature;
-    private QuoteStyle quoteStyle;
-    private QuotedTextMode quotedTextMode;
-    private String quotedText;
-    private InsertableHtmlContent quotedHtmlContent;
-    private boolean isReplyAfterQuote;
-    private boolean isSignatureBeforeQuotedText;
-    private boolean identityChanged;
-    private boolean signatureChanged;
-    private int cursorPosition;
-    private MessageReference messageReference;
-    private boolean isDraft;
+    protected List<Attachment> attachments;
+    protected Map<String, Attachment> inlineAttachments;
+    protected String signature;
+    protected QuoteStyle quoteStyle;
+    protected QuotedTextMode quotedTextMode;
+    protected String quotedText;
+    protected InsertableHtmlContent quotedHtmlContent;
+    protected boolean isReplyAfterQuote;
+    protected boolean isSignatureBeforeQuotedText;
+    protected boolean identityChanged;
+    protected boolean signatureChanged;
+    protected int cursorPosition;
+    protected MessageReference messageReference;
+    protected boolean isDraft;
     private boolean isPgpInlineEnabled;
 
     protected MessageBuilder(MessageIdGenerator messageIdGenerator,
@@ -95,7 +95,7 @@ public abstract class MessageBuilder {
         return message;
     }
 
-    private void buildHeader(MimeMessage message) throws MessagingException {
+    protected void buildHeader(MimeMessage message) throws MessagingException {
         message.addSentDate(sentDate, hideTimeZone);
         Address from = new Address(identity.getEmail(), identity.getName());
         message.setFrom(from);
@@ -235,7 +235,7 @@ public abstract class MessageBuilder {
      * @param mp MimeMultipart container in which to insert parts.
      * @throws MessagingException
      */
-    private void addAttachmentsToMessage(final MimeMultipart mp) throws MessagingException {
+    protected void addAttachmentsToMessage(final MimeMultipart mp) throws MessagingException {
         for (Attachment attachment : attachments) {
             if (attachment.getState() != Attachment.LoadingState.COMPLETE) {
                 continue;
@@ -251,7 +251,7 @@ public abstract class MessageBuilder {
         }
     }
 
-    private void addInlineAttachmentsToMessage(final MimeMultipart mp) throws MessagingException {
+    protected void addInlineAttachmentsToMessage(final MimeMultipart mp) throws MessagingException {
         for (String cid : inlineAttachments.keySet()) {
             Attachment attachment = inlineAttachments.get(cid);
             if (attachment.getState() != Attachment.LoadingState.COMPLETE) {

@@ -35,6 +35,9 @@ public class MimeMessageHelper {
 
                 String contentType = Headers.contentType(mimeType, "utf-8", name);
                 part.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
+            } else if (MimeUtility.mimeTypeMatches(mimeType, "application/ld[+]json")) {
+                String contentType = Headers.contentType(mimeType, "utf-8", null);
+                part.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
             } else {
                 part.setHeader(MimeHeader.HEADER_CONTENT_TYPE, mimeType);
             }

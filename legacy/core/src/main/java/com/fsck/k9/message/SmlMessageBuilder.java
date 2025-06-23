@@ -12,9 +12,6 @@ import android.os.AsyncTask;
 
 import com.fsck.k9.CoreResourceProvider;
 import com.fsck.k9.mail.BodyPart;
-import com.fsck.k9.mail.internet.AddressHeaderBuilder;
-import com.fsck.k9.mail.internet.Headers;
-import timber.log.Timber;
 
 import app.k9mail.legacy.account.Account.QuoteStyle;
 import app.k9mail.legacy.account.Identity;
@@ -23,72 +20,35 @@ import app.k9mail.legacy.message.controller.MessageReference;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BoundaryGenerator;
-import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeBodyPart;
-import com.fsck.k9.mail.internet.MimeHeader;
-import com.fsck.k9.mail.internet.MimeHeaderEncoder;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMessageHelper;
 import com.fsck.k9.mail.internet.MimeMultipart;
-import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mail.internet.TextBody;
-import com.fsck.k9.mailstore.TempFileBody;
 import com.fsck.k9.message.quote.InsertableHtmlContent;
-import org.apache.james.mime4j.util.MimeUtil;
 
 
-public abstract class SmlMessageBuilder {
-    private final MessageIdGenerator messageIdGenerator;
-    private final BoundaryGenerator boundaryGenerator;
-    protected final CoreResourceProvider resourceProvider;
+public abstract class SmlMessageBuilder extends MessageBuilder {
 
-
-    private String subject;
-    private Date sentDate;
-    private boolean hideTimeZone;
-    private Address[] to;
-    private Address[] cc;
-    private Address[] bcc;
-    private Address[] replyTo;
-    private String inReplyTo;
-    private String references;
-    private boolean requestReadReceipt;
-    private Identity identity;
-    private SimpleMessageFormat messageFormat;
     private String plainText;
     private String htmlText;
     // For the multipart variant, should we have a jsonld parameter and create the part here
     // or should we get an already created part?
     private BodyPart additionalAlternatePart;
-    private List<Attachment> attachments;
-    private Map<String, Attachment> inlineAttachments;
-    private String signature;
-    private QuoteStyle quoteStyle;
-    private QuotedTextMode quotedTextMode;
-    private String quotedText;
-    private InsertableHtmlContent quotedHtmlContent;
-    private boolean isReplyAfterQuote;
-    private boolean isSignatureBeforeQuotedText;
-    private boolean identityChanged;
-    private boolean signatureChanged;
-    private int cursorPosition;
-    private MessageReference messageReference;
-    private boolean isDraft;
-    private boolean isPgpInlineEnabled;
+
 
     protected SmlMessageBuilder(MessageIdGenerator messageIdGenerator,
             BoundaryGenerator boundaryGenerator, CoreResourceProvider resourceProvider) {
-        this.messageIdGenerator = messageIdGenerator;
-        this.boundaryGenerator = boundaryGenerator;
-        this.resourceProvider = resourceProvider;
+        super(messageIdGenerator, boundaryGenerator, resourceProvider);
     }
 
     /**
      * Build the message to be sent (or saved). If there is another message quoted in this one, it will be baked
      * into the message here.
      */
+    @Override
     protected MimeMessage build() throws MessagingException {
         //FIXME: check arguments
 
@@ -100,68 +60,13 @@ public abstract class SmlMessageBuilder {
         return message;
     }
 
-    private void buildHeader(MimeMessage message) throws MessagingException {
-        message.addSentDate(sentDate, hideTimeZone);
-        Address from = new Address(identity.getEmail(), identity.getName());
-        message.setFrom(from);
-
-        setRecipients(message, "To", to);
-        setRecipients(message, "CC", cc);
-        setRecipients(message, "BCC", bcc);
-        message.setSubject(subject);
-
-        if (requestReadReceipt) {
-            message.setHeader("Disposition-Notification-To", from.toEncodedString());
-            message.setHeader("X-Confirm-Reading-To", from.toEncodedString());
-            message.setHeader("Return-Receipt-To", from.toEncodedString());
-        }
-
-        if (!K9.isHideUserAgent()) {
-            String encodedUserAgent = MimeHeaderEncoder.encode("User-Agent", resourceProvider.userAgent());
-            message.setHeader("User-Agent", encodedUserAgent);
-        }
-
-        message.setReplyTo(replyTo);
-
-        if (inReplyTo != null) {
-            message.setInReplyTo(inReplyTo);
-        }
-
-        if (references != null) {
-            message.setReferences(references);
-        }
-
-        String messageId = messageIdGenerator.generateMessageId(message);
-        message.setMessageId(messageId);
-
-        if (isDraft && isPgpInlineEnabled) {
-            message.setFlag(Flag.X_DRAFT_OPENPGP_INLINE, true);
-        }
-        if (isDraft) {
-            message.setFlag(Flag.DRAFT, true);
-        }
-    }
-
-    private void setRecipients(MimeMessage message, String headerName, Address[] addresses) {
-        if (addresses != null && addresses.length > 0) {
-            String headerValue = AddressHeaderBuilder.createHeaderValue(addresses);
-            message.setHeader(headerName, headerValue);
-        }
-    }
-
-    protected MimeMultipart createMimeMultipart() {
-        String boundary = boundaryGenerator.generateBoundary();
-        return new MimeMultipart(boundary);
-    }
-
-
     // todo: instead of a copy, extend the other message builder
     private void buildBody(MimeMessage message) throws MessagingException {
         // Build the body.
 
-        TextBody bodyPlain = buildText(isDraft);
+        TextBody bodyPlain;// = buildText(isDraft);
 
-        final boolean hasAttachments = !attachments.isEmpty();
+        final boolean hasAttachments = attachments != null && !attachments.isEmpty();
 
         // HTML message (with alternative text part)
 
@@ -173,7 +78,7 @@ public abstract class SmlMessageBuilder {
         composedMimeMessage.addBodyPart(MimeBodyPart.create(bodyPlain, "text/plain"));
         TextBody bodyHTML = buildText(isDraft, SimpleMessageFormat.HTML);
         MimeBodyPart htmlPart = MimeBodyPart.create(bodyHTML, "text/html");
-        if (inlineAttachments != null && inlineAttachments.size() > 0) {
+        if (inlineAttachments != null && !inlineAttachments.isEmpty()) {
             MimeMultipart htmlPartWithInlineImages = new MimeMultipart("multipart/related",
                 boundaryGenerator.generateBoundary());
             htmlPartWithInlineImages.addBodyPart(htmlPart);
@@ -222,59 +127,6 @@ public abstract class SmlMessageBuilder {
                 .setBody(body)
                 .setBodyPlain(bodyPlain)
                 .build();
-    }
-
-    /**
-     * Add attachments as parts into a MimeMultipart container.
-     * @param mp MimeMultipart container in which to insert parts.
-     * @throws MessagingException
-     */
-    private void addAttachmentsToMessage(final MimeMultipart mp) throws MessagingException {
-        for (Attachment attachment : attachments) {
-            if (attachment.getState() != Attachment.LoadingState.COMPLETE) {
-                continue;
-            }
-
-            Body body = new TempFileBody(attachment.getFileName());
-            MimeBodyPart bp = MimeBodyPart.create(body);
-
-            addContentType(bp, attachment.getContentType(), attachment.getName());
-            addContentDisposition(bp, "attachment", attachment.getName(), attachment.getSize());
-
-            mp.addBodyPart(bp);
-        }
-    }
-
-    private void addInlineAttachmentsToMessage(final MimeMultipart mp) throws MessagingException {
-        for (String cid : inlineAttachments.keySet()) {
-            Attachment attachment = inlineAttachments.get(cid);
-            if (attachment.getState() != Attachment.LoadingState.COMPLETE) {
-                continue;
-            }
-
-            Body body = new TempFileBody(attachment.getFileName());
-            MimeBodyPart bp = MimeBodyPart.create(body);
-
-            addContentType(bp, attachment.getContentType(), attachment.getName());
-            addContentDisposition(bp, "inline", attachment.getName(), attachment.getSize());
-            bp.addHeader(MimeHeader.HEADER_CONTENT_ID, cid);
-
-            mp.addBodyPart(bp);
-        }
-    }
-
-    private void addContentType(MimeBodyPart bodyPart, String contentType, String name) throws MessagingException {
-        String value = Headers.contentType(contentType, name);
-        bodyPart.addHeader(MimeHeader.HEADER_CONTENT_TYPE, value);
-
-        if (!MimeUtil.isMessage(contentType)) {
-            bodyPart.setEncoding(MimeUtility.getEncodingforType(contentType));
-        }
-    }
-
-    private void addContentDisposition(MimeBodyPart bodyPart, String disposition, String fileName, Long size) {
-        String value = Headers.contentDisposition(disposition, fileName, size);
-        bodyPart.addHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, value);
     }
 
     /**
@@ -360,65 +212,73 @@ public abstract class SmlMessageBuilder {
         return body;
     }
 
+    @Override
     public SmlMessageBuilder setSubject(String subject) {
-        this.subject = subject;
+        super.setSubject(subject);
         return this;
     }
 
-    public String getSubject() {
-        return subject;
-    }
-
+    @Override
     public SmlMessageBuilder setSentDate(Date sentDate) {
-        this.sentDate = sentDate;
+        super.setSentDate(sentDate);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setHideTimeZone(boolean hideTimeZone) {
-        this.hideTimeZone = hideTimeZone;
+        super.setHideTimeZone(hideTimeZone);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setTo(List<Address> to) {
-        this.to = to.toArray(new Address[to.size()]);
+        super.setTo(to);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setCc(List<Address> cc) {
-        this.cc = cc.toArray(new Address[cc.size()]);
+        super.setCc(cc);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setBcc(List<Address> bcc) {
-        this.bcc = bcc.toArray(new Address[bcc.size()]);
+        super.setBcc(bcc);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setReplyTo(Address[] replyTo) {
-        this.replyTo = replyTo;
+        super.setReplyTo(replyTo);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setInReplyTo(String inReplyTo) {
-        this.inReplyTo = inReplyTo;
+        super.setInReplyTo(inReplyTo);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setReferences(String references) {
-        this.references = references;
+        super.setReferences(references);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setRequestReadReceipt(boolean requestReadReceipt) {
-        this.requestReadReceipt = requestReadReceipt;
+        super.setRequestReadReceipt(requestReadReceipt);
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setIdentity(Identity identity) {
         this.identity = identity;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setMessageFormat(SimpleMessageFormat messageFormat) {
         this.messageFormat = messageFormat;
         return this;
@@ -439,215 +299,94 @@ public abstract class SmlMessageBuilder {
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setAttachments(List<Attachment> attachments) {
         this.attachments = attachments;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setInlineAttachments(Map<String, Attachment> attachments) {
         this.inlineAttachments = attachments;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setSignature(String signature) {
         this.signature = signature;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setQuoteStyle(QuoteStyle quoteStyle) {
         this.quoteStyle = quoteStyle;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setQuotedTextMode(QuotedTextMode quotedTextMode) {
         this.quotedTextMode = quotedTextMode;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setQuotedText(String quotedText) {
         this.quotedText = quotedText;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setQuotedHtmlContent(InsertableHtmlContent quotedHtmlContent) {
         this.quotedHtmlContent = quotedHtmlContent;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setReplyAfterQuote(boolean isReplyAfterQuote) {
         this.isReplyAfterQuote = isReplyAfterQuote;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setSignatureBeforeQuotedText(boolean isSignatureBeforeQuotedText) {
         this.isSignatureBeforeQuotedText = isSignatureBeforeQuotedText;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setIdentityChanged(boolean identityChanged) {
         this.identityChanged = identityChanged;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setSignatureChanged(boolean signatureChanged) {
         this.signatureChanged = signatureChanged;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setCursorPosition(int cursorPosition) {
         this.cursorPosition = cursorPosition;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setMessageReference(MessageReference messageReference) {
         this.messageReference = messageReference;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setDraft(boolean isDraft) {
         this.isDraft = isDraft;
         return this;
     }
 
+    @Override
     public SmlMessageBuilder setIsPgpInlineEnabled(boolean isPgpInlineEnabled) {
-        this.isPgpInlineEnabled = isPgpInlineEnabled;
+        super.setIsPgpInlineEnabled(isPgpInlineEnabled);
         return this;
-    }
-
-    public boolean isDraft() {
-        return isDraft;
-    }
-
-    private Callback asyncCallback;
-    private final Object callbackLock = new Object();
-
-    // Postponed results, to be delivered upon reattachment of callback. There should only ever be one of these!
-    private MimeMessage queuedMimeMessage;
-    private MessagingException queuedException;
-    private PendingIntent queuedPendingIntent;
-    private int queuedRequestCode;
-
-    /** This method builds the message asynchronously, calling *exactly one* of the methods
-     * on the callback on the UI thread after it finishes. The callback may thread-safely
-     * be detached and reattached intermittently. */
-    final public void buildAsync(Callback callback) {
-        synchronized (callbackLock) {
-            asyncCallback = callback;
-            queuedMimeMessage = null;
-            queuedException = null;
-            queuedPendingIntent = null;
-        }
-        new AsyncTask<Void,Void,Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                buildMessageInternal();
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                deliverResult();
-            }
-        }.execute();
-    }
-
-    final public void onActivityResult(final int requestCode, int resultCode, final Intent data, Callback callback) {
-        synchronized (callbackLock) {
-            asyncCallback = callback;
-            queuedMimeMessage = null;
-            queuedException = null;
-            queuedPendingIntent = null;
-        }
-        if (resultCode != Activity.RESULT_OK) {
-            asyncCallback.onMessageBuildCancel();
-            return;
-        }
-        new AsyncTask<Void,Void,Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                buildMessageOnActivityResult(requestCode, data);
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                deliverResult();
-            }
-        }.execute();
-    }
-
-    /** This method is called in a worker thread, and should build the actual message. To deliver
-     * its computation result, it must call *exactly one* of the queueMessageBuild* methods before
-     * it finishes. */
-    abstract protected void buildMessageInternal();
-
-    abstract protected void buildMessageOnActivityResult(int requestCode, Intent data);
-
-    /** This method may be used to temporarily detach the callback. If a result is delivered
-     * while the callback is detached, it will be delivered upon reattachment. */
-    final public void detachCallback() {
-        synchronized (callbackLock) {
-            asyncCallback = null;
-        }
-    }
-
-    /** This method attaches a new callback, and must only be called after a previous one was
-     * detached. If the computation finished while the callback was detached, it will be
-     * delivered immediately upon reattachment. */
-    final public void reattachCallback(Callback callback) {
-        synchronized (callbackLock) {
-            if (asyncCallback != null) {
-                throw new IllegalStateException("need to detach callback before new one can be attached!");
-            }
-            asyncCallback = callback;
-            deliverResult();
-        }
-    }
-
-    final protected void queueMessageBuildSuccess(MimeMessage message) {
-        synchronized (callbackLock) {
-            queuedMimeMessage = message;
-        }
-    }
-
-    final protected void queueMessageBuildException(MessagingException exception) {
-        synchronized (callbackLock) {
-            queuedException = exception;
-        }
-    }
-
-    final protected void queueMessageBuildPendingIntent(PendingIntent pendingIntent, int requestCode) {
-        synchronized (callbackLock) {
-            queuedPendingIntent = pendingIntent;
-            queuedRequestCode = requestCode;
-        }
-    }
-
-    final protected void deliverResult() {
-        synchronized (callbackLock) {
-            if (asyncCallback == null) {
-                Timber.d("Keeping message builder result in queue for later delivery");
-                return;
-            }
-            if (queuedMimeMessage != null) {
-                asyncCallback.onMessageBuildSuccess(queuedMimeMessage, isDraft);
-                queuedMimeMessage = null;
-            } else if (queuedException != null) {
-                asyncCallback.onMessageBuildException(queuedException);
-                queuedException = null;
-            } else if (queuedPendingIntent != null) {
-                asyncCallback.onMessageBuildReturnPendingIntent(queuedPendingIntent, queuedRequestCode);
-                queuedPendingIntent = null;
-            }
-            asyncCallback = null;
-        }
-    }
-
-    public interface Callback {
-        void onMessageBuildSuccess(MimeMessage message, boolean isDraft);
-        void onMessageBuildCancel();
-        void onMessageBuildException(MessagingException exception);
-        void onMessageBuildReturnPendingIntent(PendingIntent pendingIntent, int requestCode);
     }
 
 }
