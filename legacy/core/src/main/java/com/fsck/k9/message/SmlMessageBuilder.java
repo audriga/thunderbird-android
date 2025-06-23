@@ -284,6 +284,11 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
         return this;
     }
 
+    @Override
+    public SmlMessageBuilder setText(String text) {
+        this.plainText = text;
+        return this;
+    }
     public SmlMessageBuilder setPlainText(String plainText) {
         this.plainText = plainText;
         return this;

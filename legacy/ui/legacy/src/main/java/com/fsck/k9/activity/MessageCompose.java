@@ -4,6 +4,9 @@ import app.k9mail.core.ui.legacy.designsystem.atom.icon.Icons.Outlined;
 import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentsChangedListener;
 import com.fsck.k9.message.Attachment.LoadingState;
 import com.fsck.k9.message.MessageBuilder.Callback;
+import com.fsck.k9.message.SimpleSmlMessageBuilder;
+import com.fsck.k9.message.SmlMessageUtil;
+import com.fsck.k9.message.SmlStandardVariant;
 import com.fsck.k9.view.MessageWebView;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import okhttp3.Request;
@@ -15,6 +18,7 @@ import okhttp3.OkHttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -279,8 +283,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private String repliedToMessageId;
 
     // SML
-    private String smlJsonLd = null;
-    private String smlHTMLEmail = null;
+//    private String smlJsonLd = null;
+    private List<JSONObject> smlPayload = null;
+//    private String smlHTMLEmail = null;
 
     // The currently used message format.
     private SimpleMessageFormat currentMessageFormat;
@@ -591,17 +596,17 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 //                String recipient = extras.getString("recipient");
                 String requestAction = extras.getString("requestAction");
                 if ("ConfirmAction".equals(requestAction)) {
-                    smlJsonLd = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}";
+                    smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}");
                     subjectView.setText("Approve");
 //                    currentMessageBuilder.setSubject("Approve");
                 } else if ("CancelAction".equals(requestAction)) {
-                    smlJsonLd = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n}";
+                    smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n})");
                     subjectView.setText("Deny");
 //                    currentMessageBuilder.setSubject("Deny");
                 } else {
                     return false;
                 }
-                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
+//                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
                 // todo: deduplicate with url processing
                 org.audriga.hetc.MustacheRenderer hetcRenderer;
                 hetcRenderer = new org.audriga.hetc.MustacheRenderer();
@@ -611,19 +616,16 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 } catch (IOException e) {
                     //throw new RuntimeException(e);
                 }
-                JSONObject smlJSONObject = org.audriga.hetc.JsonLdDeserializer.deserialize(smlJsonLd).get(0);
-                String hetcRenderResult = null;
+                JSONObject smlJSONObject = smlPayload.get(0);
+//                String hetcRenderResult = null;
                 String ld2hRenderResult = null;
                 try {
-                    hetcRenderResult = hetcRenderer.render(smlJSONObject);
+//                    hetcRenderResult = hetcRenderer.render(smlJSONObject);
                     ld2hRenderResult =  (ld2hRenderer != null) ? ld2hRenderer.render(smlJSONObject): null;
-                } catch (JSONException | IOException e) {
+                } catch (IOException e) {
                     //throw new RuntimeException(e);
                 }
-                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ hetcRenderResult +"</body></html>";
-                // Will set format and html text on send.
-//                currentMessageFormat = SimpleMessageFormat.HTML;
-//                messageContentView.setText(htmlEmail);
+//                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ hetcRenderResult +"</body></html>";
                 messageContentView.setVisibility(View.GONE);
                 messageContentViewSML.setVisibility(View.VISIBLE);
                 if (ld2hRenderResult != null) {
@@ -699,50 +701,44 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                                 //throw new RuntimeException(e);
                             }
 
-                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
+//                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
                             ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
-                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
+//                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
+                            smlPayload = new ArrayList<>(data.size());
                             for (StructuredData structuredData: data) {
-
                                 JSONObject jsonObject = structuredData.getJson();
-                                String hetcRenderResult = null;
+                                smlPayload.add(jsonObject);
+//                                String hetcRenderResult = null;
                                 String ld2hRenderResult = null;
-                                String encodedJsonLd;
-                                encodedJsonLd = jsonObject.toString();
+//                                String encodedJsonLd;
+//                                encodedJsonLd = jsonObject.toString();
                                 try {
-                                    hetcRenderResult = hetcRenderer.render(jsonObject);
+//                                    hetcRenderResult = hetcRenderer.render(jsonObject);
                                     ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
-                                } catch (IOException | JSONException e) {
+                                } catch (IOException e) {
                                     // todo handle
                                 }
 
-//
-//                                String result = renderer.render(jsonLd);
-                                if (!encodedJsonLd.isEmpty()) {
-                                    encodedJsonLds.add(encodedJsonLd);
-                                }
-                                if (hetcRenderResult != null) {
-                                    renderedEmailHTMLs.add(hetcRenderResult);
-                                }
+//                                if (!encodedJsonLd.isEmpty()) {
+//                                    encodedJsonLds.add(encodedJsonLd);
+//                                }
+//                                if (hetcRenderResult != null) {
+//                                    renderedEmailHTMLs.add(hetcRenderResult);
+//                                }
                                 if (ld2hRenderResult != null) {
                                     renderedDisplayHTMLs.add(ld2hRenderResult);
                                 }
                             }
-                            if (!renderedEmailHTMLs.isEmpty() || !encodedJsonLds.isEmpty()) {
-                                String joinedEmailHTMLRenderResults = String.join("\n", renderedEmailHTMLs);
+                            if (!renderedDisplayHTMLs.isEmpty()) {
                                 String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
-                                // This jsonld could be manually included in the html email to be sent, but it might make more sense to fix hetc to actually also include the jsonld.
-                                if (encodedJsonLds.size() == 1) {
-                                    smlJsonLd = encodedJsonLds.get(0);
-                                } else if (encodedJsonLds.size() > 1) {
-                                    smlJsonLd = "[" + String.join(",", encodedJsonLds) + "]";
-                                }
+//                                if (encodedJsonLds.size() == 1) {
+//                                    smlJsonLd = encodedJsonLds.get(0);
+//                                } else if (encodedJsonLds.size() > 1) {
+//                                    smlJsonLd = "[" + String.join(",", encodedJsonLds) + "]";
+//                                }
 
-                                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
-                                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
-                                // Will set format and html text on send.
-//                                messageContentView.setText(htmlEmail);
-//                                currentMessageFormat = SimpleMessageFormat.HTML;
+//                                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
+//                                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
                                 String css = "<head>\n" +
                                     "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
                                     "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
@@ -917,18 +913,19 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             recipientPresenter.builderSetProperties(pgpBuilder, cryptoStatus);
             builder = pgpBuilder;
         } else {
-            builder = SimpleMessageBuilder.newInstance();
+            // Sharing an url and the like before will have filled the smlJsonLd variable and enabled the switch.
+            // We already showed the user a preview, but by using the sml builder we actually build the sml message,
+            // including the html fallback
+            if (smlPayload != null && smlModeSwitch.isChecked()) {
+                builder = SmlMessageUtil.createSMLMessageBuilder(smlPayload, SmlStandardVariant.DEDICATED_MULTIPART);
+            } else {
+                builder = SimpleMessageBuilder.newInstance();
+            }
             recipientPresenter.builderSetProperties(builder);
         }
 
 
         String msgText = "" + messageContentView.getText();
-        // Sharing an url and the like before will have filled the smlJsonLd variable and enabled the switch.
-        // We already showed the user a preview, but have not set the actual text to the hetc result yet
-        if (!isDraft && smlJsonLd != null && smlHTMLEmail != null && smlModeSwitch.isChecked()) {
-            msgText = smlHTMLEmail;
-            currentMessageFormat = SimpleMessageFormat.HTML;
-        }
 
         // Note this only gets executed on send/ save-as-draft.
         //       I don't see why we would do this transformation so late.
@@ -1024,6 +1021,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
                 .setMessageFormat(currentMessageFormat)
             // todo this currently sets both text/plain and text/html parts.
+            // For a SmlMessageBuilder, this is the same as setPlaintext
                 .setText(CrLfConverter.toCrLf(msgText))
                 .setAttachments(attachmentPresenter.getAttachments())
                 .setInlineAttachments(attachmentPresenter.getInlineAttachments())
