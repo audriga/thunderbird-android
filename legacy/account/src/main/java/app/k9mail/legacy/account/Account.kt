@@ -424,6 +424,11 @@ class Account(
     @set:Synchronized
     var shouldMigrateToOAuth = false
 
+
+    @get:Synchronized
+    @set:Synchronized
+    var smlVariant = SmlVariant.SML_IN_HTML
+
     /**
      * @param automaticCheckIntervalMinutes or -1 for never.
      */
@@ -636,6 +641,12 @@ class Account(
         TEXT,
         HTML,
         AUTO,
+    }
+
+
+    enum class SmlVariant {
+        SML_IN_HTML,
+        DEDICATED_MULTIPART,
     }
 
     enum class Expunge {

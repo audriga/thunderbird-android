@@ -138,6 +138,7 @@ class AccountSettingsDataStore(
             "account_remote_search_num_results" -> account.remoteSearchNumResults.toString()
             "account_ringtone" -> account.notificationSettings.ringtone
             "notification_light" -> account.notificationSettings.light.name
+            "sml_variant_enum" -> account.smlVariant.name
             else -> defValue
         }
     }
@@ -181,6 +182,7 @@ class AccountSettingsDataStore(
             "account_remote_search_num_results" -> account.remoteSearchNumResults = value.toInt()
             "account_ringtone" -> setNotificationSound(value)
             "notification_light" -> setNotificationLight(value)
+            "sml_variant_enum" -> account.smlVariant = Account.SmlVariant.valueOf(value)
             else -> return
         }
 

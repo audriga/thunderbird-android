@@ -175,4 +175,8 @@
         <item>@string/account_settings_remote_search_num_results_entries_all</item>
     </string-array>
 
+    <string-array name="sml_variant_entries">
+        <item>@string/account_settings_sml_variant_sml_in_html</item>
+        <item>@string/account_settings_sml_variant_dedicated_part</item>
+    </string-array>
 </resources>

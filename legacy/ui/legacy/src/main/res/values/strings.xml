@@ -1124,4 +1124,7 @@ You can keep this message and use it as a backup for your secret key. If you wan
     <!-- Description of the "Usage and technical data" setting used in the "data collection" section of the general settings screen -->
     <string name="settings_ui_telemetry_description">Shares performance, usage, hardware and customization data about this app with Mozilla to help us make Thunderbird better</string>
     <string name="sml_switch_text">Send content as SML</string>
+    <string name="account_settings_sml_variant_label">SML variant to send</string>
+    <string name="account_settings_sml_variant_sml_in_html">SML in HTML</string>
+    <string name="account_settings_sml_variant_dedicated_part">Dedicated Multipart containing SML</string>
 </resources>

@@ -14,6 +14,7 @@ import app.k9mail.legacy.account.Account.QuoteStyle
 import app.k9mail.legacy.account.Account.ShowPictures
 import app.k9mail.legacy.account.Account.SortType
 import app.k9mail.legacy.account.Account.SpecialFolderSelection
+import app.k9mail.legacy.account.Account.SmlVariant
 import app.k9mail.legacy.account.Identity
 import app.k9mail.legacy.notification.NotificationLight
 import app.k9mail.legacy.notification.NotificationSettings
@@ -205,6 +206,9 @@ class AccountPreferenceSerializer(
 
             shouldMigrateToOAuth = storage.getBoolean("$accountUuid.migrateToOAuth", false)
 
+
+            smlVariant = getEnumStringPref<SmlVariant>(storage, "$accountUuid.smlVariantEnum", SmlVariant.SML_IN_HTML)
+
             val isFinishedSetup = storage.getBoolean("$accountUuid.isFinishedSetup", true)
             if (isFinishedSetup) markSetupFinished()
 
@@ -368,6 +372,7 @@ class AccountPreferenceSerializer(
             editor.putBoolean("$accountUuid.useCompression", useCompression)
             editor.putBoolean("$accountUuid.sendClientInfo", isSendClientInfoEnabled)
             editor.putBoolean("$accountUuid.migrateToOAuth", shouldMigrateToOAuth)
+            editor.putString("$accountUuid.smlVariantEnum", smlVariant.name)
         }
 
         saveIdentities(account, storage, editor)
@@ -486,6 +491,7 @@ class AccountPreferenceSerializer(
         editor.remove("$accountUuid.useCompression")
         editor.remove("$accountUuid.sendClientInfo")
         editor.remove("$accountUuid.migrateToOAuth")
+        editor.remove("$accountUuid.smlVariantEnum")
 
         deleteIdentities(account, storage, editor)
         // TODO: Remove preference settings that may exist for individual folders in the account.
@@ -614,6 +620,7 @@ class AccountPreferenceSerializer(
             isAlwaysShowCcBcc = false
             lastSyncTime = 0L
             lastFolderListRefreshTime = 0L
+            smlVariant = SmlVariant.SML_IN_HTML
 
             setArchiveFolderId(null, SpecialFolderSelection.AUTOMATIC)
             setDraftsFolderId(null, SpecialFolderSelection.AUTOMATIC)

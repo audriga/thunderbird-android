@@ -260,6 +260,16 @@
             android:title="@string/account_settings_outgoing_label"
             />
 
+        <ListPreference
+            android:dialogTitle="@string/account_settings_sml_variant_label"
+            android:entries="@array/sml_variant_entries"
+            android:entryValues="@array/sml_variant_values"
+            android:key="sml_variant_enum"
+            app:useSimpleSummaryProvider="true"
+            android:title="@string/account_settings_sml_variant_label"
+            />
+
+
     </PreferenceScreen>
 
     <PreferenceScreen

@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import android.content.Context;
 
+import app.k9mail.legacy.account.Account.SmlVariant;
 import app.k9mail.legacy.notification.NotificationLight;
 import app.k9mail.legacy.account.Account;
 import app.k9mail.legacy.account.Account.DeletePolicy;
@@ -282,6 +283,9 @@ class AccountSettingsDescriptions {
         ));
         s.put("sendClientInfo", Settings.versions(
                 new V(91, new BooleanSetting(true))
+        ));
+        s.put("smlVariantEnum", Settings.versions(
+            new V(98, new EnumSetting<>(SmlVariant.class, SmlVariant.SML_IN_HTML))
         ));
         // note that there is no setting for openPgpProvider, because this will have to be set up together
         // with the actual provider after import anyways.
