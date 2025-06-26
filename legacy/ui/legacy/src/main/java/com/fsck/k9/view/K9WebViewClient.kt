@@ -24,7 +24,6 @@ import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
-import com.fsck.k9.activity.MessageCompose
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.logging.Timber
@@ -36,13 +35,17 @@ import com.fsck.k9.mail.internet.MimeMessageHelper
 import com.fsck.k9.mail.internet.MimeMultipart
 import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.mailstore.AttachmentResolver
-import com.fsck.k9.message.MessageBuilder
 import com.fsck.k9.message.MessageBuilder.Callback
 import com.fsck.k9.message.SmlMessageUtil
 import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Date
+import okhttp3.Request;
+import okhttp3.Request.Builder;
+import okhttp3.Response;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
 
 // import android.R.style
 
@@ -114,28 +117,31 @@ internal class K9WebViewClient(
                             builder.setTo(to.toList())
                             builder.setSubject(requestAction)
                             builder.setIdentity(account.identities.first()) // todo this also is not clean, but we want no interaction, so how would we pick the identity
-                            builder.buildAsync(object : Callback {
-                                override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
-                                    mc.sendMessage(account, message, requestAction, null)
-                                    Toast.makeText(webView.context, "Sent $requestAction", Toast.LENGTH_SHORT).show()
-                                    //todo show success when done
-                                }
+                            builder.buildAsync(
+                                object : Callback {
+                                    override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
+                                        mc.sendMessage(account, message, requestAction, null)
+                                        Toast.makeText(webView.context, "Sent $requestAction", Toast.LENGTH_SHORT)
+                                            .show()
+                                        //todo show success when done
+                                    }
 
-                                override fun onMessageBuildCancel() {
+                                    override fun onMessageBuildCancel() {
 //                                    TODO("Not yet implemented")
-                                }
+                                    }
 
-                                override fun onMessageBuildException(exception: MessagingException?) {
+                                    override fun onMessageBuildException(exception: MessagingException?) {
 //                                    TODO("Not yet implemented")
-                                }
+                                    }
 
-                                override fun onMessageBuildReturnPendingIntent(
-                                    pendingIntent: PendingIntent?,
-                                    requestCode: Int,
-                                ) {
+                                    override fun onMessageBuildReturnPendingIntent(
+                                        pendingIntent: PendingIntent?,
+                                        requestCode: Int,
+                                    ) {
 //                                    TODO("Not yet implemented")
-                                }
-                            })
+                                    }
+                                },
+                            )
 
                         } else {
                             // todo show non-success
@@ -156,6 +162,10 @@ internal class K9WebViewClient(
                 } else {
                     openUrl(webView.context, uri)
                 }
+                true
+            }
+            XREQUEST_SCHEME -> {
+                xrequest(webView.context, uri)
                 true
             }
             else -> {
@@ -406,6 +416,27 @@ internal class K9WebViewClient(
         clipboardManager.setText(label, content)
     }
 
+    private fun xrequest(context: Context, uri: Uri) {
+        val httpUri = uri.buildUpon().scheme("https").build()
+        val client: OkHttpClient = OkHttpClient()
+        var htmlSrc: String? = null
+        var okErr: String? = null
+        try {
+            val request: Request = Builder()
+                .url(httpUri.toString()).build()
+            client.newCall(request).execute().use { response ->
+                if (response.body != null) {
+                    htmlSrc = response.body!!.string()
+                    Timber.d("Got response from %s:\n%s", httpUri, htmlSrc)
+                }
+            }
+        } catch (e: java.lang.Exception) {
+            okErr = e.message
+            Timber.d(e, "Couldn't get: %s", httpUri)
+        }
+        return;
+    }
+
     private fun openUrl(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             putExtra(Browser.EXTRA_APPLICATION_ID, context.packageName)
@@ -481,6 +512,7 @@ internal class K9WebViewClient(
         private const val XSTORY_SCHEME = "xstory"
         private const val XCLIPBOARD_SCHEME = "xclipboard"
         private const val MAILTO_SCHEME = "mailto"
+        private const val XREQUEST_SCHEME = "xrequest"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

@@ -438,6 +438,7 @@ public class MessageViewInfoExtractor {
 //                    + "<br><a href=\"xstory:#" + url_story + "\">xstory</a>"
 //                    + "<br><a href=\"xstory:#" + url_story2 + "\">xstory2</a>"
 //                    + "<br><a href=\"xstory:#" + url_story3 + "\">xstory3</a>"
+//                    + "<br><a href=\"xrequest://www.audriga.eu/test/web-stories/amp_story.html\">httprequest</a>"
 //                    + "<br><hr><br><br>";
 //
 //
