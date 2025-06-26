@@ -40,6 +40,7 @@ import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.internet.TextBody;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.model.Calendar;
+import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.james.mime4j.util.MimeUtil;
 import org.audriga.ld2h.ButtonDescription;
@@ -372,15 +373,22 @@ public class MessageViewInfoExtractor {
                             Calendar cal = cbuilder.build(is);
 
                             System.out.println(cal.getUid());
-                            VEvent event = (VEvent) cal.getComponents().get(0);
+                            VEvent event = null;
+                            for (CalendarComponent c : cal.getComponents()){
+                                if (c instanceof VEvent) {
+                                    event = (VEvent) c;
+                                    break;
+                                }
+                            }
+                            if (event != null) {
+                                SimpleModule module = new SimpleModule();
+                                module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
+                                ObjectMapper mapper = new ObjectMapper();
+                                mapper.registerModule(module);
 
-                            SimpleModule module = new SimpleModule();
-                            module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
-                            ObjectMapper mapper = new ObjectMapper();
-                            mapper.registerModule(module);
-
-                            String serialized = mapper.writeValueAsString(event);
-                            data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized));
+                                String serialized = mapper.writeValueAsString(event);
+                                data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized));
+                            }
                         }
                         case "vcard": {}
                         case "pkpass": {}
