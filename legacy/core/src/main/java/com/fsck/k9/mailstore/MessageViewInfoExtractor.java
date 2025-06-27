@@ -30,6 +30,7 @@ import androidx.annotation.WorkerThread;
 
 import app.k9mail.legacy.account.Account;
 import app.k9mail.legacy.di.DI;
+import app.k9mail.legacy.message.controller.MessageReference;
 import app.k9mail.legacy.message.controller.SimpleMessagingListener;
 import com.audriga.jakarta.sml.h2lj.model.StructuredData;
 import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
@@ -193,6 +194,10 @@ public class MessageViewInfoExtractor {
 
     private MessageViewInfo extractSimpleMessageForView(Message message, Part contentPart) throws MessagingException {
         List<AttachmentViewInfo> attachmentInfos = new ArrayList<>();
+        MessageReference reference = null;
+        if (message instanceof LocalMessage) {
+            reference = ((LocalMessage) message).makeMessageReference();
+        }
         ViewableExtractedText viewable = extractViewableAndAttachments(
                 Collections.singletonList(contentPart), attachmentInfos);
         AttachmentResolver attachmentResolver = AttachmentResolver.createFromPart(contentPart);

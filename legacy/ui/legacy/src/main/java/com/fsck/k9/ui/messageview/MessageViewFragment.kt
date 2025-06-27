@@ -342,10 +342,11 @@ class MessageViewFragment :
             messageTopView,
             account,
             messageViewInfo,
+            message?.makeMessageReference(),
         )
 
         if (!handledByCryptoPresenter) {
-            messageTopView.showMessage(account, messageViewInfo)
+            messageTopView.showMessage(account, messageViewInfo, message?.makeMessageReference())
 
             if (account.isOpenPgpProviderConfigured) {
                 messageTopView.messageHeaderView.setCryptoStatusDisabled()

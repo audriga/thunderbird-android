@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import android.text.TextUtils;
 
 import app.k9mail.legacy.account.Account;
+import app.k9mail.legacy.message.controller.MessageReference;
 import com.fsck.k9.mailstore.CryptoResultAnnotation;
 import com.fsck.k9.mailstore.MessageViewInfo;
 import com.fsck.k9.view.MessageCryptoDisplayStatus;
@@ -49,7 +50,7 @@ public class MessageCryptoPresenter {
         }
     }
 
-    public boolean maybeHandleShowMessage(MessageTopView messageView, Account account, MessageViewInfo messageViewInfo) {
+    public boolean maybeHandleShowMessage(MessageTopView messageView, Account account, MessageViewInfo messageViewInfo, MessageReference messageReference) {
         this.cryptoResultAnnotation = messageViewInfo.cryptoResultAnnotation;
 
         MessageCryptoDisplayStatus displayStatus =
@@ -88,7 +89,7 @@ public class MessageCryptoPresenter {
             case INCOMPLETE_SIGNED:
             case UNSUPPORTED_SIGNED:
             default: {
-                messageView.showMessage(account, messageViewInfo);
+                messageView.showMessage(account, messageViewInfo, messageReference);
                 break;
             }
 

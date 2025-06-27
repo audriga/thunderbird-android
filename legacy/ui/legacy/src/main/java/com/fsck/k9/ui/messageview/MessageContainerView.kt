@@ -25,6 +25,7 @@ import android.widget.Toast
 import androidx.core.app.ShareCompat.IntentBuilder
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.contact.ContactIntentHelper
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.helper.Utility
@@ -414,6 +415,7 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
         loadPictures: Boolean,
         hideUnsignedTextDivider: Boolean,
         attachmentCallback: AttachmentViewCallback?,
+        messageReference: MessageReference?,
     ) {
         this.attachmentCallback = attachmentCallback
 
@@ -438,6 +440,7 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
             htmlText = textToDisplay,
             attachmentResolver = messageViewInfo.attachmentResolver,
             onPageFinishedListener = onRenderingFinishedListener::onLoadFinished,
+            messageReference = messageReference,
         )
 
         if (!messageViewInfo.extraText.isNullOrEmpty()) {
@@ -451,10 +454,11 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
         htmlText: String,
         attachmentResolver: AttachmentResolver,
         onPageFinishedListener: OnPageFinishedListener,
+        messageReference: MessageReference?,
     ) {
         currentHtmlText = htmlText
         currentAttachmentResolver = attachmentResolver
-        messageContentView.displayHtmlContentWithInlineAttachments(htmlText, attachmentResolver, onPageFinishedListener)
+        messageContentView.displayHtmlContentWithInlineAttachments(htmlText, attachmentResolver, onPageFinishedListener, messageReference)
     }
 
     private fun refreshDisplayedContent() {

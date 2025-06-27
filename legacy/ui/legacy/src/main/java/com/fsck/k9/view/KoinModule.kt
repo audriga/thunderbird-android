@@ -1,5 +1,6 @@
 package com.fsck.k9.view
 
+import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ReplyToParser
 import com.fsck.k9.mailstore.AttachmentResolver
 import com.fsck.k9.message.ReplyActionStrategy
@@ -12,8 +13,8 @@ val viewModule = module {
     factory { RelativeDateTimeFormatter(context = get(), clock = get()) }
     factory { ReplyToParser() }
     factory { ReplyActionStrategy(replyRoParser = get()) }
-    factory { (attachmentResolver: AttachmentResolver?, onPageFinishedListener: OnPageFinishedListener?) ->
-        K9WebViewClient(clipboardManager = get(), attachmentResolver, onPageFinishedListener)
+    factory { (attachmentResolver: AttachmentResolver?, onPageFinishedListener: OnPageFinishedListener?, messageReference: MessageReference) ->
+        K9WebViewClient(clipboardManager = get(), attachmentResolver, onPageFinishedListener, messageReference)
     }
     factory { WebViewClientFactory() }
     factory { UserInputEmailAddressParser() }

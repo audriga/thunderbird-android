@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
+import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
@@ -56,6 +57,7 @@ internal class K9WebViewClient(
     private val clipboardManager: ClipboardManager,
     private val attachmentResolver: AttachmentResolver?,
     private val onPageFinishedListener: OnPageFinishedListener?,
+    private val messageReference: MessageReference?,
 ) : WebViewClient() {
     private var mimeBoundary: Int = 0
 

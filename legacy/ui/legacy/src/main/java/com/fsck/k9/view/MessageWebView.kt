@@ -14,6 +14,7 @@ import timber.log.Timber
 
 import android.content.Intent
 import android.net.Uri
+import app.k9mail.legacy.message.controller.MessageReference
 
 class MessageWebView : WebView, KoinComponent {
     constructor(context: Context) : super(context)
@@ -118,17 +119,30 @@ class MessageWebView : WebView, KoinComponent {
     fun displayHtmlContentWithInlineAttachments(
         htmlText: String,
         attachmentResolver: AttachmentResolver?,
+        onPageFinishedListener: OnPageFinishedListener?
+    ) = displayHtmlContentWithInlineAttachments(
+        htmlText,
+        attachmentResolver,
+        onPageFinishedListener,
+        null,
+        )
+
+    fun displayHtmlContentWithInlineAttachments(
+        htmlText: String,
+        attachmentResolver: AttachmentResolver?,
         onPageFinishedListener: OnPageFinishedListener?,
+        messageReference: MessageReference? = null,
     ) {
-        setWebViewClient(attachmentResolver, onPageFinishedListener)
+        setWebViewClient(attachmentResolver, onPageFinishedListener, messageReference)
         setHtmlContent(htmlText)
     }
 
     private fun setWebViewClient(
         attachmentResolver: AttachmentResolver?,
         onPageFinishedListener: OnPageFinishedListener?,
+        messageReference: MessageReference?
     ) {
-        val webViewClient = webViewClientFactory.create(attachmentResolver, onPageFinishedListener)
+        val webViewClient = webViewClientFactory.create(attachmentResolver, onPageFinishedListener, messageReference)
         setWebViewClient(webViewClient)
     }
 
