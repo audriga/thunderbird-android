@@ -99,69 +99,7 @@ internal class K9WebViewClient(
                 true
             }
             MAILTO_SCHEME -> {
-//                val actionQuery = uri.getQueryParameters("action") //for some reason this throws an exception
-                val query = uri.query;
-                if (query != null && query.contains("action")) {
-                    val schemaSpecific = uri.schemeSpecificPart
-                    val end = schemaSpecific.indexOf('?')
-                    val recipient = Uri.decode(schemaSpecific.substring(0, end))
-                    val requestAction = query.substring(query.indexOf('=')+1, query.length)
-                    val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction);
-                    if (smlPayload != null) {
-                        val mc = DI.get(MessagingController::class.java)
-                        val preferences = DI.get(Preferences::class.java)
-                        val account: Account? = preferences.defaultAccount
-                        if (account != null) {
-                            val builder = SmlMessageUtil.createSMLMessageBuilder(listOf(smlPayload), SmlMessageUtil.getSmlVariantFromAccount(account))
-                            val to = Address.parse(recipient) // todo error handling for this
-                            builder.setTo(to.toList())
-                            builder.setSubject(requestAction)
-                            builder.setIdentity(account.identities.first()) // todo this also is not clean, but we want no interaction, so how would we pick the identity
-                            builder.buildAsync(
-                                object : Callback {
-                                    override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
-                                        mc.sendMessage(account, message, requestAction, null)
-                                        Toast.makeText(webView.context, "Sent $requestAction", Toast.LENGTH_SHORT)
-                                            .show()
-                                        //todo show success when done
-                                    }
-
-                                    override fun onMessageBuildCancel() {
-//                                    TODO("Not yet implemented")
-                                    }
-
-                                    override fun onMessageBuildException(exception: MessagingException?) {
-//                                    TODO("Not yet implemented")
-                                    }
-
-                                    override fun onMessageBuildReturnPendingIntent(
-                                        pendingIntent: PendingIntent?,
-                                        requestCode: Int,
-                                    ) {
-//                                    TODO("Not yet implemented")
-                                    }
-                                },
-                            )
-
-                        } else {
-                            // todo show non-success
-                        }
-                    } else {
-                        // todo show non-success
-                    }
-
-////                    val bundle = Bundle();
-////                    bundle.putString("recipient", recipient)
-////                    bundle.putString("action", requestAction)
-//                    val intent = Intent(webView.context, MessageCompose::class.java).apply {
-//                        action = MessageCompose.ACTION_COMPOSE_APPROVE
-//                        data = uri
-//                    }.putExtra("recipient", recipient).putExtra("requestAction", requestAction)
-////                        .putExtra(MessageCompose.IS_SML, true)
-//                    webView.context.startActivity(intent)
-                } else {
-                    openUrl(webView.context, uri)
-                }
+                mailTo(webView.context, uri)
                 true
             }
             XREQUEST_SCHEME -> {
@@ -172,6 +110,74 @@ internal class K9WebViewClient(
                 openUrl(webView.context, uri)
                 true
             }
+        }
+    }
+
+    private fun mailTo(context: Context, uri: Uri) {
+//                val actionQuery = uri.getQueryParameters("action") //for some reason this throws an exception
+        val query = uri.query;
+        if (query != null && query.contains("action")) {
+            val schemaSpecific = uri.schemeSpecificPart
+            val end = schemaSpecific.indexOf('?')
+            val recipient = Uri.decode(schemaSpecific.substring(0, end))
+            val requestAction = query.substring(query.indexOf('=') + 1, query.length)
+            val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction);
+            if (smlPayload != null) {
+                val mc = DI.get(MessagingController::class.java)
+                val preferences = DI.get(Preferences::class.java)
+                val account: Account? = preferences.defaultAccount
+                if (account != null) {
+                    val builder = SmlMessageUtil.createSMLMessageBuilder(
+                        listOf(smlPayload),
+                        SmlMessageUtil.getSmlVariantFromAccount(account),
+                    )
+                    val to = Address.parse(recipient) // todo error handling for this
+                    builder.setTo(to.toList())
+                    builder.setSubject(requestAction)
+                    builder.setIdentity(account.identities.first()) // todo this also is not clean, but we want no interaction, so how would we pick the identity
+                    builder.buildAsync(
+                        object : Callback {
+                            override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
+                                mc.sendMessage(account, message, requestAction, null)
+                                Toast.makeText(context, "Sent $requestAction", Toast.LENGTH_SHORT)
+                                    .show()
+                                //todo show success when done
+                            }
+
+                            override fun onMessageBuildCancel() {
+    //                                    TODO("Not yet implemented")
+                            }
+
+                            override fun onMessageBuildException(exception: MessagingException?) {
+    //                                    TODO("Not yet implemented")
+                            }
+
+                            override fun onMessageBuildReturnPendingIntent(
+                                pendingIntent: PendingIntent?,
+                                requestCode: Int,
+                            ) {
+    //                                    TODO("Not yet implemented")
+                            }
+                        },
+                    )
+                } else {
+                    // todo show non-success
+                }
+            } else {
+                // todo show non-success
+            }
+
+    ////                    val bundle = Bundle();
+    ////                    bundle.putString("recipient", recipient)
+    ////                    bundle.putString("action", requestAction)
+    //                    val intent = Intent(webView.context, MessageCompose::class.java).apply {
+    //                        action = MessageCompose.ACTION_COMPOSE_APPROVE
+    //                        data = uri
+    //                    }.putExtra("recipient", recipient).putExtra("requestAction", requestAction)
+    ////                        .putExtra(MessageCompose.IS_SML, true)
+    //                    webView.context.startActivity(intent)
+        } else {
+            openUrl(context, uri)
         }
     }
 
