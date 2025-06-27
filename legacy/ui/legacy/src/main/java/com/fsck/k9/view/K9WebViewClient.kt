@@ -42,11 +42,11 @@ import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Date
-import okhttp3.Request;
-import okhttp3.Request.Builder;
-import okhttp3.Response;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Request.Builder
+import org.audriga.ld2h.JsonLdDeserializer
+import org.audriga.ld2h.MustacheRenderer
 
 // import android.R.style
 
@@ -90,6 +90,10 @@ internal class K9WebViewClient(
             }
             XSTORY_SCHEME -> {
                 xstory(webView.context, uri)
+                true
+            }
+            XRELOAD_SCHEME -> {
+                xreload(webView.context, uri)
                 true
             }
             FILE_SCHEME -> {
@@ -289,6 +293,74 @@ internal class K9WebViewClient(
         // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
         dialogAlert.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 
+
+    }
+
+    private fun xreload(context: Context, uri: Uri) {
+        val httpUri = uri.buildUpon().scheme("https").build()
+        val client = OkHttpClient()
+        var jsonSrc: String? = null
+        var okErr: String? = null
+        try {
+            val request: Request = Builder()
+                .url(httpUri.toString()).build()
+            client.newCall(request).execute().use { response ->
+                if (response.body != null) {
+                    jsonSrc = response.body!!.string()
+                    Timber.d("Got response from %s:\n%s", httpUri, jsonSrc)
+                }
+            }
+        } catch (e: java.lang.Exception) {
+            okErr = e.message
+            Timber.d(e, "Couldn't get: %s", httpUri)
+        }
+
+        var xwebView = WebView(context) // findViewById(R.id.webview)
+
+        xwebView.setVisibility(View.VISIBLE);
+        xwebView.settings.javaScriptEnabled = true
+        xwebView.settings.domStorageEnabled = true
+
+
+        if (jsonSrc != null) {
+            val jsonLds = JsonLdDeserializer.deserialize(jsonSrc)
+            val renderer: MustacheRenderer = MustacheRenderer()
+
+            val renderedHTMLs: ArrayList<String> = ArrayList(jsonLds.size)
+            for (jsonObject in jsonLds) {
+//                val buttons: List<ButtonDescription> = getButtons(jsonObject)
+                val result: String = renderer.render(jsonObject)
+                renderedHTMLs.add(result)
+            }
+
+            val result = renderedHTMLs.joinToString("\n")
+            val css = """<head>
+  <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+</head>"""
+            val htmlToDisplay = "<!DOCTYPE html>$css<html><body>$result</body></html>"
+            xwebView.loadDataWithBaseURL("about:blank", htmlToDisplay, "text/html", "utf-8", null)
+
+            // R.style.FullscreenDialogStyle
+            // android.R.style.Theme_Black_NoTitleBar_Fullscreen
+            var dialogAlert = MaterialAlertDialogBuilder(context)
+                .setView(xwebView)
+                //.setTitle("title")
+                //.setMessage("msg: " + s)
+                .setPositiveButton("Close", null)
+                .setCancelable(false)
+                .create()
+                .apply {
+                    setCanceledOnTouchOutside(false)
+                    show()
+                }
+
+            // Make Fullscreen
+            // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
+            dialogAlert.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        } else {
+            showToast(context, "Got no content ($okErr)")
+        }
 
     }
 
@@ -518,6 +590,7 @@ internal class K9WebViewClient(
         private const val XALERT_SCHEME = "xalert"
         private const val XJS_SCHEME = "xjs"
         private const val XSTORY_SCHEME = "xstory"
+        private const val XRELOAD_SCHEME = "xreload"
         private const val XCLIPBOARD_SCHEME = "xclipboard"
         private const val MAILTO_SCHEME = "mailto"
         private const val XREQUEST_SCHEME = "xrequest"
