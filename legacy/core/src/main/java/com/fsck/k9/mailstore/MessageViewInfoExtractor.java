@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.text.TextUtils;
 import android.util.Pair;
+import android.util.Patterns;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -403,7 +405,14 @@ public class MessageViewInfoExtractor {
             }
 
             if (data.isEmpty() && extracted == null) {
-                sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
+                String url = tryExtractWhitelistedUrl(textString, htmlString);
+                if (url != null) {
+                    // Substring to remove https:// prefix
+                    String button = "<a href=\"xloadcards://"+ url.substring(8) +"\">Load Cards</a><br><hr><br><br>";
+                    sanitizedHtml = button + sanitizedHtml;
+                } else {
+                    sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
+                }
             } else {
                 String css = "<head>\n" +
                     "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
@@ -790,9 +799,9 @@ public class MessageViewInfoExtractor {
 
     @Nullable
     static JSONObject tryExtract(String text, String html) throws JSONException {
-        Pattern pattern = Pattern.compile("[0-9]{6}");
-        Matcher textMatcher = pattern.matcher(text);
-        Matcher htmlMatcher = pattern.matcher(html);
+        Pattern c2cpattern = Pattern.compile("[0-9]{6}");
+        Matcher textMatcher = c2cpattern.matcher(text);
+        Matcher htmlMatcher = c2cpattern.matcher(html);
         if (textMatcher.find() && htmlMatcher.find()) {
             String textMatch = textMatcher.group();
 //            String htmlMatch = htmlMatcher.group();
@@ -807,6 +816,31 @@ public class MessageViewInfoExtractor {
                        .put("description", textMatch));
 //            }
         }
+        return null;
+    }
+
+    @Nullable
+    static String tryExtractWhitelistedUrl(String text, String html) {
+        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com");
+        Matcher urlPlaintextMatcher = Patterns.WEB_URL.matcher(text);
+        while (urlPlaintextMatcher.find()) {
+            String url = urlPlaintextMatcher.group();
+            for (String whiteListedUrl : whiteListedUrls) {
+                if (url.contains(whiteListedUrl)) {
+                    return  url;
+                }
+            }
+        }
+        Matcher urlHtmlMatcher = Patterns.WEB_URL.matcher(html);
+        while (urlHtmlMatcher.find()) {
+            String url = urlHtmlMatcher.group();
+            for (String whiteListedUrl : whiteListedUrls) {
+                if (url.contains(whiteListedUrl)) {
+                    return  url;
+                }
+            }
+        }
+
         return null;
     }
 }

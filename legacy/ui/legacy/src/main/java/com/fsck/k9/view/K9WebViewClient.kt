@@ -23,6 +23,9 @@ import androidx.annotation.RequiresApi
 import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
+import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils;
+import com.audriga.jakarta.sml.h2lj.model.StructuredData;
+import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
@@ -110,6 +113,10 @@ internal class K9WebViewClient(
             }
             XREQUEST_SCHEME -> {
                 xrequest(webView.context, uri)
+                true
+            }
+            XLOADCARDS_SCHEME -> {
+                xloadcards(webView.context, uri)
                 true
             }
             else -> {
@@ -517,6 +524,83 @@ internal class K9WebViewClient(
         return;
     }
 
+    private fun xloadcards(context: Context, uri: Uri) {
+        val httpUri = uri.buildUpon().scheme("https").build()
+        val client = OkHttpClient()
+        var htmlSrc: String? = null
+        var okErr: String? = null
+        try {
+            val request: Request = Builder()
+                .url(httpUri.toString()).build()
+            client.newCall(request).execute().use { response ->
+                if (response.body != null) {
+                    htmlSrc = response.body!!.string()
+                    Timber.d("Got response from %s:\n%s", httpUri, htmlSrc)
+                }
+            }
+        } catch (e: java.lang.Exception) {
+            okErr = e.message
+            Timber.d(e, "Couldn't get: %s", httpUri)
+        }
+        if (htmlSrc != null) {
+            var data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
+            if (data.isEmpty()) {
+                data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
+            }
+            if (data.isEmpty()) {
+                showToast(context, "Could not load cards")
+            } else {
+                val ld2hRenderer = org.audriga.ld2h.MustacheRenderer()
+                val renderedDisplayHTMLs = ArrayList<String>(data.size)
+                for (structuredData in data) {
+                    val jsonObject = structuredData.json;
+                    val ld2hRenderResult = ld2hRenderer.render(jsonObject)
+                    if (ld2hRenderResult != null) {
+                        renderedDisplayHTMLs.add(ld2hRenderResult);
+                    }
+                }
+                if (renderedDisplayHTMLs.isNotEmpty()) {
+                    val xwebView = WebView(context) // findViewById(R.id.webview)
+
+                    xwebView.setVisibility(View.VISIBLE);
+                    xwebView.settings.javaScriptEnabled = true
+                    xwebView.settings.domStorageEnabled = true
+
+                    val result = renderedDisplayHTMLs.joinToString("\n")
+                    val css = """<head>
+  <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+</head>"""
+                    val htmlToDisplay = "<!DOCTYPE html>$css<html><body>$result</body></html>"
+                    xwebView.loadDataWithBaseURL("about:blank", htmlToDisplay, "text/html", "utf-8", null)
+
+                    // R.style.FullscreenDialogStyle
+                    // android.R.style.Theme_Black_NoTitleBar_Fullscreen
+                    val dialogAlert = MaterialAlertDialogBuilder(context)
+                        .setView(xwebView)
+                        //.setTitle("title")
+                        //.setMessage("msg: " + s)
+                        .setPositiveButton("Close", null)
+                        .setCancelable(false)
+                        .create()
+                        .apply {
+                            setCanceledOnTouchOutside(false)
+                            show()
+                        }
+
+                    // Make Fullscreen
+                    // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
+                    dialogAlert.window?.setLayout(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                    )
+                }
+            }
+        } else {
+            showToast(context, "Got no content ($okErr)")
+        }
+    }
+
     private fun openUrl(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             putExtra(Browser.EXTRA_APPLICATION_ID, context.packageName)
@@ -594,6 +678,7 @@ internal class K9WebViewClient(
         private const val XCLIPBOARD_SCHEME = "xclipboard"
         private const val MAILTO_SCHEME = "mailto"
         private const val XREQUEST_SCHEME = "xrequest"
+        private const val XLOADCARDS_SCHEME = "xloadcards"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)
