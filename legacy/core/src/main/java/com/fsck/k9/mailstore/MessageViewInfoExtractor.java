@@ -810,22 +810,24 @@ public class MessageViewInfoExtractor {
 
     @Nullable
     static JSONObject tryExtract(String text, String html) throws JSONException {
-        Pattern c2cpattern = Pattern.compile("[0-9]{6}");
-        Matcher textMatcher = c2cpattern.matcher(text);
-        Matcher htmlMatcher = c2cpattern.matcher(html);
-        if (textMatcher.find() && htmlMatcher.find()) {
-            String textMatch = textMatcher.group();
-//            String htmlMatch = htmlMatcher.group();
-//            if (textMatch.equals(htmlMatch)) {
+//        Pattern c2cpattern = Pattern.compile("[0-9]{6}");
+        Pattern boldc2cpattern = Pattern.compile("<b>[0-9]{4,}</b>");
+//        Matcher textMatcher = c2cpattern.matcher(text);
+        Matcher htmlMatcher = boldc2cpattern.matcher(html);
+        while (htmlMatcher.find()) {
+//            String textMatch = textMatcher.group();
+            String htmlMatch = htmlMatcher.group();
+            String code = htmlMatch.substring(3, htmlMatch.length() -4);
+            if (text.contains(code)) {
                return new JSONObject()
                    .put("@context", "https://schema.org")
                    .put("@type", "EmailMessage")
-                   .put("description", "Confirmation code: " + textMatch)
+                   .put("description", "Confirmation code: " + code)
                    .put("potentialAction", new JSONObject()
                        .put("@type", "CopyToClipboardAction")
-                       .put( "name", "Copy " + textMatch)
-                       .put("description", textMatch));
-//            }
+                       .put( "name", "Copy " + code)
+                       .put("description", code));
+            }
         }
         return null;
     }
