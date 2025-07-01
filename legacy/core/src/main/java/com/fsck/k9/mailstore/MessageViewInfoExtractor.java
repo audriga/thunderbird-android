@@ -483,8 +483,19 @@ public class MessageViewInfoExtractor {
      */
     static private List<ButtonDescription> getButtons(JSONObject jsonObject) {
         List<ButtonDescription> buttons = new ArrayList<>();
-        buttons.add(new ButtonDescription("Call", "tel:124"));
-        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
+        JSONObject potentialActions = jsonObject.optJSONObject("potentialAction");
+        if (potentialActions != null) {
+            String type = potentialActions.optString("@type");
+            if (type.equals("CopyToClipboardAction")) {
+                String name = potentialActions.optString("name", "Copy to clipboard ");
+                String description = potentialActions.optString("description");
+                if (!description.isEmpty()) {
+                    buttons.add(new ButtonDescription(name, "xclipboard:" + description));
+                }
+            }
+        }
+//        buttons.add(new ButtonDescription("Call", "tel:124"));
+//        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
         return  buttons;
     }
 
@@ -809,10 +820,10 @@ public class MessageViewInfoExtractor {
                return new JSONObject()
                    .put("@context", "https://schema.org")
                    .put("@type", "EmailMessage")
-                   .put("description", "Copy the confirmation code " + textMatch)
+                   .put("description", "Confirmation code: " + textMatch)
                    .put("potentialAction", new JSONObject()
                        .put("@type", "CopyToClipboardAction")
-                       .put( "name", "Confirmation code")
+                       .put( "name", "Copy " + textMatch)
                        .put("description", textMatch));
 //            }
         }
