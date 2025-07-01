@@ -1,28 +1,20 @@
 package com.fsck.k9.activity;
 
-import app.k9mail.core.ui.legacy.designsystem.atom.icon.Icons.Outlined;
 import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentsChangedListener;
-import com.fsck.k9.message.Attachment.LoadingState;
 import com.fsck.k9.message.MessageBuilder.Callback;
-import com.fsck.k9.message.SimpleSmlMessageBuilder;
 import com.fsck.k9.message.SmlMessageUtil;
-import com.fsck.k9.message.SmlStandardVariant;
 import com.fsck.k9.view.MessageWebView;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import okhttp3.Request;
 import okhttp3.Request.Builder;
 import okhttp3.Response;
-import okhttp3.Call;
 import okhttp3.OkHttpClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -58,7 +50,6 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -138,10 +129,6 @@ import com.fsck.k9.ui.helper.SizeFormatter;
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
-import org.audriga.hetc.*;
-import org.audriga.ld2h.*;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.openintents.openpgp.OpenPgpApiManager;
 import org.openintents.openpgp.util.OpenPgpApi;
@@ -155,17 +142,6 @@ import timber.log.Timber;
 import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils;
 import com.audriga.jakarta.sml.h2lj.model.StructuredData;
 import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import net.fortuna.ical4j.data.CalendarBuilder;
-import net.fortuna.ical4j.model.Calendar;
-import net.fortuna.ical4j.model.component.VEvent;
-import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
-
-import java.io.StringReader;
-
-import static org.json.JSONObject.NULL;
 
 
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
@@ -682,76 +658,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
                 if (Patterns.WEB_URL.matcher(text).matches()) {
                     // Input is exactl one url
-                    String htmlSrc = downloadHTML((String) text);
-                    if (htmlSrc != null) {
-                        List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
-                        if (data.isEmpty()) {
-                            data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
-                        }
-                        if (data.isEmpty()) {
-                            // No structured data found, todo: treat link as normal?
-                        } else {
-                           // Using org.audriga.hetc.MustacheRenderer
-                            org.audriga.hetc.MustacheRenderer hetcRenderer;
-                            hetcRenderer = new org.audriga.hetc.MustacheRenderer();
-                            org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
-                            try {
-                                ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
-                            } catch (IOException e) {
-                                //throw new RuntimeException(e);
-                            }
-
-//                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
-                            ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
-//                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
-                            smlPayload = new ArrayList<>(data.size());
-                            for (StructuredData structuredData: data) {
-                                JSONObject jsonObject = structuredData.getJson();
-                                smlPayload.add(jsonObject);
-//                                String hetcRenderResult = null;
-                                String ld2hRenderResult = null;
-//                                String encodedJsonLd;
-//                                encodedJsonLd = jsonObject.toString();
-                                try {
-//                                    hetcRenderResult = hetcRenderer.render(jsonObject);
-                                    ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
-                                } catch (IOException e) {
-                                    // todo handle
-                                }
-
-//                                if (!encodedJsonLd.isEmpty()) {
-//                                    encodedJsonLds.add(encodedJsonLd);
-//                                }
-//                                if (hetcRenderResult != null) {
-//                                    renderedEmailHTMLs.add(hetcRenderResult);
-//                                }
-                                if (ld2hRenderResult != null) {
-                                    renderedDisplayHTMLs.add(ld2hRenderResult);
-                                }
-                            }
-                            if (!renderedDisplayHTMLs.isEmpty()) {
-                                String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
-//                                if (encodedJsonLds.size() == 1) {
-//                                    smlJsonLd = encodedJsonLds.get(0);
-//                                } else if (encodedJsonLds.size() > 1) {
-//                                    smlJsonLd = "[" + String.join(",", encodedJsonLds) + "]";
-//                                }
-
-//                                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
-//                                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
-                                String css = "<head>\n" +
-                                    "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
-                                    "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
-                                    "</head>";
-                                String htmlDisplay  = css + joinedDisplayHTMLRenderResults;
-                                messageContentView.setVisibility(View.GONE);
-                                messageContentViewSML.setVisibility(View.VISIBLE);
-                                messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
-                                smlModeSwitch.setVisibility(View.VISIBLE);
-                                smlModeSwitch.setChecked(true);
-                            }
-                        }
-                    }
+                    enrichSharedUrlToSml((String) text);
                 }
             }
 
@@ -795,6 +702,79 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
         return startedByExternalIntent;
+    }
+
+    private void enrichSharedUrlToSml(String text) {
+        String htmlSrc = downloadHTML(text);
+        if (htmlSrc != null) {
+            List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
+            if (data.isEmpty()) {
+                data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
+            }
+            if (data.isEmpty()) {
+                // No structured data found, todo: treat link as normal?
+            } else {
+               // Using org.audriga.hetc.MustacheRenderer
+                org.audriga.hetc.MustacheRenderer hetcRenderer;
+                hetcRenderer = new org.audriga.hetc.MustacheRenderer();
+                org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
+                try {
+                    ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
+                } catch (IOException e) {
+                    //throw new RuntimeException(e);
+                }
+
+//                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
+                ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
+//                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
+                smlPayload = new ArrayList<>(data.size());
+                for (StructuredData structuredData: data) {
+                    JSONObject jsonObject = structuredData.getJson();
+                    smlPayload.add(jsonObject);
+//                                String hetcRenderResult = null;
+                    String ld2hRenderResult = null;
+//                                String encodedJsonLd;
+//                                encodedJsonLd = jsonObject.toString();
+                    try {
+//                                    hetcRenderResult = hetcRenderer.render(jsonObject);
+                        ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
+                    } catch (IOException e) {
+                        // todo handle
+                    }
+
+//                                if (!encodedJsonLd.isEmpty()) {
+//                                    encodedJsonLds.add(encodedJsonLd);
+//                                }
+//                                if (hetcRenderResult != null) {
+//                                    renderedEmailHTMLs.add(hetcRenderResult);
+//                                }
+                    if (ld2hRenderResult != null) {
+                        renderedDisplayHTMLs.add(ld2hRenderResult);
+                    }
+                }
+                if (!renderedDisplayHTMLs.isEmpty()) {
+                    String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
+//                                if (encodedJsonLds.size() == 1) {
+//                                    smlJsonLd = encodedJsonLds.get(0);
+//                                } else if (encodedJsonLds.size() > 1) {
+//                                    smlJsonLd = "[" + String.join(",", encodedJsonLds) + "]";
+//                                }
+
+//                                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
+//                                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
+                    String css = "<head>\n" +
+                        "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
+                        "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                        "</head>";
+                    String htmlDisplay  = css + joinedDisplayHTMLRenderResults;
+                    messageContentView.setVisibility(View.GONE);
+                    messageContentViewSML.setVisibility(View.VISIBLE);
+                    messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
+                    smlModeSwitch.setVisibility(View.VISIBLE);
+                    smlModeSwitch.setChecked(true);
+                }
+            }
+        }
     }
 
     @Override
@@ -1844,6 +1824,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         String body = mailTo.getBody();
         if (body != null && !body.isEmpty()) {
             messageContentView.setText(CrLfConverter.toLf(body));
+            enrichSharedUrlToSml(body);
         }
     }
 
