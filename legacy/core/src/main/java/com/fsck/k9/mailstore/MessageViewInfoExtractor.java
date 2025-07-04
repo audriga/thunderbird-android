@@ -4,6 +4,7 @@ package com.fsck.k9.mailstore;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,6 +82,7 @@ import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils;
 
 
 import static com.fsck.k9.mail.internet.MimeUtility.getHeaderParameter;
+import static com.fsck.k9.mail.internet.MimeUtility.isSameMimeType;
 import static com.fsck.k9.mail.internet.Viewable.Alternative;
 import static com.fsck.k9.mail.internet.Viewable.Html;
 import static com.fsck.k9.mail.internet.Viewable.MessageHeader;
@@ -401,6 +403,25 @@ public class MessageViewInfoExtractor {
                     }
                 }
 
+            }
+
+            if (parseableParts != null) {
+                for (Part part : parseableParts) {
+                    if (isSameMimeType(part.getMimeType(), "application/ld+json")) {
+                        Body body = part.getBody();
+                        StringBuilder textBuilder = new StringBuilder();
+                        InputStream inputStream = body.getInputStream();
+                        try (Reader reader = new BufferedReader(new InputStreamReader
+                            (inputStream, StandardCharsets.UTF_8))) {
+                            int c = 0;
+                            while ((c = reader.read()) != -1) {
+                                textBuilder.append((char) c);
+                            }
+                        }
+                        String json = textBuilder.toString();
+                        data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(json));
+                    }
+                }
             }
 
             if (data.isEmpty() && extracted == null) {
