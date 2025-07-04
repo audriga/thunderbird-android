@@ -48,7 +48,6 @@ import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.james.mime4j.util.MimeUtil;
 import org.audriga.ld2h.ButtonDescription;
 import org.audriga.ld2h.JsonLdDeserializer;
-import org.audriga.ld2h.JsonLd;
 import org.audriga.ld2h.MustacheRenderer; // todo this version causes an exception when created
 import org.audriga.ld2h.TemplateLoader;
 import com.fsck.k9.CoreResourceProvider;
@@ -415,8 +414,11 @@ public class MessageViewInfoExtractor {
                 }
             } else {
                 String css = "<head>\n" +
-                    "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
-                    "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                    "        <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
+                    "        <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                    "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">\n" +
+                    "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto+Mono\">\n" +
+                    "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700\">\n" +
                     "</head>";
                 MustacheRenderer renderer = new MustacheRenderer();
 
