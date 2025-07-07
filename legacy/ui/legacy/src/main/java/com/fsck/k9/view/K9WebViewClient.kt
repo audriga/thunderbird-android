@@ -9,6 +9,8 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.provider.Browser
+import android.provider.MediaStore
+import android.util.Base64
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.RenderProcessGoneDetail
@@ -20,12 +22,12 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat.startActivity
 import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
-import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils;
-import com.audriga.jakarta.sml.h2lj.model.StructuredData;
-import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
+import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax
+import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
@@ -41,9 +43,11 @@ import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.mailstore.AttachmentResolver
 import com.fsck.k9.message.MessageBuilder.Callback
 import com.fsck.k9.message.SmlMessageUtil
+import com.fsck.k9.provider.AttachmentTempFileProvider
 import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.io.File
 import java.util.Date
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -117,6 +121,10 @@ internal class K9WebViewClient(
             }
             XLOADCARDS_SCHEME -> {
                 xloadcards(webView.context, uri)
+                true
+            }
+            XSHARE_AS_FILE_SCHEME -> {
+                xshareAsFile(webView.context, uri)
                 true
             }
             else -> {
@@ -601,6 +609,39 @@ internal class K9WebViewClient(
         }
     }
 
+    private fun xshareAsFile(context: Context, uri: Uri) {
+        val base64 = uri.authority
+        val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
+//        val text = String(data, charset("UTF-8"))
+        val fileName = uri.getQueryParameter("fileName")
+        val applicationContext = context.applicationContext
+        val directory = File(applicationContext.cacheDir, "temp")
+        if (!directory.exists()) {
+            if (!directory.mkdir()) {
+                Timber.e("Error creating directory: %s", directory.absolutePath)
+                return
+            }
+        }
+        val jsonFile = File(directory, fileName ?:"sml.json")
+        jsonFile.writeBytes(data)
+
+//        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
+        val sharableUri = AttachmentTempFileProvider.getUriForFile(context, "${context.packageName}.tempfileprovider", jsonFile, "sml1.json")
+//        val sharableUri = AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(jsonFile), "sml1.json")
+
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, sharableUri)
+            type = "application/json+ld"
+
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
+        startActivity(context, shareIntent, null)
+        // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
+    }
+
     private fun openUrl(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             putExtra(Browser.EXTRA_APPLICATION_ID, context.packageName)
@@ -679,6 +720,7 @@ internal class K9WebViewClient(
         private const val MAILTO_SCHEME = "mailto"
         private const val XREQUEST_SCHEME = "xrequest"
         private const val XLOADCARDS_SCHEME = "xloadcards"
+        private const val XSHARE_AS_FILE_SCHEME = "xshareasfile"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

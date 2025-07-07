@@ -21,9 +21,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import android.net.Uri;
+import android.net.Uri.Builder;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Pair;
 import android.util.Patterns;
 
@@ -516,6 +519,18 @@ public class MessageViewInfoExtractor {
                     buttons.add(new ButtonDescription(name, "xclipboard:" + description));
                 }
             }
+        }
+        String type = jsonObject.optString("@type");
+        if (type.equals("Recipe") || type.endsWith("Reservation")) {
+            byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+            String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+            String fileName = jsonObject.optString("name", type) + ".json";
+            Uri uri = new Builder()
+                .scheme("xshareasfile")
+                .authority(encodedJson)
+                .appendQueryParameter("fileName", fileName)
+                .build();
+            buttons.add(new ButtonDescription("Share as file", uri.toString()));
         }
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
