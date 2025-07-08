@@ -28,6 +28,8 @@ import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
 import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax
 import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
@@ -48,12 +50,36 @@ import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.File
+import java.net.URI
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeParseException
 import java.util.Date
+import net.fortuna.ical4j.data.CalendarBuilder
+import net.fortuna.ical4j.model.Calendar
+import net.fortuna.ical4j.model.ComponentContainer
+import net.fortuna.ical4j.model.Property
+import net.fortuna.ical4j.model.PropertyContainer
+import net.fortuna.ical4j.model.component.CalendarComponent
+import net.fortuna.ical4j.model.component.VEvent
+import net.fortuna.ical4j.model.property.Description
+import net.fortuna.ical4j.model.property.DtEnd
+import net.fortuna.ical4j.model.property.DtStart
+import net.fortuna.ical4j.model.property.Location
+import net.fortuna.ical4j.model.property.Summary
+import net.fortuna.ical4j.model.property.Uid
+import net.fortuna.ical4j.model.property.Url
+import net.fortuna.ical4j.util.Uris
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Request.Builder
+import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
+import org.json.JSONObject
+import org.mnode.ical4j.serializer.JCalMapper
 
 // import android.R.style
 
@@ -125,6 +151,10 @@ internal class K9WebViewClient(
             }
             XSHARE_AS_FILE_SCHEME -> {
                 xshareAsFile(webView.context, uri)
+                true
+            }
+            XSHARE_AS_CALENDAR_SCHEME -> {
+                xshareAsCal(webView.context, uri)
                 true
             }
             else -> {
@@ -641,6 +671,102 @@ internal class K9WebViewClient(
         startActivity(context, shareIntent, null)
         // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
     }
+    private fun xshareAsCal(context: Context, uri: Uri) {
+        val base64 = uri.authority
+        val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
+        val text = String(data, charset("UTF-8"))
+        val json = JSONObject(text)
+        val event = VEvent()
+        val id = json.optString("@id")
+        if (id.isNotEmpty()) {
+            event.add<PropertyContainer>(Uid(id))
+        }
+        val name = json.optString("name")
+        if (name.isNotEmpty()) {
+            event.add<PropertyContainer>(Summary(name))
+        }
+        val description = json.optString("description")
+        if (description.isNotEmpty()) {
+            event.add<PropertyContainer>(Description(description))
+        }
+        val url = json.opt("url")
+        if (url is URI) {
+            event.add<PropertyContainer>(Url(url))
+        } else if (url is String && url.isNotEmpty()) {
+            event.add<PropertyContainer>(Url(Uris.create(url)))
+        }
+        val startDate = json.optString("startDate")
+        if (startDate.isNotEmpty()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    if (startDate.contains("+")) {
+                        val dt = ZonedDateTime.parse(startDate)
+                        event.add<PropertyContainer>(DtStart(dt))
+                    } else {
+                        event.add<PropertyContainer>(DtStart<LocalDateTime>(startDate))
+                    }
+
+                } catch (
+                    e: DateTimeParseException,
+                ) {
+                    Timber.e("Error parsing start date: %s", e)
+
+                }
+            }
+        }
+        val endDate = json.optString("endDate")
+        if (endDate.isNotEmpty()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    if (endDate.contains("+")) {
+                        val dt = ZonedDateTime.parse(endDate)
+                        event.add<PropertyContainer>(DtEnd(dt))
+                    } else {
+                        event.add<PropertyContainer>(DtEnd<LocalDateTime>(endDate))
+                    }
+                } catch (
+                    e: DateTimeParseException,
+                ) {
+                    Timber.e("Error parsing end date: %s", e)
+                }
+            }
+        }
+        val location = json.optString("location")
+        if (location.isNotEmpty()) {
+            event.add<PropertyContainer>(Location(location))
+        }
+
+        val cal = Calendar().add<ComponentContainer<CalendarComponent>>(event)
+//        val module = SimpleModule()
+//        module.addDeserializer(Calendar::class.java, JCalMapper(VEvent::class.java))
+//        val mapper = ObjectMapper();
+//        mapper.registerModule(module);
+        val calText = cal.toString()
+
+        val applicationContext = context.applicationContext
+        val directory = File(applicationContext.cacheDir, "temp")
+        if (!directory.exists()) {
+            if (!directory.mkdir()) {
+                Timber.e("Error creating directory: %s", directory.absolutePath)
+                return
+            }
+        }
+        val jsonFile = File(directory, "${calText.encodeUtf8().sha1().hex()}.ical")
+        jsonFile.writeText(calText)
+
+//        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
+//        val sharableUri = AttachmentTempFileProvider.getUriForFile(context, "${context.packageName}.tempfileprovider", jsonFile, "sml1.json")
+        val sharableUri = AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(jsonFile), "event.ical")
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_VIEW
+            setDataAndType(sharableUri, "text/calendar")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+//        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
+        startActivity(context, sendIntent, null)
+        // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
+    }
 
     private fun openUrl(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
@@ -721,6 +847,7 @@ internal class K9WebViewClient(
         private const val XREQUEST_SCHEME = "xrequest"
         private const val XLOADCARDS_SCHEME = "xloadcards"
         private const val XSHARE_AS_FILE_SCHEME = "xshareasfile"
+        private const val XSHARE_AS_CALENDAR_SCHEME = "xshareascalendar"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

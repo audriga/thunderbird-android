@@ -74,6 +74,7 @@ import app.k9mail.html.cleaner.HtmlProcessor;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mnode.ical4j.serializer.JCalMapper;
 import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
 import org.openintents.openpgp.util.OpenPgpUtils;
 import timber.log.Timber;
@@ -531,6 +532,14 @@ public class MessageViewInfoExtractor {
                 .appendQueryParameter("fileName", fileName)
                 .build();
             buttons.add(new ButtonDescription("Share as file", uri.toString()));
+        } else if (type.endsWith("Event")) {
+            byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+            String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+            Uri uri = new Builder()
+                .scheme("xshareascalendar")
+                .authority(encodedJson)
+                .build();
+            buttons.add(new ButtonDescription("Save to calendar", uri.toString()));
         }
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
