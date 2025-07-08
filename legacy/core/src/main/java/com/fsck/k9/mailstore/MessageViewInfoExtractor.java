@@ -447,9 +447,19 @@ public class MessageViewInfoExtractor {
                     "</head>";
                 MustacheRenderer renderer = new MustacheRenderer();
 
+                // We know these types will most likely not render well, so don't render them (unless they are the only markup)
+                // todo find a good place for this
+                List<String> typesToSkip = (data.size() > 1) ?
+                    Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
+                    null;
+
                 ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
                 for (StructuredData structuredData: data) {
                     JSONObject jsonObject = structuredData.getJson();
+                    String type = jsonObject.optString("@type");
+                    if (typesToSkip != null && typesToSkip.contains(type)) {
+                        continue;
+                    }
                     List<ButtonDescription> buttons = getButtons(jsonObject);
                     String result = renderer.render(jsonObject, buttons);
                     renderedHTMLs.add(result);
