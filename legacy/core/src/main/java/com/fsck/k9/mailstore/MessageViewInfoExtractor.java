@@ -11,23 +11,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import android.net.Uri;
 import android.net.Uri.Builder;
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Pair;
 import android.util.Patterns;
 
 import androidx.annotation.Nullable;
@@ -44,16 +38,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.mail.Body;
-import com.fsck.k9.mail.internet.TextBody;
+import com.fsck.k9.mail.Message.RecipientType;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
-import org.apache.james.mime4j.util.MimeUtil;
 import org.audriga.ld2h.ButtonDescription;
-import org.audriga.ld2h.JsonLdDeserializer;
 import org.audriga.ld2h.MustacheRenderer; // todo this version causes an exception when created
-import org.audriga.ld2h.TemplateLoader;
 import com.fsck.k9.CoreResourceProvider;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.crypto.MessageCryptoStructureDetector;
@@ -71,10 +62,8 @@ import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.message.html.HtmlConverter;
 import app.k9mail.html.cleaner.HtmlProcessor;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mnode.ical4j.serializer.JCalMapper;
 import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
 import org.openintents.openpgp.util.OpenPgpUtils;
 import timber.log.Timber;
@@ -93,8 +82,6 @@ import static com.fsck.k9.mail.internet.Viewable.MessageHeader;
 import static com.fsck.k9.mail.internet.Viewable.Text;
 import static com.fsck.k9.mail.internet.Viewable.Textual;
 import static org.apache.commons.io.IOUtils.close;
-import org.apache.james.mime4j.codec.Base64InputStream;
-import static org.json.JSONObject.NULL;
 
 
 public class MessageViewInfoExtractor {
@@ -193,7 +180,7 @@ public class MessageViewInfoExtractor {
         }
 
         List<AttachmentViewInfo> extraAttachmentInfos = new ArrayList<>();
-        ViewableExtractedText extraViewable = extractViewableAndAttachments(extraParts, extraAttachmentInfos);
+        ViewableExtractedText extraViewable = extractViewableAndAttachments(extraParts, extraAttachmentInfos, null);
 
         MessageViewInfo messageViewInfo = extractSimpleMessageForView(message, cryptoContentPart);
         return messageViewInfo.withCryptoData(cryptoContentPartAnnotation, extraViewable.text, extraAttachmentInfos);
@@ -205,8 +192,9 @@ public class MessageViewInfoExtractor {
         if (message instanceof LocalMessage) {
             reference = ((LocalMessage) message).makeMessageReference();
         }
+        TryToDerive shouldTryToDerive = shouldTryToDerive(message);
         ViewableExtractedText viewable = extractViewableAndAttachments(
-                Collections.singletonList(contentPart), attachmentInfos);
+                Collections.singletonList(contentPart), attachmentInfos, shouldTryToDerive);
         AttachmentResolver attachmentResolver = AttachmentResolver.createFromPart(contentPart);
         boolean isMessageIncomplete =
                 !message.isSet(Flag.X_DOWNLOADED_FULL) || MessageExtractor.hasMissingParts(message);
@@ -222,8 +210,19 @@ public class MessageViewInfoExtractor {
                 preferredUnsubscribeUri);
     }
 
+    private static TryToDerive shouldTryToDerive(Message message) {
+        String subject = message.getSubject();
+        if (subject.toLowerCase().contains("code")) {
+            return TryToDerive.VERIFICATION_CODE;
+        }
+        return null;
+    }
+    enum TryToDerive {
+        VERIFICATION_CODE
+    }
+
     private ViewableExtractedText extractViewableAndAttachments(List<Part> parts,
-            List<AttachmentViewInfo> attachmentInfos) throws MessagingException {
+            List<AttachmentViewInfo> attachmentInfos, @Nullable TryToDerive shouldTryToDerive) throws MessagingException {
         MessagingController mc = DI.get(MessagingController.class);
         ArrayList<Viewable> viewableParts = new ArrayList<>();
         ArrayList<Part> attachments = new ArrayList<>();
@@ -265,7 +264,12 @@ public class MessageViewInfoExtractor {
                 }
             }
         }
-        return extractTextFromViewables(viewableParts, parseableParts, parseableAttachments);
+        return extractTextFromViewables(viewableParts, parseableParts, parseableAttachments, shouldTryToDerive);
+    }
+    @VisibleForTesting
+    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables, @Nullable ArrayList<Part> parseableParts, @Nullable HashMap<AttachmentViewInfo, String> parseableAttachments)
+        throws MessagingException {
+        return extractTextFromViewables(viewables, parseableParts,  parseableAttachments, null);
     }
 
     /**
@@ -278,7 +282,8 @@ public class MessageViewInfoExtractor {
      *          In case of an error.
      */
     @VisibleForTesting
-    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables, @Nullable ArrayList<Part> parseableParts, @Nullable HashMap<AttachmentViewInfo, String> parseableAttachments)
+    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables, @Nullable ArrayList<Part> parseableParts, @Nullable HashMap<AttachmentViewInfo, String> parseableAttachments,
+        @Nullable TryToDerive shouldTryToDerive)
             throws MessagingException {
         try {
             // Collect all viewable parts
@@ -356,7 +361,12 @@ public class MessageViewInfoExtractor {
 
             String htmlString = html.toString();
             String textString = text.toString();
-            JSONObject extracted = tryExtract(textString, htmlString);
+            JSONObject extracted;
+            if (shouldTryToDerive != null) {
+                extracted = tryExtract(shouldTryToDerive, textString, htmlString);
+            } else {
+                extracted = null;
+            }
 
             String sanitizedHtml = htmlProcessor.processForDisplay(htmlString);
             List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.JSON_LD);
@@ -866,26 +876,31 @@ public class MessageViewInfoExtractor {
     }
 
     @Nullable
-    static JSONObject tryExtract(String text, String html) throws JSONException {
-//        Pattern c2cpattern = Pattern.compile("[0-9]{6}");
-        Pattern boldc2cpattern = Pattern.compile("<b>[0-9]{4,}</b>");
+    static JSONObject tryExtract(TryToDerive tryToDerive, String text, String html) throws JSONException {
+        switch (tryToDerive) {
+            case VERIFICATION_CODE:
+                //        Pattern c2cpattern = Pattern.compile("[0-9]{6}");
+                Pattern boldc2cpattern = Pattern.compile("<b>[0-9]{4,}</b>");
 //        Matcher textMatcher = c2cpattern.matcher(text);
-        Matcher htmlMatcher = boldc2cpattern.matcher(html);
-        while (htmlMatcher.find()) {
+                Matcher htmlMatcher = boldc2cpattern.matcher(html);
+                while (htmlMatcher.find()) {
 //            String textMatch = textMatcher.group();
-            String htmlMatch = htmlMatcher.group();
-            String code = htmlMatch.substring(3, htmlMatch.length() -4);
-            if (text.contains(code)) {
-               return new JSONObject()
-                   .put("@context", "https://schema.org")
-                   .put("@type", "EmailMessage")
-                   .put("description", "Confirmation code: " + code)
-                   .put("potentialAction", new JSONObject()
-                       .put("@type", "CopyToClipboardAction")
-                       .put( "name", "Copy " + code)
-                       .put("description", code));
-            }
+                    String htmlMatch = htmlMatcher.group();
+                    String code = htmlMatch.substring(3, htmlMatch.length() -4);
+                    if (text.contains(code)) {
+                        return new JSONObject()
+                            .put("@context", "https://schema.org")
+                            .put("@type", "EmailMessage")
+                            .put("description", "Confirmation code: " + code)
+                            .put("potentialAction", new JSONObject()
+                                .put("@type", "CopyToClipboardAction")
+                                .put( "name", "Copy " + code)
+                                .put("description", code));
+                    }
+                }
+                break;
         }
+
         return null;
     }
 
