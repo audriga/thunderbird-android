@@ -13,6 +13,7 @@ import okhttp3.OkHttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -730,9 +731,16 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 //                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
                 ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
 //                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
+                List<String> typesToSkip = (data.size() > 1) ?
+                    Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
+                    null;
                 smlPayload = new ArrayList<>(data.size());
                 for (StructuredData structuredData: data) {
                     JSONObject jsonObject = structuredData.getJson();
+                    String type = jsonObject.optString("@type");
+                    if (typesToSkip != null && typesToSkip.contains(type)) {
+                        continue;
+                    }
                     smlPayload.add(jsonObject);
 //                                String hetcRenderResult = null;
                     String ld2hRenderResult = null;
