@@ -360,11 +360,6 @@ internal class K9WebViewClient(
             Timber.d(e, "Couldn't get: %s", httpUri)
         }
 
-        var xwebView = WebView(context) // findViewById(R.id.webview)
-
-        xwebView.setVisibility(View.VISIBLE);
-        xwebView.settings.javaScriptEnabled = true
-        xwebView.settings.domStorageEnabled = true
 
 
         if (jsonSrc != null) {
@@ -378,38 +373,15 @@ internal class K9WebViewClient(
                 renderedHTMLs.add(result)
             }
 
-            val result = renderedHTMLs.joinToString("\n")
-            val css = """<head>
-  <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-</head>"""
-            val htmlToDisplay = "<!DOCTYPE html>$css<html><body>$result</body></html>"
-            xwebView.loadDataWithBaseURL("about:blank", htmlToDisplay, "text/html", "utf-8", null)
 
-            // R.style.FullscreenDialogStyle
-            // android.R.style.Theme_Black_NoTitleBar_Fullscreen
-            var dialogAlert = MaterialAlertDialogBuilder(context)
-                .setView(xwebView)
-                //.setTitle("title")
-                //.setMessage("msg: " + s)
-                .setPositiveButton("Close", null)
-                .setCancelable(false)
-                .create()
-                .apply {
-                    setCanceledOnTouchOutside(false)
-                    show()
-                }
-
-            // Make Fullscreen
-            // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
-            dialogAlert.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            showRenderedCardsPopup(context, renderedHTMLs)
         } else {
             showToast(context, "Got no content ($okErr)")
         }
 
     }
 
-     private fun xjs(webView: WebView, uri: Uri) {
+    private fun xjs(webView: WebView, uri: Uri) {
 
         webView.evaluateJavascript(
             "(function() { return 'this'; })();",
@@ -598,45 +570,55 @@ internal class K9WebViewClient(
                     }
                 }
                 if (renderedDisplayHTMLs.isNotEmpty()) {
-                    val xwebView = WebView(context) // findViewById(R.id.webview)
-
-                    xwebView.setVisibility(View.VISIBLE);
-                    xwebView.settings.javaScriptEnabled = true
-                    xwebView.settings.domStorageEnabled = true
-
-                    val result = renderedDisplayHTMLs.joinToString("\n")
-                    val css = """<head>
-  <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-</head>"""
-                    val htmlToDisplay = "<!DOCTYPE html>$css<html><body>$result</body></html>"
-                    xwebView.loadDataWithBaseURL("about:blank", htmlToDisplay, "text/html", "utf-8", null)
-
-                    // R.style.FullscreenDialogStyle
-                    // android.R.style.Theme_Black_NoTitleBar_Fullscreen
-                    val dialogAlert = MaterialAlertDialogBuilder(context)
-                        .setView(xwebView)
-                        //.setTitle("title")
-                        //.setMessage("msg: " + s)
-                        .setPositiveButton("Close", null)
-                        .setCancelable(false)
-                        .create()
-                        .apply {
-                            setCanceledOnTouchOutside(false)
-                            show()
-                        }
-
-                    // Make Fullscreen
-                    // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
-                    dialogAlert.window?.setLayout(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                    )
+                    showRenderedCardsPopup(context, renderedDisplayHTMLs)
                 }
             }
         } else {
             showToast(context, "Got no content ($okErr)")
         }
+    }
+
+    private fun showRenderedCardsPopup(
+        context: Context,
+        renderedDisplayHTMLs: ArrayList<String>,
+    ) {
+        val xwebView = WebView(context) // findViewById(R.id.webview)
+
+        xwebView.setVisibility(View.VISIBLE);
+        xwebView.settings.javaScriptEnabled = true
+        xwebView.settings.domStorageEnabled = true
+
+        val result = renderedDisplayHTMLs.joinToString("\n")
+        val css = """<head>
+            <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+            <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono">
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700">
+    </head>""";
+        val htmlToDisplay = "<!DOCTYPE html>$css<html><body>$result</body></html>"
+        xwebView.loadDataWithBaseURL("about:blank", htmlToDisplay, "text/html", "utf-8", null)
+
+        // R.style.FullscreenDialogStyle
+        // android.R.style.Theme_Black_NoTitleBar_Fullscreen
+        val dialogAlert = MaterialAlertDialogBuilder(context)
+            .setView(xwebView)
+            //.setTitle("title")
+            //.setMessage("msg: " + s)
+            .setPositiveButton("Close", null)
+            .setCancelable(false)
+            .create()
+            .apply {
+                setCanceledOnTouchOutside(false)
+                show()
+            }
+
+        // Make Fullscreen
+        // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
+        dialogAlert.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+        )
     }
 
     private fun xshareAsFile(context: Context, uri: Uri) {

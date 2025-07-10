@@ -605,9 +605,12 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 messageContentView.setVisibility(View.GONE);
                 messageContentViewSML.setVisibility(View.VISIBLE);
                 if (ld2hRenderResult != null) {
-                    String css = "<head>\n" +
-                        "  <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
-                        "  <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                    String  css = "<head>\n" +
+                        "        <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
+                        "        <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">\n" +
+                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto+Mono\">\n" +
+                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700\">\n" +
                         "</head>";
                     String htmlDisplay  = css + ld2hRenderResult;
                     messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
