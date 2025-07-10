@@ -1838,7 +1838,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         String body = mailTo.getBody();
         if (body != null && !body.isEmpty()) {
             messageContentView.setText(CrLfConverter.toLf(body));
-            enrichSharedUrlToSml(body);
+            if (Patterns.WEB_URL.matcher(body).matches()) {
+                // Input is exactl one url
+                enrichSharedUrlToSml(body);
+            }
         }
     }
 
