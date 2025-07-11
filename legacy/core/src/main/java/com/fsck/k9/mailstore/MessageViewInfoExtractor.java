@@ -8,13 +8,14 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +39,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.mail.Body;
-import com.fsck.k9.mail.Message.RecipientType;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.CalendarComponent;
@@ -62,6 +62,7 @@ import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.message.html.HtmlConverter;
 import app.k9mail.html.cleaner.HtmlProcessor;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
@@ -561,9 +562,73 @@ public class MessageViewInfoExtractor {
                 .build();
             buttons.add(new ButtonDescription("Save to calendar", uri.toString()));
         }
+        Object url = jsonObject.opt("url");
+        if (url != null) {
+            buttons.add(new ButtonDescription("Visit", url.toString()));
+        }
+        // try to get phone number
+        try {
+            List<Object> phones = findAllRecursive(jsonObject, "telephone");
+            for (Object phone : phones) {
+                // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
+                if (phone instanceof String) {
+                    buttons.add(new ButtonDescription("Call " + phone, "tel:" +  phone));
+                }
+            }
+        } catch (JSONException e) {
+            Timber.e(e, "Error trying to add phone button descriptions");
+        }
+        // try to get Place/ Map
+        try {
+            List<Object> geos = findAllRecursive(jsonObject, "geo");
+            for (Object geo : geos) {
+                if (geo instanceof JSONObject) {
+                    Object latitude = ((JSONObject) geo).opt("latitude");
+                    Object longitude = ((JSONObject) geo).opt("longitude");
+                    // don't care if lat/ long is int, double or string, all of them should play nicely with string concatenation.
+                    // likelyhood of being a JSONObject, or something unexpected is very low I would say
+                    if (latitude != null && longitude != null) {
+                        // todo the geo uris are hardcoded at the moment
+                        buttons.add(new ButtonDescription("Navigate", "google.navigation:q=" + latitude + "," + longitude));
+                        buttons.add(new ButtonDescription("Show on map", "geo:" + latitude + "," + longitude));
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            Timber.e(e, "Error trying to add geo button descriptions");
+        }
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
         return  buttons;
+    }
+
+    static List<Object> findAllRecursive(JSONObject json, String searchKey) throws JSONException {
+        return findAllRecursive(json, searchKey, Collections.emptyList());
+    }
+    static List<Object> findAllRecursive(JSONObject json, String searchKey, List<String> excluded) throws JSONException {
+        List<Object> collectedResults = new ArrayList<>();
+        for (Iterator<String> it = json.keys(); it.hasNext(); ) {
+            String key = it.next();
+            if (excluded.contains(key)) {
+                continue;
+            }
+            Object value = json.get(key);
+            if (key.equals(searchKey)) {
+                    collectedResults.add(value);
+            } else if (value instanceof JSONObject) {
+                List<Object> ret = findAllRecursive((JSONObject) value, searchKey, excluded);
+                collectedResults.addAll(ret);
+            } else if (value instanceof JSONArray) {
+                for (int i = 0; i < ((JSONArray) value).length(); i++) {
+                    Object element = ((JSONArray) value).get(i);
+                    if (element instanceof JSONObject) {
+                        List<Object> ret = findAllRecursive((JSONObject) element, searchKey, excluded);
+                        collectedResults.addAll(ret);
+                    }
+                }
+            }
+        }
+        return collectedResults;
     }
 
     /**
