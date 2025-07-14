@@ -23,6 +23,7 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.startActivity
+import app.k9mail.feature.launcher.FeatureLauncherActivity
 import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
+import com.fsck.k9.activity.MessageCompose
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.logging.Timber
@@ -76,6 +78,7 @@ import okhttp3.Request
 import okhttp3.Request.Builder
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
+import org.audriga.ld2h.ButtonDescription
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONObject
@@ -155,6 +158,10 @@ internal class K9WebViewClient(
             }
             XSHARE_AS_CALENDAR_SCHEME -> {
                 xshareAsCal(webView.context, uri)
+                true
+            }
+            XSHARE_AS_MAIL -> {
+                xshareAsMail(webView.context, uri)
                 true
             }
             else -> {
@@ -563,8 +570,16 @@ internal class K9WebViewClient(
                 val ld2hRenderer = org.audriga.ld2h.MustacheRenderer()
                 val renderedDisplayHTMLs = ArrayList<String>(data.size)
                 for (structuredData in data) {
-                    val jsonObject = structuredData.json;
-                    val ld2hRenderResult = ld2hRenderer.render(jsonObject)
+                    val jsonObject = structuredData.json
+                    // Add button to share structured data as email
+                    val jsonBytes = jsonObject.toString().encodeToByteArray()
+                    val  encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+                    val buttonUri =  Uri.Builder()
+                        .scheme("xshareasmail")
+                        .authority(encodedJson)
+                        .build()
+                    val button = ButtonDescription("Share", buttonUri.toString())
+                    val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(button))
                     if (ld2hRenderResult != null) {
                         renderedDisplayHTMLs.add(ld2hRenderResult);
                     }
@@ -587,6 +602,7 @@ internal class K9WebViewClient(
         xwebView.setVisibility(View.VISIBLE);
         xwebView.settings.javaScriptEnabled = true
         xwebView.settings.domStorageEnabled = true
+        xwebView.webViewClient = this
 
         val result = renderedDisplayHTMLs.joinToString("\n")
         val css = """<head>
@@ -750,6 +766,24 @@ internal class K9WebViewClient(
         // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
     }
 
+    private fun xshareAsMail(context: Context, uri: Uri) {
+        val base64 = uri.authority
+        val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
+        val text = String(data)
+        val defaultAccount = Preferences.getPreferences().defaultAccount
+        if (defaultAccount == null) {
+            FeatureLauncherActivity.launchSetupAccount(context);
+        } else {
+            val accountUuid = defaultAccount.uuid
+            val i = Intent(context, MessageCompose::class.java)
+            i.putExtra(MessageCompose.EXTRA_ACCOUNT, accountUuid)
+            i.putExtra(MessageCompose.IS_SML, true)
+            i.setAction(MessageCompose.ACTION_COMPOSE)
+            i.putExtra(MessageCompose.SML_PAYLOAD, text)
+            context.startActivity(i);
+        }
+    }
+
     private fun openUrl(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             putExtra(Browser.EXTRA_APPLICATION_ID, context.packageName)
@@ -830,6 +864,7 @@ internal class K9WebViewClient(
         private const val XLOADCARDS_SCHEME = "xloadcards"
         private const val XSHARE_AS_FILE_SCHEME = "xshareasfile"
         private const val XSHARE_AS_CALENDAR_SCHEME = "xshareascalendar"
+        private const val XSHARE_AS_MAIL = "xshareasmail"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

@@ -167,6 +167,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     public static final String EXTRA_ACCOUNT = "account";
     public static final String IS_SML = "isSML";
+    public static final String SML_PAYLOAD = "sml_payload";
     public static final String EXTRA_MESSAGE_REFERENCE = "message_reference";
     public static final String EXTRA_MESSAGE_DECRYPTION_RESULT = "message_decryption_result";
 
@@ -526,12 +527,46 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
         if (intent.getBooleanExtra(IS_SML, false)) {
-            messageContentView.setVisibility(View.GONE);
-            if (subjectView.getText().length() > 0) {
-                subjectView.setText("SML Mail");
+             String payload = intent.getStringExtra(SML_PAYLOAD);
+            if (payload != null) {
+                smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize(payload);
+                org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
+                try {
+                    ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
+                } catch (IOException e) {
+                    //throw new RuntimeException(e);
+                }
+                ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(smlPayload.size());
+                ArrayList<String> types = new ArrayList<>(smlPayload.size());
+                for (JSONObject jsonObject: smlPayload) {
+                    String type = jsonObject.optString("@type");
+                    types.add(type);
+                    String ld2hRenderResult = null;
+                    try {
+                        ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
+                    } catch (IOException e) {
+                        // todo handle
+                    }
+                    if (ld2hRenderResult != null) {
+                        renderedDisplayHTMLs.add(ld2hRenderResult);
+                    }
+                }
+                if (subjectView.getText().length() == 0) {
+                    String subject = "Check out this " + String.join(", ", types);
+                    subjectView.setText(subject);
+                }
+                if (!renderedDisplayHTMLs.isEmpty()) {
+                    String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
+                   displayLd2hResult(joinedDisplayHTMLRenderResults);
+                }
+            } else {
+                messageContentView.setVisibility(View.GONE);
+                if (subjectView.getText().length() == 0) {
+                    subjectView.setText("SML Mail");
+                }
+                messageContentViewSML.setVisibility(View.VISIBLE);
+                messageContentViewSML.displayHtmlContentWithInlineAttachments("<b>Testing</b>", null, null);
             }
-            messageContentViewSML.setVisibility(View.VISIBLE);
-            messageContentViewSML.displayHtmlContentWithInlineAttachments("<b>Testing</b>", null, null);
         }
     }
 
@@ -603,20 +638,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     //throw new RuntimeException(e);
                 }
 //                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ hetcRenderResult +"</body></html>";
-                messageContentView.setVisibility(View.GONE);
-                messageContentViewSML.setVisibility(View.VISIBLE);
                 if (ld2hRenderResult != null) {
-                    String  css = "<head>\n" +
-                        "        <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
-                        "        <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
-                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">\n" +
-                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto+Mono\">\n" +
-                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700\">\n" +
-                        "</head>";
-                    String htmlDisplay  = css + ld2hRenderResult;
-                    messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
-                    smlModeSwitch.setVisibility(View.VISIBLE);
-                    smlModeSwitch.setChecked(true);
+                    displayLd2hResult(ld2hRenderResult);
                 }
                 return false;
             }
@@ -708,6 +731,27 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         return startedByExternalIntent;
     }
 
+    private void displayLd2hResult(String ld2hRenderResult) {
+        String htmlDisplay = addHeadToLd2hResult(ld2hRenderResult);
+        messageContentView.setVisibility(View.GONE);
+        messageContentViewSML.setVisibility(View.VISIBLE);
+        messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
+        smlModeSwitch.setVisibility(View.VISIBLE);
+        smlModeSwitch.setChecked(true);
+    }
+
+    @NonNull
+    private static String addHeadToLd2hResult(String ld2hRenderResult) {
+        String  css = "<head>\n" +
+            "        <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
+            "        <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+            "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">\n" +
+            "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto+Mono\">\n" +
+            "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700\">\n" +
+            "</head>";
+        return css + ld2hRenderResult;
+    }
+
     private void enrichSharedUrlToSml(String text) {
         String htmlSrc = downloadHTML(text);
         if (htmlSrc != null) {
@@ -773,19 +817,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
 //                                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
 //                                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
-                    String css = "<head>\n" +
-                        "        <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
-                        "        <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
-                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">\n" +
-                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto+Mono\">\n" +
-                        "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700\">\n" +
-                        "</head>";
-                    String htmlDisplay  = css + joinedDisplayHTMLRenderResults;
-                    messageContentView.setVisibility(View.GONE);
-                    messageContentViewSML.setVisibility(View.VISIBLE);
-                    messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
-                    smlModeSwitch.setVisibility(View.VISIBLE);
-                    smlModeSwitch.setChecked(true);
+                    displayLd2hResult(joinedDisplayHTMLRenderResults);
                 }
             }
         }
