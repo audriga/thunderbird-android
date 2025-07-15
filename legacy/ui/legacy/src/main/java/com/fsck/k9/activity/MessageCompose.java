@@ -5,6 +5,7 @@ import com.fsck.k9.message.MessageBuilder.Callback;
 import com.fsck.k9.message.SmlMessageUtil;
 import com.fsck.k9.view.MessageWebView;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.Request.Builder;
 import okhttp3.Response;
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +40,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.Patterns;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -130,6 +133,9 @@ import com.fsck.k9.ui.helper.SizeFormatter;
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
+import okhttp3.ResponseBody;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.openintents.openpgp.OpenPgpApiManager;
 import org.openintents.openpgp.util.OpenPgpApi;
@@ -539,6 +545,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(smlPayload.size());
                 ArrayList<String> types = new ArrayList<>(smlPayload.size());
                 for (JSONObject jsonObject: smlPayload) {
+                    inlineImages(jsonObject);// todo: Since this modifies the actual jsonObject, and we iterate over smlPayload here, this might also modify smlPlayload (which is what we want). But need to test this.
                     String type = jsonObject.optString("@type");
                     types.add(type);
                     String ld2hRenderResult = null;
@@ -785,7 +792,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     if (typesToSkip != null && typesToSkip.contains(type)) {
                         continue;
                     }
-                    smlPayload.add(jsonObject);
+                    smlPayload.add(inlineImages(jsonObject));
 //                                String hetcRenderResult = null;
                     String ld2hRenderResult = null;
 //                                String encodedJsonLd;
@@ -821,6 +828,127 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 }
             }
         }
+    }
+
+    private JSONObject inlineImages(JSONObject jsonLd) {
+        // First find all images in the order thumbnail, thumbnailUrl, image
+        Object thumbnail = jsonLd.opt("thumbnail");
+        List<String> thumbnails = Collections.emptyList();
+        if (thumbnail != null){
+            try {
+                thumbnails = imagesFromNestedJson(thumbnail);
+            } catch (JSONException e) {
+                // todo log
+            }
+        }
+
+        Object thumbnailUrl = jsonLd.opt("thumbnailUrl");
+        List<String> thumbnailUrls = Collections.emptyList();
+        if (thumbnailUrl != null){
+            try {
+                thumbnailUrls = imagesFromNestedJson(thumbnailUrl);
+            } catch (JSONException e) {
+                // todo log
+            }
+        }
+        Object image = jsonLd.opt("image");
+
+        List<String> images = Collections.emptyList();
+        if (image != null){
+            try {
+                images = imagesFromNestedJson(image);
+            } catch (JSONException e) {
+                // todo log
+            }
+        }
+        List<String> allImages = new ArrayList<>(thumbnails.size()+thumbnailUrls.size()+images.size());
+        allImages.addAll(thumbnails);
+        allImages.addAll(thumbnailUrls);
+        allImages.addAll(images);
+        for (String imageUriText : allImages) {
+            Uri imageUri = Uri.parse(imageUriText);
+            if (imageUri != null) {
+                String scheme = imageUri.getScheme();
+                if (scheme != null && scheme.equals("data")) {
+                    // already have an inline image, set it as image.contentUrl
+                    try {
+                        jsonLd.put("image", new JSONObject().put("contentUrl", imageUriText));
+                        return jsonLd;
+                    } catch (JSONException e) {
+                        // todo log
+                    }
+                }
+            }
+        }
+        for (String imageUriText : allImages) {
+            try {
+                String imageDataUri = downloadImage(imageUriText);
+                if (imageDataUri != null) {
+                    try {
+                        jsonLd.put("image", new JSONObject().put("contentUrl", imageDataUri));
+                        return  jsonLd;
+                    } catch (JSONException e) {
+                        // todo log
+                    }
+                }
+            } catch (Exception ignored){}
+        }
+        return jsonLd;
+    }
+
+    private String downloadImage(String imageUriText) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Builder()
+            .url(imageUriText).build();
+        try (Response response = client. newCall(request).execute()) {
+            ResponseBody body = response.body();
+            if (body != null) {
+                 MediaType mediaType = body.contentType();
+                 if (mediaType != null && mediaType.type().equals("image")) {
+                     return "data:" + mediaType.type() + "/" + mediaType.subtype() +";base64," + Base64.encodeToString(body.bytes(), Base64.NO_WRAP);
+                 }
+            }
+
+        }
+        return null;
+    }
+
+    @NonNull
+    List<String> imagesFromNestedJson(Object image) throws JSONException {
+        if (image instanceof JSONObject) {
+            Object imageContentUrl = ((JSONObject) image).opt("contentUrl");
+            if (imageContentUrl instanceof  String) {
+                return Collections.singletonList((String) imageContentUrl);
+            } else {
+                Object url = ((JSONObject) image).opt("url");
+                if (url instanceof  String) {
+                    return Collections.singletonList((String)url);
+                }
+            }
+        } else if (image instanceof JSONArray) {
+            int length = ((JSONArray) image).length();
+            List<String> images = new ArrayList<>(length);
+            for (int i = 0; i < length; i++) {
+                Object imageEntry = ((JSONArray) image).get(i);
+                if (imageEntry instanceof JSONObject) {
+                    Object imageContentUrl = ((JSONObject) imageEntry).opt("contentUrl");
+                    if (imageContentUrl instanceof String) {
+                        images.add((String) imageContentUrl);
+                    } else {
+                        Object url = ((JSONObject) imageEntry).opt("url");
+                        if (url instanceof String) {
+                            images.add((String) url);
+                        }
+                    }
+                } else if (imageEntry instanceof String) {
+                    images.add((String) imageEntry);
+                }
+            }
+            return images;
+        } else if (image instanceof  String) {
+            return Collections.singletonList((String) image);
+        }
+        return Collections.emptyList();
     }
 
     @Override
