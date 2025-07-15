@@ -440,10 +440,15 @@ public class MessageViewInfoExtractor {
             }
 
             if (data.isEmpty() && extracted == null) {
-                String url = tryExtractWhitelistedUrl(textString, htmlString);
-                if (url != null) {
-                    // Substring to remove https:// prefix
-                    String button = "<a href=\"xloadcards://"+ url.substring(8) +"\">Load Cards</a><br><hr><br><br>";
+                List<String> urls = tryExtractAllWhitelistedUrls(textString, htmlString);
+                if (!urls.isEmpty()) {
+                    List<String> encodedUrls = new ArrayList<>(urls.size());
+                    for (String url: urls) {
+                        // Substring to remove https:// prefix
+                        encodedUrls.add(Base64.encodeToString(url.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE));
+                    }
+
+                    String button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
                     sanitizedHtml = button + sanitizedHtml;
                 } else {
                     sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
@@ -971,7 +976,7 @@ public class MessageViewInfoExtractor {
 
     @Nullable
     static String tryExtractWhitelistedUrl(String text, String html) {
-        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com");
+        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com");
         Matcher urlPlaintextMatcher = Patterns.WEB_URL.matcher(text);
         while (urlPlaintextMatcher.find()) {
             String url = urlPlaintextMatcher.group();
@@ -992,5 +997,34 @@ public class MessageViewInfoExtractor {
         }
 
         return null;
+    }
+
+    static List<String> tryExtractAllWhitelistedUrls(String text, String html) {
+        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/newsletter");
+        Matcher urlPlaintextMatcher = Patterns.WEB_URL.matcher(text);
+        List<String> urls = new ArrayList<>();
+        while (urlPlaintextMatcher.find()) {
+            String url = urlPlaintextMatcher.group();
+            for (String whiteListedUrl : whiteListedUrls) {
+                if (url.contains(whiteListedUrl)) {
+                    if (!urls.contains(url)) {
+                        urls.add(url);
+                    }
+                }
+            }
+        }
+        Matcher urlHtmlMatcher = Patterns.WEB_URL.matcher(html);
+        while (urlHtmlMatcher.find()) {
+            String url = urlHtmlMatcher.group();
+            for (String whiteListedUrl : whiteListedUrls) {
+                if (url.contains(whiteListedUrl)) {
+                    if (!urls.contains(url)) {
+                        urls.add(url);
+                    }
+                }
+            }
+        }
+
+        return urls;
     }
 }

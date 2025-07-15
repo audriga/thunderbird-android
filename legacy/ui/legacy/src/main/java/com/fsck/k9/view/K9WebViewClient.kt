@@ -9,7 +9,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.provider.Browser
-import android.provider.MediaStore
 import android.util.Base64
 import android.view.View
 import android.view.ViewGroup
@@ -23,14 +22,13 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.startActivity
+import androidx.core.net.toUri
 import app.k9mail.feature.launcher.FeatureLauncherActivity
 import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
 import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax
 import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageCompose
@@ -54,14 +52,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.File
 import java.net.URI
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.Date
-import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.model.Calendar
 import net.fortuna.ical4j.model.ComponentContainer
-import net.fortuna.ical4j.model.Property
 import net.fortuna.ical4j.model.PropertyContainer
 import net.fortuna.ical4j.model.component.CalendarComponent
 import net.fortuna.ical4j.model.component.VEvent
@@ -76,13 +71,11 @@ import net.fortuna.ical4j.util.Uris
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Request.Builder
-import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import org.audriga.ld2h.ButtonDescription
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONObject
-import org.mnode.ical4j.serializer.JCalMapper
 
 // import android.R.style
 
@@ -350,22 +343,7 @@ internal class K9WebViewClient(
 
     private fun xreload(context: Context, uri: Uri) {
         val httpUri = uri.buildUpon().scheme("https").build()
-        val client = OkHttpClient()
-        var jsonSrc: String? = null
-        var okErr: String? = null
-        try {
-            val request: Request = Builder()
-                .url(httpUri.toString()).build()
-            client.newCall(request).execute().use { response ->
-                if (response.body != null) {
-                    jsonSrc = response.body!!.string()
-                    Timber.d("Got response from %s:\n%s", httpUri, jsonSrc)
-                }
-            }
-        } catch (e: java.lang.Exception) {
-            okErr = e.message
-            Timber.d(e, "Couldn't get: %s", httpUri)
-        }
+        val (jsonSrc: String?, okErr: String?) = downloadPage(httpUri)
 
 
 
@@ -386,6 +364,26 @@ internal class K9WebViewClient(
             showToast(context, "Got no content ($okErr)")
         }
 
+    }
+
+    private fun downloadPage(httpUri: Uri): Pair<String?, String?> {
+        val client = OkHttpClient()
+        var pageSrc: String? = null
+        var okErr: String? = null
+        try {
+            val request: Request = Builder()
+                .url(httpUri.toString()).build()
+            client.newCall(request).execute().use { response ->
+                if (response.body != null) {
+                    pageSrc = response.body!!.string()
+                    Timber.d("Got response from %s:\n%s", httpUri, pageSrc)
+                }
+            }
+        } catch (e: java.lang.Exception) {
+            okErr = e.message
+            Timber.d(e, "Couldn't get: %s", httpUri)
+        }
+        return Pair(pageSrc, okErr)
     }
 
     private fun xjs(webView: WebView, uri: Uri) {
@@ -522,75 +520,72 @@ internal class K9WebViewClient(
 
     private fun xrequest(context: Context, uri: Uri) {
         val httpUri = uri.buildUpon().scheme("https").build()
-        val client: OkHttpClient = OkHttpClient()
-        var htmlSrc: String? = null
-        var okErr: String? = null
-        try {
-            val request: Request = Builder()
-                .url(httpUri.toString()).build()
-            client.newCall(request).execute().use { response ->
-                if (response.body != null) {
-                    htmlSrc = response.body!!.string()
-                    Timber.d("Got response from %s:\n%s", httpUri, htmlSrc)
-                }
-            }
-        } catch (e: java.lang.Exception) {
-            okErr = e.message
-            Timber.d(e, "Couldn't get: %s", httpUri)
-        }
+        downloadPage(httpUri)
         return;
     }
 
+
+
     private fun xloadcards(context: Context, uri: Uri) {
-        val httpUri = uri.buildUpon().scheme("https").build()
-        val client = OkHttpClient()
-        var htmlSrc: String? = null
-        var okErr: String? = null
-        try {
-            val request: Request = Builder()
-                .url(httpUri.toString()).build()
-            client.newCall(request).execute().use { response ->
-                if (response.body != null) {
-                    htmlSrc = response.body!!.string()
-                    Timber.d("Got response from %s:\n%s", httpUri, htmlSrc)
+        val  maxCards = 5;
+        val encodedUrls = uri.schemeSpecificPart.split(",")
+        val urls = encodedUrls.map {  String(Base64.decode(it, Base64.NO_WRAP + Base64.URL_SAFE)) }
+        val ld2hRenderer = MustacheRenderer()
+        val renderedDisplayHTMLs = ArrayList<String>()
+        val typesToSkip = arrayOf("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage")
+        for (url in urls) {
+            if (renderedDisplayHTMLs.size >= maxCards) {
+                break
+            }
+            val (htmlSrc: String?, okErr: String?) = downloadPage(url.toUri())
+            if (htmlSrc != null) {
+                var data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
+                if (data.isEmpty()) {
+                    data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
                 }
-            }
-        } catch (e: java.lang.Exception) {
-            okErr = e.message
-            Timber.d(e, "Couldn't get: %s", httpUri)
-        }
-        if (htmlSrc != null) {
-            var data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
-            if (data.isEmpty()) {
-                data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
-            }
-            if (data.isEmpty()) {
-                showToast(context, "Could not load cards")
-            } else {
-                val ld2hRenderer = org.audriga.ld2h.MustacheRenderer()
-                val renderedDisplayHTMLs = ArrayList<String>(data.size)
-                for (structuredData in data) {
-                    val jsonObject = structuredData.json
-                    // Add button to share structured data as email
-                    val jsonBytes = jsonObject.toString().encodeToByteArray()
-                    val  encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
-                    val buttonUri =  Uri.Builder()
-                        .scheme("xshareasmail")
-                        .authority(encodedJson)
-                        .build()
-                    val button = ButtonDescription("Share", buttonUri.toString())
-                    val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(button))
-                    if (ld2hRenderResult != null) {
-                        renderedDisplayHTMLs.add(ld2hRenderResult);
+                if (data.isNotEmpty()) {
+                    for (structuredData in data) {
+                        if (renderedDisplayHTMLs.size >= maxCards) {
+                            break
+                        }
+                        val jsonObject = structuredData.json
+                        val type = jsonObject.optString("@type")
+                        if (typesToSkip.contains(type)) {
+                            continue
+                        }
+                        // Add button to share structured data as email
+                        val jsonBytes = jsonObject.toString().encodeToByteArray()
+                        val encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+                        val buttonUri = Uri.Builder()
+                            .scheme("xshareasmail")
+                            .authority(encodedJson)
+                            .build()
+                        val button = ButtonDescription("Share", buttonUri.toString())
+                        val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(button))
+                        if (ld2hRenderResult != null) {
+                            renderedDisplayHTMLs.add(ld2hRenderResult);
+                        }
                     }
+                } else {
+                    //showToast(context, "Could not load cards") // todo collect failed cards?
                 }
-                if (renderedDisplayHTMLs.isNotEmpty()) {
-                    showRenderedCardsPopup(context, renderedDisplayHTMLs)
-                }
+            } else {
+//            showToast(context, "Got no content ($okErr)")
             }
-        } else {
-            showToast(context, "Got no content ($okErr)")
         }
+        if (renderedDisplayHTMLs.isNotEmpty()) {
+            showRenderedCardsPopup(context, renderedDisplayHTMLs)
+        }
+
+//        if (htmlSrc != null) {
+//            var data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
+//            if (data.isEmpty()) {
+//                data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
+//            }
+//
+//        } else {
+//            showToast(context, "Got no content ($okErr)")
+//        }
     }
 
     private fun showRenderedCardsPopup(
