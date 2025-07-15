@@ -74,7 +74,7 @@ abstract class SmlMessageUtil {
                 for (json in payload) {
                     var hetcResult: String? = null
                     try {
-                        hetcResult = hetcRenderer.render(json)
+                        hetcResult = hetcRenderer.renderPreview(json)
                     } catch (_: IOException) {
                     } catch (_: JSONException) {
                     }
