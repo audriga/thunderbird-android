@@ -674,7 +674,8 @@ internal class K9WebViewClient(
         if (id.isNotEmpty()) {
             event.add<PropertyContainer>(Uid(id))
         }
-        val name = json.optString("name")
+        val type = json.optString("@type")
+        val name = json.optString("name", type)
         if (name.isNotEmpty()) {
             event.add<PropertyContainer>(Summary(name))
         }
@@ -688,7 +689,8 @@ internal class K9WebViewClient(
         } else if (url is String && url.isNotEmpty()) {
             event.add<PropertyContainer>(Url(Uris.create(url)))
         }
-        val startDate = json.optString("startDate")
+        val startTime = json.optString("startTime")
+        val startDate = json.optString("startDate", startTime)
         if (startDate.isNotEmpty()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 try {
@@ -707,7 +709,8 @@ internal class K9WebViewClient(
                 }
             }
         }
-        val endDate = json.optString("endDate")
+        val endTime = json.optString("endTime")
+        val endDate = json.optString("endDate", endTime)
         if (endDate.isNotEmpty()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 try {

@@ -8,7 +8,6 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -548,7 +547,7 @@ public class MessageViewInfoExtractor {
             }
         }
         String type = jsonObject.optString("@type");
-        if (type.equals("Recipe") || type.endsWith("Reservation")) {
+        if (shouldMakeSharableAsFile(type)) {
             byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
             String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
             String fileName = jsonObject.optString("name", type) + ".json";
@@ -558,18 +557,31 @@ public class MessageViewInfoExtractor {
                 .appendQueryParameter("fileName", fileName)
                 .build();
             buttons.add(new ButtonDescription("Share as file", uri.toString()));
-        } else if (type.endsWith("Event")) {
+        }
+        if (isEvent(type) || hasStartAndEndDate(jsonObject)) {
             byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
             String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
             Uri uri = new Builder()
                 .scheme("xshareascalendar")
                 .authority(encodedJson)
                 .build();
-            buttons.add(new ButtonDescription("Save to calendar", uri.toString()));
+            // 📅
+            buttons.add(new ButtonDescription("\uD83D\uDCC5", uri.toString()));
+        }
+        if (shouldMakeSharableAsMail(type)) {
+            byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+            String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+            Uri buttonUri = new Builder()
+                .scheme("xshareasmail")
+                .authority(encodedJson)
+                .build();
+            // 📨 emoji
+            buttons.add(new ButtonDescription("\uD83D\uDCE8", buttonUri.toString()));
         }
         Object url = jsonObject.opt("url");
         if (url != null) {
-            buttons.add(new ButtonDescription("Visit", url.toString()));
+            // 🌐
+            buttons.add(new ButtonDescription("\uD83C\uDF10", url.toString()));
         }
         // try to get phone number
         try {
@@ -577,7 +589,8 @@ public class MessageViewInfoExtractor {
             for (Object phone : phones) {
                 // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                 if (phone instanceof String) {
-                    buttons.add(new ButtonDescription("Call " + phone, "tel:" +  phone));
+                    // 📞
+                    buttons.add(new ButtonDescription("\uD83D\uDCDE " + phone, "tel:" +  phone));
                 }
             }
         } catch (JSONException e) {
@@ -594,8 +607,10 @@ public class MessageViewInfoExtractor {
                     // likelyhood of being a JSONObject, or something unexpected is very low I would say
                     if (latitude != null && longitude != null) {
                         // todo the geo uris are hardcoded at the moment
-                        buttons.add(new ButtonDescription("Navigate", "google.navigation:q=" + latitude + "," + longitude));
-                        buttons.add(new ButtonDescription("Show on map", "geo:" + latitude + "," + longitude));
+                        //🗺️
+                        buttons.add(new ButtonDescription("\uD83D\uDDFA️", "google.navigation:q=" + latitude + "," + longitude));
+                        // 📍
+                        buttons.add(new ButtonDescription("\uD83D\uDCCD", "geo:" + latitude + "," + longitude));
                     }
                 }
             }
@@ -605,6 +620,26 @@ public class MessageViewInfoExtractor {
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
         return  buttons;
+    }
+
+    private static boolean shouldMakeSharableAsFile(String type) {
+        return type.equals("Recipe") || type.endsWith("Reservation");
+    }
+    private static boolean shouldMakeSharableAsMail(String type) {
+        return  true;
+        // todo: long term wise should do some type based filtering
+    }
+
+    private static boolean isEvent(String type) {
+        return type.endsWith("Event");
+    }
+    private static boolean hasStartAndEndDate(JSONObject jsonObject) {
+
+        String startTime = jsonObject.optString("startTime");
+        String startDate = jsonObject.optString("startDate", startTime);
+        String endTime = jsonObject.optString("endTime");
+        String endDate = jsonObject.optString("endDate", endTime);
+        return  (!startDate.isEmpty()) || (!endDate.isEmpty());
     }
 
     static List<Object> findAllRecursive(JSONObject json, String searchKey) throws JSONException {
@@ -964,7 +999,8 @@ public class MessageViewInfoExtractor {
                             .put("description", "Confirmation code: " + code)
                             .put("potentialAction", new JSONObject()
                                 .put("@type", "CopyToClipboardAction")
-                                .put( "name", "Copy " + code)
+                                // 📋
+                                .put( "name", "\uD83D\uDCCB " + code)
                                 .put("description", code));
                     }
                 }
