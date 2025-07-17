@@ -1000,15 +1000,21 @@ public class MessageViewInfoExtractor {
     }
 
     static List<String> tryExtractAllWhitelistedUrls(String text, String html) {
-        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/newsletter");
+        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/cooking");
         Matcher urlPlaintextMatcher = Patterns.WEB_URL.matcher(text);
         List<String> urls = new ArrayList<>();
         while (urlPlaintextMatcher.find()) {
             String url = urlPlaintextMatcher.group();
             for (String whiteListedUrl : whiteListedUrls) {
                 if (url.contains(whiteListedUrl)) {
-                    if (!urls.contains(url)) {
-                        urls.add(url);
+                    int end = urlPlaintextMatcher.end();
+                    String fullUrl = url;
+                    if (end < text.length()) {
+                        String afterUrl = text.substring(end).split("[\r\n\t\f^\"<>]")[0];
+                        fullUrl = url + afterUrl;
+                    }
+                    if (!urls.contains(fullUrl)) {
+                       urls.add(fullUrl);
                     }
                 }
             }
@@ -1018,8 +1024,14 @@ public class MessageViewInfoExtractor {
             String url = urlHtmlMatcher.group();
             for (String whiteListedUrl : whiteListedUrls) {
                 if (url.contains(whiteListedUrl)) {
-                    if (!urls.contains(url)) {
-                        urls.add(url);
+                    int end = urlHtmlMatcher.end();
+                    String fullUrl = url;
+                    if (end < html.length()) {
+                        String afterUrl = html.substring(end).split("[\r\n\t\f^\"<>]")[0];
+                        fullUrl = url + afterUrl;
+                    }
+                    if (!urls.contains(fullUrl)) {
+                        urls.add(fullUrl);
                     }
                 }
             }
