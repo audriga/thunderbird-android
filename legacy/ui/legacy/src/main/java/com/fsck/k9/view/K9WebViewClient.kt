@@ -560,7 +560,7 @@ internal class K9WebViewClient(
                             .scheme("xshareasmail")
                             .authority(encodedJson)
                             .build()
-                        val button = ButtonDescription("Share", buttonUri.toString())
+                        val button = ButtonDescription(null, "forward_to_inbox", buttonUri.toString())
                         val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(button))
                         if (ld2hRenderResult != null) {
                             renderedDisplayHTMLs.add(ld2hRenderResult);

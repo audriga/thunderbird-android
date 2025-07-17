@@ -535,6 +535,10 @@ public class MessageViewInfoExtractor {
      */
     static private List<ButtonDescription> getButtons(JSONObject jsonObject) {
         List<ButtonDescription> buttons = new ArrayList<>();
+        Object url = jsonObject.opt("url");
+        if (url != null) {
+            buttons.add(new ButtonDescription(null,"open_in_browser", url.toString()));
+        }
         JSONObject potentialActions = jsonObject.optJSONObject("potentialAction");
         if (potentialActions != null) {
             String type = potentialActions.optString("@type");
@@ -542,7 +546,7 @@ public class MessageViewInfoExtractor {
                 String name = potentialActions.optString("name", "Copy to clipboard ");
                 String description = potentialActions.optString("description");
                 if (!description.isEmpty()) {
-                    buttons.add(new ButtonDescription(name, "xclipboard:" + description));
+                    buttons.add(new ButtonDescription(name, "contentPaste", "xclipboard:" + description));
                 }
             }
         }
@@ -556,7 +560,7 @@ public class MessageViewInfoExtractor {
                 .authority(encodedJson)
                 .appendQueryParameter("fileName", fileName)
                 .build();
-            buttons.add(new ButtonDescription("Share as file", uri.toString()));
+            buttons.add(new ButtonDescription(null, "share", uri.toString()));
         }
         if (isEvent(type) || hasStartAndEndDate(jsonObject)) {
             byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
@@ -565,23 +569,7 @@ public class MessageViewInfoExtractor {
                 .scheme("xshareascalendar")
                 .authority(encodedJson)
                 .build();
-            // 📅
-            buttons.add(new ButtonDescription("\uD83D\uDCC5", uri.toString()));
-        }
-        if (shouldMakeSharableAsMail(type)) {
-            byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
-            String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
-            Uri buttonUri = new Builder()
-                .scheme("xshareasmail")
-                .authority(encodedJson)
-                .build();
-            // 📨 emoji
-            buttons.add(new ButtonDescription("\uD83D\uDCE8", buttonUri.toString()));
-        }
-        Object url = jsonObject.opt("url");
-        if (url != null) {
-            // 🌐
-            buttons.add(new ButtonDescription("\uD83C\uDF10", url.toString()));
+            buttons.add(new ButtonDescription(null, "event", uri.toString()));
         }
         // try to get phone number
         try {
@@ -589,8 +577,7 @@ public class MessageViewInfoExtractor {
             for (Object phone : phones) {
                 // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                 if (phone instanceof String) {
-                    // 📞
-                    buttons.add(new ButtonDescription("\uD83D\uDCDE " + phone, "tel:" +  phone));
+                    buttons.add(new ButtonDescription(null, "call", "tel:" +  phone));
                 }
             }
         } catch (JSONException e) {
@@ -607,15 +594,22 @@ public class MessageViewInfoExtractor {
                     // likelyhood of being a JSONObject, or something unexpected is very low I would say
                     if (latitude != null && longitude != null) {
                         // todo the geo uris are hardcoded at the moment
-                        //🗺️
-                        buttons.add(new ButtonDescription("\uD83D\uDDFA️", "google.navigation:q=" + latitude + "," + longitude));
-                        // 📍
-                        buttons.add(new ButtonDescription("\uD83D\uDCCD", "geo:" + latitude + "," + longitude));
+                        buttons.add(new ButtonDescription(null, "assistant_direction", "google.navigation:q=" + latitude + "," + longitude));
+                        buttons.add(new ButtonDescription(null, "map", "geo:" + latitude + "," + longitude));
                     }
                 }
             }
         } catch (JSONException e) {
             Timber.e(e, "Error trying to add geo button descriptions");
+        }
+        if (shouldMakeSharableAsMail(type)) {
+            byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+            String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+            Uri buttonUri = new Builder()
+                .scheme("xshareasmail")
+                .authority(encodedJson)
+                .build();
+            buttons.add(new ButtonDescription(null, "forward_to_inbox", buttonUri.toString()));
         }
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
@@ -1000,7 +994,7 @@ public class MessageViewInfoExtractor {
                             .put("potentialAction", new JSONObject()
                                 .put("@type", "CopyToClipboardAction")
                                 // 📋
-                                .put( "name", "\uD83D\uDCCB " + code)
+                                .put( "name", code)
                                 .put("description", code));
                     }
                 }
