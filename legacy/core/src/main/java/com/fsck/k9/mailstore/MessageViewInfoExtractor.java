@@ -546,7 +546,7 @@ public class MessageViewInfoExtractor {
                 String name = potentialActions.optString("name", "Copy to clipboard ");
                 String description = potentialActions.optString("description");
                 if (!description.isEmpty()) {
-                    buttons.add(new ButtonDescription(name, "contentPaste", "xclipboard:" + description));
+                    buttons.add(new ButtonDescription(name, "content_paste", "xclipboard:" + description));
                 }
             }
         }
