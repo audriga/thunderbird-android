@@ -1,6 +1,7 @@
 package com.fsck.k9.activity;
 
 import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentsChangedListener;
+import com.fsck.k9.helper.MimeTypeUtil;
 import com.fsck.k9.message.MessageBuilder.Callback;
 import com.fsck.k9.message.SmlMessageUtil;
 import com.fsck.k9.view.MessageWebView;
@@ -11,8 +12,11 @@ import okhttp3.Request.Builder;
 import okhttp3.Response;
 import okhttp3.OkHttpClient;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +42,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Base64;
@@ -536,36 +541,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
              String payload = intent.getStringExtra(SML_PAYLOAD);
             if (payload != null) {
                 smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize(payload);
-                org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
-                try {
-                    ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
-                } catch (IOException e) {
-                    //throw new RuntimeException(e);
-                }
-                ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(smlPayload.size());
-                ArrayList<String> types = new ArrayList<>(smlPayload.size());
-                for (JSONObject jsonObject: smlPayload) {
-                    inlineImages(jsonObject);// todo: Since this modifies the actual jsonObject, and we iterate over smlPayload here, this might also modify smlPlayload (which is what we want). But need to test this.
-                    String type = jsonObject.optString("@type");
-                    types.add(type);
-                    String ld2hRenderResult = null;
-                    try {
-                        ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
-                    } catch (IOException e) {
-                        // todo handle
-                    }
-                    if (ld2hRenderResult != null) {
-                        renderedDisplayHTMLs.add(ld2hRenderResult);
-                    }
-                }
-                if (subjectView.getText().length() == 0) {
-                    String subject = "Check out this " + String.join(", ", types);
-                    subjectView.setText(subject);
-                }
-                if (!renderedDisplayHTMLs.isEmpty()) {
-                    String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
-                   displayLd2hResult(joinedDisplayHTMLRenderResults);
-                }
+                Ld2hResult ld2hResult = ld2hRenderSmlPayload();
+                updateSubjectAndDisplayLd2hResult(ld2hResult);
             } else {
                 messageContentView.setVisibility(View.GONE);
                 if (subjectView.getText().length() == 0) {
@@ -574,6 +551,54 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 messageContentViewSML.setVisibility(View.VISIBLE);
                 messageContentViewSML.displayHtmlContentWithInlineAttachments("<b>Testing</b>", null, null);
             }
+        }
+    }
+
+    private void updateSubjectAndDisplayLd2hResult(Ld2hResult ld2hResult) {
+        if (subjectView.getText().length() == 0) {
+            String subject = "Check out this " + String.join(", ", ld2hResult.types);
+            subjectView.setText(subject);
+        }
+        if (!ld2hResult.renderedDisplayHTMLs.isEmpty()) {
+            String joinedDisplayHTMLRenderResults = String.join("\n", ld2hResult.renderedDisplayHTMLs);
+           displayLd2hResult(joinedDisplayHTMLRenderResults);
+        }
+    }
+
+    @NonNull
+    private Ld2hResult ld2hRenderSmlPayload() {
+        org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
+        try {
+            ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
+        } catch (IOException e) {
+            //throw new RuntimeException(e);
+        }
+        ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(smlPayload.size());
+        ArrayList<String> types = new ArrayList<>(smlPayload.size());
+        for (JSONObject jsonObject: smlPayload) {
+            inlineImages(jsonObject);// todo: Since this modifies the actual jsonObject, and we iterate over smlPayload here, this might also modify smlPlayload (which is what we want). But need to test this.
+            String type = jsonObject.optString("@type");
+            types.add(type);
+            String ld2hRenderResult = null;
+            try {
+                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
+            } catch (IOException e) {
+                // todo handle
+            }
+            if (ld2hRenderResult != null) {
+                renderedDisplayHTMLs.add(ld2hRenderResult);
+            }
+        }
+        return new Ld2hResult(renderedDisplayHTMLs, types);
+    }
+
+    private static class Ld2hResult {
+        public final ArrayList<String> renderedDisplayHTMLs;
+        public final ArrayList<String> types;
+
+        public Ld2hResult(ArrayList<String> renderedDisplayHTMLs, ArrayList<String> types) {
+            this.renderedDisplayHTMLs = renderedDisplayHTMLs;
+            this.types = types;
         }
     }
 
@@ -712,6 +737,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     for (Parcelable parcelable : list) {
                         Uri stream = (Uri) parcelable;
                         if (stream != null) {
+                            // attachment adding be here
                             attachmentPresenter.addExternalAttachment(stream, type);
                         }
                     }
@@ -2310,6 +2336,49 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             View progressBar = view.findViewById(R.id.progressBar);
             boolean isLoadingComplete = (attachment.state == Attachment.LoadingState.COMPLETE);
             if (isLoadingComplete) {
+                // todo attachent loading is finished here
+                if (MimeTypeUtil.isSameMimeType(attachment.contentType, "application/json") || MimeTypeUtil.isSameMimeType(attachment.contentType, "application/json+ld")) {
+                    File fl = new File(attachment.filename);
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fl)))) {
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            sb.append(line).append("\n");
+                        }
+                        String ret =  sb.toString();
+                        // todo: popup to ask if they want to share as schema, or as attachment
+                        List<JSONObject> deserialized = org.audriga.hetc.JsonLdDeserializer.deserialize(ret);
+                        List<JSONObject> jsonLds = new ArrayList<>(deserialized.size());
+                        for (JSONObject jsonObject: deserialized) {
+                            if (isJsonLd(jsonObject)) {
+                                jsonLds.add(jsonObject);
+                            }
+                        }
+                        if (!jsonLds.isEmpty()) {
+                            if (smlPayload == null) {
+                                smlPayload = new ArrayList<>(deserialized.size());
+                            }
+                            smlPayload.addAll(jsonLds);
+                            Ld2hResult ld2hResult = ld2hRenderSmlPayload();
+                            if (!ld2hResult.renderedDisplayHTMLs.isEmpty()) {
+                                String joinedDisplayHTMLRenderResults = String.join("\n", ld2hResult.renderedDisplayHTMLs);
+                                displayLd2hResult(joinedDisplayHTMLRenderResults);
+                                if (subjectView.getText().length() == 0) {
+                                    String subject = "Check out this " + String.join(", ", ld2hResult.types);
+                                    subjectView.setText(subject);
+                                } else if (subjectView.getText().toString().startsWith("Check out this ")) {
+                                    String subjectAppend = ", " + String.join(", ", ld2hResult.types);
+                                    subjectView.append(subjectAppend);
+                                }
+                                // todo this only seems to revome the attachment from view, not from the actual mail. Maybe race condition?
+                                attachmentPresenter.onClickRemoveAttachment(attachment.uri);
+                                return;
+                            }
+                        }
+                    } catch (IOException ignored) {
+                    }
+
+                }
                 if (attachment.isSupportedImage()) {
                     ImageView attachmentTypeView = view.findViewById(R.id.attachment_type);
                     attachmentTypeView.setImageResource(Icons.Outlined.Image);
@@ -2361,6 +2430,19 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     getString(R.string.message_compose_attachments_forward_toast), Toast.LENGTH_LONG).show();
         }
     };
+
+    private static boolean isJsonLd(JSONObject jsonObject) {
+        try {
+            String context = jsonObject.getString("@context");
+            if (!context.toLowerCase().contains("schema")) {
+                return false;
+            }
+            String type = jsonObject.getString("@type");
+            return !type.isEmpty();
+        } catch (JSONException ignored) {
+            return false;
+        }
+    }
 
     private Handler internalMessageHandler = new Handler() {
         @Override
