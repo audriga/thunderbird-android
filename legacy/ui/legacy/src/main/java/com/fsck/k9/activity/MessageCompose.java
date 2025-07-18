@@ -625,7 +625,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             smlPayload.add(inlineImages(jsonObject));
             String ld2hRenderResult = null;
             try {
-                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
+                List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
+                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject, buttons) : null;
             } catch (IOException e) {
                 // todo handle
             }
