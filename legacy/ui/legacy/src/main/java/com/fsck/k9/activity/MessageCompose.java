@@ -4,6 +4,7 @@ import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentsChangedListen
 import com.fsck.k9.helper.MimeTypeUtil;
 import com.fsck.k9.message.MessageBuilder.Callback;
 import com.fsck.k9.message.SmlMessageUtil;
+import com.fsck.k9.sml.SMLUtil;
 import com.fsck.k9.view.MessageWebView;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import okhttp3.MediaType;
@@ -42,7 +43,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
-import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Base64;
@@ -139,6 +139,7 @@ import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
 import okhttp3.ResponseBody;
+import org.audriga.ld2h.ButtonDescription;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -581,7 +582,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             types.add(type);
             String ld2hRenderResult = null;
             try {
-                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
+                List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
+                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject, buttons) : null;
             } catch (IOException e) {
                 // todo handle
             }
@@ -590,6 +592,48 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             }
         }
         return new Ld2hResult(renderedDisplayHTMLs, types);
+    }
+
+    /**
+     * This also calls inlineImages for all markups
+     */
+    @NonNull
+    private ArrayList<String> ld2hRenderStructuredData(List<StructuredData> data) {
+        // Using org.audriga.hetc.MustacheRenderer
+        org.audriga.hetc.MustacheRenderer hetcRenderer;
+        hetcRenderer = new org.audriga.hetc.MustacheRenderer();
+        org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
+        try {
+            ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
+        } catch (IOException e) {
+            //throw new RuntimeException(e);
+        }
+
+//                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
+        ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
+//                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
+        List<String> typesToSkip = (data.size() > 1) ?
+            Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
+            null;
+        smlPayload = new ArrayList<>(data.size());
+        for (StructuredData structuredData: data) {
+            JSONObject jsonObject = structuredData.getJson();
+            String type = jsonObject.optString("@type");
+            if (typesToSkip != null && typesToSkip.contains(type)) {
+                continue;
+            }
+            smlPayload.add(inlineImages(jsonObject));
+            String ld2hRenderResult = null;
+            try {
+                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
+            } catch (IOException e) {
+                // todo handle
+            }
+            if (ld2hRenderResult != null) {
+                renderedDisplayHTMLs.add(ld2hRenderResult);
+            }
+        }
+        return renderedDisplayHTMLs;
     }
 
     private static class Ld2hResult {
@@ -795,61 +839,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             if (data.isEmpty()) {
                 // No structured data found, todo: treat link as normal?
             } else {
-               // Using org.audriga.hetc.MustacheRenderer
-                org.audriga.hetc.MustacheRenderer hetcRenderer;
-                hetcRenderer = new org.audriga.hetc.MustacheRenderer();
-                org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
-                try {
-                    ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
-                } catch (IOException e) {
-                    //throw new RuntimeException(e);
-                }
-
-//                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
-                ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
-//                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
-                List<String> typesToSkip = (data.size() > 1) ?
-                    Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
-                    null;
-                smlPayload = new ArrayList<>(data.size());
-                for (StructuredData structuredData: data) {
-                    JSONObject jsonObject = structuredData.getJson();
-                    String type = jsonObject.optString("@type");
-                    if (typesToSkip != null && typesToSkip.contains(type)) {
-                        continue;
-                    }
-                    smlPayload.add(inlineImages(jsonObject));
-//                                String hetcRenderResult = null;
-                    String ld2hRenderResult = null;
-//                                String encodedJsonLd;
-//                                encodedJsonLd = jsonObject.toString();
-                    try {
-//                                    hetcRenderResult = hetcRenderer.render(jsonObject);
-                        ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject) : null;
-                    } catch (IOException e) {
-                        // todo handle
-                    }
-
-//                                if (!encodedJsonLd.isEmpty()) {
-//                                    encodedJsonLds.add(encodedJsonLd);
-//                                }
-//                                if (hetcRenderResult != null) {
-//                                    renderedEmailHTMLs.add(hetcRenderResult);
-//                                }
-                    if (ld2hRenderResult != null) {
-                        renderedDisplayHTMLs.add(ld2hRenderResult);
-                    }
-                }
+                ArrayList<String> renderedDisplayHTMLs = ld2hRenderStructuredData(data);
                 if (!renderedDisplayHTMLs.isEmpty()) {
                     String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
-//                                if (encodedJsonLds.size() == 1) {
-//                                    smlJsonLd = encodedJsonLds.get(0);
-//                                } else if (encodedJsonLds.size() > 1) {
-//                                    smlJsonLd = "[" + String.join(",", encodedJsonLds) + "]";
-//                                }
-
-//                                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
-//                                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ joinedEmailHTMLRenderResults +"</body></html>";
                     displayLd2hResult(joinedDisplayHTMLRenderResults);
                 }
             }
