@@ -102,6 +102,14 @@ public abstract class SMLUtil {
                 .build();
             buttons.add(new ButtonDescription(null, "forward_to_inbox", buttonUri.toString()));
         }
+        String liveUri = jsonObject.optString("liveUri");
+        if (!liveUri.isEmpty()) {
+
+            Uri buttonUri = Uri.parse(liveUri).buildUpon()
+                .scheme("xreload")
+                .build();
+            buttons.add(new ButtonDescription(null, "replay", buttonUri.toString()));
+        }
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
         return  buttons;
