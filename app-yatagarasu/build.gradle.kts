@@ -16,8 +16,8 @@ android {
         applicationId = "com.audriga.yatagarasu.android"
         testApplicationId = "com.audriga.yatagarasu.tests"
 
-        versionCode = 2
-        versionName = "0.1"
+        versionCode = 3
+        versionName = "0.3"
 
         // Keep in sync with the resource string array "supported_languages"
         resourceConfigurations.addAll(
@@ -92,7 +92,7 @@ android {
             versionNameSuffix = "-SNAPSHOT"
 
             isShrinkResources = false
-            isDebuggable = true
+            isDebuggable = false
 
             buildConfigField("String", "RELEASE_CHANNEL", "null")
             signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
