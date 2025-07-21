@@ -41,7 +41,7 @@ public abstract class SMLUtil {
         }
         Object url = jsonObject.opt("url");
         if (url != null) {
-            buttons.add(new ButtonDescription(null,"open_in_browser", url.toString()));
+            buttons.add(new ButtonDescription(null,"web", url.toString()));
         }
         String type = jsonObject.optString("@type");
         if (shouldMakeSharableAsFile(type)) {
@@ -66,11 +66,30 @@ public abstract class SMLUtil {
         }
         // try to get phone number
         try {
-            List<Object> phones = findAllRecursive(jsonObject, "telephone");
+            List<Object> telephone = findAllRecursive(jsonObject, "telephone");
+            for (Object phone : telephone) {
+                // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
+                if (phone instanceof String) {
+                    buttons.add(new ButtonDescription(null, "call", "tel:" +  phone));
+                }
+            }
+            List<Object> phones = findAllRecursive(jsonObject, "phone");
             for (Object phone : phones) {
                 // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                 if (phone instanceof String) {
                     buttons.add(new ButtonDescription(null, "call", "tel:" +  phone));
+                }
+            }
+        } catch (JSONException e) {
+            Timber.e(e, "Error trying to add phone button descriptions");
+        }
+        // try to get mail
+        try {
+            List<Object> mails = findAllRecursive(jsonObject, "email");
+            for (Object email : mails) {
+                // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
+                if (email instanceof String) {
+                    buttons.add(new ButtonDescription(null, "mail", "mailto:" +  email));
                 }
             }
         } catch (JSONException e) {

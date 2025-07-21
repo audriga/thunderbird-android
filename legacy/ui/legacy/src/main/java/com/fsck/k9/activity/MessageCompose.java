@@ -2427,7 +2427,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private static boolean isJsonLd(JSONObject jsonObject) {
         try {
             String context = jsonObject.getString("@context");
-            if (!context.toLowerCase().contains("schema")) {
+            if (!(context.toLowerCase().contains("schema") || context.toLowerCase().contains("sml"))) {
                 return false;
             }
             String type = jsonObject.getString("@type");
