@@ -26,20 +26,22 @@ public abstract class SMLUtil {
      */
     public static List<ButtonDescription> getButtons(JSONObject jsonObject) {
         List<ButtonDescription> buttons = new ArrayList<>();
+        Object potentialActions = jsonObject.opt("potentialAction");
+        if (potentialActions != null) {
+            if (potentialActions instanceof  JSONObject) {
+                handleExistingPotentialAction((JSONObject) potentialActions, buttons);
+            } else if (potentialActions instanceof JSONArray) {
+                for (int i = 0; i < ((JSONArray) potentialActions).length(); i++) {
+                    Object potentialAction = ((JSONArray) potentialActions).opt(i);
+                    if (potentialAction instanceof JSONObject) {
+                        handleExistingPotentialAction((JSONObject) potentialAction, buttons);
+                    }
+                }
+            }
+        }
         Object url = jsonObject.opt("url");
         if (url != null) {
             buttons.add(new ButtonDescription(null,"open_in_browser", url.toString()));
-        }
-        JSONObject potentialActions = jsonObject.optJSONObject("potentialAction");
-        if (potentialActions != null) {
-            String type = potentialActions.optString("@type");
-            if (type.equals("CopyToClipboardAction")) {
-                String name = potentialActions.optString("name", "Copy to clipboard ");
-                String description = potentialActions.optString("description");
-                if (!description.isEmpty()) {
-                    buttons.add(new ButtonDescription(name, "content_paste", "xclipboard:" + description));
-                }
-            }
         }
         String type = jsonObject.optString("@type");
         if (shouldMakeSharableAsFile(type)) {
@@ -113,6 +115,36 @@ public abstract class SMLUtil {
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
         return  buttons;
+    }
+
+    private static void handleExistingPotentialAction(JSONObject potentialAction, List<ButtonDescription> buttons) {
+        String type = potentialAction.optString("@type");
+        switch (type) {
+            case "CopyToClipboardAction": {
+                String name = potentialAction.optString("name", "Copy to clipboard ");
+                String description = potentialAction.optString("description");
+                if (!description.isEmpty()) {
+                    buttons.add(new ButtonDescription(name, "content_paste", "xclipboard:" + description));
+                }
+                break;
+            }
+            case "ConfirmAction": {
+                String name = potentialAction.optString("name", "Confirm");
+                String target = potentialAction.optString("target");
+                if (!target.isEmpty()) {
+                    buttons.add(new ButtonDescription(name, target));
+                }
+                break;
+            }
+            case "CancelAction": {
+                String name = potentialAction.optString("name", "Deny");
+                String target = potentialAction.optString("target");
+                if (!target.isEmpty()) {
+                    buttons.add(new ButtonDescription(name, target));
+                }
+                break;
+            }
+        }
     }
 
     private static boolean shouldMakeSharableAsFile(String type) {
