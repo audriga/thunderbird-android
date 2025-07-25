@@ -959,9 +959,20 @@ public class MessageViewInfoExtractor {
                         String encodedFullUrl = Base64.encodeToString(fullUrl.getBytes(StandardCharsets.UTF_8),
                             Base64.NO_WRAP + Base64.URL_SAFE);
                         String loadCardUrl = "xloadcards://"+encodedFullUrl;
+                        if (originaHTMLIndex >= end) {
+                            //todo something went wrong with the matching
+                            return html;
+                        }
                         builder.append(html.substring(originaHTMLIndex, end));
                         String[] afterButtonSplits = afterMatch.split("</a>");
                         int insertPosition = end + afterButtonSplits[0].length() + 4; //+4 to position after </a> tag
+                        if (insertPosition >= html.length()) {
+                            //todo something went wrong with the matching
+                            return html;
+                        } else if (end >= insertPosition) {
+                            //todo something went wrong with the matching
+                            return html;
+                        }
                         builder.append(html.substring(end, insertPosition));
                         String button = "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" + loadCardUrl + "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">web</i></span></button>";
                         builder.append(button);
