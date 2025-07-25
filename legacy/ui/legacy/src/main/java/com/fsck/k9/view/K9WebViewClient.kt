@@ -19,6 +19,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.startActivity
@@ -76,6 +77,13 @@ import org.audriga.ld2h.ButtonDescription
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONObject
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.client.j2se.MatrixToImageWriter
+import com.google.zxing.common.BitMatrix
+//import java.awt.image.BufferedImage;
+import androidx.core.graphics.createBitmap
+import java.io.ByteArrayOutputStream
 
 // import android.R.style
 
@@ -155,6 +163,10 @@ internal class K9WebViewClient(
             }
             XSHARE_AS_MAIL -> {
                 xshareAsMail(webView.context, uri)
+                true
+            }
+            XBARCODE -> {
+                openBarcode(webView.context, uri)
                 true
             }
             else -> {
@@ -799,6 +811,66 @@ internal class K9WebViewClient(
         }
     }
 
+    private fun openBarcode(context: Context, uri: Uri) {
+        val bcbp = "M1TEST/HIDDEN E8OQ6FU FRARLGLH 4010 012C004D0001 35C>2180WM6012BLH 2922023642241060 LH *30600000K09"
+        val bm = generateQRCodeImage(bcbp)
+        val v : ImageView = ImageView(context)
+        v.setImageBitmap(bm)
+        val dialogAlert = MaterialAlertDialogBuilder(context)
+            .setView(v)
+            //.setTitle("title")
+            //.setMessage("msg: " + s)
+            .setPositiveButton("Close", null)
+            .setCancelable(false)
+            .create()
+            .apply {
+                setCanceledOnTouchOutside(false)
+                show()
+            }
+
+        // Make Fullscreen
+        // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
+        dialogAlert.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+    }
+
+    private fun generateQRCodeImage(barcodeText: String): Bitmap {
+        val barcodeWriter = MultiFormatWriter()
+        val bitMatrix: BitMatrix = barcodeWriter.encode(barcodeText, BarcodeFormat.PDF_417, 600, 400)
+
+        // Needs java.awt.image.BufferedImage
+//        MatrixToImageWriter.toBufferedImage(bitMatrix)
+
+//        val barcodeOutputStream = ByteArrayOutputStream();
+//        MatrixToImageWriter.writeToStream(bitMatrix, "PNG", barcodeOutputStream)
+
+        val pixels = setBitmapPixels(bitMatrix)
+        val bitmap = encodeBitmap(pixels, bitMatrix.width, bitMatrix.height)
+
+        return bitmap;
+    }
+
+
+
+    private fun setBitmapPixels(bitMatrix: BitMatrix): IntArray {
+        val pixels = IntArray(bitMatrix.width * bitMatrix.height)
+
+        for (y in 0 until bitMatrix.height) {
+            val offset = y * bitMatrix.width
+            for (x in 0 until bitMatrix.width)
+                pixels[offset + x] = if (bitMatrix.get(x , y)) Color.BLACK else Color.WHITE
+        }
+        return pixels
+    }
+
+    private fun encodeBitmap(pixels: IntArray, width: Int, height: Int) : Bitmap {
+        val bitmap = createBitmap(width, height)
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+        return bitmap
+    }
+
     override fun shouldInterceptRequest(webView: WebView, request: WebResourceRequest): WebResourceResponse? {
         val uri = request.url
 
@@ -863,6 +935,7 @@ internal class K9WebViewClient(
         private const val XSHARE_AS_FILE_SCHEME = "xshareasfile"
         private const val XSHARE_AS_CALENDAR_SCHEME = "xshareascalendar"
         private const val XSHARE_AS_MAIL = "xshareasmail"
+        private const val XBARCODE = "xbarcode"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

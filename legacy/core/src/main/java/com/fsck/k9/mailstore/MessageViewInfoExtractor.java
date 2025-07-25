@@ -500,29 +500,30 @@ public class MessageViewInfoExtractor {
 //                    String snippet2 = " ";
 //                    */
 //
-//                    String url_story = "https://cdn.prod.www.spiegel.de/stories/117130/index.amp.html";
-//                    String url_story2 = "https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html";
-//                    String url_story3 = "http://www.audriga.eu/test/web-stories/amp_story.html";
-//
-//
-//                    String linx = "<br>LINX: <a href=\"tel:124\">TEL</a>" +
-//                        "<br><a href=\"file:blubb\">FILE</a>" +
-//                        "<br><a href=\"xclipboard:12234567890\">Clipboard</a>" +
-//                        "<br><a href=\"xmail:blupp\">xmail</a>" +
-//                        "<br><a href=\"xalert:xblupp\">xalert</a>" +
-//                        "<br><a href=\"xjs:xjs\">xjs</a>"
-//                    + "<br><a href=\"xstory:xstory:https://www.broken.com\">x_broken</a>"
-//                    + "<br><a href=\"xstory:#https://www.google.com\">x_google</a>"
-//                    + "<br><a href=\"xstory:#" + url_story + "\">xstory</a>"
-//                    + "<br><a href=\"xstory:#" + url_story2 + "\">xstory2</a>"
-//                    + "<br><a href=\"xstory:#" + url_story3 + "\">xstory3</a>"
-//                    + "<br><a href=\"xrequest://www.audriga.eu/test/web-stories/amp_story.html\">httprequest</a>"
-//                    + "<br><a href=\"xreload://www.audriga.eu/test/data/68517fbf68ff3.json\">reload</a>"
-//                    + "<br><hr><br><br>";
-//
-//
-//                    sanitizedHtml = css  + "<br><br>SML:<br>" + result + "<br>XSML<br>" + linx + "<br>" + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
-                    sanitizedHtml = css + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
+                    String url_story = "https://cdn.prod.www.spiegel.de/stories/117130/index.amp.html";
+                    String url_story2 = "https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html";
+                    String url_story3 = "http://www.audriga.eu/test/web-stories/amp_story.html";
+
+
+                    String linx = "<br>LINX: <a href=\"tel:124\">TEL</a>" +
+                        "<br><a href=\"file:blubb\">FILE</a>" +
+                        "<br><a href=\"xclipboard:12234567890\">Clipboard</a>" +
+                        "<br><a href=\"xmail:blupp\">xmail</a>" +
+                        "<br><a href=\"xalert:xblupp\">xalert</a>" +
+                        "<br><a href=\"xjs:xjs\">xjs</a>"
+                    + "<br><a href=\"xstory:xstory:https://www.broken.com\">x_broken</a>"
+                    + "<br><a href=\"xstory:#https://www.google.com\">x_google</a>"
+                    + "<br><a href=\"xstory:#" + url_story + "\">xstory</a>"
+                    + "<br><a href=\"xstory:#" + url_story2 + "\">xstory2</a>"
+                    + "<br><a href=\"xstory:#" + url_story3 + "\">xstory3</a>"
+                    + "<br><a href=\"xrequest://www.audriga.eu/test/web-stories/amp_story.html\">httprequest</a>"
+                    + "<br><a href=\"xreload://www.audriga.eu/test/data/68517fbf68ff3.json\">reload</a>"
+                    + "<br><a href=\"xbarcode:/abc\">barcodetest</a>"
+                    + "<br><hr><br><br>";
+
+
+                    sanitizedHtml = css  + "<br><br>SML:<br>" + result + "<br>XSML<br>" + linx + "<br>" + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
+//                    sanitizedHtml = css + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
 
             }
 

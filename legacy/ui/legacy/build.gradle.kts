@@ -74,6 +74,8 @@ dependencies {
     //implementation(libs.ical4j)
     //implementation(libs.ical4jvcard)
     implementation(libs.ical4jserializer)
+    implementation(libs.zxingCore)
+    implementation(libs.zxingJavaSE)
 
     implementation(libs.glide)
     annotationProcessor(libs.glide.compiler)
