@@ -438,7 +438,13 @@ public class MessageViewInfoExtractor {
                     }
                 }
             }
-
+            String css = "<head>\n" +
+                "        <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
+                "        <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
+                "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">\n" +
+                "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto+Mono\">\n" +
+                "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700\">\n" +
+                "</head>";
             if (data.isEmpty() && extracted == null) {
                 List<String> urls = tryExtractAllWhitelistedUrls(textString, htmlString);
                 if (!urls.isEmpty()) {
@@ -449,18 +455,15 @@ public class MessageViewInfoExtractor {
                     }
 
                     String button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
-                    sanitizedHtml = button + sanitizedHtml;
+//                    sanitizedHtml = button + sanitizedHtml;
+                    String htmlWithStringButtons = addLoadButtonsAfterUrls(htmlString);
+                    // todo this is not actually using the output of htmlProcessor.processForDisplay.
+                    //    also: the function that adds the buttons should proably work on the html tree instead of what it is currently doing
+                   sanitizedHtml = css + button + htmlWithStringButtons;
                 } else {
                     sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
                 }
             } else {
-                String css = "<head>\n" +
-                    "        <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
-                    "        <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
-                    "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">\n" +
-                    "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto+Mono\">\n" +
-                    "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700\">\n" +
-                    "</head>";
                 MustacheRenderer renderer = new MustacheRenderer();
 
                 // We know these types will most likely not render well, so don't render them (unless they are the only markup)
@@ -936,5 +939,38 @@ public class MessageViewInfoExtractor {
         }
 
         return urls;
+    }
+    static String addLoadButtonsAfterUrls(String html) {
+        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/cooking");
+        StringBuilder builder = new StringBuilder();
+        Matcher urlHtmlMatcher = Patterns.WEB_URL.matcher(html);
+        int originaHTMLIndex = 0;
+        while (urlHtmlMatcher.find()) {
+            String url = urlHtmlMatcher.group();
+            for (String whiteListedUrl : whiteListedUrls) {
+                if (url.contains(whiteListedUrl)) {
+                    int end = urlHtmlMatcher.end();
+                    String fullUrl = url;
+                    if (end < html.length()) {
+                        String afterMatch = html.substring(end);
+                        String[] afterUrlSplits = afterMatch.split("[\r\n\t\f^\"<>]");
+                        String afterUrl = afterUrlSplits[0];
+                        fullUrl = url + afterUrl;
+                        String encodedFullUrl = Base64.encodeToString(fullUrl.getBytes(StandardCharsets.UTF_8),
+                            Base64.NO_WRAP + Base64.URL_SAFE);
+                        String loadCardUrl = "xloadcards://"+encodedFullUrl;
+                        builder.append(html.substring(originaHTMLIndex, end));
+                        String[] afterButtonSplits = afterMatch.split("</a>");
+                        int insertPosition = end + afterButtonSplits[0].length() + 4; //+4 to position after </a> tag
+                        builder.append(html.substring(end, insertPosition));
+                        String button = "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" + loadCardUrl + "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">web</i></span></button>";
+                        builder.append(button);
+                        originaHTMLIndex = insertPosition;
+                    }
+                }
+            }
+        }
+        builder.append(html.substring(originaHTMLIndex));
+        return builder.toString();
     }
 }
