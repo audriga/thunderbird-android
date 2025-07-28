@@ -152,10 +152,10 @@ public class SMLMessageView {
         }
         List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
         String result = renderer.render(jsonObject, buttons);
-        renderedHTMLs.add(result);
         if (showSourceButton != null) {
-            renderedHTMLs.add(showSourceButton);
+            result += showSourceButton;
         }
+        renderedHTMLs.add(result);
     }
 
     public static void extractFromParseableParts(@Nullable ArrayList<Part> parseableParts, List<StructuredData> data)

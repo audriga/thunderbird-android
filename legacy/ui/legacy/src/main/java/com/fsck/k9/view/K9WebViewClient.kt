@@ -887,9 +887,9 @@ internal class K9WebViewClient(
 
         val dialogAlert = MaterialAlertDialogBuilder(context)
             .setView(xwebView)
-            .setPositiveButton("Copy to Clipboard"
+            .setNegativeButton("Copy to Clipboard"
             ) { dialog, which -> clipboardManager.setText("Copied jsonld", jsons[0]) }
-            .setNegativeButton("Close", null)
+            .setPositiveButton("Close", null)
             .setCancelable(false)
             .create()
             .apply {
