@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,11 +21,15 @@ import android.util.Patterns;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import app.k9mail.legacy.account.Account;
+import app.k9mail.legacy.message.controller.SimpleMessagingListener;
 import com.audriga.jakarta.sml.h2lj.model.StructuredData;
 import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
 import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fsck.k9.Preferences;
+import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
@@ -405,6 +410,43 @@ public class SMLMessageView {
             Timber.e(e, "Encountered exception while trying to extract/ display markup from viewable");
         }
         return  displayHtml;
+    }
+
+    @NonNull
+    static HashMap<AttachmentViewInfo, String> getParseableAttachments(
+        List<AttachmentViewInfo> attachmentInfos, MessagingController mc) {
+        HashMap<AttachmentViewInfo, String> parseableAttachments = new HashMap<>();
+        for (AttachmentViewInfo attachmentViewInfo :
+            attachmentInfos) {
+            String filename = attachmentViewInfo.displayName;
+            if (filename != null && filename.lastIndexOf('.') != -1) {
+                String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.US);
+                ArrayList<String> extensionsOfParseable = new ArrayList<>(List.of("pkpass", "vcard", "ics"));
+                if (extensionsOfParseable.contains(extension)) {
+                    if (!attachmentViewInfo.isContentAvailable()) {
+                        LocalPart localPart = (LocalPart) attachmentViewInfo.part;
+                        String accountUuid = localPart.getAccountUuid();
+                        Account account = Preferences.getPreferences().getAccount(accountUuid);
+                        LocalMessage message = localPart.getMessage();
+                        // this copies parts of downloadAttachment, from AttachmentController
+                        mc.loadAttachment(account, message, attachmentViewInfo.part, new SimpleMessagingListener() {
+                            @Override
+                            public void loadAttachmentFinished(Account account, Message message, Part part) {
+                                attachmentViewInfo.setContentAvailable();
+                            }
+
+                            @Override
+                            public void loadAttachmentFailed(Account account, Message message, Part part, String reason) {
+                                super.loadAttachmentFailed(account, message, part, reason);
+                            }
+                        });
+                    }
+                    // todo: Wait until all attachments have loaded(?)
+                    parseableAttachments.put(attachmentViewInfo, extension);
+                }
+            }
+        }
+        return parseableAttachments;
     }
 
     public enum TryToDerive {

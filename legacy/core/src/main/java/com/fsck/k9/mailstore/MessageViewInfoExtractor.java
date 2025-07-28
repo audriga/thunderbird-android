@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 import android.text.TextUtils;
 
@@ -14,11 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
-import app.k9mail.legacy.account.Account;
 import app.k9mail.legacy.di.DI;
-import app.k9mail.legacy.message.controller.MessageReference;
-import app.k9mail.legacy.message.controller.SimpleMessagingListener;
-import com.fsck.k9.Preferences;
 import com.fsck.k9.mailstore.SMLMessageView.TryToDerive;
 import com.fsck.k9.CoreResourceProvider;
 import com.fsck.k9.controller.MessagingController;
@@ -39,11 +34,6 @@ import com.fsck.k9.message.html.HtmlConverter;
 import app.k9mail.html.cleaner.HtmlProcessor;
 import org.openintents.openpgp.util.OpenPgpUtils;
 import timber.log.Timber;
-//import app.cash.barber.Barber;
-//import com.github.mustachejava.DefaultMustacheFactory;
-//import com.github.mustachejava.Mustache;
-//import com.github.mustachejava.MustacheFactory;
-
 
 import static com.fsck.k9.mail.internet.MimeUtility.getHeaderParameter;
 import static com.fsck.k9.mail.internet.Viewable.Alternative;
@@ -51,8 +41,6 @@ import static com.fsck.k9.mail.internet.Viewable.Html;
 import static com.fsck.k9.mail.internet.Viewable.MessageHeader;
 import static com.fsck.k9.mail.internet.Viewable.Text;
 import static com.fsck.k9.mail.internet.Viewable.Textual;
-import static org.apache.commons.io.IOUtils.close;
-
 
 public class MessageViewInfoExtractor {
     private static final String TEXT_DIVIDER =
@@ -158,10 +146,6 @@ public class MessageViewInfoExtractor {
 
     private MessageViewInfo extractSimpleMessageForView(Message message, Part contentPart) throws MessagingException {
         List<AttachmentViewInfo> attachmentInfos = new ArrayList<>();
-        MessageReference reference = null;
-        if (message instanceof LocalMessage) {
-            reference = ((LocalMessage) message).makeMessageReference();
-        }
         TryToDerive shouldTryToDerive = SMLMessageView.shouldTryToDerive(message);
         ViewableExtractedText viewable = extractViewableAndAttachments(
                 Collections.singletonList(contentPart), attachmentInfos, shouldTryToDerive);
@@ -170,11 +154,7 @@ public class MessageViewInfoExtractor {
                 !message.isSet(Flag.X_DOWNLOADED_FULL) || MessageExtractor.hasMissingParts(message);
 
         UnsubscribeUri preferredUnsubscribeUri = ListUnsubscribeHelper.INSTANCE.getPreferredListUnsubscribeUri(message);
-//        //Send on render
-//        MessagingController mc = DI.get(MessagingController.class);
-//        Preferences preferences = DI.get(Preferences.class);
-//        Account account = preferences.getDefaultAccount();
-//        mc.sendMessageBlocking(account, message);
+
         return MessageViewInfo.createWithExtractedContent(
                 message, contentPart, isMessageIncomplete, viewable.html, attachmentInfos, attachmentResolver,
                 preferredUnsubscribeUri);
@@ -186,53 +166,15 @@ public class MessageViewInfoExtractor {
         ArrayList<Viewable> viewableParts = new ArrayList<>();
         ArrayList<Part> attachments = new ArrayList<>();
         ArrayList<Part> parseableParts = new ArrayList<>();
-        HashMap<AttachmentViewInfo, String> parseableAttachments = new HashMap<>();
 
         for (Part part : parts) {
             MessageExtractor.findViewablesAndAttachments(part, viewableParts, attachments, parseableParts);
         }
 
         attachmentInfos.addAll(attachmentInfoExtractor.extractAttachmentInfoForView(attachments));
-        for (AttachmentViewInfo attachmentViewInfo :
-            attachmentInfos) {
-            String filename = attachmentViewInfo.displayName;
-            if (filename != null && filename.lastIndexOf('.') != -1) {
-                String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.US);
-                ArrayList<String> extensionsOfParseable = new ArrayList<>(List.of("pkpass", "vcard", "ics"));
-                if (extensionsOfParseable.contains(extension)) {
-                    if (!attachmentViewInfo.isContentAvailable()) {
-                        LocalPart localPart = (LocalPart) attachmentViewInfo.part;
-                        String accountUuid = localPart.getAccountUuid();
-                        Account account = Preferences.getPreferences().getAccount(accountUuid);
-                        LocalMessage message = localPart.getMessage();
-                        // this copies parts of downloadAttachment, from AttachmentController
-                        mc.loadAttachment(account, message, attachmentViewInfo.part, new SimpleMessagingListener() {
-                            @Override
-                            public void loadAttachmentFinished(Account account, Message message, Part part) {
-                                attachmentViewInfo.setContentAvailable();
-                            }
+        HashMap<AttachmentViewInfo, String> parseableAttachments = SMLMessageView.getParseableAttachments(attachmentInfos, mc);
 
-                            @Override
-                            public void loadAttachmentFailed(Account account, Message message, Part part, String reason) {
-                                super.loadAttachmentFailed(account, message, part, reason);
-                            }
-                        });
-                    }
-                    // todo: Wait until all attachments have loaded(?)
-                    parseableAttachments.put(attachmentViewInfo, extension);
-                }
-            }
-        }
-        ViewableExtractedText viewableExtractedText =
-            extractTextFromViewables(viewableParts, parseableParts, parseableAttachments, shouldTryToDerive);
-
-        return extractMarkupFromViewable(viewableExtractedText, parseableParts, parseableAttachments, shouldTryToDerive);
-    }
-
-    private ViewableExtractedText extractMarkupFromViewable(ViewableExtractedText viewableExtractedText,
-        ArrayList<Part> parseableParts, HashMap<AttachmentViewInfo, String> parseableAttachments,
-        TryToDerive shouldTryToDerive) {
-        return viewableExtractedText;
+        return extractTextFromViewables(viewableParts, parseableParts, parseableAttachments, shouldTryToDerive);
     }
 
     @VisibleForTesting
