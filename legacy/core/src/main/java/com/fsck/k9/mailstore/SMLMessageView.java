@@ -139,18 +139,22 @@ public class SMLMessageView {
 
     private static void renderWithButtons(JSONObject jsonObject, MustacheRenderer renderer, ArrayList<String> renderedHTMLs)
         throws IOException {
-        List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
-        String result = renderer.render(jsonObject, buttons);
-        renderedHTMLs.add(result);
+        String showSourceButton = null;
         // todo: do the follwoing only if debug user setting is set to true
         try {
             String prettyJson = jsonObject.toString(2);
             String encodedFullUrl = Base64.encodeToString(prettyJson.getBytes(StandardCharsets.UTF_8),
                 Base64.NO_WRAP + Base64.URL_SAFE);
             String jsonSourceUrl = "xshowsource://"+encodedFullUrl;
-            String showSourceButton = "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" + jsonSourceUrl + "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">data_object</i>Show source</span></button>";
-            renderedHTMLs.add(showSourceButton);
+            showSourceButton =
+                "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" + jsonSourceUrl + "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">data_object</i>Show source</span></button>";
         } catch (JSONException ignored) {
+        }
+        List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
+        String result = renderer.render(jsonObject, buttons);
+        renderedHTMLs.add(result);
+        if (showSourceButton != null) {
+            renderedHTMLs.add(showSourceButton);
         }
     }
 
