@@ -842,7 +842,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
     }
 
-    private JSONObject inlineImages(JSONObject jsonLd) {
+    private static JSONObject inlineImages(JSONObject jsonLd) {
         // First find all images in the order thumbnail, thumbnailUrl, image
         Object thumbnail = jsonLd.opt("thumbnail");
         List<String> thumbnails = Collections.emptyList();
@@ -908,7 +908,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         return jsonLd;
     }
 
-    private String downloadImage(String imageUriText) throws IOException {
+    private static String downloadImage(String imageUriText) throws IOException {
         OkHttpClient client = new OkHttpClient();
         Request request = new Builder()
             .url(imageUriText).build();
@@ -926,7 +926,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     }
 
     @NonNull
-    List<String> imagesFromNestedJson(Object image) throws JSONException {
+    static List<String> imagesFromNestedJson(Object image) throws JSONException {
         if (image instanceof JSONObject) {
             Object imageContentUrl = ((JSONObject) image).opt("contentUrl");
             if (imageContentUrl instanceof  String) {
