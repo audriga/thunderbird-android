@@ -3,6 +3,8 @@ package com.fsck.k9.view
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.DialogInterface
+import android.content.DialogInterface.OnClickListener
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -79,11 +81,9 @@ import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONObject
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
-import com.google.zxing.client.j2se.MatrixToImageWriter
 import com.google.zxing.common.BitMatrix
 //import java.awt.image.BufferedImage;
 import androidx.core.graphics.createBitmap
-import java.io.ByteArrayOutputStream
 
 // import android.R.style
 
@@ -167,6 +167,10 @@ internal class K9WebViewClient(
             }
             XBARCODE -> {
                 openBarcode(webView.context, uri)
+                true
+            }
+            XSHOW_SOURCE -> {
+                xShowSource(webView.context, uri)
                 true
             }
             else -> {
@@ -602,7 +606,7 @@ internal class K9WebViewClient(
 
     private fun showRenderedCardsPopup(
         context: Context,
-        renderedDisplayHTMLs: ArrayList<String>,
+        renderedDisplayHTMLs: List<String>,
     ) {
         val xwebView = WebView(context) // findViewById(R.id.webview)
 
@@ -871,6 +875,33 @@ internal class K9WebViewClient(
         return bitmap
     }
 
+
+    private fun xShowSource(context: Context, uri: Uri) {
+        val encodedJsons = uri.schemeSpecificPart.split(",")
+        val jsons = encodedJsons.map {  String(Base64.decode(it, Base64.NO_WRAP + Base64.URL_SAFE)) }
+        val xwebView = WebView(context) // findViewById(R.id.webview)
+        xwebView.visibility = View.VISIBLE;
+        xwebView.webViewClient = this
+
+        xwebView.loadDataWithBaseURL("about:blank", jsons[0], "application/json", "utf-8", null)
+
+        val dialogAlert = MaterialAlertDialogBuilder(context)
+            .setView(xwebView)
+            .setPositiveButton("Copy to Clipboard"
+            ) { dialog, which -> clipboardManager.setText("Copied jsonld", jsons[0]) }
+            .setNegativeButton("Close", null)
+            .setCancelable(false)
+            .create()
+            .apply {
+                setCanceledOnTouchOutside(false)
+                show()
+            }
+        dialogAlert.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+    }
+
     override fun shouldInterceptRequest(webView: WebView, request: WebResourceRequest): WebResourceResponse? {
         val uri = request.url
 
@@ -936,6 +967,7 @@ internal class K9WebViewClient(
         private const val XSHARE_AS_CALENDAR_SCHEME = "xshareascalendar"
         private const val XSHARE_AS_MAIL = "xshareasmail"
         private const val XBARCODE = "xbarcode"
+        private const val XSHOW_SOURCE = "xshowsource"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

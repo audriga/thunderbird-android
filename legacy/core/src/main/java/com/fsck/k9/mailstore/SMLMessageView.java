@@ -95,14 +95,10 @@ public class SMLMessageView {
             if (typesToSkip != null && typesToSkip.contains(type)) {
                 continue;
             }
-            List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
-            String result = renderer.render(jsonObject, buttons);
-            renderedHTMLs.add(result);
+            renderWithButtons(jsonObject, renderer, renderedHTMLs);
         }
         if (extracted != null) {
-            List<ButtonDescription> buttonsForExtracted = SMLUtil.getButtons(extracted);
-            String result = renderer.render(extracted, buttonsForExtracted);
-            renderedHTMLs.add(result);
+            renderWithButtons(extracted, renderer, renderedHTMLs);
         }
 
         String result = String.join("\n", renderedHTMLs);
@@ -139,6 +135,23 @@ public class SMLMessageView {
 //
 //                    sanitizedHtml = css  + "<br><br>SML:<br>" + result + "<br>XSML<br>" + linx + "<br>" + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
         return SMLUtil.CSS + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + sanitizedHtml;
+    }
+
+    private static void renderWithButtons(JSONObject jsonObject, MustacheRenderer renderer, ArrayList<String> renderedHTMLs)
+        throws IOException {
+        List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
+        String result = renderer.render(jsonObject, buttons);
+        renderedHTMLs.add(result);
+        // todo: do the follwoing only if debug user setting is set to true
+        try {
+            String prettyJson = jsonObject.toString(2);
+            String encodedFullUrl = Base64.encodeToString(prettyJson.getBytes(StandardCharsets.UTF_8),
+                Base64.NO_WRAP + Base64.URL_SAFE);
+            String jsonSourceUrl = "xshowsource://"+encodedFullUrl;
+            String showSourceButton = "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" + jsonSourceUrl + "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">data_object</i>Show source</span></button>";
+            renderedHTMLs.add(showSourceButton);
+        } catch (JSONException ignored) {
+        }
     }
 
     public static void extractFromParseableParts(@Nullable ArrayList<Part> parseableParts, List<StructuredData> data)
