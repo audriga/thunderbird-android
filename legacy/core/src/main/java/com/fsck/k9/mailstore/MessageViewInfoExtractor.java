@@ -2,6 +2,7 @@ package com.fsck.k9.mailstore;
 
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -11,19 +12,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import android.net.Uri;
-import android.net.Uri.Builder;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Patterns;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
@@ -40,6 +39,7 @@ import com.fsck.k9.Preferences;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.sml.SMLUtil;
 import net.fortuna.ical4j.data.CalendarBuilder;
+import net.fortuna.ical4j.data.ParserException;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
@@ -62,7 +62,6 @@ import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.message.html.HtmlConverter;
 import app.k9mail.html.cleaner.HtmlProcessor;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
@@ -265,12 +264,22 @@ public class MessageViewInfoExtractor {
                 }
             }
         }
-        return extractTextFromViewables(viewableParts, parseableParts, parseableAttachments, shouldTryToDerive);
+        ViewableExtractedText viewableExtractedText =
+            extractTextFromViewables(viewableParts, parseableParts, parseableAttachments, shouldTryToDerive);
+
+        return extractMarkupFromViewable(viewableExtractedText, parseableParts, parseableAttachments, shouldTryToDerive);
     }
+
+    private ViewableExtractedText extractMarkupFromViewable(ViewableExtractedText viewableExtractedText,
+        ArrayList<Part> parseableParts, HashMap<AttachmentViewInfo, String> parseableAttachments,
+        TryToDerive shouldTryToDerive) {
+        return viewableExtractedText;
+    }
+
     @VisibleForTesting
-    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables, @Nullable ArrayList<Part> parseableParts, @Nullable HashMap<AttachmentViewInfo, String> parseableAttachments)
+    ViewableExtractedText extractTextFromViewables(List<Viewable> viewables)
         throws MessagingException {
-        return extractTextFromViewables(viewables, parseableParts,  parseableAttachments, null);
+        return extractTextFromViewables(viewables, null, null, null);
     }
 
     /**
@@ -362,135 +371,83 @@ public class MessageViewInfoExtractor {
 
             String htmlString = html.toString();
             String textString = text.toString();
-            JSONObject extracted;
-            if (shouldTryToDerive != null) {
-                extracted = tryExtract(shouldTryToDerive, textString, htmlString);
-            } else {
-                extracted = null;
-            }
-
             String sanitizedHtml = htmlProcessor.processForDisplay(htmlString);
+
+            JSONObject extracted = maybeTryExtract(shouldTryToDerive, textString, htmlString);
+
             List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.JSON_LD);
             if (data.isEmpty()) {
                 data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlString, StructuredSyntax.MICRODATA);
             }
 
-            if (parseableAttachments != null) {
+            extractFromAttachments(parseableAttachments, data);
 
-                for (Map.Entry<AttachmentViewInfo, String> parseableAttachment: parseableAttachments.entrySet()) {
-                    String ext = parseableAttachment.getValue();
-                    AttachmentViewInfo attachment = parseableAttachment.getKey();
-                    switch (ext) {
-                        case "ics": {
-                            //attachment.isContentAvailable();
-                            Body body = attachment.part.getBody();
-                            InputStream is = MimeUtility.decodeBody(body);
-
-//                            BufferedReader r = new BufferedReader(new InputStreamReader(is));
-//                            StringBuilder total = new StringBuilder();
-//                            for (String line; (line = r.readLine()) != null; ) {
-//                                total.append(line).append('\n');
-//                            }
-//                            String icsContent = total.toString();
-                            CalendarBuilder cbuilder = new CalendarBuilder();
-                            Calendar cal = cbuilder.build(is);
-
-                            System.out.println(cal.getUid());
-                            VEvent event = null;
-                            for (CalendarComponent c : cal.getComponents()){
-                                if (c instanceof VEvent) {
-                                    event = (VEvent) c;
-                                    break;
-                                }
-                            }
-                            if (event != null) {
-                                SimpleModule module = new SimpleModule();
-                                module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
-                                ObjectMapper mapper = new ObjectMapper();
-                                mapper.registerModule(module);
-
-                                String serialized = mapper.writeValueAsString(event);
-                                data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized));
-                            }
-                        }
-                        case "vcard": {}
-                        case "pkpass": {}
-                    }
-                }
-
-            }
-
-            if (parseableParts != null) {
-                for (Part part : parseableParts) {
-                    if (isSameMimeType(part.getMimeType(), "application/ld+json")) {
-                        Body body = part.getBody();
-                        StringBuilder textBuilder = new StringBuilder();
-                        InputStream inputStream = body.getInputStream();
-                        try (Reader reader = new BufferedReader(new InputStreamReader
-                            (inputStream, StandardCharsets.UTF_8))) {
-                            int c = 0;
-                            while ((c = reader.read()) != -1) {
-                                textBuilder.append((char) c);
-                            }
-                        }
-                        String json = textBuilder.toString();
-                        data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(json));
-                    }
-                }
-            }
-            String css = "<head>\n" +
-                "        <link href=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css\" rel=\"stylesheet\">\n" +
-                "        <script src=\"https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js\"></script>\n" +
-                "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">\n" +
-                "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto+Mono\">\n" +
-                "        <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700\">\n" +
-                "</head>";
+            extractFromParseableParts(parseableParts, data);
             if (data.isEmpty() && extracted == null) {
                 List<String> urls = tryExtractAllWhitelistedUrls(textString, htmlString);
                 if (!urls.isEmpty()) {
-                    List<String> encodedUrls = new ArrayList<>(urls.size());
-                    for (String url: urls) {
-                        // Substring to remove https:// prefix
-                        encodedUrls.add(Base64.encodeToString(url.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE));
-                    }
-
-                    String button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
-//                    sanitizedHtml = button + sanitizedHtml;
-                    String htmlWithStringButtons = addLoadButtonsAfterUrls(htmlString);
-                    // todo this is not actually using the output of htmlProcessor.processForDisplay.
-                    //    also: the function that adds the buttons should proably work on the html tree instead of what it is currently doing
-                   sanitizedHtml = css + button + htmlWithStringButtons;
+                    sanitizedHtml = addUrlButtons(urls, htmlString);
                 } else {
                     sanitizedHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
                 }
             } else {
-                MustacheRenderer renderer = new MustacheRenderer();
+                sanitizedHtml = renderDataOrExtractedAndAddToHTML(data, extracted, htmlString);
 
-                // We know these types will most likely not render well, so don't render them (unless they are the only markup)
-                // todo find a good place for this
-                List<String> typesToSkip = (data.size() > 1) ?
-                    Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
-                    null;
+            }
 
-                ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
-                for (StructuredData structuredData: data) {
-                    JSONObject jsonObject = structuredData.getJson();
-                    String type = jsonObject.optString("@type");
-                    if (typesToSkip != null && typesToSkip.contains(type)) {
-                        continue;
-                    }
-                    List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
-                    String result = renderer.render(jsonObject, buttons);
-                    renderedHTMLs.add(result);
-                }
-                if (extracted != null) {
-                    List<ButtonDescription> buttonsForExtracted = SMLUtil.getButtons(extracted);
-                    String result = renderer.render(extracted, buttonsForExtracted);
-                    renderedHTMLs.add(result);
-                }
+            return new ViewableExtractedText(textString, sanitizedHtml);
+        } catch (Exception e) {
+            throw new MessagingException("Couldn't extract viewable parts", e);
+        }
+    }
 
-                String result = String.join("\n", renderedHTMLs);
+    @NonNull
+    private static String addUrlButtons(List<String> urls, String htmlString) {
+        String sanitizedHtml;
+        List<String> encodedUrls = new ArrayList<>(urls.size());
+        for (String url: urls) {
+            // Substring to remove https:// prefix
+            encodedUrls.add(Base64.encodeToString(url.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE));
+        }
 
+        String button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
+//                    sanitizedHtml = button + sanitizedHtml;
+        String htmlWithStringButtons = addLoadButtonsAfterUrls(htmlString);
+        // todo this is not actually using the output of htmlProcessor.processForDisplay.
+        //    also: the function that adds the buttons should proably work on the html tree instead of what it is currently doing
+        sanitizedHtml = SMLUtil.CSS + button + htmlWithStringButtons;
+        return sanitizedHtml;
+    }
+
+    @NonNull
+    private String renderDataOrExtractedAndAddToHTML(List<StructuredData> data, JSONObject extracted, String htmlString)
+        throws IOException {
+        MustacheRenderer renderer = new MustacheRenderer();
+
+        // We know these types will most likely not render well, so don't render them (unless they are the only markup)
+        // todo find a good place for this
+        List<String> typesToSkip = (data.size() > 1) ?
+            Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
+            null;
+
+        ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
+        for (StructuredData structuredData: data) {
+            JSONObject jsonObject = structuredData.getJson();
+            String type = jsonObject.optString("@type");
+            if (typesToSkip != null && typesToSkip.contains(type)) {
+                continue;
+            }
+            List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
+            String result = renderer.render(jsonObject, buttons);
+            renderedHTMLs.add(result);
+        }
+        if (extracted != null) {
+            List<ButtonDescription> buttonsForExtracted = SMLUtil.getButtons(extracted);
+            String result = renderer.render(extracted, buttonsForExtracted);
+            renderedHTMLs.add(result);
+        }
+
+        String result = String.join("\n", renderedHTMLs);
 
 
 //                    /*
@@ -523,18 +480,96 @@ public class MessageViewInfoExtractor {
 //
 //
 //                    sanitizedHtml = css  + "<br><br>SML:<br>" + result + "<br>XSML<br>" + linx + "<br>" + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
-                    sanitizedHtml = css + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
+        return SMLUtil.CSS + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(
+            htmlString);
+    }
 
+    private static void extractFromParseableParts(@Nullable ArrayList<Part> parseableParts, List<StructuredData> data)
+        throws MessagingException, IOException {
+        if (parseableParts != null) {
+            for (Part part : parseableParts) {
+                if (isSameMimeType(part.getMimeType(), "application/ld+json")) {
+                    String json = readBodyToText(part);
+                    data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(json));
+                }
             }
-
-            return new ViewableExtractedText(textString, sanitizedHtml);
-        } catch (Exception e) {
-            throw new MessagingException("Couldn't extract viewable parts", e);
         }
     }
 
+    @NonNull
+    private static String readBodyToText(Part part) throws MessagingException, IOException {
+        Body body = part.getBody();
+        StringBuilder textBuilder = new StringBuilder();
+        InputStream inputStream = body.getInputStream();
+        try (Reader reader = new BufferedReader(new InputStreamReader
+            (inputStream, StandardCharsets.UTF_8))) {
+            int c = 0;
+            while ((c = reader.read()) != -1) {
+                textBuilder.append((char) c);
+            }
+        }
+        return textBuilder.toString();
+    }
 
+    private static void extractFromAttachments(@Nullable HashMap<AttachmentViewInfo, String> parseableAttachments,
+        List<StructuredData> data) throws MessagingException, IOException, ParserException {
+        if (parseableAttachments != null) {
 
+            for (Map.Entry<AttachmentViewInfo, String> parseableAttachment: parseableAttachments.entrySet()) {
+                String ext = parseableAttachment.getValue();
+                AttachmentViewInfo attachment = parseableAttachment.getKey();
+                switch (ext) {
+                    case "ics": {
+                        //attachment.isContentAvailable();
+                        Body body = attachment.part.getBody();
+                        InputStream is = MimeUtility.decodeBody(body);
+
+//                            BufferedReader r = new BufferedReader(new InputStreamReader(is));
+//                            StringBuilder total = new StringBuilder();
+//                            for (String line; (line = r.readLine()) != null; ) {
+//                                total.append(line).append('\n');
+//                            }
+//                            String icsContent = total.toString();
+                        CalendarBuilder cbuilder = new CalendarBuilder();
+                        Calendar cal = cbuilder.build(is);
+
+                        System.out.println(cal.getUid());
+                        VEvent event = null;
+                        for (CalendarComponent c : cal.getComponents()){
+                            if (c instanceof VEvent) {
+                                event = (VEvent) c;
+                                break;
+                            }
+                        }
+                        if (event != null) {
+                            SimpleModule module = new SimpleModule();
+                            module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
+                            ObjectMapper mapper = new ObjectMapper();
+                            mapper.registerModule(module);
+
+                            String serialized = mapper.writeValueAsString(event);
+                            data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized));
+                        }
+                    }
+                    case "vcard": {}
+                    case "pkpass": {}
+                }
+            }
+
+        }
+    }
+
+    @Nullable
+    private static JSONObject maybeTryExtract(@Nullable TryToDerive shouldTryToDerive, String textString,
+        String htmlString) throws JSONException {
+        JSONObject extracted;
+        if (shouldTryToDerive != null) {
+            extracted = tryExtract(shouldTryToDerive, textString, htmlString);
+        } else {
+            extracted = null;
+        }
+        return extracted;
+    }
 
 
     /**
