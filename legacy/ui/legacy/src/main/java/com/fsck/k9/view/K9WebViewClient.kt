@@ -75,7 +75,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Request.Builder
 import okio.ByteString.Companion.encodeUtf8
-import org.audriga.ld2h.ButtonDescription
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONObject
@@ -84,6 +83,7 @@ import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 //import java.awt.image.BufferedImage;
 import androidx.core.graphics.createBitmap
+import com.fsck.k9.sml.SMLUtil
 
 // import android.R.style
 
@@ -570,14 +570,9 @@ internal class K9WebViewClient(
                             continue
                         }
                         // Add button to share structured data as email
-                        val jsonBytes = jsonObject.toString().encodeToByteArray()
-                        val encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
-                        val buttonUri = Uri.Builder()
-                            .scheme("xshareasmail")
-                            .authority(encodedJson)
-                            .build()
-                        val button = ButtonDescription(null, "forward_to_inbox", buttonUri.toString())
-                        val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(button))
+                        val shareAsMailButtonDesc = SMLUtil.getShareAsMailButtonDesc(jsonObject);
+
+                        val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(shareAsMailButtonDesc))
                         if (ld2hRenderResult != null) {
                             renderedDisplayHTMLs.add(ld2hRenderResult);
                         }

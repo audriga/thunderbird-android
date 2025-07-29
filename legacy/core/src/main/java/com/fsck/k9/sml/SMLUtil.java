@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.net.Uri.Builder;
 import android.util.Base64;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import org.audriga.ld2h.ButtonDescription;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,30 +49,18 @@ public abstract class SMLUtil {
                 }
             }
         }
-        Object url = jsonObject.opt("url");
-        if (url != null) {
-            buttons.add(new ButtonDescription(null,"web", url.toString()));
+        ButtonDescription webUrlButtonDesc = getWebUrlButtonDesc(jsonObject);
+        if (webUrlButtonDesc != null) {
+            buttons.add(webUrlButtonDesc);
         }
         String type = jsonObject.optString("@type");
         if (shouldMakeSharableAsFile(type)) {
-            byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
-            String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
-            String fileName = jsonObject.optString("name", type) + ".json";
-            Uri uri = new Builder()
-                .scheme("xshareasfile")
-                .authority(encodedJson)
-                .appendQueryParameter("fileName", fileName)
-                .build();
-            buttons.add(new ButtonDescription(null, "share", uri.toString()));
+            ButtonDescription shareAsFileButtonDesc = getShareAsFileButtonDesc(jsonObject, type);
+            buttons.add(shareAsFileButtonDesc);
         }
         if (isEvent(type) || hasStartAndEndDate(jsonObject)) {
-            byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
-            String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
-            Uri uri = new Builder()
-                .scheme("xshareascalendar")
-                .authority(encodedJson)
-                .build();
-            buttons.add(new ButtonDescription(null, "event", uri.toString()));
+            ButtonDescription eventButtonDesc = getEventButtonDesc(jsonObject);
+            buttons.add(eventButtonDesc);
         }
         // try to get phone number
         try {
@@ -123,25 +113,70 @@ public abstract class SMLUtil {
             Timber.e(e, "Error trying to add geo button descriptions");
         }
         if (shouldMakeSharableAsMail(type)) {
-            byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
-            String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
-            Uri buttonUri = new Builder()
-                .scheme("xshareasmail")
-                .authority(encodedJson)
-                .build();
-            buttons.add(new ButtonDescription(null, "forward_to_inbox", buttonUri.toString()));
+            ButtonDescription shareAsMailButtonDesc = getShareAsMailButtonDesc(jsonObject);
+            buttons.add(shareAsMailButtonDesc);
         }
         String liveUri = jsonObject.optString("liveUri");
         if (!liveUri.isEmpty()) {
-
-            Uri buttonUri = Uri.parse(liveUri).buildUpon()
-                .scheme("xreload")
-                .build();
-            buttons.add(new ButtonDescription(null, "replay", buttonUri.toString()));
+            ButtonDescription reloadButtonDesc = getReloadButtonDesc(liveUri);
+            buttons.add(reloadButtonDesc);
         }
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
         return  buttons;
+    }
+
+    @NonNull
+    public static ButtonDescription getEventButtonDesc(JSONObject jsonObject) {
+        byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+        String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+        Uri uri = new Builder()
+            .scheme("xshareascalendar")
+            .authority(encodedJson)
+            .build();
+        return new ButtonDescription(null, "event", uri.toString());
+    }
+
+    @Nullable
+    public static ButtonDescription getWebUrlButtonDesc(JSONObject jsonObject) {
+        Object url = jsonObject.opt("url");
+        ButtonDescription webUrlButtonDesc = null;
+        if (url != null) {
+            webUrlButtonDesc = new ButtonDescription(null, "web", url.toString());
+        }
+        return webUrlButtonDesc;
+    }
+
+    @NonNull
+    public static ButtonDescription getReloadButtonDesc(String liveUri) {
+        Uri buttonUri = Uri.parse(liveUri).buildUpon()
+            .scheme("xreload")
+            .build();
+        return new ButtonDescription(null, "replay", buttonUri.toString());
+    }
+
+    @NonNull
+    public static ButtonDescription getShareAsMailButtonDesc(JSONObject jsonObject) {
+        byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+        String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+        Uri buttonUri = new Builder()
+            .scheme("xshareasmail")
+            .authority(encodedJson)
+            .build();
+        return new ButtonDescription(null, "forward_to_inbox", buttonUri.toString());
+    }
+
+    @NonNull
+    public static ButtonDescription getShareAsFileButtonDesc(JSONObject jsonObject, String fallbackFileName) {
+        byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+        String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
+        String fileName = jsonObject.optString("name", fallbackFileName) + ".json";
+        Uri uri = new Builder()
+            .scheme("xshareasfile")
+            .authority(encodedJson)
+            .appendQueryParameter("fileName", fileName)
+            .build();
+        return new ButtonDescription(null, "share", uri.toString());
     }
 
     private static void handleExistingPotentialAction(JSONObject potentialAction, List<ButtonDescription> buttons) {
