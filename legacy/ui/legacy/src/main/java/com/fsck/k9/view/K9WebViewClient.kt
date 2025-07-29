@@ -3,8 +3,6 @@ package com.fsck.k9.view
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.Context
-import android.content.DialogInterface
-import android.content.DialogInterface.OnClickListener
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -739,9 +737,29 @@ internal class K9WebViewClient(
                 }
             }
         }
-        val location = json.optString("location")
-        if (location.isNotEmpty()) {
-            event.add<PropertyContainer>(Location(location))
+        val location = json.opt("location")
+        if (location is String) {
+            if (location.isNotEmpty()) {
+                event.add<PropertyContainer>(Location(location))
+            }
+        } else if (location is JSONObject) {
+            val locationName = location.optString("name")
+            val locationAddress = location.opt("address")
+            if (locationName.isNotEmpty()) {
+                event.add<PropertyContainer>(Location(locationName))
+            } else if (locationAddress is String && locationAddress.isNotEmpty()){
+                event.add<PropertyContainer>(Location(locationAddress))
+            } else if (locationAddress is JSONObject) {
+                val locationAddressParts = mutableListOf<String>()
+                locationAddress.keys().forEach {
+                    val value = locationAddress.get(it)
+                    if (value is String) {
+                        locationAddressParts.add(value)
+                    }
+                }
+                val locationAddressText = locationAddressParts.joinToString { "\n" }
+                event.add<PropertyContainer>(Location(locationAddressText))
+            }
         }
 
         val cal = Calendar().add<ComponentContainer<CalendarComponent>>(event)
