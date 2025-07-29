@@ -570,9 +570,10 @@ internal class K9WebViewClient(
                             continue
                         }
                         // Add button to share structured data as email
-                        val shareAsMailButtonDesc = SMLUtil.getShareAsMailButtonDesc(jsonObject);
-
-                        val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(shareAsMailButtonDesc))
+                        val webUrlButtonDesc = SMLUtil.getWebUrlButtonDesc(jsonObject)
+                        val shareAsFileButtonDesc = SMLUtil.getShareAsFileButtonDesc(jsonObject, type)
+                        val shareAsMailButtonDesc = SMLUtil.getShareAsMailButtonDesc(jsonObject)
+                        val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(webUrlButtonDesc, shareAsFileButtonDesc, shareAsMailButtonDesc))
                         if (ld2hRenderResult != null) {
                             renderedDisplayHTMLs.add(ld2hRenderResult);
                         }

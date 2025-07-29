@@ -376,7 +376,8 @@ public class SMLMessageView {
                             return html;
                         }
                         builder.append(html.substring(end, insertPosition));
-                        String button = "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" + loadCardUrl + "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">web</i></span></button>";
+                      String button = "<a href=\"" + loadCardUrl + "\"><span class=\"material-icons\">web_asset</span></a>";
+//                      button += "<a href=\"" + loadCardUrl + "\"><span class=\"material-symbols-outlined\">web_asset</span></a>";
                         builder.append(button);
                         originaHTMLIndex = insertPosition;
                     }
