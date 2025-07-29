@@ -30,8 +30,8 @@ import app.k9mail.feature.launcher.FeatureLauncherActivity
 import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
-import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax
-import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils
+import com.audriga.h2lj.model.StructuredSyntax
+import com.audriga.h2lj.parser.StructuredDataExtractionUtils
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageCompose

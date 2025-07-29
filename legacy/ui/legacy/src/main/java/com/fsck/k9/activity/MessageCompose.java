@@ -146,15 +146,11 @@ import org.json.JSONObject;
 import org.openintents.openpgp.OpenPgpApiManager;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpIntentStarter;
-//import okhttp3.OkHttpClient;
-//import okhttp3.Request;
-//import okhttp3.Response;
-////import com.audriga.jakarta.sml.h2lj.parser;
 import timber.log.Timber;
 
-import com.audriga.jakarta.sml.h2lj.parser.StructuredDataExtractionUtils;
-import com.audriga.jakarta.sml.h2lj.model.StructuredData;
-import com.audriga.jakarta.sml.h2lj.model.StructuredSyntax;
+import com.audriga.h2lj.parser.StructuredDataExtractionUtils;
+import com.audriga.h2lj.model.StructuredData;
+import com.audriga.h2lj.model.StructuredSyntax;
 
 
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
