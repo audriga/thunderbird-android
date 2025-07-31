@@ -432,7 +432,7 @@ class Account(
 
     @get:Synchronized
     @set:Synchronized
-    var debugView = false
+    var debugView = false // todo potentially rename this to isInDebugViewMode or similar
 
 
     @get:Synchronized
