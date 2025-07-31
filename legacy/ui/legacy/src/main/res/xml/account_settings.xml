@@ -49,6 +49,19 @@
             android:title="@string/account_settings_mark_message_as_read_on_view_label"
             />
 
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="debug_view"
+            android:summary="@string/account_settings_debug_view_summary"
+            android:title="@string/account_settings_debug_view_label"
+            />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="demo_view"
+            android:summary="@string/account_settings_demo_view_label"
+            android:title="@string/account_settings_demo_view_summary"
+            />
     </PreferenceScreen>
 
     <PreferenceScreen

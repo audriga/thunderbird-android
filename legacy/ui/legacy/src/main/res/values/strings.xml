@@ -1127,4 +1127,8 @@ You can keep this message and use it as a backup for your secret key. If you wan
     <string name="account_settings_sml_variant_label">SML variant to send</string>
     <string name="account_settings_sml_variant_sml_in_html">SML in HTML</string>
     <string name="account_settings_sml_variant_dedicated_part">Dedicated Multipart containing SML</string>
+    <string name="account_settings_debug_view_label">SML debug view mode</string>
+    <string name="account_settings_debug_view_summary">Shows additional ui elements for debugging purposes</string>
+    <string name="account_settings_demo_view_label">SML demo view mode</string>
+    <string name="account_settings_demo_view_summary">Shows additional ui elements for demo purposes</string>
 </resources>

@@ -287,6 +287,12 @@ class AccountSettingsDescriptions {
         s.put("smlVariantEnum", Settings.versions(
             new V(98, new EnumSetting<>(SmlVariant.class, SmlVariant.SML_IN_HTML))
         ));
+        s.put("debugView", Settings.versions(
+            new V(99, new BooleanSetting(false))
+        ));
+        s.put("demoView", Settings.versions(
+            new V(99, new BooleanSetting(false))
+        ));
         // note that there is no setting for openPgpProvider, because this will have to be set up together
         // with the actual provider after import anyways.
 

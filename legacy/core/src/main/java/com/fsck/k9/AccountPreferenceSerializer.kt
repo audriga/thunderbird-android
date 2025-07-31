@@ -209,6 +209,10 @@ class AccountPreferenceSerializer(
 
             smlVariant = getEnumStringPref<SmlVariant>(storage, "$accountUuid.smlVariantEnum", SmlVariant.SML_IN_HTML)
 
+            debugView = storage.getBoolean("$accountUuid.debugView", false)
+
+            demoView = storage.getBoolean("$accountUuid.demoView", false)
+
             val isFinishedSetup = storage.getBoolean("$accountUuid.isFinishedSetup", true)
             if (isFinishedSetup) markSetupFinished()
 
@@ -373,6 +377,8 @@ class AccountPreferenceSerializer(
             editor.putBoolean("$accountUuid.sendClientInfo", isSendClientInfoEnabled)
             editor.putBoolean("$accountUuid.migrateToOAuth", shouldMigrateToOAuth)
             editor.putString("$accountUuid.smlVariantEnum", smlVariant.name)
+            editor.putBoolean("$accountUuid.debugView", debugView)
+            editor.putBoolean("$accountUuid.demoView", demoView)
         }
 
         saveIdentities(account, storage, editor)
@@ -492,6 +498,8 @@ class AccountPreferenceSerializer(
         editor.remove("$accountUuid.sendClientInfo")
         editor.remove("$accountUuid.migrateToOAuth")
         editor.remove("$accountUuid.smlVariantEnum")
+        editor.remove("$accountUuid.debugView")
+        editor.remove("$accountUuid.demoView")
 
         deleteIdentities(account, storage, editor)
         // TODO: Remove preference settings that may exist for individual folders in the account.
@@ -621,6 +629,8 @@ class AccountPreferenceSerializer(
             lastSyncTime = 0L
             lastFolderListRefreshTime = 0L
             smlVariant = SmlVariant.SML_IN_HTML
+            debugView = false
+            demoView = false
 
             setArchiveFolderId(null, SpecialFolderSelection.AUTOMATIC)
             setDraftsFolderId(null, SpecialFolderSelection.AUTOMATIC)

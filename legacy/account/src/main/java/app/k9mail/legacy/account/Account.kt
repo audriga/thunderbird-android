@@ -429,6 +429,16 @@ class Account(
     @set:Synchronized
     var smlVariant = SmlVariant.SML_IN_HTML
 
+
+    @get:Synchronized
+    @set:Synchronized
+    var debugView = false
+
+
+    @get:Synchronized
+    @set:Synchronized
+    var demoView = false
+
     /**
      * @param automaticCheckIntervalMinutes or -1 for never.
      */
