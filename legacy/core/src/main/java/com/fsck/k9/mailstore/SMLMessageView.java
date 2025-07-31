@@ -68,7 +68,15 @@ public class SMLMessageView {
             encodedUrls.add(Base64.encodeToString(url.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE));
         }
 
-        String button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
+
+        // todo this is a per account setting but we only request the setting for the default account
+        Account account = Preferences.getPreferences().getDefaultAccount();
+        String button;
+        if (account != null && account.getDemoView()) {
+            button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
+        } else {
+            button = "";
+        }
 //                    sanitizedHtml = button + sanitizedHtml;
         String htmlWithStringButtons = addLoadButtonsAfterUrls(htmlString);
         // todo this is not actually using the output of htmlProcessor.processForDisplay.
