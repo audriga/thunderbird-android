@@ -171,6 +171,10 @@ internal class K9WebViewClient(
                 xShowSource(webView.context, uri)
                 true
             }
+            XIMIP -> {
+                xIMIP(webView.context, uri)
+                true
+            }
             else -> {
                 openUrl(webView.context, uri)
                 true
@@ -679,6 +683,46 @@ internal class K9WebViewClient(
         val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
         val text = String(data, charset("UTF-8"))
         val json = JSONObject(text)
+        val cal = calendarFromJsonLd(json)
+        val calText = cal.toString()
+
+        val applicationContext = context.applicationContext
+        val directory = File(applicationContext.cacheDir, "temp")
+        if (!directory.exists()) {
+            if (!directory.mkdir()) {
+                Timber.e("Error creating directory: %s", directory.absolutePath)
+                return
+            }
+        }
+        val jsonFile = File(directory, "${calText.encodeUtf8().sha1().hex()}.ical")
+        jsonFile.writeText(calText)
+
+//        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
+//        val sharableUri = AttachmentTempFileProvider.getUriForFile(context, "${context.packageName}.tempfileprovider", jsonFile, "sml1.json")
+        val sharableUri = AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(jsonFile), "event.ical")
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_VIEW
+            setDataAndType(sharableUri, "text/calendar")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+//        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
+        startActivity(context, sendIntent, null)
+        // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
+    }
+
+    private fun calendarFromJsonLd(json: JSONObject): ComponentContainer<CalendarComponent>? {
+        val event = vEventFromJsonLd(json)
+
+        val cal = Calendar().add<ComponentContainer<CalendarComponent>>(event)
+        //        val module = SimpleModule()
+        //        module.addDeserializer(Calendar::class.java, JCalMapper(VEvent::class.java))
+        //        val mapper = ObjectMapper();
+        //        mapper.registerModule(module);
+        return cal
+    }
+
+    private fun vEventFromJsonLd(json: JSONObject): VEvent {
         val event = VEvent()
         val id = json.optString("@id")
         if (id.isNotEmpty()) {
@@ -710,12 +754,10 @@ internal class K9WebViewClient(
                     } else {
                         event.add<PropertyContainer>(DtStart<LocalDateTime>(startDate))
                     }
-
                 } catch (
                     e: DateTimeParseException,
                 ) {
                     Timber.e("Error parsing start date: %s", e)
-
                 }
             }
         }
@@ -747,7 +789,7 @@ internal class K9WebViewClient(
             val locationAddress = location.opt("address")
             if (locationName.isNotEmpty()) {
                 event.add<PropertyContainer>(Location(locationName))
-            } else if (locationAddress is String && locationAddress.isNotEmpty()){
+            } else if (locationAddress is String && locationAddress.isNotEmpty()) {
                 event.add<PropertyContainer>(Location(locationAddress))
             } else if (locationAddress is JSONObject) {
                 val locationAddressParts = mutableListOf<String>()
@@ -761,37 +803,7 @@ internal class K9WebViewClient(
                 event.add<PropertyContainer>(Location(locationAddressText))
             }
         }
-
-        val cal = Calendar().add<ComponentContainer<CalendarComponent>>(event)
-//        val module = SimpleModule()
-//        module.addDeserializer(Calendar::class.java, JCalMapper(VEvent::class.java))
-//        val mapper = ObjectMapper();
-//        mapper.registerModule(module);
-        val calText = cal.toString()
-
-        val applicationContext = context.applicationContext
-        val directory = File(applicationContext.cacheDir, "temp")
-        if (!directory.exists()) {
-            if (!directory.mkdir()) {
-                Timber.e("Error creating directory: %s", directory.absolutePath)
-                return
-            }
-        }
-        val jsonFile = File(directory, "${calText.encodeUtf8().sha1().hex()}.ical")
-        jsonFile.writeText(calText)
-
-//        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
-//        val sharableUri = AttachmentTempFileProvider.getUriForFile(context, "${context.packageName}.tempfileprovider", jsonFile, "sml1.json")
-        val sharableUri = AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(jsonFile), "event.ical")
-        val sendIntent: Intent = Intent().apply {
-            action = Intent.ACTION_VIEW
-            setDataAndType(sharableUri, "text/calendar")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-
-//        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
-        startActivity(context, sendIntent, null)
-        // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
+        return event
     }
 
     private fun xshareAsMail(context: Context, uri: Uri) {
@@ -870,8 +882,6 @@ internal class K9WebViewClient(
         return bitmap;
     }
 
-
-
     private fun setBitmapPixels(bitMatrix: BitMatrix): IntArray {
         val pixels = IntArray(bitMatrix.width * bitMatrix.height)
 
@@ -888,7 +898,6 @@ internal class K9WebViewClient(
         bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
         return bitmap
     }
-
 
     private fun xShowSource(context: Context, uri: Uri) {
         val encodedJsons = uri.schemeSpecificPart.split(",")
@@ -914,6 +923,24 @@ internal class K9WebViewClient(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
         )
+    }
+
+    private fun xIMIP(context: Context, uri: Uri) {
+        val base64 = uri.authority
+        val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
+        val text = String(data, charset("UTF-8"))
+        val json = JSONObject(text)
+        val query = uri.query
+        if (arrayOf<String>("accept", "decline").contains(query)) {
+            // TODO: Add to calendar via intent, and on return send email.
+            if (query.equals("accept")) {
+                //TODO send accept mail
+                showToast(context, "accepted")
+            } else if (query.equals("decline")) {
+                // TODO send decline mail
+                showToast(context, "declined")
+            }
+        }
     }
 
     override fun shouldInterceptRequest(webView: WebView, request: WebResourceRequest): WebResourceResponse? {
@@ -982,6 +1009,7 @@ internal class K9WebViewClient(
         private const val XSHARE_AS_MAIL = "xshareasmail"
         private const val XBARCODE = "xbarcode"
         private const val XSHOW_SOURCE = "xshowsource"
+        private const val XIMIP = "ximip"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)

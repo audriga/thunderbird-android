@@ -60,8 +60,9 @@ public abstract class SMLUtil {
             buttons.add(shareAsFileButtonDesc);
         }
         if (isEvent(type) || hasStartAndEndDate(jsonObject)) {
-            ButtonDescription eventButtonDesc = getEventButtonDesc(jsonObject);
-            buttons.add(eventButtonDesc);
+            List<ButtonDescription> eventButtonDesc = getEventButtonDescs(jsonObject);
+            buttons.addAll(eventButtonDesc);
+
         }
         // try to get phone number
         try {
@@ -128,14 +129,34 @@ public abstract class SMLUtil {
     }
 
     @NonNull
-    public static ButtonDescription getEventButtonDesc(JSONObject jsonObject) {
+    public static List<ButtonDescription> getEventButtonDescs(JSONObject jsonObject) {
         byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
         String encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE);
         Uri uri = new Builder()
             .scheme("xshareascalendar")
             .authority(encodedJson)
             .build();
-        return new ButtonDescription(null, "event", uri.toString());
+        String iTIPMethod = jsonObject.optString("iTIPMethod");
+        ButtonDescription shareEventAsCalendar = new ButtonDescription(null, "event", uri.toString());
+        if (iTIPMethod.isEmpty()) {
+            return Collections.singletonList(shareEventAsCalendar);
+        } else {
+            List<ButtonDescription> buttonDescs = new ArrayList<>(3);
+            buttonDescs.add(shareEventAsCalendar);
+            Uri acceptUri = new Builder()
+                .scheme("ximip")
+                .authority(encodedJson)
+                .query("accept")
+                .build();
+            Uri declineUri = new Builder()
+                .scheme("ximip")
+                .authority(encodedJson)
+                .query("decline")
+                .build();
+            buttonDescs.add(new ButtonDescription("Accept", acceptUri.toString()));
+            buttonDescs.add(new ButtonDescription("Decline", declineUri.toString()));
+            return buttonDescs;
+        }
     }
 
     @Nullable

@@ -206,7 +206,12 @@ public class SMLMessageView {
                 switch (ext) {
                     case "ics": {
                         //attachment.isContentAvailable();
-                        Body body = attachment.part.getBody();
+                        Part part = attachment.part;
+                        // Check if ics is IMIP:
+                        String contentTypeHeader = part.getContentType();
+                        String itipMethod = MimeUtility.getHeaderParameter(contentTypeHeader, "method");
+
+                        Body body = part.getBody();
                         InputStream is = MimeUtility.decodeBody(body);
 
 //                            BufferedReader r = new BufferedReader(new InputStreamReader(is));
@@ -231,9 +236,18 @@ public class SMLMessageView {
                             module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
                             ObjectMapper mapper = new ObjectMapper();
                             mapper.registerModule(module);
-
                             String serialized = mapper.writeValueAsString(event);
-                            data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized));
+                            List<StructuredData> structuredDatas =
+                                StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized);
+                            // structuredData should only contain a single JSONObject I think
+                            for (StructuredData sd : structuredDatas) {
+                                try {
+                                    sd.getJson().put("iTIPMethod", itipMethod);
+                                } catch (JSONException e) {
+                                    Timber.e(e, "Could not add iTIP method to json");
+                                }
+                            }
+                            data.addAll(structuredDatas);
                         }
                     }
                     case "vcard": {}
