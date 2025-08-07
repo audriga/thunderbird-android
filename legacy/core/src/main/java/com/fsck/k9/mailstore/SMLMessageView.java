@@ -47,6 +47,7 @@ import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
+import net.fortuna.ical4j.model.component.VTimeZone;
 import net.fortuna.ical4j.model.property.Attendee;
 import net.fortuna.ical4j.model.property.Created;
 import net.fortuna.ical4j.model.property.DtStamp;
@@ -228,7 +229,8 @@ public class SMLMessageView {
                         // Check if ics is IMIP:
                         String contentTypeHeader = part.getContentType();
                         String itipMethod = MimeUtility.getHeaderParameter(contentTypeHeader, "method");
-
+                        // could potentially get recipient via
+                        // ((LocalBodyPart) part).message.getRecipients(RecipientType.TO)
                         Body body = part.getBody();
                         InputStream is = MimeUtility.decodeBody(body);
 
@@ -240,74 +242,72 @@ public class SMLMessageView {
 //                            String icsContent = total.toString();
                         CalendarBuilder cbuilder = new CalendarBuilder();
                         Calendar cal = cbuilder.build(is);
-
-                        System.out.println(cal.getUid());
-                        VEvent event = null;
+                        String icalText = cal.toString();
+//                        System.out.println(cal.getUid());
+                        List<StructuredData> eventJsons = new ArrayList<>();
                         for (CalendarComponent c : cal.getComponents()){
                             if (c instanceof VEvent) {
-                                event = (VEvent) c;
-                                break;
-                            }
-                        }
-                        // TODO: Process all events, not just the first.
-                        if (event != null) {
-                            List<Attendee> attendees = event.getAttendees();
-                            Optional<Organizer> organizer = event.getOrganizer();
-                            Optional<Created> created = event.getCreated();
-                            Optional<LastModified> lastModified = event.getLastModified();
-                            Optional<DtStamp> dateTimeStamp = event.getDateTimeStamp();
-                            Optional<Sequence> sequence = event.getSequence();
-                            Optional<Status> status = event.getStatus();
-                            List<Property> rrules = event.getProperties(Property.RRULE);
+                                VEvent event = (VEvent) c;
+//                                List<Attendee> attendees = event.getAttendees();
+//                                Optional<Organizer> organizer = event.getOrganizer();
+//                                Optional<Created> created = event.getCreated();
+//                                Optional<LastModified> lastModified = event.getLastModified();
+//                                Optional<DtStamp> dateTimeStamp = event.getDateTimeStamp();
+//                                Optional<Sequence> sequence = event.getSequence();
+//                                Optional<Status> status = event.getStatus();
+//                                List<Property> rrules = event.getProperties(Property.RRULE);
 
-                            SimpleModule module = new SimpleModule();
-                            module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
+                                SimpleModule module = new SimpleModule();
+                                module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
 //                            module.addSerializer(VCard.class, new PersonJsonLdSerializer(VCard.class));
 //                            module.addSerializer(VCard.class, new OrganizationJsonLdSerializer(VCard.class));
-                            ObjectMapper mapper = new ObjectMapper();
-                            mapper.registerModule(module);
-                            String serialized = mapper.writeValueAsString(event);
-                            List<StructuredData> structuredDatas =
-                                StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized);
-                            // structuredData should only contain a single JSONObject I think
-                            for (StructuredData sd : structuredDatas) {
-                                try {
-                                    sd.getJson().put("iTIPMethod", itipMethod);
-                                    List<String> attendeesText = new ArrayList<>(attendees.size());
-                                    for (Attendee attendee : attendees) {
-                                        attendeesText.add(attendee.toString().trim());
+                                ObjectMapper mapper = new ObjectMapper();
+                                mapper.registerModule(module);
+                                String serialized = mapper.writeValueAsString(event);
+                                List<StructuredData> structuredDatas =
+                                    StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(serialized);
+                                // structuredData should only contain a single JSONObject I think
+                                for (StructuredData sd : structuredDatas) {
+                                    try {
+                                        sd.getJson().put("iTIPMethod", itipMethod);
+                                        sd.getJson().put("originalICal", icalText);
+//                                        List<String> attendeesText = new ArrayList<>(attendees.size());
+//                                        for (Attendee attendee : attendees) {
+//                                            attendeesText.add(attendee.toString().trim());
+//                                        }
+//                                        sd.getJson().put("attendee", new JSONArray(attendeesText));
+//                                        if (VERSION.SDK_INT >= VERSION_CODES.N) {
+//                                            if (organizer.isPresent()) {
+//                                                sd.getJson().put("organizer", organizer.get().toString().trim());
+//                                            }
+//                                            if (created.isPresent()) {
+//                                                sd.getJson().put("dateCreated", created.get().toString().trim());
+//                                            }
+//                                            if (lastModified.isPresent()) {
+//                                                sd.getJson().put("dateModified", lastModified.get().toString().trim());
+//                                            }
+//                                            if (dateTimeStamp.isPresent()) {
+//                                                sd.getJson().put("icalDTStamp", dateTimeStamp.get().toString().trim());
+//                                            }
+//                                            if (sequence.isPresent()) {
+//                                                sd.getJson().put("icalSequence", sequence.get().toString().trim());
+//                                            }
+//                                            if (status.isPresent()) {
+//                                                sd.getJson().put("icalStatus", status.get().toString().trim());
+//                                            }
+//                                            if (!rrules.isEmpty()) {
+//                                                List<String> rrulesText = rrules.stream().map(rrule -> rrule.toString().trim()).collect(Collectors.toList());
+//                                                sd.getJson().put("icalRRules", new JSONArray(rrulesText));
+//                                            }
+//                                        }
+                                    } catch (JSONException e) {
+                                        Timber.e(e, "Could not add iTIP things to json");
                                     }
-                                    sd.getJson().put("attendee", new JSONArray(attendeesText));
-                                    if (VERSION.SDK_INT >= VERSION_CODES.N) {
-                                        if (organizer.isPresent()) {
-                                            sd.getJson().put("organizer", organizer.get().toString().trim());
-                                        }
-                                        if (created.isPresent()) {
-                                            sd.getJson().put("dateCreated", created.get().toString().trim());
-                                        }
-                                        if (lastModified.isPresent()) {
-                                            sd.getJson().put("dateModified", lastModified.get().toString().trim());
-                                        }
-                                        if (dateTimeStamp.isPresent()) {
-                                            sd.getJson().put("icalDTStamp", dateTimeStamp.get().toString().trim());
-                                        }
-                                        if (sequence.isPresent()) {
-                                            sd.getJson().put("icalSequence", sequence.get().toString().trim());
-                                        }
-                                        if (status.isPresent()) {
-                                            sd.getJson().put("icalStatus", status.get().toString().trim());
-                                        }
-                                        if (!rrules.isEmpty()) {
-                                            List<String> rrulesText = rrules.stream().map(rrule -> rrule.toString().trim()).collect(Collectors.toList());
-                                            sd.getJson().put("icalRRules", new JSONArray(rrulesText));
-                                        }
-                                    }
-                                } catch (JSONException e) {
-                                    Timber.e(e, "Could not add iTIP things to json");
                                 }
+                                eventJsons.addAll(structuredDatas);
                             }
-                            data.addAll(structuredDatas);
                         }
+                        data.addAll(eventJsons);
                     }
                     case "vcard": {}
                     case "pkpass": {}

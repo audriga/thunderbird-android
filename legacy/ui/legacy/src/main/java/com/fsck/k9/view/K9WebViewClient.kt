@@ -1,5 +1,6 @@
 package com.fsck.k9.view
 
+//import java.awt.image.BufferedImage;
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -23,6 +24,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.startActivity
+import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import app.k9mail.feature.launcher.FeatureLauncherActivity
 import app.k9mail.legacy.account.Account
@@ -31,40 +33,63 @@ import app.k9mail.legacy.message.controller.MessageReference
 import com.audriga.h2lj.model.StructuredSyntax
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
 import com.fsck.k9.K9
+import com.fsck.k9.K9.isHideTimeZone
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageCompose
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
+import com.fsck.k9.helper.toCrLf
 import com.fsck.k9.logging.Timber
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.MessagingException
+import com.fsck.k9.mail.internet.Headers.contentType
 import com.fsck.k9.mail.internet.MimeBodyPart
 import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mail.internet.MimeMessageHelper
 import com.fsck.k9.mail.internet.MimeMultipart
+import com.fsck.k9.mail.internet.MimeParameterEncoder
 import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.mailstore.AttachmentResolver
+import com.fsck.k9.message.MessageBuilder
 import com.fsck.k9.message.MessageBuilder.Callback
+import com.fsck.k9.message.SimpleMessageFormat
+import com.fsck.k9.message.SimpleSmlMessageBuilder
 import com.fsck.k9.message.SmlMessageUtil
 import com.fsck.k9.provider.AttachmentTempFileProvider
+import com.fsck.k9.sml.SMLUtil
 import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.common.BitMatrix
 import java.io.File
 import java.net.URI
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.Date
+import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.model.Calendar
 import net.fortuna.ical4j.model.ComponentContainer
+import net.fortuna.ical4j.model.Parameter
+import net.fortuna.ical4j.model.Property
 import net.fortuna.ical4j.model.PropertyContainer
 import net.fortuna.ical4j.model.component.CalendarComponent
 import net.fortuna.ical4j.model.component.VEvent
+import net.fortuna.ical4j.model.parameter.Cn
+import net.fortuna.ical4j.model.parameter.PartStat
+import net.fortuna.ical4j.model.parameter.Rsvp
+import net.fortuna.ical4j.model.property.Attendee
 import net.fortuna.ical4j.model.property.Description
 import net.fortuna.ical4j.model.property.DtEnd
+import net.fortuna.ical4j.model.property.DtStamp
 import net.fortuna.ical4j.model.property.DtStart
+import net.fortuna.ical4j.model.property.LastModified
 import net.fortuna.ical4j.model.property.Location
+import net.fortuna.ical4j.model.property.Method
+import net.fortuna.ical4j.model.property.Organizer
 import net.fortuna.ical4j.model.property.Summary
 import net.fortuna.ical4j.model.property.Uid
 import net.fortuna.ical4j.model.property.Url
@@ -76,12 +101,6 @@ import okio.ByteString.Companion.encodeUtf8
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONObject
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.MultiFormatWriter
-import com.google.zxing.common.BitMatrix
-//import java.awt.image.BufferedImage;
-import androidx.core.graphics.createBitmap
-import com.fsck.k9.sml.SMLUtil
 
 // import android.R.style
 
@@ -194,6 +213,7 @@ internal class K9WebViewClient(
             if (smlPayload != null) {
                 val mc = DI.get(MessagingController::class.java)
                 val preferences = DI.get(Preferences::class.java)
+                // todo use messageReference to get account
                 val account: Account? = preferences.defaultAccount
                 if (account != null) {
                     val builder = SmlMessageUtil.createSMLMessageBuilder(
@@ -659,6 +679,7 @@ internal class K9WebViewClient(
                 return
             }
         }
+        // todo: deduplicate temp file writing code
         val jsonFile = File(directory, fileName ?:"sml.json")
         jsonFile.writeBytes(data)
 
@@ -686,6 +707,10 @@ internal class K9WebViewClient(
         val cal = calendarFromJsonLd(json)
         val calText = cal.toString()
 
+        viewTextAsFile(context, calText, "ical", "text/calendar")
+    }
+
+    private fun viewTextAsFile(context: Context, text: String, extension: String, mimeType: String) {
         val applicationContext = context.applicationContext
         val directory = File(applicationContext.cacheDir, "temp")
         if (!directory.exists()) {
@@ -694,24 +719,39 @@ internal class K9WebViewClient(
                 return
             }
         }
-        val jsonFile = File(directory, "${calText.encodeUtf8().sha1().hex()}.ical")
-        jsonFile.writeText(calText)
+        val textFile = File(directory, "${text.encodeUtf8().sha1().hex()}.$extension")
+        textFile.writeText(text)
+        // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
 
-//        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
-//        val sharableUri = AttachmentTempFileProvider.getUriForFile(context, "${context.packageName}.tempfileprovider", jsonFile, "sml1.json")
-        val sharableUri = AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(jsonFile), "event.ical")
+        //        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
+        //        val sharableUri = AttachmentTempFileProvider.getUriForFile(context, "${context.packageName}.tempfileprovider", jsonFile, "sml1.json")
+        val sharableUri =
+            AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(textFile), "event.$extension")
         val sendIntent: Intent = Intent().apply {
             action = Intent.ACTION_VIEW
-            setDataAndType(sharableUri, "text/calendar")
+            setDataAndType(sharableUri, mimeType)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-//        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
+        //        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
         startActivity(context, sendIntent, null)
-        // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
     }
 
-    private fun calendarFromJsonLd(json: JSONObject): ComponentContainer<CalendarComponent>? {
+    private fun calendarFromJsonLd(json: JSONObject): Calendar? {
+        val originalICalText = json.optString("originalICal")
+        if (originalICalText.isNotEmpty()) {
+            val cbuilder = CalendarBuilder()
+            try {
+                val originalIcal = cbuilder.build(originalICalText.reader())
+                if (originalIcal != null) {
+                    return originalIcal;
+                } else {
+                    Timber.e("Json had originalVEvent property, but parsing failed")
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Could not parse original VEvent")
+            }
+        }
         val event = vEventFromJsonLd(json)
 
         val cal = Calendar().add<ComponentContainer<CalendarComponent>>(event)
@@ -719,7 +759,7 @@ internal class K9WebViewClient(
         //        module.addDeserializer(Calendar::class.java, JCalMapper(VEvent::class.java))
         //        val mapper = ObjectMapper();
         //        mapper.registerModule(module);
-        return cal
+        return cal as Calendar?
     }
 
     private fun vEventFromJsonLd(json: JSONObject): VEvent {
@@ -910,7 +950,8 @@ internal class K9WebViewClient(
 
         val dialogAlert = MaterialAlertDialogBuilder(context)
             .setView(xwebView)
-            .setNegativeButton("Copy to Clipboard"
+            .setNegativeButton(
+                "Copy to Clipboard",
             ) { dialog, which -> clipboardManager.setText("Copied jsonld", jsons[0]) }
             .setPositiveButton("Close", null)
             .setCancelable(false)
@@ -930,17 +971,96 @@ internal class K9WebViewClient(
         val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
         val text = String(data, charset("UTF-8"))
         val json = JSONObject(text)
+        val cal = calendarFromJsonLd(json)
+        val accountUuid = messageReference?.accountUuid
+        val account: Account?
+        if (accountUuid != null) {
+            val preferences = Preferences.getPreferences()
+            account = preferences.getAccount(accountUuid)
+        } else {
+            account = null
+        }
         val query = uri.query
-        if (arrayOf<String>("accept", "decline").contains(query)) {
+        if (account != null && arrayOf("accept", "decline").contains(query)) {
             // TODO: Add to calendar via intent, and on return send email.
-            if (query.equals("accept")) {
-                //TODO send accept mail
-                showToast(context, "accepted")
-            } else if (query.equals("decline")) {
-                // TODO send decline mail
-                showToast(context, "declined")
+//                val attendees = cal?.componentList?.get<VEvent>()?.map { it.attendees }?.flatten()
+            val event = cal?.componentList?.all?.filterIsInstance<VEvent>()?.firstOrNull()
+            if (event != null) {
+                val summary = event.propertyList.get<Summary>(Property.SUMMARY).firstOrNull()?.value
+                val organizer = event.propertyList.get<Organizer>(Property.ORGANIZER).firstOrNull()
+                val organizerName = organizer?.parameterList?.get<Cn>(Parameter.CN)?.firstOrNull()?.value
+                val organizerEmail = organizer?.calAddress?.schemeSpecificPart
+                if (!organizerEmail.isNullOrEmpty()) {
+                    if (query.equals("accept")) {
+                        val userAttendee = findAccountEmailInAttendees(event, account, "ACCEPTED")
+                        val calTextToSave = cal.toString()
+                        viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
+                        //todo save
+                        event.attendees.clear()
+                        event.attendees.add(userAttendee)
+                        cal.propertyList.replace(Method("REPLY"))
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            val current = Instant.now()
+                            cal.propertyList.replace(LastModified(current))
+                            cal.propertyList.replace(DtStamp(current))
+                        }
+                        val calTextToReply = cal.toString()
+                        val messageBuilder = SimpleSmlMessageBuilder.newInstance()
+                        val contentType = contentType("text/calendar", "utf-8", null) //todo change
+                        MimeParameterEncoder.encode("text/calendar", mapOf("charset" to "utf-8", "method" to "REPLY"))
+                        val body = TextBody(calTextToReply.replace("\r\n", "\n").replace("\n", "\r\n"))
+                        val dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
+                        dedicatedJsonMultipart.setEncoding("8bit")
+                        val subject = "Accepted " + (summary ?: "")
+                        messageBuilder
+                            .setSubject(subject)
+                            .setSentDate(Date())
+                            .setHideTimeZone(isHideTimeZone)
+                            .setIdentity(account.identities.first()) // todo if the account has multiple identities
+                            .setPlainText("Has accepted your invitation".toCrLf()) // todo clear text representation of the event(?)
+                            .setHtmlText("I think this is necessary") // todo either enable plaintext-only, or set this to some actial html
+                            .setMessageFormat(SimpleMessageFormat.TEXT)
+                            .setTo(listOf(Address(organizerEmail, organizerName)))
+                        messageBuilder.setAdditionalAlternatePart(dedicatedJsonMultipart)
+                        messageBuilder.buildAsync(
+                            object : Callback {
+                                override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
+
+                                    val messagingController = DI.get(MessagingController::class.java)
+                                    messagingController.sendMessage(account, message, subject, null)
+                                    showToast(context, "accepted")
+                                }
+                                // todo: not handling any of the non success cases
+                                override fun onMessageBuildCancel() {}
+                                override fun onMessageBuildException(exception: MessagingException?) {}
+                                override fun onMessageBuildReturnPendingIntent(
+                                    pendingIntent: PendingIntent?,
+                                    requestCode: Int,
+                                ) {}
+                            },
+                        )
+                        //TODO send accept mail
+                    } else if (query.equals("decline")) {
+                        // TODO send decline mail
+                        showToast(context, "declined")
+                    }
+                }
             }
         }
+    }
+
+    private fun findAccountEmailInAttendees(event: VEvent, account: Account, partStat: String): Attendee? {
+        // the user currently interacting with this mail as an attendee of the event
+        var userAttendee: Attendee? = null
+        for (attendee in event.attendees) {
+            if (attendee.calAddress.schemeSpecificPart == account.email) {
+                attendee.replace<Property>(PartStat(partStat))
+                attendee.remove<Property>(Rsvp(true))
+
+                userAttendee = attendee
+            }
+        }
+        return userAttendee
     }
 
     override fun shouldInterceptRequest(webView: WebView, request: WebResourceRequest): WebResourceResponse? {
