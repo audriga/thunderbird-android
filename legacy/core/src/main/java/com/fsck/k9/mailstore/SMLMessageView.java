@@ -270,7 +270,9 @@ public class SMLMessageView {
                                 for (StructuredData sd : structuredDatas) {
                                     try {
                                         sd.getJson().put("iTIPMethod", itipMethod);
-                                        sd.getJson().put("originalICal", icalText);
+                                        if (itipMethod != null && !itipMethod.isEmpty()) {
+                                            sd.getJson().put("originalICal", icalText);
+                                        }
 //                                        List<String> attendeesText = new ArrayList<>(attendees.size());
 //                                        for (Attendee attendee : attendees) {
 //                                            attendeesText.add(attendee.toString().trim());
