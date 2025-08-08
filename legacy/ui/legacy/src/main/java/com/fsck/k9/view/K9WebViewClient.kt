@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.IntentSender.SendIntentException
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
@@ -69,6 +70,7 @@ import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.Date
+import java.util.Locale
 import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.model.Calendar
 import net.fortuna.ical4j.model.ComponentContainer
@@ -101,6 +103,7 @@ import okio.ByteString.Companion.encodeUtf8
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONObject
+import org.openintents.openpgp.util.OpenPgpIntentStarter.startIntentSenderForResult
 
 // import android.R.style
 
@@ -982,75 +985,116 @@ internal class K9WebViewClient(
         }
         val query = uri.query
         if (account != null && arrayOf("accept", "decline").contains(query)) {
-            // TODO: Add to calendar via intent, and on return send email.
-//                val attendees = cal?.componentList?.get<VEvent>()?.map { it.attendees }?.flatten()
-            val event = cal?.componentList?.all?.filterIsInstance<VEvent>()?.firstOrNull()
-            if (event != null) {
-                val summary = event.propertyList.get<Summary>(Property.SUMMARY).firstOrNull()?.value
-                val organizer = event.propertyList.get<Organizer>(Property.ORGANIZER).firstOrNull()
-                val organizerName = organizer?.parameterList?.get<Cn>(Parameter.CN)?.firstOrNull()?.value
-                val organizerEmail = organizer?.calAddress?.schemeSpecificPart
-                if (!organizerEmail.isNullOrEmpty()) {
-                    if (query.equals("accept")) {
-                        val userAttendee = findAccountEmailInAttendees(event, account, "ACCEPTED")
-                        val calTextToSave = cal.toString()
-                        viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
-                        // this replaces all attendees with userAttendee
-                        event.replace<VEvent>(userAttendee)
-                        cal.replace<Calendar>(Method("REPLY"))
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            val current = Instant.now()
-                            event.replace<VEvent>(LastModified(current))
-                            event.replace<VEvent>(DtStamp(current))
-                        }
-                        val resourceProvider = DI.get(CoreResourceProvider::class.java)
-                        val ua = resourceProvider.userAgent()
-                        cal.replace<Calendar>(ProdId("-//$ua//EN")) //todo: should probably be something like -//comapy//appname/langcode
-                        val calTextToReply = cal.toString()
-                        val messageBuilder = SimpleSmlMessageBuilder.newInstance()
-                        val contentType = contentType("text/calendar", "utf-8", null)
-                        MimeParameterEncoder.encode("text/calendar", mapOf("charset" to "utf-8", "method" to "REPLY"))
-                        val body = TextBody(calTextToReply.replace("\r\n", "\n").replace("\n", "\r\n"))
-                        val dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
-                        dedicatedJsonMultipart.setEncoding("8bit")
-                        val subject = "Accepted " + (summary ?: "")
-                        messageBuilder
-                            .setSubject(subject)
-                            .setSentDate(Date())
-                            .setHideTimeZone(isHideTimeZone)
-                            .setIdentity(account.identities.first()) // todo if the account has multiple identities
-                            .setPlainText(account.displayName + " has accepted your invitation")
-                            .setMessageFormat(SimpleMessageFormat.TEXT)
-                            .setTo(listOf(Address(organizerEmail, organizerName)))
-                        messageBuilder.setAdditionalAlternatePart(dedicatedJsonMultipart)
-                        messageBuilder.buildAsync(
-                            object : Callback {
-                                override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
-
-                                    val messagingController = DI.get(MessagingController::class.java)
-                                    messagingController.sendMessage(account, message, subject, null)
-                                    showToast(context, "accepted")
-                                }
-                                // todo: not handling any of the non success cases
-                                override fun onMessageBuildCancel() {}
-                                override fun onMessageBuildException(exception: MessagingException?) {}
-                                override fun onMessageBuildReturnPendingIntent(
-                                    pendingIntent: PendingIntent?,
-                                    requestCode: Int,
-                                ) {}
-                            },
-                        )
-                        //TODO send accept mail
-                    } else if (query.equals("decline")) {
-                        // TODO send decline mail
-                        showToast(context, "declined")
-                    }
-                }
+            if (query.equals("accept")) {
+                imipIteract(cal, IMIPAction.Accept, account, context)
+            } else if (query.equals("decline")) {
+                imipIteract(cal, IMIPAction.Decline, account, context)
             }
         }
     }
 
-    private fun findAccountEmailInAttendees(event: VEvent, account: Account, partStat: String): Attendee? {
+    /**
+     * @param partStat is set for the PARTSTAT of the attendee.
+     * @param verb is used for subject line ("Accepted: <Event summary>"),
+     * and plaintext ("<name> has accepted your invitation").
+     */
+    enum class IMIPAction(val partStat: String, val verb: String) {
+        Accept(partStat = "ACCEPTED", verb = "Accepted"),
+        Decline(partStat = "DECLINED", verb = "Declined");
+    }
+
+    /**
+     * If accept saves modified (to reflect accept) cal to calendar (via open ics file).
+     * In all cases send reply imip email (with further modified cal).
+     */
+    private fun imipIteract(
+        cal: Calendar?,
+        action: IMIPAction,
+        account: Account,
+        context: Context,
+    ) {
+        // TODO: Add to calendar via intent, and on return send email.
+        //                val attendees = cal?.componentList?.get<VEvent>()?.map { it.attendees }?.flatten()
+        val event = cal?.componentList?.all?.filterIsInstance<VEvent>()?.firstOrNull()
+        if (event != null) {
+            val summary = event.propertyList.get<Summary>(Property.SUMMARY).firstOrNull()?.value
+            val organizer = event.propertyList.get<Organizer>(Property.ORGANIZER).firstOrNull()
+            val organizerName = organizer?.parameterList?.get<Cn>(Parameter.CN)?.firstOrNull()?.value
+            val organizerEmail = organizer?.calAddress?.schemeSpecificPart
+            if (!organizerEmail.isNullOrEmpty()) {
+                // todo: can't send email if organizer email is null or empty. Show some sort of error?
+                val userAttendee = findAndUpdateAccountEmailInAttendees(event, account, action.partStat)
+                if (action != IMIPAction.Decline) {
+                    val calTextToSave = cal.toString()
+                    viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
+                }
+                if (userAttendee == null) {
+                    showToast(context, "You are not part of the attendees. Not sending an email")
+                    return
+                }
+                // this replaces all attendees with userAttendee
+                event.replace<VEvent>(userAttendee)
+                cal.replace<Calendar>(Method("REPLY"))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val current = Instant.now()
+                    event.replace<VEvent>(LastModified(current))
+                    event.replace<VEvent>(DtStamp(current))
+                }
+                val resourceProvider = DI.get(CoreResourceProvider::class.java)
+                val ua = resourceProvider.userAgent()
+                cal.replace<Calendar>(ProdId("-//$ua//EN")) //todo: should probably be something like -//comapy//appname/langcode
+                val calTextToReply = cal.toString()
+                val messageBuilder = SimpleSmlMessageBuilder.newInstance()
+                val contentType = contentType("text/calendar", "utf-8", null)
+                MimeParameterEncoder.encode("text/calendar", mapOf("charset" to "utf-8", "method" to "REPLY"))
+                val body = TextBody(calTextToReply.replace("\r\n", "\n").replace("\n", "\r\n"))
+                val dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
+                dedicatedJsonMultipart.setEncoding("8bit")
+                val subject = action.verb + ": " + (summary ?: "")
+                messageBuilder
+                    .setSubject(subject)
+                    .setSentDate(Date())
+                    .setHideTimeZone(isHideTimeZone)
+                    .setIdentity(account.identities.first()) // todo if the account has multiple identities
+                    .setPlainText("${account.displayName} has ${action.verb.lowercase(Locale.getDefault())} your invitation")
+                    .setMessageFormat(SimpleMessageFormat.TEXT)
+                    .setTo(listOf(Address(organizerEmail, organizerName)))
+                messageBuilder.setAdditionalAlternatePart(dedicatedJsonMultipart)
+                messageBuilder.buildAsync(
+                    object : Callback {
+                        override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
+                            val messagingController = DI.get(MessagingController::class.java)
+                            messagingController.sendMessage(account, message, subject, null)
+                            showToast(context, action.verb)
+                        }
+
+                        override fun onMessageBuildCancel() {
+                            Timber.e("Cancelled sending message")
+                        }
+
+                        override fun onMessageBuildException(me: MessagingException?) {
+                            Timber.e(me, "Error sending message")
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.send_failed_reason, me?.localizedMessage ?: ""),
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+
+                        override fun onMessageBuildReturnPendingIntent(
+                            pendingIntent: PendingIntent?,
+                            requestCode: Int,
+                        ) {
+                            //todo MessageCompose uses  OpenPgpIntentStarter.startIntentSenderForResult here,
+                            //   which requires an activity, so cannot copy that here.
+                        }
+                    },
+                )
+            }
+        }
+    }
+
+    private fun findAndUpdateAccountEmailInAttendees(event: VEvent, account: Account, partStat: String): Attendee? {
         // the user currently interacting with this mail as an attendee of the event
         var userAttendee: Attendee? = null
         for (attendee in event.attendees) {
