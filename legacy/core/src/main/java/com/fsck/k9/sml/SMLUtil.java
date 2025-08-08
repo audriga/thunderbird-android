@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 import android.net.Uri;
 import android.net.Uri.Builder;
@@ -140,23 +141,31 @@ public abstract class SMLUtil {
         ButtonDescription shareEventAsCalendar = new ButtonDescription(null, "event", uri.toString());
         if (iTIPMethod.isEmpty()) {
             return Collections.singletonList(shareEventAsCalendar);
+        } else if (iTIPMethod.toLowerCase(Locale.ROOT).equals("request")){
+            return getIMITButtonDescriptions(shareEventAsCalendar, encodedJson);
         } else {
-            List<ButtonDescription> buttonDescs = new ArrayList<>(3);
-            buttonDescs.add(shareEventAsCalendar);
-            Uri acceptUri = new Builder()
-                .scheme("ximip")
-                .authority(encodedJson)
-                .query("accept")
-                .build();
-            Uri declineUri = new Builder()
-                .scheme("ximip")
-                .authority(encodedJson)
-                .query("decline")
-                .build();
-            buttonDescs.add(new ButtonDescription("Accept", acceptUri.toString()));
-            buttonDescs.add(new ButtonDescription("Decline", declineUri.toString()));
-            return buttonDescs;
+            return Collections.singletonList(shareEventAsCalendar);
         }
+    }
+
+    @NonNull
+    private static List<ButtonDescription> getIMITButtonDescriptions(ButtonDescription shareEventAsCalendar,
+        String encodedJson) {
+        List<ButtonDescription> buttonDescs = new ArrayList<>(3);
+        buttonDescs.add(shareEventAsCalendar);
+        Uri acceptUri = new Builder()
+            .scheme("ximip")
+            .authority(encodedJson)
+            .query("accept")
+            .build();
+        Uri declineUri = new Builder()
+            .scheme("ximip")
+            .authority(encodedJson)
+            .query("decline")
+            .build();
+        buttonDescs.add(new ButtonDescription("Accept", acceptUri.toString()));
+        buttonDescs.add(new ButtonDescription("Decline", declineUri.toString()));
+        return buttonDescs;
     }
 
     @Nullable
