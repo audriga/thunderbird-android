@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.IntentSender.SendIntentException
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
@@ -27,7 +26,6 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
-import app.k9mail.feature.launcher.FeatureLauncherActivity
 import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
@@ -103,7 +101,6 @@ import okio.ByteString.Companion.encodeUtf8
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONObject
-import org.openintents.openpgp.util.OpenPgpIntentStarter.startIntentSenderForResult
 
 // import android.R.style
 
@@ -215,9 +212,7 @@ internal class K9WebViewClient(
             val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction);
             if (smlPayload != null) {
                 val mc = DI.get(MessagingController::class.java)
-                val preferences = DI.get(Preferences::class.java)
-                // todo use messageReference to get account
-                val account: Account? = preferences.defaultAccount
+                val account: Account? = account(messageReference)
                 if (account != null) {
                     val builder = SmlMessageUtil.createSMLMessageBuilder(
                         listOf(smlPayload),
@@ -536,17 +531,10 @@ internal class K9WebViewClient(
         message.setHeader("To", address.toEncodedString())
 
         val messagingController = DI.get(MessagingController::class.java)
-        val preferences = DI.get(Preferences::class.java)
-        val account = preferences.defaultAccount;
-        messagingController.sendMessageBlocking(account, message);
-
-        // val messageListRepository = DI.get<MessageListRepository>()
-        // val context = DI.get(Context::class.java)
-
-        //        MessagingController mc = DI.get(MessagingController.class);
-        //        Preferences preferences = DI.get(Preferences.class);
-        //        Account account = preferences.getDefaultAccount();
-        //        mc.sendMessageBlocking(account, message);
+        val account = account(messageReference)
+        if (account != null) {
+            messagingController.sendMessageBlocking(account, message);
+        }
     }
 
     private fun copyUrlToClipboard(context: Context, uri: Uri) {
@@ -853,18 +841,12 @@ internal class K9WebViewClient(
         val base64 = uri.authority
         val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
         val text = String(data)
-        val defaultAccount = Preferences.getPreferences().defaultAccount
-        if (defaultAccount == null) {
-            FeatureLauncherActivity.launchSetupAccount(context);
-        } else {
-            val accountUuid = defaultAccount.uuid
-            val i = Intent(context, MessageCompose::class.java)
-            i.putExtra(MessageCompose.EXTRA_ACCOUNT, accountUuid)
-            i.putExtra(MessageCompose.IS_SML, true)
-            i.setAction(MessageCompose.ACTION_COMPOSE)
-            i.putExtra(MessageCompose.SML_PAYLOAD, text)
-            context.startActivity(i);
-        }
+        val i = Intent(context, MessageCompose::class.java)
+        i.putExtra(MessageCompose.EXTRA_ACCOUNT, messageReference?.accountUuid)
+        i.putExtra(MessageCompose.IS_SML, true)
+        i.setAction(MessageCompose.ACTION_COMPOSE)
+        i.putExtra(MessageCompose.SML_PAYLOAD, text)
+        context.startActivity(i);
     }
 
     private fun openUrl(context: Context, uri: Uri) {
@@ -975,14 +957,7 @@ internal class K9WebViewClient(
         val text = String(data, charset("UTF-8"))
         val json = JSONObject(text)
         val cal = calendarFromJsonLd(json)
-        val accountUuid = messageReference?.accountUuid
-        val account: Account?
-        if (accountUuid != null) {
-            val preferences = Preferences.getPreferences()
-            account = preferences.getAccount(accountUuid)
-        } else {
-            account = null
-        }
+        val account: Account? = account(messageReference)
         val query = uri.query
         if (account != null && arrayOf("accept", "decline").contains(query)) {
             if (query.equals("accept")) {
@@ -1178,5 +1153,18 @@ internal class K9WebViewClient(
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)
+
+
+        private fun account(messageReference: MessageReference?): Account? {
+            val accountUuid = messageReference?.accountUuid
+            val account: Account?
+            if (accountUuid != null) {
+                val preferences = Preferences.getPreferences()
+                account = preferences.getAccount(accountUuid)
+            } else {
+                account = null
+            }
+            return account
+        }
     }
 }
