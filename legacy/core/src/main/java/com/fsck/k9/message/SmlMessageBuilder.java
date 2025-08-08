@@ -76,16 +76,21 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
         // Let the receiver select either the text or the HTML part.
         bodyPlain = buildText(isDraft, SimpleMessageFormat.TEXT);
         composedMimeMessage.addBodyPart(MimeBodyPart.create(bodyPlain, "text/plain"));
-        TextBody bodyHTML = buildText(isDraft, SimpleMessageFormat.HTML);
-        MimeBodyPart htmlPart = MimeBodyPart.create(bodyHTML, "text/html");
-        if (inlineAttachments != null && !inlineAttachments.isEmpty()) {
-            MimeMultipart htmlPartWithInlineImages = new MimeMultipart("multipart/related",
-                boundaryGenerator.generateBoundary());
-            htmlPartWithInlineImages.addBodyPart(htmlPart);
-            addInlineAttachmentsToMessage(htmlPartWithInlineImages);
-            composedMimeMessage.addBodyPart(MimeBodyPart.create(htmlPartWithInlineImages));
+        TextBody bodyHTML;
+        if (htmlText != null && !htmlText.isEmpty()) {
+            bodyHTML = buildText(isDraft, SimpleMessageFormat.HTML);
+            MimeBodyPart htmlPart = MimeBodyPart.create(bodyHTML, "text/html");
+            if (inlineAttachments != null && !inlineAttachments.isEmpty()) {
+                MimeMultipart htmlPartWithInlineImages = new MimeMultipart("multipart/related",
+                    boundaryGenerator.generateBoundary());
+                htmlPartWithInlineImages.addBodyPart(htmlPart);
+                addInlineAttachmentsToMessage(htmlPartWithInlineImages);
+                composedMimeMessage.addBodyPart(MimeBodyPart.create(htmlPartWithInlineImages));
+            } else {
+                composedMimeMessage.addBodyPart(htmlPart);
+            }
         } else {
-            composedMimeMessage.addBodyPart(htmlPart);
+            bodyHTML = null;
         }
         if (additionalAlternatePart != null) {
             composedMimeMessage.addBodyPart(additionalAlternatePart);
@@ -108,8 +113,28 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
         // If this is a draft, add metadata for thawing.
         if (isDraft) {
             // Add the identity to the message.
-            message.addHeader(K9.IDENTITY_HEADER, buildIdentityHeader(bodyHTML, bodyPlain));
+            if (bodyHTML != null) {
+                message.addHeader(K9.IDENTITY_HEADER, buildIdentityHeader(bodyHTML, bodyPlain));
+            } else {
+                message.addHeader(K9.IDENTITY_HEADER, buildIdentityHeader(bodyPlain));
+            }
         }
+    }
+
+    private String buildIdentityHeader(TextBody bodyPlain) {
+        return new IdentityHeaderBuilder()
+            .setCursorPosition(cursorPosition)
+            .setIdentity(identity)
+            .setIdentityChanged(identityChanged)
+            .setMessageFormat(messageFormat)
+            .setMessageReference(messageReference)
+            .setQuotedHtmlContent(quotedHtmlContent)
+            .setQuoteStyle(quoteStyle)
+            .setQuoteTextMode(quotedTextMode)
+            .setSignature(signature)
+            .setSignatureChanged(signatureChanged)
+            .setBodyPlain(bodyPlain)
+            .build();
     }
 
     private String buildIdentityHeader(TextBody body, TextBody bodyPlain) {

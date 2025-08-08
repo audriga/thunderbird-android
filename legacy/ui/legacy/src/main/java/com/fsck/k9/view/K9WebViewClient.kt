@@ -32,13 +32,13 @@ import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
 import com.audriga.h2lj.model.StructuredSyntax
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
+import com.fsck.k9.CoreResourceProvider
 import com.fsck.k9.K9
 import com.fsck.k9.K9.isHideTimeZone
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageCompose
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
-import com.fsck.k9.helper.toCrLf
 import com.fsck.k9.logging.Timber
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.MessagingException
@@ -50,7 +50,6 @@ import com.fsck.k9.mail.internet.MimeMultipart
 import com.fsck.k9.mail.internet.MimeParameterEncoder
 import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.mailstore.AttachmentResolver
-import com.fsck.k9.message.MessageBuilder
 import com.fsck.k9.message.MessageBuilder.Callback
 import com.fsck.k9.message.SimpleMessageFormat
 import com.fsck.k9.message.SimpleSmlMessageBuilder
@@ -90,6 +89,7 @@ import net.fortuna.ical4j.model.property.LastModified
 import net.fortuna.ical4j.model.property.Location
 import net.fortuna.ical4j.model.property.Method
 import net.fortuna.ical4j.model.property.Organizer
+import net.fortuna.ical4j.model.property.ProdId
 import net.fortuna.ical4j.model.property.Summary
 import net.fortuna.ical4j.model.property.Uid
 import net.fortuna.ical4j.model.property.Url
@@ -995,18 +995,20 @@ internal class K9WebViewClient(
                         val userAttendee = findAccountEmailInAttendees(event, account, "ACCEPTED")
                         val calTextToSave = cal.toString()
                         viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
-                        //todo save
-                        event.attendees.clear()
-                        event.attendees.add(userAttendee)
-                        cal.propertyList.replace(Method("REPLY"))
+                        // this replaces all attendees with userAttendee
+                        event.replace<VEvent>(userAttendee)
+                        cal.replace<Calendar>(Method("REPLY"))
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             val current = Instant.now()
-                            cal.propertyList.replace(LastModified(current))
-                            cal.propertyList.replace(DtStamp(current))
+                            event.replace<VEvent>(LastModified(current))
+                            event.replace<VEvent>(DtStamp(current))
                         }
+                        val resourceProvider = DI.get(CoreResourceProvider::class.java)
+                        val ua = resourceProvider.userAgent()
+                        cal.replace<Calendar>(ProdId("-//$ua//EN")) //todo: should probably be something like -//comapy//appname/langcode
                         val calTextToReply = cal.toString()
                         val messageBuilder = SimpleSmlMessageBuilder.newInstance()
-                        val contentType = contentType("text/calendar", "utf-8", null) //todo change
+                        val contentType = contentType("text/calendar", "utf-8", null)
                         MimeParameterEncoder.encode("text/calendar", mapOf("charset" to "utf-8", "method" to "REPLY"))
                         val body = TextBody(calTextToReply.replace("\r\n", "\n").replace("\n", "\r\n"))
                         val dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
@@ -1017,8 +1019,7 @@ internal class K9WebViewClient(
                             .setSentDate(Date())
                             .setHideTimeZone(isHideTimeZone)
                             .setIdentity(account.identities.first()) // todo if the account has multiple identities
-                            .setPlainText("Has accepted your invitation".toCrLf()) // todo clear text representation of the event(?)
-                            .setHtmlText("I think this is necessary") // todo either enable plaintext-only, or set this to some actial html
+                            .setPlainText(account.displayName + " has accepted your invitation")
                             .setMessageFormat(SimpleMessageFormat.TEXT)
                             .setTo(listOf(Address(organizerEmail, organizerName)))
                         messageBuilder.setAdditionalAlternatePart(dedicatedJsonMultipart)
