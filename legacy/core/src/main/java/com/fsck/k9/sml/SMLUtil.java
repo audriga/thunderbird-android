@@ -142,17 +142,16 @@ public abstract class SMLUtil {
         if (iTIPMethod.isEmpty()) {
             return Collections.singletonList(shareEventAsCalendar);
         } else if (iTIPMethod.toLowerCase(Locale.ROOT).equals("request")){
-            return getIMITButtonDescriptions(shareEventAsCalendar, encodedJson);
+            return getIMITButtonDescriptions(encodedJson);
         } else {
             return Collections.singletonList(shareEventAsCalendar);
         }
     }
 
     @NonNull
-    private static List<ButtonDescription> getIMITButtonDescriptions(ButtonDescription shareEventAsCalendar,
-        String encodedJson) {
-        List<ButtonDescription> buttonDescs = new ArrayList<>(3);
-        buttonDescs.add(shareEventAsCalendar);
+    private static List<ButtonDescription> getIMITButtonDescriptions(String encodedJson) {
+        List<ButtonDescription> buttonDescs = new ArrayList<>(2);
+//        buttonDescs.add(shareEventAsCalendar);
         Uri acceptUri = new Builder()
             .scheme("ximip")
             .authority(encodedJson)
