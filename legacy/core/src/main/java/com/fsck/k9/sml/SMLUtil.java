@@ -163,8 +163,14 @@ public abstract class SMLUtil {
             .authority(encodedJson)
             .query("decline")
             .build();
+        Uri tentativeUri = new Builder()
+            .scheme("ximip")
+            .authority(encodedJson)
+            .query("tentative")
+            .build();
         buttonDescs.add(new ButtonDescription("Accept", acceptUri.toString()));
         buttonDescs.add(new ButtonDescription("Decline", declineUri.toString()));
+        buttonDescs.add(new ButtonDescription("Tentative", tentativeUri.toString()));
         return buttonDescs;
     }
 

@@ -959,11 +959,17 @@ internal class K9WebViewClient(
         val cal = calendarFromJsonLd(json)
         val account: Account? = account(messageReference)
         val query = uri.query
-        if (account != null && arrayOf("accept", "decline").contains(query)) {
-            if (query.equals("accept")) {
-                imipIteract(cal, IMIPAction.Accept, account, context)
-            } else if (query.equals("decline")) {
-                imipIteract(cal, IMIPAction.Decline, account, context)
+        if (account != null && arrayOf("accept", "decline", "tentative").contains(query)) {
+            when {
+                query.equals("accept") -> {
+                    imipIteract(cal, IMIPAction.Accept, account, context)
+                }
+                query.equals("decline") -> {
+                    imipIteract(cal, IMIPAction.Decline, account, context)
+                }
+                query.equals("tentative") -> {
+                    imipIteract(cal, IMIPAction.Tentative, account, context)
+                }
             }
         }
     }
@@ -975,7 +981,8 @@ internal class K9WebViewClient(
      */
     enum class IMIPAction(val partStat: String, val verb: String) {
         Accept(partStat = "ACCEPTED", verb = "Accepted"),
-        Decline(partStat = "DECLINED", verb = "Declined");
+        Decline(partStat = "DECLINED", verb = "Declined"),
+        Tentative(partStat = "TENTATIVE", verb = "Tentative");
     }
 
     /**
