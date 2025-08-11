@@ -7,10 +7,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
 
 import android.net.Uri;
 import android.net.Uri.Builder;
 import android.util.Base64;
+import android.util.Patterns;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -61,6 +63,10 @@ public abstract class SMLUtil {
             buttons.add(shareAsFileButtonDesc);
         }
         if (isEvent(type) || hasStartAndEndDate(jsonObject)) {
+            ButtonDescription meetButtonDesc = getMeetButtonDesc(jsonObject);
+            if (meetButtonDesc != null) {
+                buttons.add(meetButtonDesc);
+            }
             List<ButtonDescription> eventButtonDesc = getEventButtonDescs(jsonObject);
             buttons.addAll(eventButtonDesc);
 
@@ -129,6 +135,19 @@ public abstract class SMLUtil {
         return  buttons;
     }
 
+    public static ButtonDescription getMeetButtonDesc(JSONObject jsonObject) {
+        String description = jsonObject.optString("description");
+        if (!description.isEmpty()) {
+        Matcher urlHtmlMatcher = Patterns.WEB_URL.matcher(description);
+        while (urlHtmlMatcher.find()) {
+            String url = urlHtmlMatcher.group();
+                if (url.contains("meet.google.com")) {
+                    return new ButtonDescription(null, "videocam", url);
+            }
+        }
+        }
+        return null;
+    }
     @NonNull
     public static List<ButtonDescription> getEventButtonDescs(JSONObject jsonObject) {
         byte[] jsonBytes = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
