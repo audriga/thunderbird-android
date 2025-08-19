@@ -39,7 +39,6 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.sml.SMLUtil;
-import kotlinx.coroutines.sync.Mutex;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.data.ParserException;
 import net.fortuna.ical4j.model.Calendar;
@@ -58,7 +57,6 @@ import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
 import timber.log.Timber;
 
 import static com.fsck.k9.mail.internet.MimeUtility.isSameMimeType;
-import static java.lang.Thread.sleep;
 
 
 public abstract class SMLMessageView {
@@ -185,7 +183,11 @@ public abstract class SMLMessageView {
             for (Part part : parseableParts) {
                 if (isSameMimeType(part.getMimeType(), "application/ld+json")) {
                     String json = readBodyToText(part);
-                    data.addAll(StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(json));
+                    List<StructuredData> structuredData =
+                        StructuredDataExtractionUtils.parseStructuredDataFromJsonStr(json);
+                    if (structuredData != null) {
+                        data.addAll(structuredData);
+                    }
                 }
             }
         }
@@ -202,7 +204,6 @@ public abstract class SMLMessageView {
 
                // It would probably be a bit cleaner to use a CompletableFuture but that is only available at API level 24
                CountDownLatch latch = new CountDownLatch(1);
-               final boolean[] doneLoadingPart = { false };
                mc.loadAttachment(account, message, part, new SimpleMessagingListener() {
                    @Override
                    public void loadAttachmentFinished(Account account, Message message, Part part) {
