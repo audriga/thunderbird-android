@@ -70,6 +70,7 @@ public class MessageViewInfoExtractor {
         ArrayList<Part> extraParts = new ArrayList<>();
         Part cryptoContentPart = MessageCryptoStructureDetector.findPrimaryEncryptedOrSignedPart(message, extraParts);
 
+        boolean shouldRenderSML = new SMLTrustHelper().shouldRenderSML(message, cryptoAnnotations, cryptoContentPart);
         if (cryptoContentPart == null) {
             if (cryptoAnnotations != null && !cryptoAnnotations.isEmpty()) {
                 Timber.e("Got crypto message cryptoContentAnnotations but no crypto root part!");

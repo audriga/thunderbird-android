@@ -70,7 +70,7 @@ import timber.log.Timber;
 import static com.fsck.k9.mail.internet.MimeUtility.isSameMimeType;
 
 
-public class SMLMessageView {
+public abstract class SMLMessageView {
     public static TryToDerive shouldTryToDerive(Message message) {
         String subject = message.getSubject();
         if (subject.toLowerCase().contains("code")) {
