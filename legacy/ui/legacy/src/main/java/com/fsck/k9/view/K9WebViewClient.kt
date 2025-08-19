@@ -100,6 +100,7 @@ import okhttp3.Request.Builder
 import okio.ByteString.Companion.encodeUtf8
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
+import org.json.JSONException
 import org.json.JSONObject
 
 // import android.R.style
@@ -164,6 +165,10 @@ internal class K9WebViewClient(
             }
             XREQUEST_SCHEME -> {
                 xrequest(webView.context, uri)
+                true
+            }
+            XPOPUPCARD_SCHEMA -> {
+                xpopupcard(webView.context, uri)
                 true
             }
             XLOADCARDS_SCHEME -> {
@@ -554,6 +559,38 @@ internal class K9WebViewClient(
     }
 
 
+    private fun xpopupcard(context: Context, uri: Uri) {
+
+        val encodedJsons = uri.schemeSpecificPart.split(",")
+        val decodedJsonTexts = encodedJsons.map { String(Base64.decode(it, Base64.NO_WRAP + Base64.URL_SAFE)) }
+        val ld2hRenderer = MustacheRenderer()
+        val renderedDisplayHTMLs = ArrayList<String>()
+        for (decodedJsonText in decodedJsonTexts) {
+            val jsonObject: JSONObject
+            try {
+                jsonObject = JSONObject(decodedJsonText)
+            } catch (e: JSONException) {
+                Timber.e(e, "Error parsing decoded json")
+                continue
+            }
+
+            val type = jsonObject.optString("@type")
+            // Add button to share structured data as email
+            val webUrlButtonDesc = SMLUtil.getWebUrlButtonDesc(jsonObject)
+            val shareAsFileButtonDesc = SMLUtil.getShareAsFileButtonDesc(jsonObject, type)
+            val shareAsMailButtonDesc = SMLUtil.getShareAsMailButtonDesc(jsonObject)
+            val ld2hRenderResult =
+                ld2hRenderer.render(jsonObject, listOf(webUrlButtonDesc, shareAsFileButtonDesc, shareAsMailButtonDesc))
+            if (ld2hRenderResult != null) {
+                renderedDisplayHTMLs.add(ld2hRenderResult);
+            }
+
+
+        }
+        if (renderedDisplayHTMLs.isNotEmpty()) {
+            showRenderedCardsPopup(context, renderedDisplayHTMLs)
+        }
+    }
 
     private fun xloadcards(context: Context, uri: Uri) {
         val  maxCards = 5;
@@ -1151,6 +1188,7 @@ internal class K9WebViewClient(
         private const val MAILTO_SCHEME = "mailto"
         private const val XREQUEST_SCHEME = "xrequest"
         private const val XLOADCARDS_SCHEME = "xloadcards"
+        private const val XPOPUPCARD_SCHEMA = "xpopupcard"
         private const val XSHARE_AS_FILE_SCHEME = "xshareasfile"
         private const val XSHARE_AS_CALENDAR_SCHEME = "xshareascalendar"
         private const val XSHARE_AS_MAIL = "xshareasmail"

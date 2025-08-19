@@ -6,27 +6,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.lang.StackWalker.Option;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import android.util.Base64;
 import android.util.Patterns;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import app.k9mail.legacy.account.Account;
+import app.k9mail.legacy.di.DI;
 import app.k9mail.legacy.message.controller.SimpleMessagingListener;
 import com.audriga.h2lj.model.StructuredData;
 import com.audriga.h2lj.model.StructuredSyntax;
@@ -41,33 +39,26 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.sml.SMLUtil;
+import kotlinx.coroutines.sync.Mutex;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.data.ParserException;
 import net.fortuna.ical4j.model.Calendar;
-import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
-import net.fortuna.ical4j.model.component.VTimeZone;
-import net.fortuna.ical4j.model.property.Attendee;
-import net.fortuna.ical4j.model.property.Created;
-import net.fortuna.ical4j.model.property.DtStamp;
-import net.fortuna.ical4j.model.property.LastModified;
-import net.fortuna.ical4j.model.property.Organizer;
-import net.fortuna.ical4j.model.property.RRule;
-import net.fortuna.ical4j.model.property.Sequence;
-import net.fortuna.ical4j.model.property.Status;
-import net.fortuna.ical4j.vcard.VCard;
 import org.audriga.ld2h.ButtonDescription;
 import org.audriga.ld2h.MustacheRenderer;
-import org.json.JSONArray;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
-import org.mnode.ical4j.serializer.jsonld.OrganizationJsonLdSerializer;
-import org.mnode.ical4j.serializer.jsonld.PersonJsonLdSerializer;
 import timber.log.Timber;
 
 import static com.fsck.k9.mail.internet.MimeUtility.isSameMimeType;
+import static java.lang.Thread.sleep;
 
 
 public abstract class SMLMessageView {
@@ -200,10 +191,42 @@ public abstract class SMLMessageView {
         }
     }
 
-    @NonNull
     private static String readBodyToText(Part part) throws MessagingException, IOException {
         Body body = part.getBody();
         StringBuilder textBuilder = new StringBuilder();
+        if (body == null) {
+           if (part instanceof LocalBodyPart) {
+               LocalMessage message = ((LocalBodyPart) part).getMessage();
+               Account account = message.getAccount();
+               MessagingController mc = DI.get(MessagingController.class);
+
+               // It would probably be a bit cleaner to use a CompletableFuture but that is only available at API level 24
+               CountDownLatch latch = new CountDownLatch(1);
+               final boolean[] doneLoadingPart = { false };
+               mc.loadAttachment(account, message, part, new SimpleMessagingListener() {
+                   @Override
+                   public void loadAttachmentFinished(Account account, Message message, Part part) {
+                       latch.countDown();
+                       super.loadAttachmentFinished(account, message, part);
+                   }
+
+                   @Override
+                   public void loadAttachmentFailed(Account account, Message message, Part part, String reason) {
+                       latch.countDown();
+                       super.loadAttachmentFailed(account, message, part, reason);
+                   }
+               });
+               try {
+                   latch.await();
+               } catch (InterruptedException e) {
+                   Timber.e(e, "Interrupted while trying to load part");
+               }
+               body = part.getBody();
+           }
+        }
+        if (body == null) {
+            return null;
+        }
         InputStream inputStream = body.getInputStream();
         try (Reader reader = new BufferedReader(new InputStreamReader
             (inputStream, StandardCharsets.UTF_8))) {
@@ -212,7 +235,12 @@ public abstract class SMLMessageView {
                 textBuilder.append((char) c);
             }
         }
-        return textBuilder.toString();
+        String bodyText = textBuilder.toString();
+        @NotNull String[] contentTransferEncoding = part.getHeader("Content-Transfer-Encoding");
+        if (contentTransferEncoding.length > 0 && contentTransferEncoding[0].equals("base64")) {
+            return new String(Base64.decode(bodyText, Base64.DEFAULT));
+        }
+        return bodyText;
     }
 
     public static void extractFromAttachments(@Nullable HashMap<AttachmentViewInfo, String> parseableAttachments,
@@ -508,12 +536,69 @@ public abstract class SMLMessageView {
                     displayHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
                 }
             } else {
-                displayHtml = renderDataOrExtractedAndAddToHTML(data, extracted, sanitizedHtml);
+
+                // Should not render all jsonLds at the top of the message, if we are in our "newsletter with a dozen recipes" case
+                String inlineModifiedHtml = addInlineButtonsToHtmlForEmbeddedStructuredData(rawHtml, data);
+                if (inlineModifiedHtml != null) {
+                    displayHtml = SMLUtil.CSS + inlineModifiedHtml;
+                } else {
+                    displayHtml = renderDataOrExtractedAndAddToHTML(data, extracted, sanitizedHtml);
+                }
+
+
             }
         } catch (Exception e) {
             Timber.e(e, "Encountered exception while trying to extract/ display markup from viewable");
         }
         return  displayHtml;
+    }
+
+    /**
+     * This is for the newsletter with embedded structured data case.
+     *
+     * @return the modified html, if it was modified, to contain inline buttons to show the corresponding card, or null
+     * if the html was not modified.
+     */
+    private static String addInlineButtonsToHtmlForEmbeddedStructuredData(String rawHtml,
+        List<StructuredData> data) {
+        // Mail contains some structured data. This might be our "newsletter with data-id" case too.
+        Map<String, JSONObject> idToJsonLd = new HashMap<>(data.size());
+        for (StructuredData structuredDatum : data) {
+            String id = structuredDatum.getJson().optString("@id");
+            if (!id.isEmpty()) {
+                idToJsonLd.put(id, structuredDatum.getJson());
+            }
+        }
+        boolean didModifyHtml = false;
+        if (!idToJsonLd.isEmpty()) {
+            Document doc = Jsoup.parse(rawHtml);
+            Elements linksWithId = doc.select("a[href][data-id]");
+            if (!linksWithId.isEmpty()) {
+                for (Element linkElement : linksWithId) {
+                    String dataId = linkElement.attr("data-id");
+                    if (idToJsonLd.containsKey(dataId)) {
+                        JSONObject jsonObject = idToJsonLd.get(dataId);
+                        if (jsonObject != null) {
+                            String encodedJsonLd =
+                                Base64.encodeToString(jsonObject.toString().getBytes(StandardCharsets.UTF_8),
+                                    Base64.NO_WRAP + Base64.URL_SAFE);
+                            String popupCardUrl = "xpopupcard://" + encodedJsonLd;
+                            String button =
+                                "<a href=\"" + popupCardUrl + "\"><span class=\"material-icons\">web_asset</span></a>";
+                            linkElement.after(button);
+                            didModifyHtml = true;
+                        }
+                    }
+                }
+            }
+            if (didModifyHtml) {
+                // todo this is based on the rawHtml.. Should we run this through the sanitizer somehow?
+                return doc.outerHtml();
+            } else {
+                return null;
+            }
+        }
+        return null;
     }
 
     @NonNull
