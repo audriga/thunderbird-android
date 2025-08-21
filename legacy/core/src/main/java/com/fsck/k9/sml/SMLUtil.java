@@ -197,7 +197,7 @@ public abstract class SMLUtil {
         Object url = jsonObject.opt("url");
         ButtonDescription webUrlButtonDesc = null;
         if (url != null) {
-            webUrlButtonDesc = new ButtonDescription(null, "web", url.toString());
+            webUrlButtonDesc = new ButtonDescription(null, "link", url.toString());
         }
         return webUrlButtonDesc;
     }
