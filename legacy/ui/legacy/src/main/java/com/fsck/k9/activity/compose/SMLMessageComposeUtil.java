@@ -15,6 +15,8 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 //import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Patterns;
 import android.view.View;
@@ -68,6 +70,34 @@ public class SMLMessageComposeUtil {
         this.messageContentView = messageContentView;
         this.messageContentViewSML = messageContentViewSML;
         this.smlModeSwitch = smlModeSwitch;
+
+        this.messageContentView.addTextChangedListener(new TextWatcher() {
+            private int insertedStartIndex = -1;
+            private int insertedEndIndex = -1;
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s == null || count < 2) {
+                    insertedStartIndex = -1;
+                } else {
+                    insertedStartIndex = start;
+                    insertedEndIndex = start + count;
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                int insertedStartIndex = this.insertedStartIndex;
+                int insertedEndIndex = this.insertedEndIndex;
+                if (s != null && insertedStartIndex != -1) {
+                    CharSequence insertedText = s.subSequence(insertedStartIndex, insertedEndIndex);
+                    enrichTextToSmlIfUrl(insertedText);
+                }
+            }
+        });
     }
 
     @Nullable
@@ -168,7 +198,7 @@ public class SMLMessageComposeUtil {
     public void enrichTextToSmlIfUrl(CharSequence text) {
         if (Patterns.WEB_URL.matcher(text).matches()) {
             // Input is exactl one url
-            enrichSharedUrlToSml((String) text);
+            enrichSharedUrlToSml(text.toString());
         }
     }
 
