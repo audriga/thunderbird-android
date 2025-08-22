@@ -1,26 +1,13 @@
 package com.fsck.k9.activity;
 
 import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentsChangedListener;
-import com.fsck.k9.helper.MimeTypeUtil;
+import com.fsck.k9.activity.compose.SMLMessageComposeUtil;
 import com.fsck.k9.message.MessageBuilder.Callback;
 import com.fsck.k9.message.SmlMessageUtil;
-import com.fsck.k9.sml.SMLUtil;
 import com.fsck.k9.view.MessageWebView;
 import com.google.android.material.materialswitch.MaterialSwitch;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.Request.Builder;
-import okhttp3.Response;
-import okhttp3.OkHttpClient;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -45,8 +32,6 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Base64;
-import android.util.Patterns;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -138,19 +123,10 @@ import com.fsck.k9.ui.helper.SizeFormatter;
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
-import okhttp3.ResponseBody;
-import org.audriga.ld2h.ButtonDescription;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.openintents.openpgp.OpenPgpApiManager;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpIntentStarter;
 import timber.log.Timber;
-
-import com.audriga.h2lj.parser.StructuredDataExtractionUtils;
-import com.audriga.h2lj.model.StructuredData;
-import com.audriga.h2lj.model.StructuredSyntax;
 
 
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
@@ -165,7 +141,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private static final int DIALOG_CONFIRM_DISCARD = 4;
 
     public static final String ACTION_COMPOSE = "com.fsck.k9.intent.action.COMPOSE";
-    public static final String ACTION_COMPOSE_APPROVE = "com.fsck.k9.intent.action.COMPOSE_APPROVE";
     public static final String ACTION_REPLY = "com.fsck.k9.intent.action.REPLY";
     public static final String ACTION_REPLY_ALL = "com.fsck.k9.intent.action.REPLY_ALL";
     public static final String ACTION_FORWARD = "com.fsck.k9.intent.action.FORWARD";
@@ -174,8 +149,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private static final String ACTION_AUTOCRYPT_PEER = "org.autocrypt.PEER_ACTION";
 
     public static final String EXTRA_ACCOUNT = "account";
-    public static final String IS_SML = "isSML";
-    public static final String SML_PAYLOAD = "sml_payload";
     public static final String EXTRA_MESSAGE_REFERENCE = "message_reference";
     public static final String EXTRA_MESSAGE_DECRYPTION_RESULT = "message_decryption_result";
 
@@ -264,14 +237,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private MessageWebView messageContentViewSML;
     private MaterialSwitch smlModeSwitch;
     private LinearLayout attachmentsView;
+    private  SMLMessageComposeUtil smlMessageComposeUtil;
 
     private String referencedMessageIds;
     private String repliedToMessageId;
-
-    // SML
-//    private String smlJsonLd = null;
-    private List<JSONObject> smlPayload = null;
-//    private String smlHTMLEmail = null;
 
     // The currently used message format.
     private SimpleMessageFormat currentMessageFormat;
@@ -383,6 +352,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 messageContentViewSML.setVisibility(View.GONE);
             }
         });
+        smlMessageComposeUtil = new SMLMessageComposeUtil(subjectView, attachmentPresenter, messageContentView, messageContentViewSML, smlModeSwitch);
 
 
         TextWatcher draftNeedsChangingTextWatcher = new SimpleTextWatcher() {
@@ -534,114 +504,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             currentMessageBuilder.reattachCallback(this);
         }
 
-        if (intent.getBooleanExtra(IS_SML, false)) {
-             String payload = intent.getStringExtra(SML_PAYLOAD);
-            if (payload != null) {
-                smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize(payload);
-                Ld2hResult ld2hResult = ld2hRenderSmlPayload();
-                updateSubjectAndDisplayLd2hResult(ld2hResult);
-            } else {
-                messageContentView.setVisibility(View.GONE);
-                if (subjectView.getText().length() == 0) {
-                    subjectView.setText("SML Mail");
-                }
-                messageContentViewSML.setVisibility(View.VISIBLE);
-                messageContentViewSML.displayHtmlContentWithInlineAttachments("<b>Testing</b>", null, null);
-            }
-        }
+        smlMessageComposeUtil.initializePayloadFromIntent(intent);
     }
 
-    private void updateSubjectAndDisplayLd2hResult(Ld2hResult ld2hResult) {
-        if (subjectView.getText().length() == 0) {
-            String subject = "Check out this " + String.join(", ", ld2hResult.types);
-            subjectView.setText(subject);
-        }
-        if (!ld2hResult.renderedDisplayHTMLs.isEmpty()) {
-            String joinedDisplayHTMLRenderResults = String.join("\n", ld2hResult.renderedDisplayHTMLs);
-           displayLd2hResult(joinedDisplayHTMLRenderResults);
-        }
-    }
-
-    @NonNull
-    private Ld2hResult ld2hRenderSmlPayload() {
-        org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
-        try {
-            ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
-        } catch (IOException e) {
-            //throw new RuntimeException(e);
-        }
-        ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(smlPayload.size());
-        ArrayList<String> types = new ArrayList<>(smlPayload.size());
-        for (JSONObject jsonObject: smlPayload) {
-            inlineImages(jsonObject);// todo: Since this modifies the actual jsonObject, and we iterate over smlPayload here, this might also modify smlPlayload (which is what we want). But need to test this.
-            String type = jsonObject.optString("@type");
-            types.add(type);
-            String ld2hRenderResult = null;
-            try {
-                List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
-                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject, buttons) : null;
-            } catch (IOException e) {
-                // todo handle
-            }
-            if (ld2hRenderResult != null) {
-                renderedDisplayHTMLs.add(ld2hRenderResult);
-            }
-        }
-        return new Ld2hResult(renderedDisplayHTMLs, types);
-    }
-
-    /**
-     * This also calls inlineImages for all markups
-     */
-    @NonNull
-    private ArrayList<String> ld2hRenderStructuredData(List<StructuredData> data) {
-        // Using org.audriga.hetc.MustacheRenderer
-        org.audriga.hetc.MustacheRenderer hetcRenderer;
-        hetcRenderer = new org.audriga.hetc.MustacheRenderer();
-        org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
-        try {
-            ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
-        } catch (IOException e) {
-            //throw new RuntimeException(e);
-        }
-
-//                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
-        ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
-//                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
-        List<String> typesToSkip = (data.size() > 1) ?
-            Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
-            null;
-        smlPayload = new ArrayList<>(data.size());
-        for (StructuredData structuredData: data) {
-            JSONObject jsonObject = structuredData.getJson();
-            String type = jsonObject.optString("@type");
-            if (typesToSkip != null && typesToSkip.contains(type)) {
-                continue;
-            }
-            smlPayload.add(inlineImages(jsonObject));
-            String ld2hRenderResult = null;
-            try {
-                List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
-                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject, buttons) : null;
-            } catch (IOException e) {
-                // todo handle
-            }
-            if (ld2hRenderResult != null) {
-                renderedDisplayHTMLs.add(ld2hRenderResult);
-            }
-        }
-        return renderedDisplayHTMLs;
-    }
-
-    private static class Ld2hResult {
-        public final ArrayList<String> renderedDisplayHTMLs;
-        public final ArrayList<String> types;
-
-        public Ld2hResult(ArrayList<String> renderedDisplayHTMLs, ArrayList<String> types) {
-            this.renderedDisplayHTMLs = renderedDisplayHTMLs;
-            this.types = types;
-        }
-    }
 
     /**
      * Handle external intents that trigger the message compose activity.
@@ -666,57 +531,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         boolean startedByExternalIntent = false;
         final String action = intent.getAction();
 
-
-        if (ACTION_COMPOSE_APPROVE.equals(action)) {
-            if (intent.getExtras() != null) {
-                Uri uri = intent.getData();
-                if (MailTo.isMailTo(uri)) {
-                    // todo: This is the mailto entrypoint
-                    MailTo mailTo = MailTo.parse(uri);
-                    initializeFromMailto(mailTo);
-                }
-            }
-            if (intent.getData() != null) {
-                Bundle extras = intent.getExtras();
-//                String recipient = extras.getString("recipient");
-                String requestAction = extras.getString("requestAction");
-                if ("ConfirmAction".equals(requestAction)) {
-                    smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}");
-                    subjectView.setText("Approve");
-//                    currentMessageBuilder.setSubject("Approve");
-                } else if ("CancelAction".equals(requestAction)) {
-                    smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n})");
-                    subjectView.setText("Deny");
-//                    currentMessageBuilder.setSubject("Deny");
-                } else {
-                    return false;
-                }
-//                String smlScript = "<script type=\"application/ld+json\">" + smlJsonLd + "</script>";
-                // todo: deduplicate with url processing
-//                org.audriga.hetc.MustacheRenderer hetcRenderer;
-//                hetcRenderer = new org.audriga.hetc.MustacheRenderer();
-                org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
-                try {
-                    ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
-                } catch (IOException e) {
-                    //throw new RuntimeException(e);
-                }
-                JSONObject smlJSONObject = smlPayload.get(0);
-//                String hetcRenderResult = null;
-                String ld2hRenderResult = null;
-                try {
-//                    hetcRenderResult = hetcRenderer.render(smlJSONObject);
-                    ld2hRenderResult =  (ld2hRenderer != null) ? ld2hRenderer.render(smlJSONObject): null;
-                } catch (IOException e) {
-                    //throw new RuntimeException(e);
-                }
-//                smlHTMLEmail = "<html><head>"+ smlScript + "</head><body>"+ hetcRenderResult +"</body></html>";
-                if (ld2hRenderResult != null) {
-                    displayLd2hResult(ld2hRenderResult);
-                }
-                return false;
-            }
-        }
+//        if (smlMessageComposeUtil.initializeApproveDeny(intent)) {
+//            return false;
+//        }
 
         if (Intent.ACTION_VIEW.equals(action) || Intent.ACTION_SENDTO.equals(action) || NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
             /*
@@ -725,7 +542,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             if (intent.getData() != null) {
                 Uri uri = intent.getData();
                 if (MailTo.isMailTo(uri)) {
-                    // todo: This is the mailto entrypoint
                     MailTo mailTo = MailTo.parse(uri);
                     initializeFromMailto(mailTo);
                 }
@@ -756,10 +572,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             if (text != null && messageContentView.getText().length() == 0) {
                 messageContentView.setText(CrLfConverter.toLf(text));
 
-                if (Patterns.WEB_URL.matcher(text).matches()) {
-                    // Input is exactl one url
-                    enrichSharedUrlToSml((String) text);
-                }
+                smlMessageComposeUtil.enrichTextToSmlIfUrl(text);
             }
 
             String type = intent.getType();
@@ -805,159 +618,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         return startedByExternalIntent;
     }
 
-    private void displayLd2hResult(String ld2hRenderResult) {
-        String htmlDisplay = addHeadToLd2hResult(ld2hRenderResult);
-        messageContentView.setVisibility(View.GONE);
-        messageContentViewSML.setVisibility(View.VISIBLE);
-        messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null);
-        smlModeSwitch.setVisibility(View.VISIBLE);
-        smlModeSwitch.setChecked(true);
-    }
-
-    @NonNull
-    private static String addHeadToLd2hResult(String ld2hRenderResult) {
-        return SMLUtil.CSS + ld2hRenderResult;
-    }
-
-    private void enrichSharedUrlToSml(String text) {
-        String htmlSrc = downloadHTML(text);
-        if (htmlSrc != null) {
-            List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
-            if (data.isEmpty()) {
-                data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
-            }
-            if (data.isEmpty()) {
-                // No structured data found, todo: treat link as normal?
-            } else {
-                ArrayList<String> renderedDisplayHTMLs = ld2hRenderStructuredData(data);
-                if (!renderedDisplayHTMLs.isEmpty()) {
-                    String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
-                    displayLd2hResult(joinedDisplayHTMLRenderResults);
-                }
-            }
-        }
-    }
-
-    private static JSONObject inlineImages(JSONObject jsonLd) {
-        // First find all images in the order thumbnail, thumbnailUrl, image
-        Object thumbnail = jsonLd.opt("thumbnail");
-        List<String> thumbnails = Collections.emptyList();
-        if (thumbnail != null){
-            try {
-                thumbnails = imagesFromNestedJson(thumbnail);
-            } catch (JSONException e) {
-                // todo log
-            }
-        }
-
-        Object thumbnailUrl = jsonLd.opt("thumbnailUrl");
-        List<String> thumbnailUrls = Collections.emptyList();
-        if (thumbnailUrl != null){
-            try {
-                thumbnailUrls = imagesFromNestedJson(thumbnailUrl);
-            } catch (JSONException e) {
-                // todo log
-            }
-        }
-        Object image = jsonLd.opt("image");
-
-        List<String> images = Collections.emptyList();
-        if (image != null){
-            try {
-                images = imagesFromNestedJson(image);
-            } catch (JSONException e) {
-                // todo log
-            }
-        }
-        List<String> allImages = new ArrayList<>(thumbnails.size()+thumbnailUrls.size()+images.size());
-        allImages.addAll(thumbnails);
-        allImages.addAll(thumbnailUrls);
-        allImages.addAll(images);
-        for (String imageUriText : allImages) {
-            Uri imageUri = Uri.parse(imageUriText);
-            if (imageUri != null) {
-                String scheme = imageUri.getScheme();
-                if (scheme != null && scheme.equals("data")) {
-                    // already have an inline image, set it as image.contentUrl
-                    try {
-                        jsonLd.put("image", new JSONObject().put("contentUrl", imageUriText));
-                        return jsonLd;
-                    } catch (JSONException e) {
-                        // todo log
-                    }
-                }
-            }
-        }
-        for (String imageUriText : allImages) {
-            try {
-                String imageDataUri = downloadImage(imageUriText);
-                if (imageDataUri != null) {
-                    try {
-                        jsonLd.put("image", new JSONObject().put("contentUrl", imageDataUri));
-                        return  jsonLd;
-                    } catch (JSONException e) {
-                        // todo log
-                    }
-                }
-            } catch (Exception ignored){}
-        }
-        return jsonLd;
-    }
-
-    private static String downloadImage(String imageUriText) throws IOException {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Builder()
-            .url(imageUriText).build();
-        try (Response response = client. newCall(request).execute()) {
-            ResponseBody body = response.body();
-            if (body != null) {
-                 MediaType mediaType = body.contentType();
-                 if (mediaType != null && mediaType.type().equals("image")) {
-                     return "data:" + mediaType.type() + "/" + mediaType.subtype() +";base64," + Base64.encodeToString(body.bytes(), Base64.NO_WRAP);
-                 }
-            }
-
-        }
-        return null;
-    }
-
-    @NonNull
-    static List<String> imagesFromNestedJson(Object image) throws JSONException {
-        if (image instanceof JSONObject) {
-            Object imageContentUrl = ((JSONObject) image).opt("contentUrl");
-            if (imageContentUrl instanceof  String) {
-                return Collections.singletonList((String) imageContentUrl);
-            } else {
-                Object url = ((JSONObject) image).opt("url");
-                if (url instanceof  String) {
-                    return Collections.singletonList((String)url);
-                }
-            }
-        } else if (image instanceof JSONArray) {
-            int length = ((JSONArray) image).length();
-            List<String> images = new ArrayList<>(length);
-            for (int i = 0; i < length; i++) {
-                Object imageEntry = ((JSONArray) image).get(i);
-                if (imageEntry instanceof JSONObject) {
-                    Object imageContentUrl = ((JSONObject) imageEntry).opt("contentUrl");
-                    if (imageContentUrl instanceof String) {
-                        images.add((String) imageContentUrl);
-                    } else {
-                        Object url = ((JSONObject) imageEntry).opt("url");
-                        if (url instanceof String) {
-                            images.add((String) url);
-                        }
-                    }
-                } else if (imageEntry instanceof String) {
-                    images.add((String) imageEntry);
-                }
-            }
-            return images;
-        } else if (image instanceof  String) {
-            return Collections.singletonList((String) image);
-        }
-        return Collections.emptyList();
-    }
 
     @Override
     protected void onResume() {
@@ -1078,8 +738,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             // Sharing an url and the like before will have filled the smlJsonLd variable and enabled the switch.
             // We already showed the user a preview, but by using the sml builder we actually build the sml message,
             // including the html fallback
-            if (smlPayload != null && smlModeSwitch.isChecked()) {
-                builder = SmlMessageUtil.createSMLMessageBuilder(smlPayload, SmlMessageUtil.getSmlVariantFromAccount(account));
+            if (smlMessageComposeUtil.getSmlPayload() != null && smlModeSwitch.isChecked()) {
+                builder = SmlMessageUtil.createSMLMessageBuilder(smlMessageComposeUtil.getSmlPayload(), SmlMessageUtil.getSmlVariantFromAccount(account));
             } else {
                 builder = SimpleMessageBuilder.newInstance();
             }
@@ -1089,87 +749,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
         String msgText = "" + messageContentView.getText();
 
-        // Note this only gets executed on send/ save-as-draft.
-        //       I don't see why we would do this transformation so late.
-        //       Is this on purpose or a mistake?
-        // This messes up html if there is any
-//        if (msgText.startsWith("<")) msgText = msgText.substring(1, msgText.length());
-//        if (msgText.endsWith(">")) msgText = msgText.substring(0, msgText.length()-1);
-
-//        if (msgText.startsWith("https://")) {
-//
-//
-//            String oriURL = msgText;
-//            String htmlSrc = downloadHTML(oriURL);
-//
-//            String sml = "{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"EventReservation\",\r\n  \"reservationNumber\": \"1234567\",\r\n  \"reservationStatus\": \"http://schema.org/Confirmed\",\r\n  \"modifyReservationUrl\": \"https://www.eventbrite.com/mytickets/123?utm_campaign=order_confirm&amp;utm_medium=email&amp;ref=eemailordconf&amp;utm_source=eb_email&amp;utm_term=googlenow\",\r\n  \"underName\": {\r\n    \"@type\": \"Person\",\r\n    \"name\": \"Peter Meier\"\r\n  },\r\n  \"reservationFor\": {\r\n    \"@type\": \"Event\",\r\n    \"name\": \"Calendar and Scheduling Developer Day Zurich\",\r\n    \"startDate\": \"2019-02-04T09:00:00+01:00\",\r\n    \"endDate\": \"2019-02-04T17:30:00+01:00\",\r\n    \"location\": {\r\n      \"@type\": \"Place\",\r\n      \"name\": \"Google Zürich - Europaalle campus\",\r\n      \"address\": {\r\n        \"@type\": \"PostalAddress\",\r\n        \"streetAddress\": \"Lagerstrasse 1008004 Zürich\",\r\n        \"addressLocality\": \"Zürich\",\r\n        \"addressRegion\": \"ZH\",\r\n        \"postalCode\": \"8004\",\r\n        \"addressCountry\": \"CH\"\r\n      }\r\n    }\r\n  }\r\n}";
-//
-//            // TODO - perhaps use H2LJ?
-//            String jStart = "<script type=\"application/ld+json\">";
-//            String jStop = "</script>";
-//            if (htmlSrc.contains("ld+json")){
-//                int indexOf = htmlSrc.indexOf(jStart);
-//                sml = htmlSrc.substring(indexOf+jStart.length(), htmlSrc.indexOf(jStop, indexOf));
-//                oriURL = oriURL + " (EXTRACTED!)";
-//            } else {
-//                oriURL = oriURL + " (NOTHING FOUND TO EXTRACT!)";
-//
-//            }
-//
-//            String smlScript = "<script type=\"application/ld+json\">" + sml + "</script>";
-//
-//            //msgText = "<html><body>" + smlScript + "<b>Bold</b>Text / " + oriURL + "</body></html>";
-//            msgText = smlScript + "<b>Bold</b>Text /" + oriURL + "(END)";
-//
-//            currentMessageFormat = SimpleMessageFormat.HTML;
-//
-//        } else if (msgText.startsWith("ICAL")) {
-//
-//            try {
-//
-//                String myCalendarString = "BEGIN:VCALENDAR\n" +
-//                        "VERSION:2.0\n" +
-//                        "CALSCALE:GREGORIAN\n" +
-//                        "BEGIN:VEVENT\n" +
-//                        "SUMMARY:Access-A-Ride Pickup\n" +
-//                        "UID:uid1@example.com\n" +
-//                        "DTSTART;TZID=America/New_York:20130802T103400\n" +
-//                        "DTEND;TZID=America/New_York:20130802T110400\n" +
-//                        "LOCATION:1000 Broadway Ave.\\, Brooklyn\n" +
-//                        "DESCRIPTION: Access-A-Ride trip to 900 Jay St.\\, Brooklyn\n" +
-//                        "STATUS:CONFIRMED\n" +
-//                        "SEQUENCE:3\n" +
-//                        "BEGIN:VALARM\n" +
-//                        "TRIGGER:-PT10M\n" +
-//                        "DESCRIPTION:Pickup Reminder\n" +
-//                        "ACTION:DISPLAY\n" +
-//                        "END:VALARM\n" +
-//                        "END:VEVENT\n" +
-//                        "BEGIN:VEVENT\n" +
-//                        "END:VEVENT\n" +
-//                        "END:VCALENDAR";
-//                StringReader sin = new StringReader(myCalendarString);
-//                CalendarBuilder cbuilder = new CalendarBuilder();
-//                Calendar cal = cbuilder.build(sin);
-//
-//                System.out.println(cal.getUid());
-//                VEvent event = (VEvent) cal.getComponents().get(0);
-//
-//                SimpleModule module = new SimpleModule();
-//                module.addSerializer(VEvent.class, new EventJsonLdSerializer(VEvent.class));
-//                ObjectMapper mapper = new ObjectMapper();
-//                mapper.registerModule(module);
-//
-//                String serialized = mapper.writeValueAsString(event);
-//
-//                msgText = serialized;
-//
-//                currentMessageFormat = SimpleMessageFormat.HTML;
-//
-//            } catch (Exception e){
-//                msgText = e.getMessage();
-//            }
-//        }
 
 
         builder.setSubject(Utility.stripNewLines(subjectView.getText().toString()))
@@ -1182,7 +761,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 .setReplyTo(replyToPresenter.getAddresses())
 
                 .setMessageFormat(currentMessageFormat)
-            // todo this currently sets both text/plain and text/html parts.
             // For a SmlMessageBuilder, this is the same as setPlaintext
                 .setText(CrLfConverter.toCrLf(msgText))
                 .setAttachments(attachmentPresenter.getAttachments())
@@ -2006,10 +1584,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         String body = mailTo.getBody();
         if (body != null && !body.isEmpty()) {
             messageContentView.setText(CrLfConverter.toLf(body));
-            if (Patterns.WEB_URL.matcher(body).matches()) {
-                // Input is exactl one url
-                enrichSharedUrlToSml(body);
-            }
+            smlMessageComposeUtil.enrichTextToSmlIfUrl(body);
+
         }
     }
 
@@ -2318,48 +1894,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             View progressBar = view.findViewById(R.id.progressBar);
             boolean isLoadingComplete = (attachment.state == Attachment.LoadingState.COMPLETE);
             if (isLoadingComplete) {
-                // todo attachent loading is finished here
-                if (MimeTypeUtil.isSameMimeType(attachment.contentType, "application/json") || MimeTypeUtil.isSameMimeType(attachment.contentType, "application/json+ld")) {
-                    File fl = new File(attachment.filename);
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fl)))) {
-                        StringBuilder sb = new StringBuilder();
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            sb.append(line).append("\n");
-                        }
-                        String ret =  sb.toString();
-                        // todo: popup to ask if they want to share as schema, or as attachment
-                        List<JSONObject> deserialized = org.audriga.hetc.JsonLdDeserializer.deserialize(ret);
-                        List<JSONObject> jsonLds = new ArrayList<>(deserialized.size());
-                        for (JSONObject jsonObject: deserialized) {
-                            if (isJsonLd(jsonObject)) {
-                                jsonLds.add(jsonObject);
-                            }
-                        }
-                        if (!jsonLds.isEmpty()) {
-                            if (smlPayload == null) {
-                                smlPayload = new ArrayList<>(deserialized.size());
-                            }
-                            smlPayload.addAll(jsonLds);
-                            Ld2hResult ld2hResult = ld2hRenderSmlPayload();
-                            if (!ld2hResult.renderedDisplayHTMLs.isEmpty()) {
-                                String joinedDisplayHTMLRenderResults = String.join("\n", ld2hResult.renderedDisplayHTMLs);
-                                displayLd2hResult(joinedDisplayHTMLRenderResults);
-                                if (subjectView.getText().length() == 0) {
-                                    String subject = "Check out this " + String.join(", ", ld2hResult.types);
-                                    subjectView.setText(subject);
-                                } else if (subjectView.getText().toString().startsWith("Check out this ")) {
-                                    String subjectAppend = ", " + String.join(", ", ld2hResult.types);
-                                    subjectView.append(subjectAppend);
-                                }
-                                // todo this only seems to revome the attachment from view, not from the actual mail. Maybe race condition?
-                                attachmentPresenter.onClickRemoveAttachment(attachment.uri);
-                                return;
-                            }
-                        }
-                    } catch (IOException ignored) {
-                    }
-
+                if (smlMessageComposeUtil.handleJsonLdAttachment(attachment)) {
+                    return;
                 }
                 if (attachment.isSupportedImage()) {
                     ImageView attachmentTypeView = view.findViewById(R.id.attachment_type);
@@ -2413,18 +1949,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
     };
 
-    private static boolean isJsonLd(JSONObject jsonObject) {
-        try {
-            String context = jsonObject.getString("@context");
-            if (!(context.toLowerCase().contains("schema") || context.toLowerCase().contains("sml"))) {
-                return false;
-            }
-            String type = jsonObject.getString("@type");
-            return !type.isEmpty();
-        } catch (JSONException ignored) {
-            return false;
-        }
-    }
+
 
     private Handler internalMessageHandler = new Handler() {
         @Override
@@ -2474,25 +1999,5 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         public int getTitleResource() {
             return titleResource;
         }
-    }
-
-
-    @Nullable
-    private static String downloadHTML(String url) {
-        OkHttpClient client = new OkHttpClient();
-        String htmlSrc = null;
-        String okErr = null;
-        Request request = new Builder()
-            .url(url).build();
-        try (Response response = client. newCall(request).execute()) {
-            if (response.body() != null) {
-                htmlSrc = response.body().string();
-            }
-
-        } catch (Exception e){
-            okErr = e.getMessage();
-            // todo log err
-        }
-        return htmlSrc;
     }
 }

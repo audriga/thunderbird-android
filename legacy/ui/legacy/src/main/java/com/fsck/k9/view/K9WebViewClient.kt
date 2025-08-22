@@ -36,6 +36,7 @@ import com.fsck.k9.K9
 import com.fsck.k9.K9.isHideTimeZone
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageCompose
+import com.fsck.k9.activity.compose.SMLMessageComposeUtil
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.logging.Timber
@@ -880,9 +881,9 @@ internal class K9WebViewClient(
         val text = String(data)
         val i = Intent(context, MessageCompose::class.java)
         i.putExtra(MessageCompose.EXTRA_ACCOUNT, messageReference?.accountUuid)
-        i.putExtra(MessageCompose.IS_SML, true)
+        i.putExtra(SMLMessageComposeUtil.IS_SML, true)
         i.setAction(MessageCompose.ACTION_COMPOSE)
-        i.putExtra(MessageCompose.SML_PAYLOAD, text)
+        i.putExtra(SMLMessageComposeUtil.SML_PAYLOAD, text)
         context.startActivity(i);
     }
 
