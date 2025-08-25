@@ -53,6 +53,14 @@ public abstract class SMLUtil {
                 }
             }
         }
+        ButtonDescription audioButtonDesc = getAudioContentButtonDesc(jsonObject);
+        if (audioButtonDesc != null) {
+            buttons.add(audioButtonDesc);
+        }
+        ButtonDescription videoButtonDesc = getVideoContentButtonDesc(jsonObject);
+        if (videoButtonDesc != null) {
+            buttons.add(videoButtonDesc);
+        }
         ButtonDescription webUrlButtonDesc = getWebUrlButtonDesc(jsonObject);
         if (webUrlButtonDesc != null) {
             buttons.add(webUrlButtonDesc);
@@ -132,8 +140,81 @@ public abstract class SMLUtil {
         }
 //        buttons.add(new ButtonDescription("Call", "tel:124"));
 //        buttons.add(new ButtonDescription("Story", "xstory:#https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"));
+
         return  buttons;
     }
+
+    @Nullable
+    public static ButtonDescription getAudioContentButtonDesc(JSONObject jsonObject) {
+        String mediaType = "audio";
+        return getMediaContentButtonDesc(jsonObject, mediaType, "music_note");
+    }
+
+
+    @Nullable
+    public static ButtonDescription getVideoContentButtonDesc(JSONObject jsonObject) {
+        String mediaType = "video";
+        return getMediaContentButtonDesc(jsonObject, mediaType, "play_circle");
+    }
+
+    @Nullable
+    private static ButtonDescription getMediaContentButtonDesc(JSONObject jsonObject, String mediaType, String icon) {
+        String mediaContentUrl = getMediaContentUrl(jsonObject, mediaType);
+        if (mediaContentUrl == null || mediaContentUrl.isEmpty()) {
+            return null;
+        }
+        String encodedContentUrl = Base64.encodeToString(mediaContentUrl.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE);
+        Uri uri = new Builder()
+            .scheme("xplaymedia")
+            .authority(encodedContentUrl)
+            .appendQueryParameter("mediaType", mediaType)
+            .build();
+        return new ButtonDescription(null, icon, uri.toString());
+    }
+
+    @Nullable
+    private static String getMediaContentUrl(JSONObject jsonObject, String mediaType) {
+        Object media = jsonObject.opt(mediaType);
+        if (media != null) {
+            if (media instanceof JSONArray) {
+                for (int i = 0; i < ((JSONArray) media).length(); i++) {
+                    try {
+                        Object mediaElement = ((JSONArray) media).get(i);
+                        if (mediaElement instanceof JSONObject) {
+                            return  getPotentiallyNestedMediaContentUrl((JSONObject) mediaElement, mediaType);
+                        }
+                    } catch (JSONException e) {
+                        Timber.e(e, "Error while iteration over audio or video jsonld element");
+                    }
+                }
+            } else if (media instanceof JSONObject) {
+                return  getPotentiallyNestedMediaContentUrl((JSONObject) media, mediaType);
+            }
+
+        }
+        return null;
+    }
+
+    /**
+     * Gets contentUrl either directly from object, or from direct child, but does not recurse
+     */
+    @Nullable
+    private static String getPotentiallyNestedMediaContentUrl(JSONObject media, String mediaType) {
+        String mediaContentUrl = media.optString("contentUrl");
+        if (!mediaContentUrl.isEmpty()) {
+           return mediaContentUrl;
+        } else {
+            JSONObject innerMedia = media.optJSONObject(mediaType);
+            if (innerMedia != null) {
+                mediaContentUrl = innerMedia.optString("contentUrl");
+                if (!mediaContentUrl.isEmpty()) {
+                    return mediaContentUrl;
+                }
+            }
+        }
+        return null;
+    }
+
 
     public static ButtonDescription getMeetButtonDesc(JSONObject jsonObject) {
         String description = jsonObject.optString("description");

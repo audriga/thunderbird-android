@@ -200,6 +200,10 @@ internal class K9WebViewClient(
                 xIMIP(webView.context, uri)
                 true
             }
+            XPLAY_MEDIA -> {
+                xPlayMedia(webView.context, uri)
+                true
+            }
             else -> {
                 openUrl(webView.context, uri)
                 true
@@ -1012,6 +1016,21 @@ internal class K9WebViewClient(
         }
     }
 
+    private fun xPlayMedia(context: Context, uri: Uri) {
+        val base64 = uri.authority
+        val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
+        val contentUrl = String(data)
+        val contentUrlAsUri = contentUrl.toUri()
+        val mediaType = uri.getQueryParameter("mediaType") // i.e. "audio" or "video"
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_VIEW
+            setDataAndType(contentUrlAsUri, "$mediaType/*")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP) // https://stackoverflow.com/a/18188955
+        }
+
+        //        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
+        startActivity(context, sendIntent, null)
+    }
     /**
      * @param partStat is set for the PARTSTAT of the attendee.
      * @param verb is used for subject line ("Accepted: <Event summary>"),
@@ -1196,6 +1215,7 @@ internal class K9WebViewClient(
         private const val XBARCODE = "xbarcode"
         private const val XSHOW_SOURCE = "xshowsource"
         private const val XIMIP = "ximip"
+        private const val XPLAY_MEDIA = "xplaymedia"
 
         private val RESULT_DO_NOT_INTERCEPT: WebResourceResponse? = null
         private val RESULT_DUMMY_RESPONSE = WebResourceResponse(null, null, null)
