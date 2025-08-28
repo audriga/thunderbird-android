@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,10 +35,15 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.mail.Body;
+import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
+import com.fsck.k9.mail.internet.BinaryTempFileBody;
+import com.fsck.k9.mail.internet.MessageExtractor;
+import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.MimeUtility;
+import com.fsck.k9.mail.internet.Viewable;
 import com.fsck.k9.sml.SMLUtil;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.data.ParserException;
@@ -204,15 +210,20 @@ public abstract class SMLMessageView {
 
                // It would probably be a bit cleaner to use a CompletableFuture but that is only available at API level 24
                CountDownLatch latch = new CountDownLatch(1);
+               AtomicReference<Part> resultRef = new AtomicReference<>();
+               //mc.loadMessageRemote(); this could potentially be used instead to download the entire message...
                mc.loadAttachment(account, message, part, new SimpleMessagingListener() {
                    @Override
                    public void loadAttachmentFinished(Account account, Message message, Part part) {
+                       resultRef.set(part);
                        latch.countDown();
                        super.loadAttachmentFinished(account, message, part);
                    }
 
                    @Override
                    public void loadAttachmentFailed(Account account, Message message, Part part, String reason) {
+                       Timber.e("Loading Part failed: %s", reason);
+                       resultRef.set(part);
                        latch.countDown();
                        super.loadAttachmentFailed(account, message, part, reason);
                    }
@@ -222,12 +233,43 @@ public abstract class SMLMessageView {
                } catch (InterruptedException e) {
                    Timber.e(e, "Interrupted while trying to load part");
                }
+               // Loads messsage from local storage
+               LocalMessage loadedMessage = mc.loadMessage(account, message.getFolder().getDatabaseId(), message.getUid());
+               Body messageBody = loadedMessage.getBody();
+               if (messageBody instanceof MimeMultipart) {
+                   part = null;
+                   List<BodyPart> parts = ((MimeMultipart) messageBody).getBodyParts();
+                   ArrayList<Viewable> viewableParts = new ArrayList<>();
+                   ArrayList<Part> attachments = new ArrayList<>();
+                   ArrayList<Part> parseableParts = new ArrayList<>();
+
+                   for (Part bp : parts) {
+                       MessageExtractor.findViewablesAndAttachments(bp, viewableParts, attachments, parseableParts);
+                   }
+                   for (Part bp : parseableParts) {
+                           if (isSameMimeType(bp.getMimeType(), "application/ld+json")) {
+                           part = bp;
+                           break;
+                       }
+                   }
+                   if (part == null) {
+                       Timber.e("Did not find application/ld+json part in message");
+                       return null;
+                   }
+               } else {
+                   Timber.e("Expected to get multipart after loading part, but got %s instead", messageBody.getClass());
+                   return null;
+               }
+//               ((LocalMessage) message.getFolder().getMessage(message.getUid())).getBody().
+//               part = resultRef.get();
                body = part.getBody();
+//               ((BinaryTempFileBody) body).
            }
         }
         if (body == null) {
             return null;
         }
+        // todo use InputStream inputStream = MimeUtility.decodeBody(body);, or even String text = MessageExtractor.getTextFromPart(part);
         InputStream inputStream = body.getInputStream();
         try (Reader reader = new BufferedReader(new InputStreamReader
             (inputStream, StandardCharsets.UTF_8))) {
