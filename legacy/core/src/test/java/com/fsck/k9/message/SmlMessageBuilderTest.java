@@ -17,6 +17,7 @@ import com.fsck.k9.mail.BoundaryGenerator;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.Message.RecipientType;
 import com.fsck.k9.mail.MessagingException;
+import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMultipart;
@@ -400,10 +401,10 @@ public class SmlMessageBuilderTest extends RobolectricTest {
     private static final String ALTERNATIVE_PART_CONTENTS = ""  +
         "Content-Type: application/ld+json;\r\n" +
         " charset=utf-8\r\n" +
-        "Content-Transfer-Encoding: 8bit\r\n" +
+        "Content-Transfer-Encoding: quoted-printable\r\n" +
         "\r\n" +
         "{\r\n" +
-        "  \"@context\": \"http:\\/\\/schema.org\",\r\n" +
+        "  \"@context\": \"http:\\/\\/schema=2Eorg\",\r\n" +
         "  \"@type\": \"EventReservation\",\r\n" +
         "  \"reservationId\": \"MBE12345\",\r\n" +
         "  \"underName\": {\r\n" +
@@ -416,8 +417,9 @@ public class SmlMessageBuilderTest extends RobolectricTest {
         "    \"startDate\": \"2024-10-15\",\r\n" +
         "    \"organizer\": {\r\n" +
         "      \"@type\": \"Organization\",\r\n" +
-        "      \"name\": \"Fastmail Pty Ltd.\",\r\n" +
-        "      \"logo\": \"https:\\/\\/www.fastmail.com\\/assets\\/images\\/FM-Logo-RGB-IiFj8alCx1-3073.webp\"\r\n" +
+        "      \"name\": \"Fastmail Pty Ltd=2E\",\r\n" +
+        "      \"logo\": \"https:\\/\\/www=2Efastmail=2Ecom\\/assets\\/images\\/FM-Logo-RGB=\r\n" +
+        "-IiFj8alCx1-3073=2Ewebp\"\r\n" +
         "    },\r\n" +
         "    \"location\": {\r\n" +
         "      \"@type\": \"Place\",\r\n" +
@@ -533,6 +535,14 @@ public class SmlMessageBuilderTest extends RobolectricTest {
 
         String messageContents = getMessageContents(message);
         assertEquals(MESSAGE_HEADERS + MESSAGE_CONTENT + HTML_MESSAGE_CONTENT + ALTERNATIVE_PART_CONTENTS, messageContents);
+
+
+        // Reading of own generated message works as well:
+        String outJsonLdText = MessageExtractor.getTextFromPart(parts.get(2));
+        // This should show there are no parsing issues
+        String outJsonLd = new JSONObject(outJsonLdText).toString(2);
+        String inJsonLd = new JSONObject(SML_CONTENT).toString(2);
+        assertEquals(inJsonLd, outJsonLd);
     }
 
 

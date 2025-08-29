@@ -13,6 +13,7 @@ import com.fsck.k9.message.TextBodyBuilder.HTML_AND_BODY_END
 import com.fsck.k9.message.TextBodyBuilder.HTML_AND_BODY_START
 import java.io.IOException
 import java.util.Date
+import org.apache.james.mime4j.util.MimeUtil
 import org.audriga.hetc.MustacheRenderer
 import org.json.JSONException
 import org.json.JSONObject
@@ -101,7 +102,7 @@ abstract class SmlMessageUtil {
 //                body.composedMessageOffset = 0
                 val contentType = contentType("application/ld+json", "utf-8", null)
                 dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
-                dedicatedJsonMultipart.setEncoding("8bit") // todo can't set TextBody to 7bit, could use BinaryMemoryBody to
+                dedicatedJsonMultipart.setEncoding(MimeUtil.ENC_QUOTED_PRINTABLE) // todo can't set TextBody to 7bit, could use BinaryMemoryBody to
                 // freely set encoding to what we want. In that case it might also make sense to encode in base64, to avoid unwanted linebreaks
             } else {
                 dedicatedJsonMultipart = null
