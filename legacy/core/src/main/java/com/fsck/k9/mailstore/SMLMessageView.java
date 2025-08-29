@@ -1,11 +1,8 @@
 package com.fsck.k9.mailstore;
 
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +36,6 @@ import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
-import com.fsck.k9.mail.internet.BinaryTempFileBody;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.MimeUtility;
@@ -52,7 +48,6 @@ import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.audriga.ld2h.ButtonDescription;
 import org.audriga.ld2h.MustacheRenderer;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -201,8 +196,8 @@ public abstract class SMLMessageView {
 
     private static String readBodyToText(Part part) throws MessagingException, IOException {
         Body body = part.getBody();
-        StringBuilder textBuilder = new StringBuilder();
         if (body == null) {
+            // Part must have been lazy loaded. Downloading full part.
            if (part instanceof LocalBodyPart) {
                LocalMessage message = ((LocalBodyPart) part).getMessage();
                Account account = message.getAccount();
@@ -233,7 +228,9 @@ public abstract class SMLMessageView {
                } catch (InterruptedException e) {
                    Timber.e(e, "Interrupted while trying to load part");
                }
-               // Loads messsage from local storage
+               // Trying to use part after this (either via `part = resultRef.get();` or directly using the existing
+               // reference) causes issues, because the body is a BinaryTempFileBody and the temp file is already gone.
+               // Loading message from local storage instead works, but need to re-find sml part.
                LocalMessage loadedMessage = mc.loadMessage(account, message.getFolder().getDatabaseId(), message.getUid());
                Body messageBody = loadedMessage.getBody();
                if (messageBody instanceof MimeMultipart) {
@@ -260,30 +257,14 @@ public abstract class SMLMessageView {
                    Timber.e("Expected to get multipart after loading part, but got %s instead", messageBody.getClass());
                    return null;
                }
-//               ((LocalMessage) message.getFolder().getMessage(message.getUid())).getBody().
-//               part = resultRef.get();
                body = part.getBody();
-//               ((BinaryTempFileBody) body).
            }
         }
         if (body == null) {
             return null;
         }
-        // todo use InputStream inputStream = MimeUtility.decodeBody(body);, or even String text = MessageExtractor.getTextFromPart(part);
-        InputStream inputStream = body.getInputStream();
-        try (Reader reader = new BufferedReader(new InputStreamReader
-            (inputStream, StandardCharsets.UTF_8))) {
-            int c; // = 0
-            while ((c = reader.read()) != -1) {
-                textBuilder.append((char) c);
-            }
-        }
-        String bodyText = textBuilder.toString();
-        @NotNull String[] contentTransferEncoding = part.getHeader("Content-Transfer-Encoding");
-        if (contentTransferEncoding.length > 0 && contentTransferEncoding[0].equals("base64")) {
-            return new String(Base64.decode(bodyText, Base64.DEFAULT));
-        }
-        return bodyText;
+        // Decoding body. Possible alternative (lower leve): use InputStream inputStream = MimeUtility.decodeBody(body)
+        return MessageExtractor.getTextFromPart(part);
     }
 
     public static void extractFromAttachments(@Nullable HashMap<AttachmentViewInfo, String> parseableAttachments,

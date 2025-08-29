@@ -58,7 +58,7 @@ public class MessageExtractor {
 
             String mimeType = part.getMimeType();
             if (mimeType != null && MimeUtility.mimeTypeMatches(mimeType, "text/*") ||
-                    part.isMimeType("application/pgp")) {
+                    part.isMimeType("application/pgp") || part.isMimeType("application/ld+json")) {
                 return getTextFromTextPart(part, body, mimeType, textSizeLimit);
             }
 
