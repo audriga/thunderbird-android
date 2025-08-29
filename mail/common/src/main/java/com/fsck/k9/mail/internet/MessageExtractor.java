@@ -226,6 +226,8 @@ public class MessageExtractor {
             // ignore this type explicitly
         } else if (isSameMimeType(part.getMimeType(), "text/rfc822-headers")) {
             // ignore this type explicitly
+        } else if (!skipSavingParseableParts && isSameMimeType(part.getMimeType(), "application/ld+json")) {
+            outputParseableParts.add(part);
         } else {
             if (skipSavingNonViewableParts) {
                 return;
