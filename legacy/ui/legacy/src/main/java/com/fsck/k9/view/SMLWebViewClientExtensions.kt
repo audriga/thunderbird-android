@@ -42,8 +42,6 @@ import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.internet.Headers.contentType
 import com.fsck.k9.mail.internet.MimeBodyPart
 import com.fsck.k9.mail.internet.MimeMessage
-import com.fsck.k9.mail.internet.MimeMessageHelper
-import com.fsck.k9.mail.internet.MimeMultipart
 import com.fsck.k9.mail.internet.MimeParameterEncoder
 import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.message.MessageBuilder.Callback
@@ -104,25 +102,9 @@ class SMLWebViewClientExtensions(
     private val messageReference: MessageReference?,
     private val webViewClient: WebViewClient,
 ) {
-    private var mimeBoundary: Int = 0
 
     fun shouldOverrideUrlLoading(webView: WebView, uri: Uri): Boolean {
         return when (uri.scheme) {
-            XMAIL_SCHEME -> {
-                xmail(uri)
-                true
-            }
-
-            XALERT_SCHEME -> {
-                xalert(webView.context, "" + uri)
-                true
-            }
-
-            XJS_SCHEME -> {
-                xjs(webView)
-                true
-            }
-
             XSTORY_SCHEME -> {
                 xstory(webView.context, uri)
                 true
@@ -600,65 +582,8 @@ class SMLWebViewClientExtensions(
         }
     }
 
-    private fun xmail(uri: Uri) {
-
-        val address = Address("max2@oldhoster.net")
-
-        /*
-        val message = MimeMessage().apply {
-            setFrom(Address("from@example.com"))
-            setHeader("To", "to@example.com")
-            subject = "Test Message"
-            setHeader("Date", "Wed, 28 Aug 2024 08:51:09 -0400")
-        }
-
-        val multipartBody = MimeMultipart("multipart/mixed", generateBoundary()).apply {
-            addBodyPart(textBodyPart())
-            addBodyPart(binaryBodyPart())
-        }
-
-        MimeMessageHelper.setBody(message, multipartBody)
-        */
-
-        // From AutoCryptMessageCreator.kt
-        //val messageBody = MimeMultipart.newInstance()
-        //messageBody.addBodyPart("Text")
-        //messageBody.addBodyPart("Data")
-
-        val textBodyPart = MimeBodyPart.create(TextBody("textBody"))
-        val htmlBodyPart = MimeBodyPart.create(TextBody("htmlBody"))
-
-        val messageBody = MimeMultipart("multipart/alternative", generateBoundary()).apply {
-            addBodyPart(textBodyPart)
-            addBodyPart(htmlBodyPart)
-        }
-
-        val message = MimeMessage.create()
-        MimeMessageHelper.setBody(message, messageBody)
-
-        val nowDate = Date()
-
-        message.subject = "subjectText $uri"
-        message.internalDate = nowDate
-        message.addSentDate(nowDate, isHideTimeZone)
-        message.setFrom(address)
-        message.setHeader("To", address.toEncodedString())
-
-        val messagingController = DI.get(MessagingController::class.java)
-        val account = account(messageReference)
-        if (account != null) {
-            messagingController.sendMessageBlocking(account, message)
-        }
-    }
-
-    private fun generateBoundary(): String {
-        return "----Boundary${mimeBoundary++}"
-    }
 
     companion object {
-        private const val XMAIL_SCHEME = "xmail"
-        private const val XALERT_SCHEME = "xalert"
-        private const val XJS_SCHEME = "xjs"
         private const val XSTORY_SCHEME = "xstory"
         private const val XRELOAD_SCHEME = "xreload"
         private const val XCLIPBOARD_SCHEME = "xclipboard"
@@ -678,60 +603,6 @@ class SMLWebViewClientExtensions(
             val httpUri = uri.buildUpon().scheme("https").build()
             downloadPage(httpUri)
             return
-        }
-
-        private fun xjs(webView: WebView) {
-
-            webView.evaluateJavascript(
-                "(function() { return 'this'; })();",
-            ) { value -> xalert(webView.context, "" + value) }
-        }
-
-        /*
-        import android.view.LayoutInflater
-        import android.view.View
-        import com.google.android.material.dialog.MaterialAlertDialogBuilder
-        import com.fsck.k9.ui.base.R as BaseR
-        import app.k9mail.feature.settings.importing.R
-        */
-
-        private fun xalert(context: Context, s: String) {
-
-            //https://developer.android.com/reference/com/google/android/material/dialog/MaterialAlertDialogBuilder
-            // https://stackoverflow.com/questions/56098162/how-to-use-materialalertdialogbuilder-fine
-            // https://medium.com/codex/optimized-androids-dialogs-management-1b899ecaedb6
-
-            /*
-            MaterialAlertDialogBuilder(this)
-                .setMessage("This is a test of MaterialAlertDialogBuilder")
-                .setPositiveButton("Ok", null)
-                .show()
-            */
-
-            // R.style.FullscreenDialogStyle
-            // android.R.style.Theme_Black_NoTitleBar_Fullscreen
-            MaterialAlertDialogBuilder(context)
-                // .setView(xwebView)
-                .setTitle("title")
-                .setMessage("msg: $s")
-                .setPositiveButton("Close", null)
-                .setCancelable(false)
-                .create()
-                .apply {
-                    setCanceledOnTouchOutside(false)
-                    show()
-                }
-
-            /*
-            var dialogView =  createView();
-
-
-            MaterialAlertDialogBuilder(requireContext())
-                .setView(dialogView)
-                .setPositiveButton(BaseR.string.okay_action, null)
-                .setNegativeButton(BaseR.string.cancel_action, null)
-                .create()
-            */
         }
 
         private fun xshareAsFile(context: Context, uri: Uri) {
