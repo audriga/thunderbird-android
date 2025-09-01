@@ -73,8 +73,10 @@
     <string name="unsubscribe_action">Dad-tanysgrifio</string>
     <string name="show_headers_action">Dangos penynnau</string>
     <plurals name="copy_address_to_clipboard">
+        <item quantity="zero">Copïwyd y cyfeiriad i\'r clipfwrdd</item>
         <item quantity="one">Copïwyd y cyfeiriad i\'r clipfwrdd</item>
         <item quantity="two">Copïwyd y cyfeiriadau i\'r clipfwrdd</item>
+        <item quantity="few">Copïwyd y cyfeiriadau i\'r clipfwrdd</item>
         <item quantity="many">Copïwyd y cyfeiriadau i\'r clipfwrdd</item>
         <item quantity="other">Copïwyd y cyfeiriadau i\'r clipfwrdd</item>
     </plurals>
@@ -104,8 +106,10 @@
     <string name="size_format_kilobytes">%.1f kB</string>
     <string name="size_format_bytes">%d B</string>
     <plurals name="notification_new_messages_title">
+        <item quantity="zero"><xliff:g id="new_message_count">%d</xliff:g> neges newydd</item>
         <item quantity="one"><xliff:g id="new_message_count">%d</xliff:g> neges newydd</item>
         <item quantity="two"><xliff:g id="new_message_count">%d</xliff:g> neges newydd</item>
+        <item quantity="few"><xliff:g id="new_message_count">%d</xliff:g> neges newydd</item>
         <item quantity="many"><xliff:g id="new_message_count">%d</xliff:g> neges newydd</item>
         <item quantity="other"><xliff:g id="new_message_count">%d</xliff:g> neges newydd</item>
     </plurals>
@@ -294,12 +298,6 @@
     <string name="account_settings_push_advanced_title">Uwch</string>
     <string name="account_settings_title_fmt">Gosodiadau cyfrif</string>
     <string name="account_settings_notify_label">Hysbysiadau negeseuon newydd</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Ffolderi i hysbysu amdanynt</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Pob un</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Dim ond ffolderi rhenc 1af</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">Ffolderi rhenc 1af ac 2ail</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Pob ffolder ond 2ail renc</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">Dim</string>
     <string name="account_settings_notify_sync_label">Hysbysiadau cydweddu</string>
     <string name="account_settings_email_label">Dy gyfeiriad ebost</string>
     <string name="account_settings_notify_summary">Dangos yn bar statws pan fo neges newydd</string>
@@ -388,48 +386,11 @@
     <string name="account_settings_message_age_3_months">y 3 mis diwethaf</string>
     <string name="account_settings_message_age_6_months">y 6 mis diwethaf</string>
     <string name="account_settings_message_age_1_year">y flwyddyn ddiwethaf</string>
-    <string name="account_settings_folder_display_mode_label">Ffolderi i\'w dangos</string>
-    <string name="account_settings_folder_display_mode_all">Pob un</string>
-    <string name="account_settings_folder_display_mode_first_class">Ffolderi rhenc 1af yn unig</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">Ffolderi rhenc 1af ac 2ail</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Pob ffolder ond 2ail renc</string>
-    <string name="account_settings_folder_sync_mode_label">Ffolderi i\'w gwirio</string>
-    <string name="account_settings_folder_sync_mode_all">Pob un</string>
-    <string name="account_settings_folder_sync_mode_first_class">Ffolderi rhenc 1af yn unig</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">Ffolderi rhenc 1af ac 2ail</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Pob ffolder ond 2ail renc</string>
-    <string name="account_settings_folder_sync_mode_none">Dim</string>
-    <string name="account_settings_folder_push_mode_label">Ffolderi i\'w gwthio</string>
-    <string name="account_settings_folder_push_mode_all">Pob un</string>
-    <string name="account_settings_folder_push_mode_first_class">Ffolderi rhenc 1af yn unig</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">Ffolderi rhenc 1af ac 2ail</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Pob ffolder ond 2ail renc</string>
-    <string name="account_settings_folder_push_mode_none">Dim</string>
     <string name="account_settings_sync_remote_deletetions_label">Cydweddu dileu ar y gweinydd</string>
     <string name="account_settings_sync_remote_deletetions_summary">Dileu negeseuon pan maen nhw\'n cael eu dileu ar y gweinydd.</string>
     <string name="account_settings_openpgp_missing">Map OpenPGP ar goll. A chafodd ei osod?</string>
     <string name="folder_settings_title">Gosodiadau ffolder</string>
     <string name="folder_settings_in_top_group_label">Dangos yn y grŵp uchaf</string>
-    <string name="folder_settings_in_top_group_summary">Dangos yn agos at frig y rhestr ffolderi</string>
-    <string name="folder_settings_folder_display_mode_label">Rhenc dangos y ffolder</string>
-    <string name="folder_settings_folder_display_mode_normal">Dim Rhenc</string>
-    <string name="folder_settings_folder_display_mode_first_class">Rhenc 1af</string>
-    <string name="folder_settings_folder_display_mode_second_class">2ail renc</string>
-    <string name="folder_settings_folder_sync_mode_label">Rhenc gwirio\'r ffolder</string>
-    <string name="folder_settings_folder_sync_mode_normal">Dim</string>
-    <string name="folder_settings_folder_sync_mode_first_class">Rhenc 1af</string>
-    <string name="folder_settings_folder_sync_mode_second_class">2ail renc</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Fel ei rhenc dangos</string>
-    <string name="folder_settings_folder_push_mode_label">Rhenc gwthio\'r ffolder</string>
-    <string name="folder_settings_folder_push_mode_normal">Dim Rhenc</string>
-    <string name="folder_settings_folder_push_mode_first_class">Rhenc 1af</string>
-    <string name="folder_settings_folder_push_mode_second_class">2ail renc</string>
-    <string name="folder_settings_folder_push_mode_inherited">Fel rhenc gwirio</string>
-    <string name="folder_settings_folder_notify_mode_label">Rhenc hysbysiadau\'r ffolder</string>
-    <string name="folder_settings_folder_notify_mode_normal">Dim rhenc</string>
-    <string name="folder_settings_folder_notify_mode_first_class">Rhenc 1af</string>
-    <string name="folder_settings_folder_notify_mode_second_class">2ail renc</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Fel ei rhenc gwthio</string>
     <string name="folder_settings_clear_local_folder_action">Clirio negeseuon lleol</string>
     <string name="account_settings_incoming_label">Gweinydd</string>
     <string name="account_settings_incoming_summary">Ffurfweddu\'r gweinydd derbyn</string>
@@ -516,11 +477,6 @@
     <string name="sort_by_attach">Atodiadau</string>
     <string name="account_delete_dlg_title">Tynnu Cyfrif</string>
     <string name="folder_list_filter_hint">Enw ffolder yn cynnwys</string>
-    <string name="folder_list_display_mode_label">Dangos ffolderi…</string>
-    <string name="folder_list_display_mode_all">Pob ffolder</string>
-    <string name="folder_list_display_mode_first_class">Ffolderi Rhenc 1af</string>
-    <string name="folder_list_display_mode_first_and_second_class">Ffolderi Rhenc 1af ac 2ail</string>
-    <string name="folder_list_display_mode_not_second_class">Cuddio ffolderi 2ail renc</string>
     <string name="account_settings_signature__location_label">Lleoliad llofnod</string>
     <string name="account_settings_signature__location_before_quoted_text">Cyn neges wedi ei dyfynnu</string>
     <string name="account_settings_signature__location_after_quoted_text">Ar ôl neges wedi ei dyfynnu</string>
@@ -562,13 +518,11 @@
     <string name="account_setup_push_limit_1000">1000 o ffolderi</string>
     <string name="animations_title">Animeiddiad</string>
     <string name="animations_summary">Defnyddio effeithiau gweledol dros ben llestri</string>
-    <string name="volume_navigation_title">Llywio gyda botymau sain ym modd golwg neges</string>
     <string name="show_unified_inbox_title">Dangos mewnflwch unedig</string>
     <string name="show_starred_count_title">Dangos cyfrif serennog</string>
     <string name="integrated_inbox_title">Mewnflwch Unedig</string>
     <string name="integrated_inbox_detail">Holl negeseuon pob cyfrif mewn un ffolder unedig</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Uno</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Mae\'r holl negeseuon yn cael eu dangos mewn un Mewnflwch Unedig</string>
     <string name="account_settings_no_folder_selected">Dim</string>
     <string name="account_settings_automatic_special_folder">Awtomatig (%s)</string>
     <string name="font_size_settings_title">Maint ffont</string>
@@ -608,8 +562,10 @@
     <string name="dialog_confirm_delete_title">Cadarnhau dileu</string>
     <string name="dialog_confirm_delete_message">Wyt ti wir eisiau dileu\'r neges hon?</string>
     <plurals name="dialog_confirm_delete_messages">
+        <item quantity="zero">Wyt ti wir eisiau dileu\'r neges hon?</item>
         <item quantity="one">Wyt ti wir eisiau dileu\'r neges hon?</item>
         <item quantity="two">Wyt ti wir eisiau dileu <xliff:g id="message_count">%1$d</xliff:g> neges?</item>
+        <item quantity="few">Wyt ti wir eisiau dileu <xliff:g id="message_count">%1$d</xliff:g> neges?</item>
         <item quantity="many">Wyt ti wir eisiau dileu <xliff:g id="message_count">%1$d</xliff:g> neges?</item>
         <item quantity="other">Wyt ti wir eisiau dileu <xliff:g id="message_count">%1$d</xliff:g> neges?</item>
     </plurals>
@@ -623,8 +579,10 @@
     <string name="dialog_confirm_mark_all_as_read_cancel_button">Nac ydw</string>
     <string name="dialog_confirm_spam_title">Cadarnhau symud i\'r ffolder sbam</string>
     <plurals name="dialog_confirm_spam_message">
+        <item quantity="zero">Wyt ti wir eisiau symud y neges hon i\'r ffolder sbam?</item>
         <item quantity="one">Wyt ti wir eisiau symud y neges hon i\'r ffolder sbam?</item>
         <item quantity="two">Wyt ti wir eisiau symud <xliff:g id="message_count">%1$d</xliff:g> neges i\'r ffolder sbam?</item>
+        <item quantity="few">Wyt ti wir eisiau symud <xliff:g id="message_count">%1$d</xliff:g> neges i\'r ffolder sbam?</item>
         <item quantity="many">Wyt ti wir eisiau symud <xliff:g id="message_count">%1$d</xliff:g> neges i\'r ffolder sbam?</item>
         <item quantity="other">Wyt ti wir eisiau symud <xliff:g id="message_count">%1$d</xliff:g> neges i\'r ffolder sbam?</item>
     </plurals>
@@ -671,14 +629,18 @@
     <string name="account_settings_remote_search_num_label">Terfyn chwiliad gweinydd</string>
     <string name="remote_search_sending_query">Yn anfon gwiriad i\'r gweinydd</string>
     <plurals name="remote_search_downloading">
+        <item quantity="zero">Yn nôl %d canlyniad</item>
         <item quantity="one">Yn nôl %d canlyniad</item>
         <item quantity="two">Yn nôl %d ganlyniad</item>
+        <item quantity="few">Yn nôl %d ganlyniad</item>
         <item quantity="many">Yn nôl %d canlyniad</item>
         <item quantity="other">Yn nôl %d canlyniad</item>
     </plurals>
     <plurals name="remote_search_downloading_limited">
+        <item quantity="zero">Yn nôl %1$d o %2$d canlyniad</item>
         <item quantity="one">Yn nôl %1$d o %2$d canlyniad</item>
         <item quantity="two">Yn nôl %1$d o %2$d ganlyniad</item>
+        <item quantity="few">Yn nôl %1$d o %2$d ganlyniad</item>
         <item quantity="many">Yn nôl %1$d o %2$d canlyniad</item>
         <item quantity="other">Yn nôl %1$d o %2$d canlyniad</item>
     </plurals>

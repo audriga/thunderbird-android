@@ -23,7 +23,7 @@ import android.widget.ListAdapter;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
-import app.k9mail.legacy.account.Account;
+import net.thunderbird.core.android.account.LegacyAccount;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.ui.R;
 import com.fsck.k9.ui.base.K9Activity;
@@ -31,7 +31,7 @@ import com.fsck.k9.ui.base.ThemeType;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpProviderUtil;
-import timber.log.Timber;
+import net.thunderbird.core.logging.legacy.Log;
 
 
 public class OpenPgpAppSelectDialog extends K9Activity {
@@ -48,9 +48,9 @@ public class OpenPgpAppSelectDialog extends K9Activity {
             String.format("https://play.google.com/store/apps/details?id=%s", OPENKEYCHAIN_PACKAGE)));
 
 
-    private Account account;
+    private LegacyAccount account;
 
-    public static void startOpenPgpChooserActivity(Context context, Account account) {
+    public static void startOpenPgpChooserActivity(Context context, LegacyAccount account) {
         Intent i = new Intent(context, OpenPgpAppSelectDialog.class);
         i.putExtra(EXTRA_ACCOUNT, account.getUuid());
         context.startActivity(i);
@@ -76,7 +76,7 @@ public class OpenPgpAppSelectDialog extends K9Activity {
         if (openPgpProviderPackages.isEmpty()) {
             showOpenKeychainInfoFragment();
         } else if (openPgpProviderPackages.size() == 1) {
-            Timber.d("Only one OpenPGP provider - just choosing that one!");
+            Log.d("Only one OpenPGP provider - just choosing that one!");
             persistOpenPgpProviderSetting(openPgpProviderPackages.get(0));
             finish();
         } else {

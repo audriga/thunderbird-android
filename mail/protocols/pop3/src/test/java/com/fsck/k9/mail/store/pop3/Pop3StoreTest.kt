@@ -5,12 +5,15 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isSameInstanceAs
 import com.fsck.k9.mail.AuthType
 import com.fsck.k9.mail.ConnectionSecurity
-import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.ServerSettings
 import com.fsck.k9.mail.ssl.TrustedSocketFactory
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.net.Socket
+import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.logging.testing.TestLogger
+import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
@@ -20,6 +23,11 @@ import org.mockito.kotlin.stubbing
 class Pop3StoreTest {
     private val trustedSocketFactory = mock<TrustedSocketFactory>()
     private val store: Pop3Store = Pop3Store(createServerSettings(), trustedSocketFactory)
+
+    @Before
+    fun setUp() {
+        Log.logger = TestLogger()
+    }
 
     @Test
     fun `getFolder() should return same instance every time`() {

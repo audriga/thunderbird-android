@@ -25,6 +25,14 @@ internal fun AutoDiscoveryResultView(
         mutableStateOf(settings?.isTrusted?.not() ?: false)
     }
 
+    val discoveryResultHeaderState = if (settings == null) {
+        AutoDiscoveryResultHeaderState.NoSettings
+    } else if (settings.isTrusted) {
+        AutoDiscoveryResultHeaderState.Trusted
+    } else {
+        AutoDiscoveryResultHeaderState.Untrusted
+    }
+
     Column(
         modifier = modifier,
     ) {
@@ -35,20 +43,21 @@ internal fun AutoDiscoveryResultView(
                     width = 1.dp,
                     color = Color.Gray.copy(alpha = 0.5f),
                     shape = MainTheme.shapes.small,
-                )
-                .clickable { expanded.value = !expanded.value },
+                ).let {
+                    if (discoveryResultHeaderState.isExpandable) {
+                        it.clickable(enabled = true) { expanded.value = !expanded.value }
+                    } else if (discoveryResultHeaderState == AutoDiscoveryResultHeaderState.NoSettings) {
+                        it.clickable(enabled = true) { onEditConfigurationClick() }
+                    } else {
+                        it.clickable(enabled = false) {}
+                    }
+                },
         ) {
             Column(
                 modifier = Modifier.padding(MainTheme.spacings.default),
             ) {
                 AutoDiscoveryResultHeaderView(
-                    state = if (settings == null) {
-                        AutoDiscoveryResultHeaderState.NoSettings
-                    } else if (settings.isTrusted) {
-                        AutoDiscoveryResultHeaderState.Trusted
-                    } else {
-                        AutoDiscoveryResultHeaderState.Untrusted
-                    },
+                    state = discoveryResultHeaderState,
                     isExpanded = expanded.value,
                 )
 

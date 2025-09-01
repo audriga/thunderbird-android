@@ -4,15 +4,15 @@ package com.fsck.k9.storage;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.fsck.k9.K9;
-import com.fsck.k9.mail.FolderClass;
+import com.fsck.k9.core.BuildConfig;
 import com.fsck.k9.mailstore.LockableDatabase.SchemaDefinition;
 import com.fsck.k9.mailstore.MigrationsHelper;
 import com.fsck.k9.storage.migrations.Migrations;
-import timber.log.Timber;
+import net.thunderbird.core.logging.legacy.Log;
 
 
 class StoreSchemaDefinition implements SchemaDefinition {
-    static final int DB_VERSION = 85;
+    static final int DB_VERSION = 88;
 
     private final MigrationsHelper migrationsHelper;
 
@@ -31,18 +31,18 @@ class StoreSchemaDefinition implements SchemaDefinition {
         try {
             upgradeDatabase(db);
         } catch (Exception e) {
-            if (K9.DEVELOPER_MODE) {
+            if (BuildConfig.DEBUG) {
                 throw new Error("Exception while upgrading database", e);
             }
 
-            Timber.e(e, "Exception while upgrading database. Resetting the DB to v0");
+            Log.e(e, "Exception while upgrading database. Resetting the DB to v0");
             db.setVersion(0);
             upgradeDatabase(db);
         }
     }
 
     private void upgradeDatabase(final SQLiteDatabase db) {
-        Timber.i("Upgrading database from version %d to version %d", db.getVersion(), DB_VERSION);
+        Log.i("Upgrading database from version %d to version %d", db.getVersion(), DB_VERSION);
 
         db.beginTransaction();
         try {
@@ -91,9 +91,9 @@ class StoreSchemaDefinition implements SchemaDefinition {
                 "flagged_count INTEGER default 0, " +
                 "integrate INTEGER, " +
                 "top_group INTEGER, " +
-                "poll_class TEXT, " +
-                "push_class TEXT, " +
-                "display_class TEXT, " +
+                "sync_enabled INTEGER DEFAULT 0, " +
+                "push_enabled INTEGER DEFAULT 0, " +
+                "visible INTEGER DEFAULT 1, " +
                 "notifications_enabled INTEGER DEFAULT 0, " +
                 "more_messages TEXT default \"unknown\", " +
                 "server_id TEXT, " +

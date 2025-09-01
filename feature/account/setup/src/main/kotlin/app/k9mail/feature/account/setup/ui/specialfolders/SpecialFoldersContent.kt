@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import app.k9mail.core.ui.compose.designsystem.molecule.ContentLoadingErrorView
 import app.k9mail.core.ui.compose.designsystem.molecule.ErrorView
@@ -15,10 +14,10 @@ import app.k9mail.core.ui.compose.designsystem.molecule.LoadingView
 import app.k9mail.core.ui.compose.designsystem.template.ResponsiveWidthContainer
 import app.k9mail.core.ui.compose.theme2.MainTheme
 import app.k9mail.feature.account.common.ui.AppTitleTopHeader
-import app.k9mail.feature.account.common.ui.loadingerror.rememberContentLoadingErrorViewState
 import app.k9mail.feature.account.setup.R
 import app.k9mail.feature.account.setup.ui.specialfolders.SpecialFoldersContract.Event
 import app.k9mail.feature.account.setup.ui.specialfolders.SpecialFoldersContract.State
+import net.thunderbird.core.ui.compose.common.modifier.testTagAsResourceId
 import app.k9mail.feature.account.common.R as CommonR
 
 @Composable
@@ -26,36 +25,36 @@ fun SpecialFoldersContent(
     state: State,
     onEvent: (Event) -> Unit,
     contentPadding: PaddingValues,
-    appName: String,
+    brandName: String,
     modifier: Modifier = Modifier,
 ) {
     ResponsiveWidthContainer(
         modifier = Modifier
-            .testTag("SpecialFoldersContent")
+            .testTagAsResourceId("SpecialFoldersContent")
             .padding(contentPadding)
             .then(modifier),
-    ) {
-        Column {
+    ) { contentPadding ->
+        Column(Modifier.padding(contentPadding)) {
             AppTitleTopHeader(
-                title = appName,
+                title = brandName,
             )
 
             ContentLoadingErrorView(
-                state = rememberContentLoadingErrorViewState(state = state),
+                state = state,
                 loading = {
                     LoadingView(
                         message = stringResource(id = R.string.account_setup_special_folders_loading_message),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 },
-                error = {
+                error = { error ->
                     SpecialFoldersErrorView(
-                        failure = state.error!!,
+                        failure = error,
                         onRetry = { onEvent(Event.OnRetryClicked) },
                     )
                 },
                 modifier = Modifier.fillMaxSize(),
-            ) {
+            ) { state ->
                 if (state.isSuccess) {
                     LoadingView(
                         message = stringResource(id = R.string.account_setup_special_folders_success_message),

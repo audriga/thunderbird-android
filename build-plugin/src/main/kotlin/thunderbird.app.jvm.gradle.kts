@@ -2,11 +2,12 @@ plugins {
     id("application")
     id("org.jetbrains.kotlin.jvm")
     id("thunderbird.quality.detekt.typed")
+    id("thunderbird.quality.spotless")
 }
 
 java {
-    sourceCompatibility = ThunderbirdProjectConfig.javaCompatibilityVersion
-    targetCompatibility = ThunderbirdProjectConfig.javaCompatibilityVersion
+    sourceCompatibility = ThunderbirdProjectConfig.Compiler.javaCompatibility
+    targetCompatibility = ThunderbirdProjectConfig.Compiler.javaCompatibility
 }
 
 configureKotlinJavaCompatibility()

@@ -23,7 +23,7 @@
     <string name="archive_action">Archiviu</string>
     <string name="spam_action">Merzaghju</string>
     <string name="forward_action">Trasferisce</string>
-    <string name="forward_as_attachment_action">Trasferisce cum’è pezza aghjunta</string>
+    <string name="forward_as_attachment_action">Trasferisce cum’è pezza ghjunta</string>
     <string name="edit_as_new_message_action">Mudificà cum’è un messaghju novu</string>
     <string name="refile_action">Riclassificà…</string>
     <string name="done_action">Fattu</string>
@@ -49,7 +49,7 @@
     <string name="changelog_snackbar_text">Scuprite ciò chì hè novu in sta versione</string>
     <string name="accounts_title">Conti</string>
     <string name="compose_title_reply">Risponde</string>
-    <string name="compose_title_forward_as_attachment">Trasferisce cum’è pezza aghjunta</string>
+    <string name="compose_title_forward_as_attachment">Trasferisce cum’è pezza ghjunta</string>
     <string name="send_action">Mandà</string>
     <string name="move_action">Dispiazzà</string>
     <string name="move_to_drafts_action">Dispiazzà versu Bruttacopie</string>
@@ -68,7 +68,7 @@
     <string name="read_receipt_enabled">Una cunferma di lettura serà richiesta</string>
     <string name="read_receipt_disabled">Una cunferma di lettura ùn serà micca richiesta</string>
     <string name="empty_trash_action">Viutà a curbella</string>
-    <string name="add_attachment_action">Aghjunghje una pezza aghjunta</string>
+    <string name="add_attachment_action">Aghjunghje una pezza ghjunta</string>
     <string name="expunge_action">Squassà</string>
     <string name="about_action">Apprupositu</string>
     <string name="prefs_title">Parametri</string>
@@ -132,14 +132,14 @@
     <string name="compose_error_incomplete_recipient">U campu Destinatariu cuntene un’entrata incumpleta !</string>
     <string name="error_contact_address_not_found">Ùn si pò truvà alcunu indirizzu elettronicu per stu cuntattu.</string>
     <string name="message_compose_show_quoted_text_action">Mintuà u messaghju d’origine</string>
-    <string name="message_compose_attachments_forward_toast">U messaghju ùn pò micca esse trasferitu perchè certe pezze aghjunte ùn sò state scaricate.</string>
+    <string name="message_compose_attachments_forward_toast">U messaghju ùn pò micca esse trasferitu perchè certe pezze ghjunte ùn sò state scaricate.</string>
     <string name="message_compose_description_delete_quoted_text">Caccià u testu menziunatu</string>
     <string name="message_compose_description_edit_quoted_text">Mudificà u testu menziunatu</string>
-    <string name="remove_attachment_action">Caccià a pezza aghjunta</string>
+    <string name="remove_attachment_action">Caccià a pezza ghjunta</string>
     <string name="message_to_label">À :</string>
     <string name="message_view_cc_label">Cc :</string>
     <string name="message_view_bcc_label">Cci :</string>
-    <string name="message_view_status_attachment_not_saved">Impussibule d’arregistrà a pezza aghjunta.</string>
+    <string name="message_view_status_attachment_not_saved">Impussibule d’arregistrà a pezza ghjunta.</string>
     <string name="message_view_me_text">eiu</string>
     <string name="message_view_no_viewer">Ùn si pò truvà un affissadore per <xliff:g id="mimetype">%s</xliff:g>.</string>
     <string name="message_view_download_remainder">Scaricà u messaghju cumpletu</string>
@@ -188,7 +188,7 @@
     <string name="global_settings_privacy_hide_timezone_detail">Impiegà UTC invece di u fusu orariu lucale in l’intestature di messaghju è di risposta</string>
     <string name="global_settings_notification_quick_delete_when_single_msg">Per a nutificazione d’un messaghju unicu</string>
     <string name="global_settings_notification_quick_delete_always">Sempre</string>
-    <string name="global_settings_lock_screen_notification_visibility_title">Nutificazioni di l’ammarchjunata di screnu</string>
+    <string name="global_settings_lock_screen_notification_visibility_title">Nutificazioni di u screnu d’ammarchjunata</string>
     <string name="global_settings_lock_screen_notification_visibility_app_name">Nome di l’appiecazione</string>
     <string name="global_settings_lock_screen_notification_visibility_message_count">Numeru di messaghji novi</string>
     <string name="global_settings_lock_screen_notification_visibility_senders">Numeru di messaghji è speditori</string>
@@ -209,12 +209,12 @@
     <string name="sent_folder_label">Cartulare di i messaghji mandati</string>
     <string name="archive_folder_label">Cartulare di l’archivii</string>
     <string name="spam_folder_label">Cartulare di i merzaghji</string>
-    <string name="sort_attach_first">Messaghji cù pezze aghjunte in primu</string>
-    <string name="sort_unattached_first">Messaghji senza pezza aghjunta in primu</string>
-    <string name="sort_by_attach">Pezze aghjunte</string>
-    <string name="loading_attachment">Caricamentu di a pezza aghjunta…</string>
-    <string name="fetching_attachment_dialog_message">Riguarera di a pezza aghjunta…</string>
-    <string name="error_crypto_inline_attach">U modu PGP/INLINE ùn accetteghja micca e pezze aghjunte !</string>
+    <string name="sort_attach_first">Messaghji cù pezze ghjunte in primu</string>
+    <string name="sort_unattached_first">Messaghji senza pezza ghjunta in primu</string>
+    <string name="sort_by_attach">Pezze ghjunte</string>
+    <string name="loading_attachment">Caricamentu di a pezza ghjunta…</string>
+    <string name="fetching_attachment_dialog_message">Riguarera di a pezza ghjunta…</string>
+    <string name="error_crypto_inline_attach">U modu PGP/INLINE ùn accetteghja micca e pezze ghjunte !</string>
     <string name="account_settings_action">Parametri di u contu</string>
     <string name="remove_account_action">Caccià u contu</string>
     <string name="mark_as_read_action">Marcà cum’è lettu</string>
@@ -233,11 +233,11 @@
     <string name="message_compose_content_hint">Testu di u messaghju</string>
     <string name="message_compose_quote_header_from">Da :</string>
     <string name="message_compose_reply_header_fmt_with_date">U <xliff:g id="sent_date">%1$s</xliff:g>, <xliff:g id="sender">%2$s</xliff:g> hà scrittu :</string>
-    <string name="message_compose_attachments_skipped_toast">Certe pezze aghjunte ùn ponu micca esse trasferite perchè ùn sò state scaricate.</string>
-    <string name="dialog_attachment_progress_title">Scaricamentu di a pezza aghjunta</string>
+    <string name="message_compose_attachments_skipped_toast">Certe pezze ghjunte ùn ponu micca esse trasferite perchè ùn sò state scaricate.</string>
+    <string name="dialog_attachment_progress_title">Scaricamentu di a pezza ghjunta</string>
     <string name="openpgp_inline_minus_attach">E pezza aghjunte ùn sò micca accettate</string>
-    <string name="openpgp_dialog_sign_only_minus_attach">E segnature puderianu esse affissate cum’è pezze aghjunte « signature.asc » in certe messaghjerie elettroniche.</string>
-    <string name="locked_attach_title">Pezza aghjunta nonprutetta</string>
+    <string name="openpgp_dialog_sign_only_minus_attach">E segnature puderianu esse affissate cum’è pezze ghjunte « signature.asc » in certe messaghjerie elettroniche.</string>
+    <string name="locked_attach_title">Pezza ghjunta nonprutetta</string>
     <string name="message_view_recipients_format">à <xliff:g id="recipients">%s</xliff:g></string>
     <string name="message_view_additional_recipient_prefix">+</string>
     <string name="message_view_show_remote_images_action">Affissà e fiure alluntanate</string>
@@ -284,12 +284,6 @@
     <string name="account_setup_options_mail_display_count_all">tutti i messaghji</string>
     <string name="move_copy_cannot_copy_unsynced_message">Ùn si pò micca cupià o dispiazzà un messaghju chì ùn hè micca sincrunizatu cù u servitore</string>
     <string name="account_settings_push_advanced_title">Espertu</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Cartulari di e nutificazioni</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Tutti</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Solu i cartulari di 1a classa</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">Cartulari di 1a è 2a classa</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Tutti i cartulari fora di a 2a classa</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">Nisunu</string>
     <string name="account_settings_notify_sync_label">Nutificazioni di sincrunizazione</string>
     <string name="account_settings_email_label">U vostru indirizzu elettronicu</string>
     <string name="account_settings_notify_summary">Nutificazione in a barra di statu à ricezzione d’un messaghju novu</string>
@@ -358,31 +352,6 @@
     <string name="account_settings_message_age_3_months">i 3 ultimi mesi</string>
     <string name="account_settings_message_age_6_months">i 6 ultimi mesi</string>
     <string name="account_settings_message_age_1_year">l’ultimu annu</string>
-    <string name="account_settings_folder_display_mode_label">Cartulari à affissà</string>
-    <string name="account_settings_folder_display_mode_all">Tutti</string>
-    <string name="account_settings_folder_display_mode_first_class">Solu i cartulari di 1a classa</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">Cartulari di 1a è 2a classa</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Tutti i cartulari fora di a 2a classa</string>
-    <string name="account_settings_folder_sync_mode_label">Cartulari à sullicità</string>
-    <string name="account_settings_folder_sync_mode_all">Tutti</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Tutti i cartulari fora di a 2a classa</string>
-    <string name="account_settings_folder_sync_mode_none">Nisunu</string>
-    <string name="account_settings_folder_push_mode_label">Cartulari Catapughjà</string>
-    <string name="account_settings_folder_push_mode_all">Tutti</string>
-    <string name="account_settings_folder_push_mode_first_class">Solu i cartulari di 1a classa</string>
-    <string name="account_settings_folder_push_mode_none">Nisunu</string>
-    <string name="folder_settings_in_top_group_summary">Affissà in a parte superiore di a lista di i cartulari</string>
-    <string name="folder_settings_folder_display_mode_label">Classa d’affissera di u cartulare</string>
-    <string name="folder_settings_folder_display_mode_normal">Nisuna classa</string>
-    <string name="folder_settings_folder_display_mode_second_class">2a classa</string>
-    <string name="folder_settings_folder_sync_mode_label">Classa di sullicitazione di u cartulare</string>
-    <string name="folder_settings_folder_sync_mode_normal">Nisuna</string>
-    <string name="folder_settings_folder_sync_mode_second_class">2a classa</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Cum’è a classa d’affissera</string>
-    <string name="folder_settings_folder_push_mode_second_class">2a classa</string>
-    <string name="folder_settings_folder_push_mode_inherited">Cum’è a classa di sullicitazione</string>
-    <string name="folder_settings_folder_notify_mode_label">Classa di nutificazione di u cartulare</string>
-    <string name="folder_settings_folder_notify_mode_second_class">2a classa</string>
     <string name="folder_settings_clear_local_folder_action">Squassà i messaghji lucale</string>
     <string name="account_settings_outgoing_summary">Cunfigurà u servitore d’esciuta (SMTP) di i messaghji</string>
     <string name="account_settings_vibration">Vibrazione</string>
@@ -420,29 +389,17 @@
     <string name="account_settings_autodownload_message_size_10240">10 Mio</string>
     <string name="account_settings_message_age_1">i 2 ultimi ghjorni</string>
     <string name="account_settings_message_age_21">e 3 ultime settimane</string>
-    <string name="account_settings_folder_sync_mode_first_class">Solu i cartulari di 1a classa</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">Cartulari di 1a è 2a classa</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">Cartulari di 1a è 2a classa</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Tutti i cartulari fora di a 2a classa</string>
     <string name="account_settings_sync_remote_deletetions_label">Sincrunizà e squassature di u servitore</string>
     <string name="account_settings_sync_remote_deletetions_summary">Caccià i messaghji quand’elli sò squassati nant’à u servitore</string>
     <string name="account_settings_openpgp_missing">L’appiecazione OpenPGP hè assente ; seria desinstallata ?</string>
     <string name="folder_settings_title">Parametri di u cartulare</string>
     <string name="folder_settings_in_top_group_label">Affissà in u gruppu superiore</string>
     <string name="account_settings_vibrate_enable">Vibrà</string>
-    <string name="folder_settings_folder_sync_mode_first_class">1a classa</string>
     <string name="account_settings_vibrate_pattern_default">Predefinitu</string>
     <string name="account_settings_vibrate_pattern_1">Mudellu 1</string>
     <string name="account_settings_vibrate_pattern_4">Mudellu 4</string>
-    <string name="folder_settings_folder_push_mode_label">Classa Catapughjà di u cartulare</string>
-    <string name="folder_settings_folder_push_mode_first_class">1a classa</string>
-    <string name="folder_settings_folder_push_mode_normal">Nisuna classa</string>
     <string name="account_settings_vibrate_pattern_2">Mudellu 2</string>
     <string name="account_settings_vibrate_pattern_5">Mudellu 5</string>
-    <string name="folder_settings_folder_notify_mode_normal">Nisuna classa</string>
-    <string name="folder_settings_folder_notify_mode_first_class">1a classa</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Cum’è a classa Catapughjà</string>
-    <string name="folder_settings_folder_display_mode_first_class">1a classa</string>
     <string name="account_settings_incoming_label">Servitore d’entrata</string>
     <string name="account_settings_incoming_summary">Cunfigurà u servitore d’entrata di i messaghji</string>
     <string name="account_settings_outgoing_label">Servitore d’esciuta</string>
@@ -502,10 +459,6 @@
     <string name="sort_by_unread">Lettu/à leghje</string>
     <string name="account_delete_dlg_title">Caccià u contu</string>
     <string name="folder_list_filter_hint">U nome di cartulare cuntene</string>
-    <string name="folder_list_display_mode_label">Affissà i cartulari…</string>
-    <string name="folder_list_display_mode_first_class">Cartulari di 1a classa</string>
-    <string name="folder_list_display_mode_first_and_second_class">Cartulari di 1a è 2a classa</string>
-    <string name="folder_list_display_mode_not_second_class">Piattà i cartulari di 2a classa</string>
     <string name="account_settings_signature__location_label">Pusizione di a segnatura</string>
     <string name="account_settings_signature__location_before_quoted_text">Nanzu à u messaghju menziunatu</string>
     <string name="account_settings_signature__location_after_quoted_text">Dopu à u messaghju menziunatu</string>
@@ -527,7 +480,6 @@
     <string name="sort_sender_alpha">Speditore in l’ordine alfabeticu</string>
     <string name="edit_identity_signature_label">Segnatura</string>
     <string name="edit_identity_signature_hint">(Ozzionale)</string>
-    <string name="folder_list_display_mode_all">Tutti i cartulari</string>
     <string name="setting_theme_light">Chjaru</string>
     <string name="debug_preferences">Spannatura</string>
     <string name="settings_theme_label">Tema</string>
@@ -543,12 +495,10 @@
     <string name="account_setup_push_limit_1000">1000 cartulari</string>
     <string name="animations_title">Animazione</string>
     <string name="animations_summary">Impiegà l’effetti visuali esagerati</string>
-    <string name="volume_navigation_title">Navigà cù vulume in a vista di messaghji</string>
     <string name="show_unified_inbox_title">Affissà a scatula di ricezzione cuncolta</string>
     <string name="show_starred_count_title">Affissà u numaru di stellati</string>
     <string name="integrated_inbox_detail">Tutti i messaghji in i cartulari cuncolti</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Unificà</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Tutti i messaghji sò affissati in a scatula di ricezzione cuncolta</string>
     <string name="account_settings_automatic_special_folder">Autumaticu (%s)</string>
     <string name="font_size_message_list_sender">Speditore</string>
     <string name="font_size_message_list_date">Data</string>
@@ -863,11 +813,35 @@
     <string name="clipboard_label_name_and_email_address">Nome è indirizzu elettronicu</string>
     <string name="message_list_content_description_unread_prefix">à leghje, %s</string>
     <string name="background_work_notification_remove_account">Cacciatura di u contu…</string>
-    <string name="account_delete_dlg_instructions_fmt">U contu \"<xliff:g id="account">%s</xliff:g>\" serà cacciatu da <xliff:g id="app_name">%s</xliff:g>.</string>
+    <string name="account_delete_dlg_instructions_fmt">U contu \"<xliff:g id="account">%1$s</xliff:g>\" serà cacciatu da <xliff:g id="app_name">%2$s</xliff:g>.</string>
     <string name="push_info_notification_explanation_text">Quandu s’impiegheghja a catapughjata, <xliff:g id="app_name">%1$s</xliff:g> mantene una cunnessione à u servitore di messaghjeria. Android richiede l’affissera d’una nutificazione quandu l’appiecazione hè attiva in tacca di sfondulu. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
-    <string name="default_signature">--
-\nMandatu da u mo apparechju Android cù <xliff:g id="app_name">%s</xliff:g>. Scusate a mo curtezza.</string>
     <string name="dialog_openkeychain_info_text">L’appiecazione OpenKeychain hè richiesta per permette l’adopru di a cifratura da un capu à l’altru.</string>
     <string name="about_title">Apprupositu di <xliff:g id="app_name">%s</xliff:g></string>
     <string name="about_app_authors_thunderbird">A squadra Thunderbird Mobile</string>
+    <string name="folder_settings_push_label">Attivà a catapughjata</string>
+    <string name="folder_settings_sync_label">Attivà a sincrunizazione</string>
+    <string name="folder_settings_notifications_label">Nutificazioni</string>
+    <string name="settings_ui_telemetry_description">Sparte cù Mozilla i dati di perfurmenza, d’impiegu, di materiale è di persunalizazione di st’appiecazione per aiutacci à amendà Thunderbird</string>
+    <string name="settings_ui_data_collection">Culletta di dati</string>
+    <string name="settings_ui_telemetry_title">Dati d’impiegu è tecnichi</string>
+    <string name="folder_settings_visible_label">Affissà u cartulare</string>
+    <string name="folder_list_show_hidden_folders">Affissà i cartulari piattati</string>
+    <string name="settings_list_action_support">Sustene <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="volume_navigation_title_short">Navigà cù i tasti di vulume</string>
+    <string name="volume_navigation_summary">Navigà d’un messaghju à l’altru cù i tasti di vulume nant’à a vista di i messaghji</string>
+    <string name="save_attachment_action">Arregistrà a pezza ghjunta</string>
+    <string name="expand_content_description">Spiegà</string>
+    <string name="dialog_confirm_empty_spam_message">Vulete viutà u cartulare di i merzaghji ?</string>
+    <string name="empty_spam_action">Squassà i merzaghji</string>
+    <string name="dialog_confirm_empty_spam_title">Cunfirmà à squassatura di i merzaghji</string>
+    <string name="attach_file">Assucià un schedariu</string>
+    <string name="open_camera">Apre l’apparechju-fotò</string>
+    <string name="camera_permission_denied">U permessu d’accede à l’apparechju-fotò hè statu ricusatu. Impussibule di piglià una fotò</string>
+    <string name="debug_enable_sync_debug_logging_title">Attivà u ghjurnale di spannatura di a sincrunizazione</string>
+    <string name="debug_enable_sync_debug_logging_summary">Arregistrà l’infurmazioni di diagnosticu di a sincrunizazione per 24 ore</string>
+    <string name="debug_sync_export_logs_title">Espurtà i ghjurnali di sincrunizazione</string>
+    <string name="debug_open_secret_debug_screen">Apre u screnu sicretu di spannatura</string>
+    <string name="swipe_action_archive_folder_not_set">Cunfigurà u cartulare d’archiviera</string>
+    <string name="swipe_action_change_swipe_gestures">Cambià \nI gesti di spazzatura</string>
+    <string name="archiving_not_available_for_this_account">L’archiviera ùn hè micca dispunibule per stu contu.</string>
 </resources>

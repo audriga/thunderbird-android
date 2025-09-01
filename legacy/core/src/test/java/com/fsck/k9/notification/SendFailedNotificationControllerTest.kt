@@ -5,10 +5,23 @@ import android.app.PendingIntent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
-import app.k9mail.core.android.testing.RobolectricTest
-import app.k9mail.legacy.account.Account
-import com.fsck.k9.testing.MockHelper.mockBuilder
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.testing.MockHelper.mockBuilder
+import net.thunderbird.core.android.testing.RobolectricTest
+import net.thunderbird.core.preference.GeneralSettings
+import net.thunderbird.core.preference.display.DisplaySettings
+import net.thunderbird.core.preference.network.NetworkSettings
+import net.thunderbird.core.preference.notification.NotificationPreference
+import net.thunderbird.core.preference.privacy.PrivacySettings
+import net.thunderbird.core.testing.TestClock
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
+import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.context.GlobalContext.stopKoin
+import org.koin.dsl.module
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
@@ -33,7 +46,32 @@ class SendFailedNotificationControllerTest : RobolectricTest() {
         notificationHelper = createFakeNotificationHelper(notificationManager, builder, lockScreenNotificationBuilder),
         actionBuilder = createActionBuilder(contentIntent),
         resourceProvider = resourceProvider,
+        generalSettingsManager = mock {
+            on { getSettings() } doReturn GeneralSettings(
+                display = DisplaySettings(),
+                network = NetworkSettings(),
+                notification = NotificationPreference(),
+                privacy = PrivacySettings(),
+            )
+        },
     )
+
+    @OptIn(ExperimentalTime::class)
+    @Before
+    fun setUp() {
+        startKoin {
+            modules(
+                module {
+                    single<Clock> { TestClock() }
+                },
+            )
+        }
+    }
+
+    @After
+    fun tearDown() {
+        stopKoin()
+    }
 
     @Test
     fun testShowSendFailedNotification() {
@@ -78,7 +116,7 @@ class SendFailedNotificationControllerTest : RobolectricTest() {
         }
     }
 
-    private fun createFakeAccount(): Account {
+    private fun createFakeAccount(): LegacyAccount {
         return mock {
             on { accountNumber } doReturn ACCOUNT_NUMBER
             on { name } doReturn ACCOUNT_NAME

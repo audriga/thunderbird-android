@@ -22,7 +22,7 @@
     <string name="account_setup_auto_discovery_loading_error">Nastavení e-mailu se nepodařilo nahrát</string>
     <string name="account_setup_auto_discovery_result_approval_checkbox_label">Tomuto nastavení důvěřuji</string>
     <string name="account_setup_options_display_name_error_required">Vaše jméno je vyžadováno.</string>
-    <string name="account_setup_error_network">Síť</string>
+    <string name="account_setup_error_network">Chyba sítě. Zkontrolujte prosím stav svého připojení a zkuste to znovu.</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_invalid">Toto není rozeznáno jako platná e-mailová adresa.</string>
     <string name="account_setup_options_email_check_frequency_never">Nikdy</string>
     <string name="account_setup_auto_discovery_loading_message">Zjišťování konfigurace…</string>
@@ -50,16 +50,19 @@
     <plurals name="account_setup_options_email_check_frequency_minutes">
         <item quantity="one">Každou minutu</item>
         <item quantity="few">Každé %d minuty</item>
+        <item quantity="many">Každých %d minut</item>
         <item quantity="other">Každých %d minut</item>
     </plurals>
     <plurals name="account_setup_options_email_check_frequency_hours">
         <item quantity="one">Každou hodinu</item>
         <item quantity="few">Každé %d hodiny</item>
+        <item quantity="many">Každých %d hodin</item>
         <item quantity="other">Každých %d hodin</item>
     </plurals>
     <plurals name="account_setup_options_email_display_count_messages">
         <item quantity="one">1 zpráva</item>
         <item quantity="few">%d zprávy</item>
+        <item quantity="many">%d zpráv</item>
         <item quantity="other">%d zpráv</item>
     </plurals>
 </resources>

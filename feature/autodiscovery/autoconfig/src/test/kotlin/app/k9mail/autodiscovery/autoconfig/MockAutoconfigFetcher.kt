@@ -7,9 +7,9 @@ import app.k9mail.autodiscovery.api.ConnectionSecurity.StartTLS
 import app.k9mail.autodiscovery.api.ConnectionSecurity.TLS
 import app.k9mail.autodiscovery.api.ImapServerSettings
 import app.k9mail.autodiscovery.api.SmtpServerSettings
-import app.k9mail.core.common.mail.EmailAddress
-import app.k9mail.core.common.net.toHostname
-import app.k9mail.core.common.net.toPort
+import net.thunderbird.core.common.mail.EmailAddress
+import net.thunderbird.core.common.net.toHostname
+import net.thunderbird.core.common.net.toPort
 import okhttp3.HttpUrl
 
 internal class MockAutoconfigFetcher : AutoconfigFetcher {
@@ -17,6 +17,9 @@ internal class MockAutoconfigFetcher : AutoconfigFetcher {
 
     val callCount: Int
         get() = callArguments.size
+
+    val urls: List<String>
+        get() = callArguments.map { (url, _) -> url.toString() }
 
     private val results = mutableListOf<AutoDiscoveryResult>()
 

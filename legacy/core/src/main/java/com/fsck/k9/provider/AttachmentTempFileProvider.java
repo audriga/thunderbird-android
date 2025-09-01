@@ -18,9 +18,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
-import timber.log.Timber;
+import app.k9mail.legacy.di.DI;
+import net.thunderbird.core.logging.legacy.Log;
 
 import com.fsck.k9.K9;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 import okio.ByteString;
 import org.apache.commons.io.IOUtils;
 
@@ -30,6 +32,7 @@ public class AttachmentTempFileProvider extends FileProvider {
     private static final long FILE_DELETE_THRESHOLD_MILLISECONDS = 3 * 60 * 1000;
     private static final Object tempFileWriteMonitor = new Object();
     private static final Object cleanupReceiverMonitor = new Object();
+    private static final GeneralSettingsManager generalSettingsManager = DI.get(GeneralSettingsManager.class);
 
     private static String AUTHORITY;
     private static AttachmentTempFileProviderCleanupReceiver cleanupReceiver = null;
@@ -106,15 +109,15 @@ public class AttachmentTempFileProvider extends FileProvider {
             if (lastModified < deletionThreshold) {
                 boolean fileDeleted = tempFile.delete();
                 if (!fileDeleted) {
-                    Timber.e("Failed to delete temporary file");
+                    Log.e("Failed to delete temporary file");
                     // TODO really do this? might cause our service to stay up indefinitely if a file can't be deleted
                     allFilesDeleted = false;
                 }
             } else {
-                if (K9.isDebugLoggingEnabled()) {
+                if (generalSettingsManager.getConfig().getDebugging().isDebugLoggingEnabled()) {
                     String timeLeftStr = String.format(
                             Locale.ENGLISH, "%.2f", (lastModified - deletionThreshold) / 1000 / 60.0);
-                    Timber.e("Not deleting temp file (for another %s minutes)", timeLeftStr);
+                    Log.e("Not deleting temp file (for another %s minutes)", timeLeftStr);
                 }
                 allFilesDeleted = false;
             }
@@ -127,7 +130,7 @@ public class AttachmentTempFileProvider extends FileProvider {
         File directory = new File(context.getCacheDir(), CACHE_DIRECTORY);
         if (!directory.exists()) {
             if (!directory.mkdir()) {
-                Timber.e("Error creating directory: %s", directory.getAbsolutePath());
+                Log.e("Error creating directory: %s", directory.getAbsolutePath());
             }
         }
 
@@ -172,7 +175,7 @@ public class AttachmentTempFileProvider extends FileProvider {
                 return;
             }
 
-            Timber.d("Unregistering temp file cleanup receiver");
+            Log.d("Unregistering temp file cleanup receiver");
             context.unregisterReceiver(cleanupReceiver);
             cleanupReceiver = null;
         }
@@ -184,7 +187,7 @@ public class AttachmentTempFileProvider extends FileProvider {
                 return;
             }
 
-            Timber.d("Registering temp file cleanup receiver");
+            Log.d("Registering temp file cleanup receiver");
             cleanupReceiver = new AttachmentTempFileProviderCleanupReceiver();
 
             IntentFilter intentFilter = new IntentFilter();
@@ -201,7 +204,7 @@ public class AttachmentTempFileProvider extends FileProvider {
                 throw new IllegalArgumentException("onReceive called with action that isn't screen off!");
             }
 
-            Timber.d("Cleaning up temp files");
+            Log.d("Cleaning up temp files");
 
             boolean allFilesDeleted = deleteOldTemporaryFiles(context);
             if (allFilesDeleted) {

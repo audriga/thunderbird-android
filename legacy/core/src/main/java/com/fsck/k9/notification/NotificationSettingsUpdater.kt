@@ -2,8 +2,8 @@ package com.fsck.k9.notification
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import app.k9mail.legacy.account.Account
 import com.fsck.k9.Preferences
+import net.thunderbird.core.android.account.LegacyAccount
 
 /**
  * Update accounts with notification settings read from their "Messages" `NotificationChannel`.
@@ -25,7 +25,7 @@ class NotificationSettingsUpdater(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun updateNotificationSettings(account: Account) {
+    fun updateNotificationSettings(account: LegacyAccount) {
         val notificationConfiguration = notificationChannelManager.getNotificationConfiguration(account)
         val notificationSettings = notificationConfigurationConverter.convert(account, notificationConfiguration)
 

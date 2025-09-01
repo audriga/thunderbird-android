@@ -15,8 +15,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.app.LoaderManager.LoaderCallbacks;
 import androidx.loader.content.Loader;
-
-import app.k9mail.legacy.account.Account;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.autocrypt.AutocryptOperations;
 import app.k9mail.legacy.message.controller.MessageReference;
@@ -25,7 +23,7 @@ import app.k9mail.legacy.message.controller.MessagingListener;
 import app.k9mail.legacy.message.controller.SimpleMessagingListener;
 import com.fsck.k9.helper.RetainFragment;
 import com.fsck.k9.mail.Flag;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.MessageCryptoAnnotations;
 import com.fsck.k9.mailstore.MessageViewInfo;
@@ -35,8 +33,9 @@ import com.fsck.k9.ui.crypto.MessageCryptoHelper;
 import com.fsck.k9.ui.crypto.OpenPgpApiFactory;
 import com.fsck.k9.ui.message.LocalMessageExtractorLoader;
 import com.fsck.k9.ui.message.LocalMessageLoader;
+import net.thunderbird.core.android.account.LegacyAccount;
 import org.openintents.openpgp.OpenPgpDecryptionResult;
-import timber.log.Timber;
+import net.thunderbird.core.logging.legacy.Log;
 
 
 /** This class is responsible for loading a message start to finish, and
@@ -90,7 +89,7 @@ public class MessageLoaderHelper {
     // transient state
     private boolean onlyLoadMetadata;
     private MessageReference messageReference;
-    private Account account;
+    private LegacyAccount account;
 
     private LocalMessage localMessage;
     private MessageCryptoAnnotations messageCryptoAnnotations;
@@ -121,7 +120,7 @@ public class MessageLoaderHelper {
             if (cachedDecryptionResult instanceof OpenPgpDecryptionResult) {
                 this.cachedDecryptionResult = (OpenPgpDecryptionResult) cachedDecryptionResult;
             } else {
-                Timber.e("Got decryption result of unknown type - ignoring");
+                Log.e("Got decryption result of unknown type - ignoring");
             }
         }
 
@@ -209,12 +208,12 @@ public class MessageLoaderHelper {
         boolean isLoaderStale = (loader == null) || !loader.isCreatedFor(messageReference);
 
         if (isLoaderStale) {
-            Timber.d("Creating new local message loader");
+            Log.d("Creating new local message loader");
             cancelAndClearCryptoOperation();
             cancelAndClearDecodeLoader();
             loaderManager.restartLoader(LOCAL_MESSAGE_LOADER_ID, null, localMessageLoaderCallback);
         } else {
-            Timber.d("Reusing local message loader");
+            Log.d("Reusing local message loader");
             loaderManager.initLoader(LOCAL_MESSAGE_LOADER_ID, null, localMessageLoaderCallback);
         }
     }
@@ -375,10 +374,10 @@ public class MessageLoaderHelper {
         boolean isLoaderStale = (loader == null) || !loader.isCreatedFor(localMessage, messageCryptoAnnotations);
 
         if (isLoaderStale) {
-            Timber.d("Creating new decode message loader");
+            Log.d("Creating new decode message loader");
             loaderManager.restartLoader(DECODE_MESSAGE_LOADER_ID, null, decodeMessageLoaderCallback);
         } else {
-            Timber.d("Reusing decode message loader");
+            Log.d("Reusing decode message loader");
             loaderManager.initLoader(DECODE_MESSAGE_LOADER_ID, null, decodeMessageLoaderCallback);
         }
     }
@@ -490,7 +489,7 @@ public class MessageLoaderHelper {
 
     MessagingListener downloadMessageListener = new SimpleMessagingListener() {
         @Override
-        public void loadMessageRemoteFinished(final Account account, final long folderId, final String uid) {
+        public void loadMessageRemoteFinished(final LegacyAccount account, final long folderId, final String uid) {
             handler.post(() -> {
                 if (!messageReference.equals(account.getUuid(), folderId, uid)) {
                     return;
@@ -500,7 +499,7 @@ public class MessageLoaderHelper {
         }
 
         @Override
-        public void loadMessageRemoteFailed(Account account, long folderId, String uid, final Throwable t) {
+        public void loadMessageRemoteFailed(LegacyAccount account, long folderId, String uid, final Throwable t) {
             handler.post(new Runnable() {
                 @Override
                 public void run() {

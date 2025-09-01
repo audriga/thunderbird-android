@@ -23,7 +23,7 @@ import com.fsck.k9.helper.UnsubscribeUri;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Message;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeUtility;
@@ -33,7 +33,7 @@ import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.message.html.HtmlConverter;
 import app.k9mail.html.cleaner.HtmlProcessor;
 import org.openintents.openpgp.util.OpenPgpUtils;
-import timber.log.Timber;
+import net.thunderbird.core.logging.legacy.Log;
 
 import static com.fsck.k9.mail.internet.MimeUtility.getHeaderParameter;
 import static com.fsck.k9.mail.internet.Viewable.Alternative;
@@ -73,7 +73,7 @@ public class MessageViewInfoExtractor {
         boolean shouldRenderSML = new SMLTrustHelper().shouldRenderSML(message, cryptoAnnotations, cryptoContentPart);
         if (cryptoContentPart == null) {
             if (cryptoAnnotations != null && !cryptoAnnotations.isEmpty()) {
-                Timber.e("Got crypto message cryptoContentAnnotations but no crypto root part!");
+                Log.e("Got crypto message cryptoContentAnnotations but no crypto root part!");
             }
             MessageViewInfo messageViewInfo = extractSimpleMessageForView(message, message);
             return messageViewInfo.withSubject(message.getSubject(), false);
@@ -190,7 +190,7 @@ public class MessageViewInfoExtractor {
      * @return A {@link ViewableExtractedText} instance containing the textual parts of the message as
      *         plain text and HTML, and a list of message parts considered attachments.
      *
-     * @throws com.fsck.k9.mail.MessagingException
+     * @throws net.thunderbird.core.common.exception.MessagingException
      *          In case of an error.
      */
     @VisibleForTesting
@@ -446,7 +446,7 @@ public class MessageViewInfoExtractor {
      * @param message
      *         The message to extract the header values from.
      *
-     * @throws com.fsck.k9.mail.MessagingException
+     * @throws net.thunderbird.core.common.exception.MessagingException
      *          In case of an error.
      */
     private void addMessageHeaderText(StringBuilder text, Message message)
@@ -507,7 +507,7 @@ public class MessageViewInfoExtractor {
      * @param message
      *         The message to extract the header values from.
      *
-     * @throws com.fsck.k9.mail.MessagingException
+     * @throws net.thunderbird.core.common.exception.MessagingException
      *          In case of an error.
      */
     private void addMessageHeaderHtml(StringBuilder html, Message message)

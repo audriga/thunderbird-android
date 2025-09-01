@@ -15,8 +15,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
 import app.k9mail.feature.account.oauth.domain.AccountOAuthDomainContract.UseCase.GetOAuthRequestIntent
 import app.k9mail.feature.account.oauth.domain.entity.AuthorizationIntentResult
-import app.k9mail.legacy.account.Account
-import app.k9mail.legacy.account.AccountManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +26,9 @@ import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
-import timber.log.Timber
+import net.thunderbird.core.android.account.AccountManager
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.logging.legacy.Log
 
 private const val KEY_AUTHORIZATION = "app.k9mail_auth"
 
@@ -41,7 +41,7 @@ internal class AuthViewModel(
     private var authService: AuthorizationService? = null
     private val authState = AuthState()
 
-    private var account: Account? = null
+    private var account: LegacyAccount? = null
 
     private lateinit var resultObserver: AppAuthResultObserver
 
@@ -53,7 +53,7 @@ internal class AuthViewModel(
         return authService ?: AuthorizationService(getApplication<Application>()).also { authService = it }
     }
 
-    fun init(activityResultRegistry: ActivityResultRegistry, lifecycle: Lifecycle, account: Account) {
+    fun init(activityResultRegistry: ActivityResultRegistry, lifecycle: Lifecycle, account: LegacyAccount) {
         this.account = account
         resultObserver = AppAuthResultObserver(activityResultRegistry)
         lifecycle.addObserver(resultObserver)
@@ -63,20 +63,20 @@ internal class AuthViewModel(
         _uiState.update { AuthFlowState.Idle }
     }
 
-    fun isAuthorized(account: Account): Boolean {
+    fun isAuthorized(account: LegacyAccount): Boolean {
         val authState = getOrCreateAuthState(account)
         return authState.isAuthorized
     }
 
-    fun isUsingGoogle(account: Account): Boolean {
+    fun isUsingGoogle(account: LegacyAccount): Boolean {
         return GoogleOAuthHelper.isGoogle(account.incomingServerSettings.host!!)
     }
 
-    private fun getOrCreateAuthState(account: Account): AuthState {
+    private fun getOrCreateAuthState(account: LegacyAccount): AuthState {
         return try {
             account.oAuthState?.let { AuthState.jsonDeserialize(it) } ?: AuthState()
         } catch (e: Exception) {
-            Timber.e(e, "Error deserializing AuthState")
+            Log.e(e, "Error deserializing AuthState")
             AuthState()
         }
     }
@@ -93,7 +93,7 @@ internal class AuthViewModel(
         }
     }
 
-    private suspend fun startLogin(account: Account) {
+    private suspend fun startLogin(account: LegacyAccount) {
         val authRequestIntentResult = withContext(Dispatchers.IO) {
             getOAuthRequestIntent.execute(account.incomingServerSettings.host!!, account.email)
         }

@@ -9,16 +9,22 @@ import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.PendingIntentCompat
-import app.k9mail.legacy.account.Account
-import com.fsck.k9.K9
+import app.k9mail.legacy.di.DI
+import com.fsck.k9.QuietTimeChecker
 import com.fsck.k9.notification.NotificationChannelManager.ChannelType
-import timber.log.Timber
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.preference.notification.NotificationPreference
 
 class NotificationHelper(
     private val context: Context,
     private val notificationManager: NotificationManagerCompat,
     private val notificationChannelManager: NotificationChannelManager,
     private val resourceProvider: NotificationResourceProvider,
+    private val generalSettingsManager: GeneralSettingsManager,
 ) {
     fun getContext(): Context {
         return context
@@ -28,12 +34,12 @@ class NotificationHelper(
         return notificationManager
     }
 
-    fun createNotificationBuilder(account: Account, channelType: ChannelType): NotificationCompat.Builder {
+    fun createNotificationBuilder(account: LegacyAccount, channelType: ChannelType): NotificationCompat.Builder {
         val notificationChannel = notificationChannelManager.getChannelIdFor(account, channelType)
         return NotificationCompat.Builder(context, notificationChannel)
     }
 
-    fun notify(account: Account, notificationId: Int, notification: Notification) {
+    fun notify(account: LegacyAccount, notificationId: Int, notification: Notification) {
         try {
             notificationManager.notify(notificationId, notification)
         } catch (e: SecurityException) {
@@ -45,7 +51,7 @@ class NotificationHelper(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 e.message?.contains("does not have permission to") == true
             ) {
-                Timber.e(e, "Failed to create a notification for a new message")
+                Log.e(e, "Failed to create a notification for a new message")
                 showNotifyErrorNotification(account)
             } else {
                 throw e
@@ -53,7 +59,7 @@ class NotificationHelper(
         }
     }
 
-    private fun showNotifyErrorNotification(account: Account) {
+    private fun showNotifyErrorNotification(account: LegacyAccount) {
         val title = resourceProvider.notifyErrorTitle()
         val text = resourceProvider.notifyErrorText()
 
@@ -77,7 +83,7 @@ class NotificationHelper(
             .setContentIntent(notificationSettingsPendingIntent)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setCategory(NotificationCompat.CATEGORY_ERROR)
-            .setErrorAppearance()
+            .setErrorAppearance(generalSettingsManager = generalSettingsManager)
             .build()
 
         val notificationId = NotificationIds.getNewMailSummaryNotificationId(account)
@@ -94,17 +100,20 @@ class NotificationHelper(
     }
 }
 
-internal fun NotificationCompat.Builder.setErrorAppearance(): NotificationCompat.Builder = apply {
-    setSilent(true)
+internal fun NotificationCompat.Builder.setErrorAppearance(
+    generalSettingsManager: GeneralSettingsManager,
+): NotificationCompat.Builder =
+    apply {
+        setSilent(true)
 
-    if (!K9.isQuietTime) {
-        setLights(
-            NotificationHelper.NOTIFICATION_LED_FAILURE_COLOR,
-            NotificationHelper.NOTIFICATION_LED_FAST_ON_TIME,
-            NotificationHelper.NOTIFICATION_LED_FAST_OFF_TIME,
-        )
+        if (!generalSettingsManager.getSettings().notification.isQuietTime) {
+            setLights(
+                NotificationHelper.NOTIFICATION_LED_FAILURE_COLOR,
+                NotificationHelper.NOTIFICATION_LED_FAST_ON_TIME,
+                NotificationHelper.NOTIFICATION_LED_FAST_OFF_TIME,
+            )
+        }
     }
-}
 
 internal fun NotificationCompat.Builder.setAppearance(
     silent: Boolean,
@@ -130,3 +139,15 @@ internal fun NotificationCompat.Builder.setAppearance(
         }
     }
 }
+
+@OptIn(ExperimentalTime::class)
+internal val NotificationPreference.isQuietTime: Boolean
+    get() {
+        val clock = DI.get<Clock>()
+        val quietTimeChecker = QuietTimeChecker(
+            clock = clock,
+            quietTimeStart = quietTimeStarts,
+            quietTimeEnd = quietTimeEnds,
+        )
+        return quietTimeChecker.isQuietTime
+    }

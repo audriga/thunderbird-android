@@ -1,8 +1,8 @@
 package app.k9mail.legacy.mailstore
 
-import app.k9mail.legacy.account.Account
-import app.k9mail.legacy.account.AccountManager
 import java.util.concurrent.ConcurrentHashMap
+import net.thunderbird.core.android.account.AccountManager
+import net.thunderbird.core.android.account.LegacyAccount
 
 class MessageStoreManager(
     private val accountManager: AccountManager,
@@ -21,7 +21,7 @@ class MessageStoreManager(
         return getMessageStore(account)
     }
 
-    fun getMessageStore(account: Account): ListenableMessageStore {
+    fun getMessageStore(account: LegacyAccount): ListenableMessageStore {
         return messageStores.getOrPut(account.uuid) { messageStoreFactory.create(account) }
     }
 

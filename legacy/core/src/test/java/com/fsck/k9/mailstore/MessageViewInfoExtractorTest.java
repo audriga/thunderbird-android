@@ -21,7 +21,7 @@ import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.Message;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeBodyPart;
@@ -36,6 +36,8 @@ import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.mailstore.MessageViewInfoExtractor.ViewableExtractedText;
 import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import app.k9mail.html.cleaner.HtmlProcessor;
+import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.core.logging.testing.TestLogger;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -43,9 +45,9 @@ import org.mockito.stubbing.Answer;
 import org.openintents.openpgp.OpenPgpDecryptionResult;
 import org.robolectric.RuntimeEnvironment;
 
-import static com.fsck.k9.mail.TestMessageConstructionUtils.bodypart;
-import static com.fsck.k9.mail.TestMessageConstructionUtils.messageFromBody;
-import static com.fsck.k9.mail.TestMessageConstructionUtils.multipart;
+import static com.fsck.k9.mail.testing.message.TestMessageConstructionUtils.bodypart;
+import static com.fsck.k9.mail.testing.message.TestMessageConstructionUtils.messageFromBody;
+import static com.fsck.k9.mail.testing.message.TestMessageConstructionUtils.multipart;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertSame;
@@ -73,6 +75,7 @@ public class MessageViewInfoExtractorTest extends K9RobolectricTest {
 
     @Before
     public void setUp() throws Exception {
+        Log.logger = new TestLogger();
         context = RuntimeEnvironment.getApplication();
 
         HtmlProcessor htmlProcessor = createFakeHtmlProcessor();

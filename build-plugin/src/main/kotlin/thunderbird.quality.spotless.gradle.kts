@@ -6,45 +6,43 @@ plugins {
 
 configure<SpotlessExtension> {
     kotlin {
-        ktlint(libs.versions.ktlint.get())
-            .setEditorConfigPath("$projectDir/.editorconfig")
-            .editorConfigOverride(editorConfigOverride)
-        target("**/*.kt")
-        targetExclude(
-            "**/build/",
-            "**/resources/",
-            "plugins/openpgp-api-lib/",
-            "ui-utils/ItemTouchHelper/",
-            "ui-utils/LinearLayoutManager/",
+        target(
+            "src/*/java/*.kt",
+            "src/*/kotlin/*.kt",
+            "src/*/java/**/*.kt",
+            "src/*/kotlin/**/*.kt",
         )
+
+        ktlint(libs.versions.ktlint.get())
+            .setEditorConfigPath("${project.rootProject.projectDir}/.editorconfig")
+            .editorConfigOverride(kotlinEditorConfigOverride)
     }
+
     kotlinGradle {
-        ktlint(libs.versions.ktlint.get())
-            .setEditorConfigPath("$projectDir/.editorconfig")
-            .editorConfigOverride(editorConfigOverride)
-        target("**/*.gradle.kts")
-        targetExclude("**/build/")
-    }
-    format("markdown") {
-        prettier()
-        target("**/*.md")
-        targetExclude(
-            "plugins/openpgp-api-lib/",
-            "app-k9mail/fastlane/README.md",
-            "**/build/",
+        target(
+            "*.gradle.kts",
         )
+
+        ktlint(libs.versions.ktlint.get())
+            .setEditorConfigPath("${project.rootProject.projectDir}/.editorconfig")
+            .editorConfigOverride(
+                mapOf(
+                    "ktlint_code_style" to "intellij_idea",
+                    "ktlint_standard_function-expression-body" to "disabled",
+                    "ktlint_standard_function-signature" to "disabled",
+                ),
+            )
     }
+
+    flexmark {
+        target(
+            "*.md",
+        )
+        flexmark()
+    }
+
     format("misc") {
-        target("**/*.gradle", "**/.gitignore")
+        target(".gitignore")
         trimTrailingWhitespace()
-        targetExclude("app-k9mail/dependencies/**")
     }
 }
-
-val editorConfigOverride = mapOf(
-    "ktlint_function_naming_ignore_when_annotated_with" to "Composable",
-    "ktlint_standard_property-naming" to "disabled",
-    "ktlint_standard_function-signature" to "disabled",
-    "ktlint_standard_parameter-list-spacing" to "disabled",
-    "ktlint_ignore_back_ticked_identifier" to "true",
-)

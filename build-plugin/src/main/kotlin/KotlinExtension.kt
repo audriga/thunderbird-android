@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun Project.configureKotlinJavaCompatibility() {
     tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = ThunderbirdProjectConfig.javaCompatibilityVersion.toString()
+        compilerOptions {
+            jvmTarget.set(ThunderbirdProjectConfig.Compiler.jvmTarget)
         }
     }
 }

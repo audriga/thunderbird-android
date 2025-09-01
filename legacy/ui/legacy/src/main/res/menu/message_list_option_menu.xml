@@ -22,7 +22,7 @@
     <!-- MessageList -->
     <item
         android:id="@+id/search_remote"
-        android:icon="@drawable/ic_search"
+        android:icon="@drawable/ic_search_remote"
         android:title="@string/action_remote_search"
         android:visible="false"
         app:showAsAction="always"
@@ -203,6 +203,13 @@
         android:id="@+id/send_messages"
         android:icon="@drawable/ic_upload"
         android:title="@string/send_messages_action"
+        app:showAsAction="never"
+        />
+
+    <!-- MessageList -->
+    <item
+        android:id="@+id/empty_spam"
+        android:title="@string/empty_spam_action"
         app:showAsAction="never"
         />
 

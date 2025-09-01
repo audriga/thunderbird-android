@@ -9,19 +9,19 @@ import androidx.core.content.IntentCompat
 import androidx.core.os.BundleCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
-import app.k9mail.legacy.account.Account
-import app.k9mail.legacy.account.Identity
 import com.fsck.k9.EmailAddressValidator
 import com.fsck.k9.Preferences
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.base.K9Activity
 import com.google.android.material.checkbox.MaterialCheckBox
+import net.thunderbird.core.android.account.Identity
+import net.thunderbird.core.android.account.LegacyAccount
 import org.koin.android.ext.android.inject
 
 class EditIdentity : K9Activity() {
     private val emailAddressValidator: EmailAddressValidator by inject()
 
-    private lateinit var account: Account
+    private lateinit var account: LegacyAccount
     private lateinit var identity: Identity
 
     private lateinit var description: EditText

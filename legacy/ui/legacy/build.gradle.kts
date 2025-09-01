@@ -5,21 +5,31 @@ plugins {
 
 dependencies {
     api(projects.legacy.ui.base)
-    api(projects.legacy.ui.account)
+    api(projects.core.ui.account)
     api(projects.legacy.ui.folder)
     api(projects.core.ui.legacy.designsystem)
 
     implementation(projects.legacy.core)
+    implementation(projects.feature.mail.account.api)
     implementation(projects.mail.common)
     implementation(projects.uiUtils.toolbarBottomSheet)
+    implementation(projects.core.android.contact)
 
-    implementation(projects.core.featureflags)
+    implementation(projects.core.featureflag)
+    implementation(projects.core.ui.theme.api)
     implementation(projects.feature.launcher)
-    implementation(projects.feature.navigation.drawer)
+    implementation(projects.core.common)
+    implementation(projects.feature.navigation.drawer.api)
+    implementation(projects.feature.navigation.drawer.dropdown)
+    implementation(projects.feature.navigation.drawer.siderail)
+    implementation(projects.feature.notification.api)
     // TODO: Remove AccountOauth dependency
     implementation(projects.feature.account.oauth)
+    implementation(projects.feature.funding.api)
+    implementation(projects.feature.search.implLegacy)
     implementation(projects.feature.settings.import)
     implementation(projects.feature.telemetry.api)
+    implementation(projects.feature.mail.message.list)
 
     compileOnly(projects.mail.protocols.imap)
 
@@ -40,9 +50,8 @@ dependencies {
     implementation(libs.androidx.localbroadcastmanager)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.ckchangelog.core)
-    implementation(libs.tokenautocomplete)
+    implementation(projects.library.tokenAutoComplete)
     implementation(libs.safeContentResolver)
-    implementation(libs.materialdrawer)
     implementation(libs.searchPreference)
     implementation(libs.fastadapter)
     implementation(libs.fastadapter.extensions.drag)
@@ -53,7 +62,6 @@ dependencies {
     implementation(libs.commons.io)
     implementation(libs.androidx.core.ktx)
     implementation(libs.jcip.annotations)
-    implementation(libs.timber)
     implementation(libs.mime4j.core)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
@@ -80,12 +88,15 @@ dependencies {
     implementation(libs.glide)
     annotationProcessor(libs.glide.compiler)
 
+    testImplementation(projects.core.logging.testing)
+    testImplementation(projects.feature.account.fake)
+
     // This is necessary as RecipientPresenterTest fails to inject
     testImplementation(projects.legacy.common)
     testImplementation(projects.core.testing)
+    testImplementation(projects.core.android.testing)
     testImplementation(projects.mail.testing)
     testImplementation(projects.legacy.storage)
-    testImplementation(projects.legacy.testing)
     testImplementation(projects.feature.telemetry.noop)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

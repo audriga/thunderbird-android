@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import android.annotation.SuppressLint;
@@ -46,13 +47,14 @@ import com.fsck.k9.view.RecipientSelectView.Recipient;
 import com.google.android.material.textview.MaterialTextView;
 import com.tokenautocomplete.TokenCompleteTextView;
 import de.hdodenhof.circleimageview.CircleImageView;
-import timber.log.Timber;
+import net.thunderbird.core.preference.GeneralSettingsManager;
+import net.thunderbird.core.logging.legacy.Log;
 
 import static com.fsck.k9.FontSizes.FONT_DEFAULT;
 
 
 public class RecipientSelectView extends TokenCompleteTextView<Recipient> implements LoaderCallbacks<List<Recipient>>,
-        AlternateRecipientListener {
+    AlternateRecipientListener {
 
     private static final int MINIMUM_LENGTH_FOR_FILTERING = 2;
 
@@ -64,10 +66,11 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
 
     private final UserInputEmailAddressParser emailAddressParser = DI.get(UserInputEmailAddressParser.class);
 
+    private final GeneralSettingsManager generalSettingsManager = DI.get(GeneralSettingsManager.class);
+
     private RecipientAdapter adapter;
     @Nullable
     private String cryptoProvider;
-    private boolean showAdvancedInfo;
     private boolean showCryptoEnabled;
     @Nullable
     private LoaderManager loaderManager;
@@ -149,7 +152,9 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     private void bindObjectView(Recipient recipient, View view) {
         RecipientTokenViewHolder holder = (RecipientTokenViewHolder) view.getTag();
 
-        holder.vName.setText(recipient.getDisplayNameOrAddress());
+        holder.vName.setText(recipient.getDisplayNameOrAddress(
+            generalSettingsManager.getConfig().getDisplay().isShowCorrespondentNames()
+        ));
         if (tokenTextSize != FONT_DEFAULT) {
             holder.vName.setTextSize(TypedValue.COMPLEX_UNIT_SP, tokenTextSize);
         }
@@ -163,30 +168,38 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
         }
 
         boolean isAvailable = recipient.cryptoStatus == RecipientCryptoStatus.AVAILABLE_TRUSTED ||
-                recipient.cryptoStatus == RecipientCryptoStatus.AVAILABLE_UNTRUSTED;
-        if (!showAdvancedInfo) {
-            holder.showSimpleCryptoState(isAvailable, showCryptoEnabled);
-        } else {
-            boolean isVerified = recipient.cryptoStatus == RecipientCryptoStatus.AVAILABLE_TRUSTED;
-            holder.showAdvancedCryptoState(isAvailable, isVerified);
+            recipient.cryptoStatus == RecipientCryptoStatus.AVAILABLE_UNTRUSTED;
+
+        holder.showCryptoState(isAvailable, showCryptoEnabled);
+    }
+
+    private List<Recipient> parseRecipients(String text) {
+        try {
+            List<Address> parsedAddresses = emailAddressParser.parse(text);
+
+            if (parsedAddresses.isEmpty()) {
+                setError(getContext().getString(R.string.recipient_error_parse_failed));
+                return List.of();
+            }
+
+            List<Recipient> recipients = new ArrayList<>();
+            for (Address a : parsedAddresses) {
+                recipients.add(new Recipient(a));
+            }
+            return recipients;
+        } catch (NonAsciiEmailAddressException e) {
+            setError(getContext().getString(R.string.recipient_error_non_ascii));
+            return List.of();
         }
     }
 
     @Override
     protected Recipient defaultObject(String completionText) {
-        try {
-            List<Address> parsedAddresses = emailAddressParser.parse(completionText);
-
-            if (parsedAddresses.isEmpty()) {
-                setError(getContext().getString(R.string.recipient_error_parse_failed));
-                return null;
-            }
-
-            return new Recipient(parsedAddresses.get(0));
-        } catch (NonAsciiEmailAddressException e) {
-            setError(getContext().getString(R.string.recipient_error_non_ascii));
-            return null;
+        List<Recipient> recipients = parseRecipients(completionText);
+        if (!recipients.isEmpty()) {
+            return recipients.get(0);
         }
+        return null;
     }
 
     public void setLoaderManager(@Nullable LoaderManager loaderManager) {
@@ -216,16 +229,15 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     }
 
     /**
-     * TokenCompleteTextView removes composing strings, and etc, but leaves internal composition
-     * predictions partially constructed. Changing either/or the Selection or Candidate start/end
-     * positions, forces the IMM to reset cleaner.
+     * TokenCompleteTextView removes composing strings, and etc, but leaves internal composition predictions partially
+     * constructed. Changing either/or the Selection or Candidate start/end positions, forces the IMM to reset cleaner.
      */
     @Override
     protected void replaceText(CharSequence text) {
         super.replaceText(text);
 
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(
-                Context.INPUT_METHOD_SERVICE);
+            Context.INPUT_METHOD_SERVICE);
         imm.updateSelection(this, getSelectionStart(), getSelectionEnd(), -1, -1);
     }
 
@@ -250,9 +262,12 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     @Override
     public void performCompletion() {
         if (getListSelection() == ListView.INVALID_POSITION && enoughToFilter()) {
-            Object recipientText = defaultObject(currentCompletionText());
-            if (recipientText != null) {
-                replaceText(convertSelectionToString(recipientText));
+            List<Recipient> recipients = parseRecipients(currentCompletionText());
+            if (!recipients.isEmpty()) {
+                clearCompletionText();
+                for (Recipient r : recipients) {
+                    addObjectSync(r);
+                }
             }
         } else {
             super.performCompletion();
@@ -276,11 +291,8 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
         loaderManager.restartLoader(LOADER_ID_FILTERING, args, this);
     }
 
-    public void setCryptoProvider(@Nullable String cryptoProvider, boolean showAdvancedInfo) {
+    public void setCryptoProvider(@Nullable String cryptoProvider) {
         this.cryptoProvider = cryptoProvider;
-        this.showAdvancedInfo = showAdvancedInfo;
-        adapter.setShowAdvancedInfo(showAdvancedInfo);
-        alternatesAdapter.setShowAdvancedInfo(showAdvancedInfo);
     }
 
     public void setShowCryptoEnabled(boolean showCryptoEnabled) {
@@ -463,7 +475,7 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
         List<Recipient> currentRecipients = getObjects();
         int indexOfRecipient = currentRecipients.indexOf(recipientToReplace);
         if (indexOfRecipient == -1) {
-            Timber.e("Tried to refresh invalid view token!");
+            Log.e("Tried to refresh invalid view token!");
             return;
         }
         Recipient currentRecipient = currentRecipients.get(indexOfRecipient);
@@ -474,7 +486,7 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
 
         View recipientTokenView = getTokenViewForRecipient(currentRecipient);
         if (recipientTokenView == null) {
-            Timber.e("Tried to refresh invalid view token!");
+            Log.e("Tried to refresh invalid view token!");
             return;
         }
 
@@ -498,8 +510,8 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     }
 
     /**
-     * Changing the size of our RecipientTokenSpan doesn't seem to redraw the cursor in the new position. This will
-     * make sure the cursor position is recalculated.
+     * Changing the size of our RecipientTokenSpan doesn't seem to redraw the cursor in the new position. This will make
+     * sure the cursor position is recalculated.
      */
     private void invalidateCursorPositionHack() {
         int oldStart = getSelectionStart();
@@ -514,9 +526,8 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     }
 
     /**
-     * This method builds the span given a recipient object. We override it with identical
-     * functionality, but using the custom RecipientTokenSpan class which allows us to
-     * retrieve the view for redrawing at a later point.
+     * This method builds the span given a recipient object. We override it with identical functionality, but using the
+     * custom RecipientTokenSpan class which allows us to retrieve the view for redrawing at a later point.
      */
     @Override
     protected TokenImageSpan buildSpanForObject(Recipient obj) {
@@ -529,8 +540,8 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     }
 
     /**
-     * Find the token view tied to a given recipient. This method relies on spans to
-     * be of the RecipientTokenSpan class, as created by the buildSpanForObject method.
+     * Find the token view tied to a given recipient. This method relies on spans to be of the RecipientTokenSpan class,
+     * as created by the buildSpanForObject method.
      */
     private View getTokenViewForRecipient(Recipient currentRecipient) {
         Editable text = getText();
@@ -549,8 +560,8 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     }
 
     /**
-     * We use a specialized version of TokenCompleteTextView.TokenListener as well,
-     * adding a callback for onTokenChanged.
+     * We use a specialized version of TokenCompleteTextView.TokenListener as well, adding a callback for
+     * onTokenChanged.
      */
     public void setTokenListener(TokenListener<Recipient> listener) {
         super.setTokenListener(listener);
@@ -584,7 +595,7 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
 
         @Override
         public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end, float x, int top, int y,
-                int bottom, @NonNull Paint paint) {
+            int bottom, @NonNull Paint paint) {
             super.draw(canvas, text, start, end, x, top, y, bottom, paint);
 
             // Dispatch onPreDraw event so image loading using Glide will work properly.
@@ -595,54 +606,30 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     private static class RecipientTokenViewHolder {
         final MaterialTextView vName;
         final CircleImageView vContactPhoto;
-        final View cryptoStatusRed;
-        final View cryptoStatusOrange;
-        final View cryptoStatusGreen;
-        final View cryptoStatusSimple;
-        final View cryptoStatusSimpleEnabled;
-        final View cryptoStatusSimpleError;
+        final View cryptoStatus;
+        final View cryptoStatusEnabled;
+        final View cryptoStatusError;
 
 
         RecipientTokenViewHolder(View view) {
             vName = view.findViewById(android.R.id.text1);
             vContactPhoto = view.findViewById(R.id.contact_photo);
-            cryptoStatusRed = view.findViewById(R.id.contact_crypto_status_red);
-            cryptoStatusOrange = view.findViewById(R.id.contact_crypto_status_orange);
-            cryptoStatusGreen = view.findViewById(R.id.contact_crypto_status_green);
 
-            cryptoStatusSimple = view.findViewById(R.id.contact_crypto_status_icon_simple);
-            cryptoStatusSimpleEnabled = view.findViewById(R.id.contact_crypto_status_icon_simple_enabled);
-            cryptoStatusSimpleError = view.findViewById(R.id.contact_crypto_status_icon_simple_error);
+            cryptoStatus = view.findViewById(R.id.contact_crypto_status_icon);
+            cryptoStatusEnabled = view.findViewById(R.id.contact_crypto_status_icon_enabled);
+            cryptoStatusError = view.findViewById(R.id.contact_crypto_status_icon_error);
         }
 
-        void showSimpleCryptoState(boolean isAvailable, boolean isShowEnabled) {
-            cryptoStatusRed.setVisibility(View.GONE);
-            cryptoStatusOrange.setVisibility(View.GONE);
-            cryptoStatusGreen.setVisibility(View.GONE);
-
-            cryptoStatusSimple.setVisibility(!isShowEnabled && isAvailable ? View.VISIBLE : View.GONE);
-            cryptoStatusSimpleEnabled.setVisibility(isShowEnabled && isAvailable ? View.VISIBLE : View.GONE);
-            cryptoStatusSimpleError.setVisibility(isShowEnabled && !isAvailable ? View.VISIBLE : View.GONE);
-        }
-
-        void showAdvancedCryptoState(boolean isAvailable, boolean isVerified) {
-            cryptoStatusRed.setVisibility(!isAvailable ? View.VISIBLE : View.GONE);
-            cryptoStatusOrange.setVisibility(isAvailable && !isVerified ? View.VISIBLE : View.GONE);
-            cryptoStatusGreen.setVisibility(isAvailable && isVerified ? View.VISIBLE : View.GONE);
-
-            cryptoStatusSimple.setVisibility(View.GONE);
-            cryptoStatusSimpleEnabled.setVisibility(View.GONE);
-            cryptoStatusSimpleError.setVisibility(View.GONE);
+        void showCryptoState(boolean isAvailable, boolean isShowEnabled) {
+            cryptoStatus.setVisibility(!isShowEnabled && isAvailable ? View.VISIBLE : View.GONE);
+            cryptoStatusEnabled.setVisibility(isShowEnabled && isAvailable ? View.VISIBLE : View.GONE);
+            cryptoStatusError.setVisibility(isShowEnabled && !isAvailable ? View.VISIBLE : View.GONE);
         }
 
         void hideCryptoState() {
-            cryptoStatusRed.setVisibility(View.GONE);
-            cryptoStatusOrange.setVisibility(View.GONE);
-            cryptoStatusGreen.setVisibility(View.GONE);
-
-            cryptoStatusSimple.setVisibility(View.GONE);
-            cryptoStatusSimpleEnabled.setVisibility(View.GONE);
-            cryptoStatusSimpleError.setVisibility(View.GONE);
+            cryptoStatus.setVisibility(View.GONE);
+            cryptoStatusEnabled.setVisibility(View.GONE);
+            cryptoStatusError.setVisibility(View.GONE);
         }
     }
 
@@ -676,7 +663,7 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
         }
 
         public Recipient(String name, String email, String addressLabel, long contactId, String lookupKey,
-                int timesContacted, String sortKey, boolean starred) {
+            int timesContacted, String sortKey, boolean starred) {
             this.address = new Address(email, name);
             this.contactId = contactId;
             this.addressLabel = addressLabel;
@@ -687,8 +674,8 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
             this.starred = starred;
         }
 
-        public String getDisplayNameOrAddress() {
-            final String displayName = K9.isShowCorrespondentNames() ? getDisplayName() : null;
+        public String getDisplayNameOrAddress(Boolean showCorrespondentNames) {
+            final String displayName = showCorrespondentNames ? getDisplayName() : null;
 
             if (displayName != null) {
                 return displayName;

@@ -12,8 +12,9 @@ import android.database.sqlite.SQLiteException;
 
 import com.fsck.k9.K9;
 import com.fsck.k9.helper.FileHelper;
-import com.fsck.k9.mail.MessagingException;
-import timber.log.Timber;
+import net.thunderbird.core.common.exception.MessagingException;
+import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 
 import static java.lang.System.currentTimeMillis;
 
@@ -46,8 +47,6 @@ public class LockableDatabase {
         void doDbUpgrade(SQLiteDatabase db);
     }
 
-    private String mStorageProviderId;
-
     private SQLiteDatabase mDb;
     /**
      * Reentrant read lock
@@ -66,6 +65,7 @@ public class LockableDatabase {
     }
 
     private Context context;
+    private final StorageFilesProvider storageFilesProvider;
 
     /**
      * {@link ThreadLocal} to check whether a DB transaction is occurring in the
@@ -76,33 +76,14 @@ public class LockableDatabase {
     private ThreadLocal<Boolean> inTransaction = new ThreadLocal<>();
 
     private SchemaDefinition mSchemaDefinition;
+    private GeneralSettingsManager generalSettingsManager;
 
-    private String uUid;
-
-    /**
-     * @param context
-     *            Never <code>null</code>.
-     * @param uUid
-     *            Never <code>null</code>.
-     * @param schemaDefinition
-     *            Never <code>null</code>.
-     */
-    public LockableDatabase(final Context context, final String uUid, final SchemaDefinition schemaDefinition) {
+    public LockableDatabase(Context context, StorageFilesProvider storageFilesProvider,
+            SchemaDefinition schemaDefinition, GeneralSettingsManager generalSettingsManager) {
         this.context = context;
-        this.uUid = uUid;
+        this.storageFilesProvider = storageFilesProvider;
         this.mSchemaDefinition = schemaDefinition;
-    }
-
-    public void setStorageProviderId(String mStorageProviderId) {
-        this.mStorageProviderId = mStorageProviderId;
-    }
-
-    public String getStorageProviderId() {
-        return mStorageProviderId;
-    }
-
-    private StorageManager getStorageManager() {
-        return StorageManager.getInstance(context);
+        this.generalSettingsManager = generalSettingsManager;
     }
 
     /**
@@ -160,7 +141,7 @@ public class LockableDatabase {
         lockRead();
         final boolean doTransaction = transactional && inTransaction.get() == null;
         try {
-            final boolean debug = K9.isDebugLoggingEnabled();
+            final boolean debug = generalSettingsManager.getConfig().getDebugging().isDebugLoggingEnabled();
             if (doTransaction) {
                 inTransaction.set(Boolean.TRUE);
                 mDb.beginTransaction();
@@ -182,7 +163,7 @@ public class LockableDatabase {
                     // not doing endTransaction in the same 'finally' block of unlockRead() because endTransaction() may throw an exception
                     mDb.endTransaction();
                     if (debug) {
-                        Timber.v("LockableDatabase: Transaction ended, took %d ms / %s",
+                        Log.v("LockableDatabase: Transaction ended, took %d ms / %s",
                                 currentTimeMillis() - begin,
                                 new Exception().getStackTrace()[1]);
                     }
@@ -193,51 +174,6 @@ public class LockableDatabase {
                 inTransaction.set(null);
             }
             unlockRead();
-        }
-    }
-
-    /**
-     * @param newProviderId
-     *            Never <code>null</code>.
-     * @throws MessagingException
-     */
-    public void switchProvider(final String newProviderId) throws MessagingException {
-        if (newProviderId.equals(mStorageProviderId)) {
-            Timber.v("LockableDatabase: Ignoring provider switch request as they are equal: %s", newProviderId);
-            return;
-        }
-
-        Timber.v("LockableDatabase: Switching provider from %s to %s", mStorageProviderId, newProviderId);
-
-        final String oldProviderId = mStorageProviderId;
-        lockWrite();
-        try {
-            try {
-                mDb.close();
-            } catch (Exception e) {
-                Timber.i(e, "Unable to close DB on local store migration");
-            }
-
-            final StorageManager storageManager = getStorageManager();
-            File oldDatabase = storageManager.getDatabase(uUid, oldProviderId);
-
-            // create new path
-            prepareStorage(newProviderId);
-
-            // move all database files
-            FileHelper.moveRecursive(oldDatabase, storageManager.getDatabase(uUid, newProviderId));
-            // move all attachment files
-            FileHelper.moveRecursive(storageManager.getAttachmentDirectory(uUid, oldProviderId),
-                    storageManager.getAttachmentDirectory(uUid, newProviderId));
-            // remove any remaining old journal files
-            deleteDatabase(oldDatabase);
-
-            mStorageProviderId = newProviderId;
-
-            // re-initialize this class with the new Uri
-            openOrCreateDataspace();
-        } finally {
-            unlockWrite();
         }
     }
 
@@ -253,14 +189,14 @@ public class LockableDatabase {
     private void openOrCreateDataspace() {
         lockWrite();
         try {
-            final File databaseFile = prepareStorage(mStorageProviderId);
+            final File databaseFile = prepareStorage();
             try {
                 doOpenOrCreateDb(databaseFile);
             } catch (SQLiteException e) {
                 // TODO handle this error in a better way!
-                Timber.w(e, "Unable to open DB %s - removing file and retrying", databaseFile);
+                Log.w(e, "Unable to open DB %s - removing file and retrying", databaseFile);
                 if (databaseFile.exists() && !databaseFile.delete()) {
-                    Timber.d("Failed to remove %s that couldn't be opened", databaseFile);
+                    Log.d("Failed to remove %s that couldn't be opened", databaseFile);
                 }
                 doOpenOrCreateDb(databaseFile);
             }
@@ -276,20 +212,11 @@ public class LockableDatabase {
     }
 
     private void doOpenOrCreateDb(final File databaseFile) {
-        if (StorageManager.InternalStorageProvider.ID.equals(mStorageProviderId)) {
-            // internal storage
-            mDb = context.openOrCreateDatabase(databaseFile.getName(), Context.MODE_PRIVATE,
-                    null);
-        } else {
-            // external storage
-            mDb = SQLiteDatabase.openOrCreateDatabase(databaseFile, null);
-        }
+        mDb = context.openOrCreateDatabase(databaseFile.getName(), Context.MODE_PRIVATE, null);
     }
 
-    protected File prepareStorage(final String providerId) {
-        final StorageManager storageManager = getStorageManager();
-
-        final File databaseFile = storageManager.getDatabase(uUid, providerId);
+    protected File prepareStorage() {
+        final File databaseFile = storageFilesProvider.getDatabaseFile();
         final File databaseParentDir = databaseFile.getParentFile();
         if (databaseParentDir.isFile()) {
             // should be safe to unconditionally delete clashing file: user is not supposed to mess with our directory
@@ -303,7 +230,7 @@ public class LockableDatabase {
             FileHelper.touchFile(databaseParentDir, ".nomedia");
         }
 
-        final File attachmentDir = storageManager.getAttachmentDirectory(uUid, providerId);
+        final File attachmentDir = storageFilesProvider.getAttachmentDirectory();
         final File attachmentParentDir = attachmentDir.getParentFile();
         if (!attachmentParentDir.exists()) {
             // noinspection ResultOfMethodCallIgnored, TODO maybe throw UnavailableStorageException?
@@ -334,33 +261,32 @@ public class LockableDatabase {
             try {
                 mDb.close();
             } catch (Exception e) {
-                Timber.d("Exception caught in DB close: %s", e.getMessage());
+                Log.d("Exception caught in DB close: %s", e.getMessage());
             }
-            final StorageManager storageManager = getStorageManager();
             try {
-                final File attachmentDirectory = storageManager.getAttachmentDirectory(uUid, mStorageProviderId);
+                final File attachmentDirectory = storageFilesProvider.getAttachmentDirectory();
                 final File[] attachments = attachmentDirectory.listFiles();
                 for (File attachment : attachments) {
                     if (attachment.exists()) {
                         boolean attachmentWasDeleted = attachment.delete();
                         if (!attachmentWasDeleted) {
-                            Timber.d("Attachment was not deleted!");
+                            Log.d("Attachment was not deleted!");
                         }
                     }
                 }
                 if (attachmentDirectory.exists()) {
                     boolean attachmentDirectoryWasDeleted = attachmentDirectory.delete();
                     if (!attachmentDirectoryWasDeleted) {
-                        Timber.d("Attachment directory was not deleted!");
+                        Log.d("Attachment directory was not deleted!");
                     }
                 }
             } catch (Exception e) {
-                Timber.d("Exception caught in clearing attachments: %s", e.getMessage());
+                Log.d("Exception caught in clearing attachments: %s", e.getMessage());
             }
             try {
-                deleteDatabase(storageManager.getDatabase(uUid, mStorageProviderId));
+                deleteDatabase(storageFilesProvider.getDatabaseFile());
             } catch (Exception e) {
-                Timber.i(e, "LockableDatabase: delete(): Unable to delete backing DB file");
+                Log.i(e, "LockableDatabase: delete(): Unable to delete backing DB file");
             }
 
             if (recreate) {
@@ -374,7 +300,7 @@ public class LockableDatabase {
     private void deleteDatabase(File database) {
         boolean deleted = SQLiteDatabase.deleteDatabase(database);
         if (!deleted) {
-            Timber.i("LockableDatabase: deleteDatabase(): No files deleted.");
+            Log.i("LockableDatabase: deleteDatabase(): No files deleted.");
         }
     }
 }

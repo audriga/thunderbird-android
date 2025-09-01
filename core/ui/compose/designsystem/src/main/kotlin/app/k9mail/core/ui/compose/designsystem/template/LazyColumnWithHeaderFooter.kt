@@ -1,13 +1,17 @@
 package app.k9mail.core.ui.compose.designsystem.template
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 
 /**
  * The [LazyColumnWithHeaderFooter] composable creates a [LazyColumn] with header and footer items.
@@ -22,6 +26,8 @@ import androidx.compose.ui.unit.Density
 @Composable
 fun LazyColumnWithHeaderFooter(
     modifier: Modifier = Modifier,
+    state: LazyListState = rememberLazyListState(),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     header: @Composable () -> Unit = {},
@@ -30,6 +36,8 @@ fun LazyColumnWithHeaderFooter(
 ) {
     LazyColumn(
         modifier = modifier,
+        state = state,
+        contentPadding = contentPadding,
         verticalArrangement = verticalArrangementWithHeaderFooter(verticalArrangement),
         horizontalAlignment = horizontalAlignment,
     ) {

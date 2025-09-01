@@ -10,6 +10,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.k9mail.feature.migration.launcher.api.MigrationManager
 import app.k9mail.feature.settings.import.SettingsImportExternalContract.AccountActivator
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.helper.measureRealtimeMillisWithResult
@@ -27,7 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
-import timber.log.Timber
+import net.thunderbird.core.logging.legacy.Log
 
 private typealias AccountUuid = String
 private typealias AccountNumber = Int
@@ -36,12 +37,17 @@ internal class SettingsImportViewModel(
     private val contentResolver: ContentResolver,
     private val settingsImporter: SettingsImporter,
     private val accountActivator: AccountActivator,
+    private val migrationManager: MigrationManager,
     private val importAppFetcher: ImportAppFetcher,
     private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.IO,
     viewModelScope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
 ) : ViewModel(viewModelScope) {
     private val uiModelLiveData = MutableLiveData<SettingsImportUiModel>()
     private val actionLiveData = SingleLiveEvent<Action>()
+
+    private var isInitialized = false
+    private var action = SettingsImportAction.Overview
+    private var wasActionHandled = false
 
     private val uiModel = SettingsImportUiModel()
     private var accountsMap: MutableMap<AccountNumber, AccountUuid> = mutableMapOf()
@@ -69,8 +75,18 @@ internal class SettingsImportViewModel(
                 .toSet()
         }
 
-    init {
-        checkForImportApps()
+    fun initialize() {
+        if (isInitialized) return
+
+        if (migrationManager.isFeatureIncluded()) {
+            updateUiModel {
+                showMigrationActions()
+            }
+
+            checkForImportApps()
+        }
+
+        isInitialized = true
     }
 
     private fun checkForImportApps() {
@@ -98,7 +114,9 @@ internal class SettingsImportViewModel(
         return uiModelLiveData
     }
 
+    @Suppress("LongMethod")
     fun initializeFromSavedState(savedInstanceState: Bundle) {
+        wasActionHandled = true
         contentUri = BundleCompat.getParcelable(savedInstanceState, STATE_CONTENT_URI, Uri::class.java)
         currentlyAuthorizingAccountUuid = savedInstanceState.getString(STATE_CURRENTLY_AUTHORIZING_ACCOUNT_UUID)
 
@@ -110,6 +128,8 @@ internal class SettingsImportViewModel(
             closeButtonLabel = savedInstanceState.getEnum(STATE_CLOSE_BUTTON_LABEL, CloseButtonLabel.OK)
             isPickDocumentButtonVisible = savedInstanceState.getBoolean(STATE_PICK_DOCUMENT_BUTTON_VISIBLE)
             isPickDocumentButtonEnabled = savedInstanceState.getBoolean(STATE_PICK_DOCUMENT_BUTTON_ENABLED)
+            isScanQrCodeButtonVisible = savedInstanceState.getBoolean(STATE_SCAN_QR_CODE_BUTTON_VISIBLE)
+            isScanQrCodeButtonEnabled = savedInstanceState.getBoolean(STATE_SCAN_QR_CODE_BUTTON_ENABLED)
 
             isLoadingProgressVisible = savedInstanceState.getBoolean(STATE_LOADING_PROGRESS_VISIBLE)
             isImportProgressVisible = savedInstanceState.getBoolean(STATE_IMPORT_PROGRESS_VISIBLE)
@@ -174,6 +194,8 @@ internal class SettingsImportViewModel(
             outState.putEnum(STATE_CLOSE_BUTTON_LABEL, closeButtonLabel)
             outState.putBoolean(STATE_PICK_DOCUMENT_BUTTON_VISIBLE, isPickDocumentButtonVisible)
             outState.putBoolean(STATE_PICK_DOCUMENT_BUTTON_ENABLED, isPickDocumentButtonEnabled)
+            outState.putBoolean(STATE_SCAN_QR_CODE_BUTTON_VISIBLE, isScanQrCodeButtonVisible)
+            outState.putBoolean(STATE_SCAN_QR_CODE_BUTTON_ENABLED, isScanQrCodeButtonEnabled)
             outState.putBoolean(STATE_LOADING_PROGRESS_VISIBLE, isLoadingProgressVisible)
             outState.putBoolean(STATE_IMPORT_PROGRESS_VISIBLE, isImportProgressVisible)
             outState.putEnum(STATE_STATUS_TEXT, statusText)
@@ -193,12 +215,33 @@ internal class SettingsImportViewModel(
         outState.putParcelable(STATE_CONTENT_URI, contentUri)
     }
 
+    fun setAction(action: SettingsImportAction) {
+        this.action = action
+
+        if (!wasActionHandled) {
+            wasActionHandled = true
+
+            when (action) {
+                SettingsImportAction.Overview -> Unit
+                SettingsImportAction.ScanQrCode -> onScanQrCodeButtonClicked()
+            }
+        }
+    }
+
     fun onPickDocumentButtonClicked() {
         updateUiModel {
             disablePickButtons()
         }
 
         sendActionEvent(Action.PickDocument)
+    }
+
+    fun onScanQrCodeButtonClicked() {
+        updateUiModel {
+            disablePickButtons()
+        }
+
+        sendActionEvent(Action.ScanQrCode)
     }
 
     fun onPickAppButtonClicked() {
@@ -210,8 +253,12 @@ internal class SettingsImportViewModel(
     }
 
     fun onDocumentPickCanceled() {
-        updateUiModel {
-            enablePickButtons()
+        if (action == SettingsImportAction.ScanQrCode) {
+            sendActionEvent(Action.Close(importSuccess = false))
+        } else {
+            updateUiModel {
+                enablePickButtons()
+            }
         }
     }
 
@@ -340,7 +387,7 @@ internal class SettingsImportViewModel(
                     initializeSettingsList(items)
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Error reading settings file")
+                Log.e(e, "Error reading settings file")
 
                 updateUiModel {
                     showReadFailureText()
@@ -376,7 +423,7 @@ internal class SettingsImportViewModel(
                     updateCloseButtonAndImportStatusText()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Error importing settings")
+                Log.e(e, "Error importing settings")
 
                 updateUiModel {
                     showImportErrorText()
@@ -519,6 +566,8 @@ internal class SettingsImportViewModel(
         private const val STATE_CLOSE_BUTTON_LABEL = "closeButtonLabel"
         private const val STATE_PICK_DOCUMENT_BUTTON_VISIBLE = "pickDocumentButtonVisible"
         private const val STATE_PICK_DOCUMENT_BUTTON_ENABLED = "pickDocumentButtonEnabled"
+        private const val STATE_SCAN_QR_CODE_BUTTON_VISIBLE = "scanQrCodeButtonVisible"
+        private const val STATE_SCAN_QR_CODE_BUTTON_ENABLED = "scanQrCodeButtonEnabled"
         private const val STATE_LOADING_PROGRESS_VISIBLE = "loadingProgressVisible"
         private const val STATE_IMPORT_PROGRESS_VISIBLE = "importProgressVisible"
         private const val STATE_STATUS_TEXT = "statusText"
@@ -534,6 +583,7 @@ internal class SettingsImportViewModel(
 sealed class Action {
     class Close(val importSuccess: Boolean) : Action()
     object PickDocument : Action()
+    object ScanQrCode : Action()
     object PickApp : Action()
     class StartAuthorization(val accountUuid: String) : Action()
     class PasswordPrompt(

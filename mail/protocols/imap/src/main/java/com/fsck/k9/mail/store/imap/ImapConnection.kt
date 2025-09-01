@@ -1,9 +1,9 @@
 package com.fsck.k9.mail.store.imap
 
-import com.fsck.k9.mail.MessagingException
 import java.io.IOException
 import java.io.OutputStream
 import java.net.SocketException
+import net.thunderbird.core.common.exception.MessagingException
 
 internal interface ImapConnection {
     val logId: String
@@ -11,12 +11,15 @@ internal interface ImapConnection {
     val isConnected: Boolean
     val outputStream: OutputStream
     val isUidPlusCapable: Boolean
+    val isUtf8AcceptCapable: Boolean
     val isIdleCapable: Boolean
 
     @Throws(IOException::class, MessagingException::class)
     fun open()
 
     fun close()
+
+    fun canSendUTF8QuotedStrings(): Boolean
 
     @Throws(IOException::class, MessagingException::class)
     fun hasCapability(capability: String): Boolean

@@ -1,6 +1,5 @@
 package app.k9mail.feature.account.server.settings.ui.incoming
 
-import app.k9mail.core.common.domain.usecase.validation.ValidationResult
 import app.k9mail.core.ui.compose.common.mvi.UnidirectionalViewModel
 import app.k9mail.feature.account.common.domain.entity.AuthenticationType
 import app.k9mail.feature.account.common.domain.entity.ConnectionSecurity
@@ -9,7 +8,7 @@ import app.k9mail.feature.account.common.domain.entity.toDefaultPort
 import app.k9mail.feature.account.common.domain.input.NumberInputField
 import app.k9mail.feature.account.common.domain.input.StringInputField
 import app.k9mail.feature.account.common.ui.WithInteractionMode
-import app.k9mail.feature.account.common.ui.loadingerror.LoadingErrorState
+import net.thunderbird.core.common.domain.usecase.validation.ValidationResult
 
 interface IncomingServerSettingsContract {
 
@@ -30,10 +29,7 @@ interface IncomingServerSettingsContract {
         val imapPrefix: StringInputField = StringInputField(),
         val imapUseCompression: Boolean = true,
         val imapSendClientInfo: Boolean = true,
-
-        override val isLoading: Boolean = true,
-        override val error: Error? = null,
-    ) : LoadingErrorState<Error>
+    )
 
     sealed interface Event {
         data class ProtocolTypeChanged(val protocolType: IncomingProtocolType) : Event

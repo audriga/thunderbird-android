@@ -1,6 +1,7 @@
 package net.thunderbird.cli.translation
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
@@ -15,7 +16,6 @@ class TranslationCli(
     private val supportedLanguagesFormatter: SupportedLanguagesFormatter = SupportedLanguagesFormatter(),
 ) : CliktCommand(
     name = "translation",
-    help = "Translation CLI",
 ) {
     private val token: String by option(
         help = "Weblate API token",
@@ -29,19 +29,27 @@ class TranslationCli(
         help = "Print code example",
     ).flag()
 
+    override fun help(context: Context): String = "Translation CLI"
+
     override fun run() {
         val languageCodes = languageCodeLoader.loadCurrentAndroidLanguageCodes(token, threshold)
+        val androidLanguageCodes = languageCodes.map { AndroidLanguageCodeHelper.fixLanguageCodeFormat(it) }
         val size = languageCodes.size
 
         echo("\nLanguages that are translated above the threshold of ($threshold%): $size")
         echo("--------------------------------------------------------------")
+        echo("For androidResources.localeFilters:")
         echo(languageCodes.joinToString(", "))
+        echo()
+        echo("For array resource supported_languages:")
+        echo(androidLanguageCodes.joinToString(", "))
         if (printAll) {
+            echo()
             echo("--------------------------------------------------------------")
             echo(configurationsFormatter.format(languageCodes))
             echo("--------------------------------------------------------------")
             echo("--------------------------------------------------------------")
-            echo(supportedLanguagesFormatter.format(languageCodes))
+            echo(supportedLanguagesFormatter.format(androidLanguageCodes))
             echo("--------------------------------------------------------------")
             echo("Please read docs/translating.md for more information on how to update language values.")
             echo("--------------------------------------------------------------")

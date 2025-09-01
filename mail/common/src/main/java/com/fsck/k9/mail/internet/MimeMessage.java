@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.fsck.k9.logging.Timber;
+import net.thunderbird.core.logging.legacy.Log;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyFactory;
@@ -23,7 +23,7 @@ import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.DefaultBodyFactory;
 import com.fsck.k9.mail.Header;
 import com.fsck.k9.mail.Message;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.MimeType;
 import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.Part;
@@ -38,6 +38,7 @@ import org.apache.james.mime4j.stream.BodyDescriptor;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.jetbrains.annotations.NotNull;
+import net.thunderbird.core.common.exception.MessagingException;
 
 
 /**
@@ -149,7 +150,7 @@ public class MimeMessage extends Message {
                 DateTimeField field = (DateTimeField) DefaultFieldParser.parse("Date: " + dateHeaderBody);
                 mSentDate = field.getDate();
             } catch (Exception e) {
-                Timber.d(e, "Couldn't parse Date header field");
+                Log.d(e, "Couldn't parse Date header field");
             }
         }
         return mSentDate;
@@ -161,7 +162,7 @@ public class MimeMessage extends Message {
      *
      * @see #mSentDate
      * @param sentDate
-     * @throws com.fsck.k9.mail.MessagingException
+     * @throws net.thunderbird.core.common.exception.MessagingException
      */
     public void addSentDate(Date sentDate, boolean hideTimeZone) {
         if (mDateFormat == null) {

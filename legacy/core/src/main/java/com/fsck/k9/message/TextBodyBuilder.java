@@ -1,13 +1,14 @@
 package com.fsck.k9.message;
 
 
-import timber.log.Timber;
+import net.thunderbird.core.logging.legacy.Log;
 
 import com.fsck.k9.K9;
 import com.fsck.k9.message.html.HtmlConverter;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.message.quote.InsertableHtmlContent;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 
 
 class TextBodyBuilder {
@@ -24,9 +25,11 @@ class TextBodyBuilder {
     private String mSignature;
     private String mQuotedText;
     private InsertableHtmlContent mQuotedTextHtml;
+    private GeneralSettingsManager generalSettingsManager;
 
-    public TextBodyBuilder(String messageContent) {
+    public TextBodyBuilder(String messageContent, GeneralSettingsManager generalSettingsManager) {
         mMessageContent = messageContent;
+        this.generalSettingsManager = generalSettingsManager;
     }
 
     /**
@@ -49,8 +52,8 @@ class TextBodyBuilder {
         if (mIncludeQuotedText) {
             InsertableHtmlContent quotedHtmlContent = getQuotedTextHtml();
 
-            if (K9.isDebugLoggingEnabled()) {
-                Timber.d("insertable: %s", quotedHtmlContent.toDebugString());
+            if (generalSettingsManager.getConfig().getDebugging().isDebugLoggingEnabled()) {
+                Log.d("insertable: %s", quotedHtmlContent.toDebugString());
             }
 
             // Convert the text to HTML

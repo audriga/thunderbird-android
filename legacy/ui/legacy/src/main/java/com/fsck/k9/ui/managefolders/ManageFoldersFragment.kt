@@ -12,7 +12,6 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.ui.folder.DisplayFolder
 import app.k9mail.legacy.ui.folder.FolderIconProvider
 import app.k9mail.legacy.ui.folder.FolderNameFormatter
@@ -23,6 +22,7 @@ import com.fsck.k9.ui.base.livedata.observeNotNull
 import com.mikepenz.fastadapter.FastAdapter
 import com.mikepenz.fastadapter.adapters.ItemAdapter
 import java.util.Locale
+import net.thunderbird.core.android.account.LegacyAccount
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -34,7 +34,7 @@ class ManageFoldersFragment : Fragment() {
     private val preferences: Preferences by inject()
     private val folderIconProvider: FolderIconProvider by inject { parametersOf(requireActivity().theme) }
 
-    private lateinit var account: Account
+    private lateinit var account: LegacyAccount
     private lateinit var itemAdapter: ItemAdapter<FolderListItem>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -99,6 +99,11 @@ class ManageFoldersFragment : Fragment() {
         configureFolderSearchView(menu)
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        val folderMenuItem = menu.findItem(R.id.filter_folders)
+        folderMenuItem.isVisible = !folderMenuItem.isActionViewExpanded
+    }
+
     private fun configureFolderSearchView(menu: Menu) {
         val folderMenuItem = menu.findItem(R.id.filter_folders)
         val folderSearchView = folderMenuItem.actionView as SearchView
@@ -116,15 +121,21 @@ class ManageFoldersFragment : Fragment() {
                 }
             },
         )
+        folderMenuItem?.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+            override fun onMenuItemActionExpand(p0: MenuItem): Boolean {
+                return true
+            }
+
+            override fun onMenuItemActionCollapse(p0: MenuItem): Boolean {
+                requireActivity().invalidateOptionsMenu()
+                return true
+            }
+        })
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.list_folders -> refreshFolderList()
-            R.id.display_1st_class -> setDisplayMode(Account.FolderMode.FIRST_CLASS)
-            R.id.display_1st_and_2nd_class -> setDisplayMode(Account.FolderMode.FIRST_AND_SECOND_CLASS)
-            R.id.display_not_second_class -> setDisplayMode(Account.FolderMode.NOT_SECOND_CLASS)
-            R.id.display_all -> setDisplayMode(Account.FolderMode.ALL)
             else -> return super.onOptionsItemSelected(item)
         }
 
@@ -133,13 +144,6 @@ class ManageFoldersFragment : Fragment() {
 
     private fun refreshFolderList() {
         messagingController.refreshFolderList(account)
-    }
-
-    private fun setDisplayMode(newMode: Account.FolderMode) {
-        account.folderDisplayMode = newMode
-        preferences.saveAccount(account)
-
-        itemAdapter.filter(null)
     }
 
     private fun folderListFilter(item: FolderListItem, constraint: CharSequence?): Boolean {

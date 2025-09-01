@@ -14,16 +14,16 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
-import com.fsck.k9.logging.Timber
 import com.fsck.k9.mailstore.AttachmentResolver
 import com.fsck.k9.ui.R
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
+import net.thunderbird.core.logging.legacy.Log
 
 
 /**
  * [WebViewClient] that intercepts requests for `cid:` URIs to load the respective body part.
  */
-internal class K9WebViewClient(
+class K9WebViewClient(
     private val clipboardManager: ClipboardManager,
     private val attachmentResolver: AttachmentResolver?,
     private val onPageFinishedListener: OnPageFinishedListener?,
@@ -80,7 +80,7 @@ internal class K9WebViewClient(
         try {
             context.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
-            Timber.d(e, "Couldn't open URL: %s", uri)
+            Log.d(e, "Couldn't open URL: %s", uri)
             Toast.makeText(context, R.string.error_activity_not_found, Toast.LENGTH_LONG).show()
         }
     }
@@ -110,7 +110,7 @@ internal class K9WebViewClient(
                 addCacheControlHeader()
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error while intercepting URI: %s", uri)
+            Log.e(e, "Error while intercepting URI: %s", uri)
             RESULT_DUMMY_RESPONSE
         }
     }

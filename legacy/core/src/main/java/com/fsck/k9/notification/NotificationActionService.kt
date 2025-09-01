@@ -4,7 +4,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
@@ -14,9 +13,10 @@ import com.fsck.k9.mail.Flag
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.logging.legacy.Log
 import org.koin.android.ext.android.inject
 import org.koin.core.qualifier.named
-import timber.log.Timber
 
 class NotificationActionService : Service() {
     private val preferences: Preferences by inject()
@@ -24,7 +24,7 @@ class NotificationActionService : Service() {
     private val coroutineScope: CoroutineScope by inject(named("AppCoroutineScope"))
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Timber.i("NotificationActionService started with startId = %d", startId)
+        Log.i("NotificationActionService started with startId = %d", startId)
 
         startHandleCommand(intent, startId)
 
@@ -41,22 +41,22 @@ class NotificationActionService : Service() {
     private fun handleCommand(intent: Intent) {
         val accountUuid = intent.getStringExtra(EXTRA_ACCOUNT_UUID)
         if (accountUuid == null) {
-            Timber.w("Missing account UUID.")
+            Log.w("Missing account UUID.")
             return
         }
 
         val account = preferences.getAccount(accountUuid)
         if (account == null) {
-            Timber.w("Could not find account for notification action.")
+            Log.w("Could not find account for notification action.")
             return
         }
 
         when (intent.action) {
             ACTION_MARK_AS_READ -> markMessagesAsRead(intent, account)
             ACTION_DELETE -> deleteMessages(intent)
-            ACTION_ARCHIVE -> archiveMessages(intent, account)
+            ACTION_ARCHIVE -> archiveMessages(intent)
             ACTION_SPAM -> markMessageAsSpam(intent, account)
-            ACTION_DISMISS -> Timber.i("Notification dismissed")
+            ACTION_DISMISS -> Log.i("Notification dismissed")
         }
 
         cancelNotifications(intent, account)
@@ -66,8 +66,8 @@ class NotificationActionService : Service() {
         return null
     }
 
-    private fun markMessagesAsRead(intent: Intent, account: Account) {
-        Timber.i("NotificationActionService marking messages as read")
+    private fun markMessagesAsRead(intent: Intent, account: LegacyAccount) {
+        Log.i("NotificationActionService marking messages as read")
 
         val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
         val messageReferences = MessageReferenceHelper.toMessageReferenceList(messageReferenceStrings)
@@ -80,7 +80,7 @@ class NotificationActionService : Service() {
     }
 
     private fun deleteMessages(intent: Intent) {
-        Timber.i("NotificationActionService deleting messages")
+        Log.i("NotificationActionService deleting messages")
 
         val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
         val messageReferences = MessageReferenceHelper.toMessageReferenceList(messageReferenceStrings)
@@ -88,40 +88,29 @@ class NotificationActionService : Service() {
         messagingController.deleteMessages(messageReferences)
     }
 
-    private fun archiveMessages(intent: Intent, account: Account) {
-        Timber.i("NotificationActionService archiving messages")
-
-        val archiveFolderId = account.archiveFolderId
-        if (archiveFolderId == null || !messagingController.isMoveCapable(account)) {
-            Timber.w("Cannot archive messages")
-            return
-        }
+    private fun archiveMessages(intent: Intent) {
+        Log.i("NotificationActionService archiving messages")
 
         val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
         val messageReferences = MessageReferenceHelper.toMessageReferenceList(messageReferenceStrings)
 
-        for (messageReference in messageReferences) {
-            if (messagingController.isMoveCapable(messageReference)) {
-                val sourceFolderId = messageReference.folderId
-                messagingController.moveMessage(account, sourceFolderId, messageReference, archiveFolderId)
-            }
-        }
+        messagingController.archiveMessages(messageReferences)
     }
 
-    private fun markMessageAsSpam(intent: Intent, account: Account) {
-        Timber.i("NotificationActionService moving messages to spam")
+    private fun markMessageAsSpam(intent: Intent, account: LegacyAccount) {
+        Log.i("NotificationActionService moving messages to spam")
 
         val messageReferenceString = intent.getStringExtra(EXTRA_MESSAGE_REFERENCE)
         val messageReference = MessageReference.parse(messageReferenceString)
 
         if (messageReference == null) {
-            Timber.w("Invalid message reference: %s", messageReferenceString)
+            Log.w("Invalid message reference: %s", messageReferenceString)
             return
         }
 
         val spamFolderId = account.spamFolderId
         if (spamFolderId == null) {
-            Timber.w("No spam folder configured")
+            Log.w("No spam folder configured")
             return
         }
 
@@ -131,7 +120,7 @@ class NotificationActionService : Service() {
         }
     }
 
-    private fun cancelNotifications(intent: Intent, account: Account) {
+    private fun cancelNotifications(intent: Intent, account: LegacyAccount) {
         if (intent.hasExtra(EXTRA_MESSAGE_REFERENCE)) {
             val messageReferenceString = intent.getStringExtra(EXTRA_MESSAGE_REFERENCE)
             val messageReference = MessageReference.parse(messageReferenceString)
@@ -139,7 +128,7 @@ class NotificationActionService : Service() {
             if (messageReference != null) {
                 messagingController.cancelNotificationForMessage(account, messageReference)
             } else {
-                Timber.w("Invalid message reference: %s", messageReferenceString)
+                Log.w("Invalid message reference: %s", messageReferenceString)
             }
         } else if (intent.hasExtra(EXTRA_MESSAGE_REFERENCES)) {
             val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
@@ -194,7 +183,7 @@ class NotificationActionService : Service() {
             }
         }
 
-        fun createDismissAllMessagesIntent(context: Context, account: Account): Intent {
+        fun createDismissAllMessagesIntent(context: Context, account: LegacyAccount): Intent {
             return Intent(context, NotificationActionService::class.java).apply {
                 action = ACTION_DISMISS
                 putExtra(EXTRA_ACCOUNT_UUID, account.uuid)
@@ -234,7 +223,7 @@ class NotificationActionService : Service() {
 
         fun createArchiveAllIntent(
             context: Context,
-            account: Account,
+            account: LegacyAccount,
             messageReferences: List<MessageReference>,
         ): Intent {
             return Intent(context, NotificationActionService::class.java).apply {

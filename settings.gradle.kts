@@ -1,29 +1,51 @@
+// Thunderbird for Android
+rootProject.name = "tfa"
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
+    includeBuild("build-plugin")
     repositories {
-        includeBuild("build-plugin")
-        gradlePluginPortal()
-        google()
+        google {
+            mavenContent {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
-        google()
+        google {
+            mavenContent {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
+        maven(url = "https://maven.mozilla.org/maven2") {
+            mavenContent {
+                includeGroup("org.mozilla.components")
+                includeGroup("org.mozilla.telemetry")
+            }
+        }
+        maven(url = "https://jitpack.io") {
+            mavenContent {
+                includeGroup("com.github.ByteHamster")
+                includeGroup("com.github.cketti")
+            }
+        }
         mavenCentral()
-        maven(url = "https://maven.mozilla.org/maven2")
-        maven(url = "https://jitpack.io")
     }
 }
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
-rootProject.name = "k-9"
-
 include(
     ":app-k9mail",
-//    ":app-thunderbird",
+    ":app-thunderbird",
     ":app-yatagarasu",
     ":app-ui-catalog",
 )
@@ -37,23 +59,22 @@ include(
 )
 
 include(
-    ":feature:onboarding:main",
-    ":feature:onboarding:welcome",
-    ":feature:onboarding:permissions",
-)
-
-include(
-    ":feature:settings:import",
-)
-
-include(
+    ":feature:account:api",
+    ":feature:account:avatar:api",
+    ":feature:account:avatar:impl",
+    ":feature:account:core",
     ":feature:account:common",
     ":feature:account:edit",
+    ":feature:account:fake",
     ":feature:account:oauth",
-    ":feature:account:setup",
+    ":feature:account:settings:api",
+    ":feature:account:settings:impl",
     ":feature:account:server:certificate",
     ":feature:account:server:settings",
     ":feature:account:server:validation",
+    ":feature:account:setup",
+    ":feature:account:storage:api",
+    ":feature:account:storage:legacy",
 )
 
 include(
@@ -64,17 +85,53 @@ include(
 )
 
 include(
-    ":feature:navigation:drawer",
+    ":feature:funding:api",
+    ":feature:funding:googleplay",
+    ":feature:funding:link",
+    ":feature:funding:noop",
 )
 
 include(
-    ":feature:widget:message-list",
-    ":feature:widget:shortcut",
-    ":feature:widget:unread",
+    ":feature:mail:account:api",
+    ":feature:mail:folder:api",
+    ":feature:mail:message:list",
 )
 
 include(
     ":feature:migration:provider",
+    ":feature:migration:qrcode",
+    ":feature:migration:launcher:api",
+    ":feature:migration:launcher:noop",
+    ":feature:migration:launcher:thunderbird",
+)
+
+include(
+    ":feature:navigation:drawer:api",
+    ":feature:navigation:drawer:dropdown",
+    ":feature:navigation:drawer:siderail",
+)
+
+include(
+    ":feature:notification:api",
+    ":feature:notification:impl",
+    ":feature:notification:testing",
+)
+
+include(
+    ":feature:onboarding:main",
+    ":feature:onboarding:welcome",
+    ":feature:onboarding:permissions",
+    ":feature:onboarding:migration:api",
+    ":feature:onboarding:migration:thunderbird",
+    ":feature:onboarding:migration:noop",
+)
+
+include(
+    ":feature:search:impl-legacy",
+)
+
+include(
+    ":feature:settings:import",
 )
 
 include(
@@ -84,56 +141,57 @@ include(
 )
 
 include(
+    ":feature:widget:message-list",
+    ":feature:widget:message-list-glance",
+    ":feature:widget:shortcut",
+    ":feature:widget:unread",
+)
+
+include(
+    ":core:architecture:api",
     ":core:common",
-    ":core:featureflags",
+    ":core:featureflag",
+    ":core:logging:api",
+    ":core:logging:impl-composite",
+    ":core:logging:impl-console",
+    ":core:logging:impl-legacy",
+    ":core:logging:impl-file",
+    ":core:logging:testing",
+    ":core:mail:mailserver",
+    ":core:preference:api",
+    ":core:preference:impl",
+    ":core:outcome",
     ":core:testing",
+)
+
+include(
+    ":core:android:account",
     ":core:android:common",
+    ":core:android:contact",
+    ":core:android:logging",
+    ":core:android:network",
     ":core:android:permissions",
     ":core:android:testing",
+)
+
+include(
+    ":core:ui:account",
     ":core:ui:compose:common",
     ":core:ui:compose:designsystem",
+    ":core:ui:compose:navigation",
+    ":core:ui:compose:preference",
+    ":core:ui:compose:testing",
     ":core:ui:compose:theme2:common",
     ":core:ui:compose:theme2:k9mail",
-//    ":core:ui:compose:theme2:thunderbird",
+    ":core:ui:compose:theme2:thunderbird",
     ":core:ui:compose:theme2:yatagarasu",
-    ":core:ui:compose:testing",
     ":core:ui:legacy:designsystem",
     ":core:ui:legacy:theme2:common",
     ":core:ui:legacy:theme2:k9mail",
-//    ":core:ui:legacy:theme2:thunderbird",
+    ":core:ui:legacy:theme2:thunderbird",
     ":core:ui:legacy:theme2:yatagarasu",
     ":core:ui:theme:api",
-)
-
-include(
-    ":core:mail:folder:api",
-)
-
-include(
-    ":legacy:account",
-    ":legacy:common",
-    ":legacy:core",
-    ":legacy:crypto-openpgp",
-    ":legacy:di",
-    ":legacy:folder",
-    ":legacy:mailstore",
-    ":legacy:message",
-    ":legacy:notification",
-    ":legacy:preferences",
-    ":legacy:search",
-    ":legacy:storage",
-    ":legacy:testing",
-    ":legacy:ui:base",
-    ":legacy:ui:account",
-    ":legacy:ui:folder",
-    ":legacy:ui:legacy",
-    ":legacy:ui:theme",
-)
-
-include(
-    ":ui-utils:LinearLayoutManager",
-    ":ui-utils:ItemTouchHelper",
-    ":ui-utils:ToolbarBottomSheet",
+    ":core:ui:theme:manager",
 )
 
 include(
@@ -153,6 +211,25 @@ include(
     ":backend:demo",
 )
 
+include(
+    ":legacy:common",
+    ":legacy:core",
+    ":legacy:crypto-openpgp",
+    ":legacy:di",
+    ":legacy:mailstore",
+    ":legacy:message",
+    ":legacy:storage",
+    ":legacy:ui:base",
+    ":legacy:ui:folder",
+    ":legacy:ui:legacy",
+)
+
+include(
+    ":ui-utils:LinearLayoutManager",
+    ":ui-utils:ItemTouchHelper",
+    ":ui-utils:ToolbarBottomSheet",
+)
+
 include(":plugins:openpgp-api-lib:openpgp-api")
 
 include(
@@ -164,4 +241,25 @@ include(
 
 include(
     ":library:html-cleaner",
+    ":library:TokenAutoComplete",
 )
+
+include(
+    ":quality:konsist",
+)
+
+include(
+    ":feature:debug-settings",
+)
+
+check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+    """
+        Java 17+ is required to build Thunderbird for Android.
+        But it found an incompatible Java version ${{JavaVersion.current()}}.
+
+        Java Home: [${System.getProperty("java.home")}]
+
+        Please install Java 17+ and set JAVA_HOME to the directory containing the Java 17+ installation.
+        https://developer.android.com/build/jdks#jdk-config-in-studio
+    """.trimIndent()
+}

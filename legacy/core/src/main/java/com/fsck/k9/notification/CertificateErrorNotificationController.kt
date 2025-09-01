@@ -4,14 +4,16 @@ import android.app.Notification
 import android.app.PendingIntent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import app.k9mail.legacy.account.Account
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.preference.GeneralSettingsManager
 
 internal open class CertificateErrorNotificationController(
     private val notificationHelper: NotificationHelper,
     private val actionCreator: NotificationActionCreator,
     private val resourceProvider: NotificationResourceProvider,
+    private val generalSettingsManager: GeneralSettingsManager,
 ) {
-    fun showCertificateErrorNotification(account: Account, incoming: Boolean) {
+    fun showCertificateErrorNotification(account: LegacyAccount, incoming: Boolean) {
         val notificationId = NotificationIds.getCertificateErrorNotificationId(account, incoming)
         val editServerSettingsPendingIntent = createContentIntent(account, incoming)
         val title = resourceProvider.certificateErrorTitle(account.displayName)
@@ -30,17 +32,17 @@ internal open class CertificateErrorNotificationController(
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPublicVersion(createLockScreenNotification(account))
             .setCategory(NotificationCompat.CATEGORY_ERROR)
-            .setErrorAppearance()
+            .setErrorAppearance(generalSettingsManager = generalSettingsManager)
 
         notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
-    fun clearCertificateErrorNotifications(account: Account, incoming: Boolean) {
+    fun clearCertificateErrorNotifications(account: LegacyAccount, incoming: Boolean) {
         val notificationId = NotificationIds.getCertificateErrorNotificationId(account, incoming)
         notificationManager.cancel(notificationId)
     }
 
-    protected open fun createContentIntent(account: Account, incoming: Boolean): PendingIntent {
+    protected open fun createContentIntent(account: LegacyAccount, incoming: Boolean): PendingIntent {
         return if (incoming) {
             actionCreator.getEditIncomingServerSettingsIntent(account)
         } else {
@@ -48,7 +50,7 @@ internal open class CertificateErrorNotificationController(
         }
     }
 
-    private fun createLockScreenNotification(account: Account): Notification {
+    private fun createLockScreenNotification(account: LegacyAccount): Notification {
         return notificationHelper
             .createNotificationBuilder(account, NotificationChannelManager.ChannelType.MISCELLANEOUS)
             .setSmallIcon(resourceProvider.iconWarning)

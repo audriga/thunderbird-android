@@ -7,13 +7,12 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import app.k9mail.core.android.common.compat.BundleCompat;
-import app.k9mail.legacy.account.Account;
-import app.k9mail.legacy.account.Account.MessageFormat;
-import app.k9mail.legacy.account.Account.QuoteStyle;
+import net.thunderbird.core.android.account.LegacyAccount;
+import net.thunderbird.core.android.account.MessageFormat;
 import app.k9mail.legacy.di.DI;
 import com.fsck.k9.activity.MessageCompose;
 import com.fsck.k9.activity.MessageCompose.Action;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeUtility;
@@ -30,7 +29,9 @@ import com.fsck.k9.message.quote.InsertableHtmlContent;
 import com.fsck.k9.message.quote.TextQuoteCreator;
 import com.fsck.k9.message.signature.HtmlSignatureRemover;
 import com.fsck.k9.message.signature.TextSignatureRemover;
-import timber.log.Timber;
+import net.thunderbird.core.android.account.QuoteStyle;
+import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 
 
 public class QuotedMessagePresenter {
@@ -42,6 +43,7 @@ public class QuotedMessagePresenter {
     private static final int UNKNOWN_LENGTH = 0;
 
     private final TextQuoteCreator textQuoteCreator = DI.get(TextQuoteCreator.class);
+    private final GeneralSettingsManager generalSettingsManager = DI.get(GeneralSettingsManager.class);
     private final QuotedMessageMvpView view;
     private final MessageCompose messageCompose;
 
@@ -52,11 +54,11 @@ public class QuotedMessagePresenter {
 
     private SimpleMessageFormat quotedTextFormat;
     private InsertableHtmlContent quotedHtmlContent;
-    private Account account;
+    private LegacyAccount account;
 
 
     public QuotedMessagePresenter(
-            MessageCompose messageCompose, QuotedMessageMvpView quotedMessageMvpView, Account account) {
+            MessageCompose messageCompose, QuotedMessageMvpView quotedMessageMvpView, LegacyAccount account) {
         this.messageCompose = messageCompose;
         this.view = quotedMessageMvpView;
         onSwitchAccount(account);
@@ -67,7 +69,7 @@ public class QuotedMessagePresenter {
         quotedMessageMvpView.setOnClickPresenter(this);
     }
 
-    public void onSwitchAccount(Account account) {
+    public void onSwitchAccount(LegacyAccount account) {
         this.account = account;
     }
 
@@ -111,7 +113,7 @@ public class QuotedMessagePresenter {
             }
 
             // Add the HTML reply header to the top of the content.
-            quotedHtmlContent = HtmlQuoteCreator.quoteOriginalHtmlMessage(messageViewInfo.message, content, quoteStyle);
+            quotedHtmlContent = HtmlQuoteCreator.quoteOriginalHtmlMessage(messageViewInfo.message, content, quoteStyle, generalSettingsManager);
 
             // Load the message with the reply header. TODO replace with MessageViewInfo data
             view.setQuotedHtml(quotedHtmlContent.getQuotedContent(),
@@ -202,7 +204,7 @@ public class QuotedMessagePresenter {
             try {
                 cursorPosition = Integer.parseInt(k9identity.get(IdentityField.CURSOR_POSITION));
             } catch (Exception e) {
-                Timber.e(e, "Could not parse cursor position for MessageCompose; continuing.");
+                Log.e(e, "Could not parse cursor position for MessageCompose; continuing.");
             }
         }
 
@@ -265,15 +267,15 @@ public class QuotedMessagePresenter {
                 String text = MessageExtractor.getTextFromPart(part);
 
                 if (text == null) {
-                    Timber.d("Empty message; skipping.");
+                    Log.d("Empty message; skipping.");
                     bodyText = "";
                 } else {
-                    Timber.d("Loading message with offset %d, length %d. Text length is %d.",
+                    Log.d("Loading message with offset %d, length %d. Text length is %d.",
                             bodyOffset, bodyLength, text.length());
 
                     if (bodyOffset + bodyLength > text.length()) {
                         // The draft was edited outside of K-9 Mail?
-                        Timber.d("The identity field from the draft contains an invalid LENGTH/OFFSET");
+                        Log.d("The identity field from the draft contains an invalid LENGTH/OFFSET");
                         bodyOffset = 0;
                         bodyLength = 0;
                     }
@@ -308,14 +310,14 @@ public class QuotedMessagePresenter {
             quotedTextFormat = SimpleMessageFormat.TEXT;
             processSourceMessageText(messageViewInfo.rootPart, bodyOffset, bodyLength, true);
         } else {
-            Timber.e("Unhandled message format.");
+            Log.e("Unhandled message format.");
         }
 
         // Set the cursor position if we have it.
         try {
             view.setMessageContentCursorPosition(cursorPosition);
         } catch (Exception e) {
-            Timber.e(e, "Could not set cursor position in MessageCompose; ignoring.");
+            Log.e(e, "Could not set cursor position in MessageCompose; ignoring.");
         }
 
         showOrHideQuotedText(quotedMode);
@@ -337,7 +339,7 @@ public class QuotedMessagePresenter {
 
         String messageText = MessageExtractor.getTextFromPart(textPart);
 
-        Timber.d("Loading message with offset %d, length %d. Text length is %d.",
+        Log.d("Loading message with offset %d, length %d. Text length is %d.",
                 bodyOffset, bodyLength, messageText.length());
 
         // If we had a body length (and it was valid), separate the composition from the quoted text
@@ -364,7 +366,7 @@ public class QuotedMessagePresenter {
                 messageText = messageText.substring(bodyOffset, bodyOffset + bodyLength);
             } catch (IndexOutOfBoundsException e) {
                 // Invalid bodyOffset or bodyLength.  The draft was edited outside of K-9 Mail?
-                Timber.d("The identity field from the draft contains an invalid bodyOffset/bodyLength");
+                Log.d("The identity field from the draft contains an invalid bodyOffset/bodyLength");
             }
         }
 

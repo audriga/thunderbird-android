@@ -1,15 +1,17 @@
 package app.k9mail.core.android.common.contact
 
 import android.content.Context
-import app.k9mail.core.common.cache.Cache
-import app.k9mail.core.common.cache.ExpiringCache
-import app.k9mail.core.common.cache.SynchronizedCache
-import app.k9mail.core.common.mail.EmailAddress
+import kotlin.time.ExperimentalTime
+import net.thunderbird.core.common.cache.Cache
+import net.thunderbird.core.common.cache.ExpiringCache
+import net.thunderbird.core.common.cache.SynchronizedCache
+import net.thunderbird.core.common.mail.EmailAddress
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 internal val contactModule = module {
     single<Cache<EmailAddress, Contact?>>(named(CACHE_NAME)) {
+        @OptIn(ExperimentalTime::class)
         SynchronizedCache(
             delegateCache = ExpiringCache(clock = get()),
         )

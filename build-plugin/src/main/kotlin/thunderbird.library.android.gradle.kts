@@ -2,26 +2,31 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("thunderbird.quality.detekt.typed")
+    id("thunderbird.quality.spotless")
 }
 
 android {
-    configureSharedConfig()
+    configureSharedConfig(project)
 
     buildFeatures {
         buildConfig = false
     }
 
     kotlinOptions {
-        jvmTarget = ThunderbirdProjectConfig.javaCompatibilityVersion.toString()
-    }
-
-    lint {
-        lintConfig = file("${rootProject.projectDir}/config/lint/lint.xml")
+        jvmTarget = ThunderbirdProjectConfig.Compiler.javaCompatibility.toString()
     }
 
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+        }
+    }
+}
+
+kotlin {
+    sourceSets.all {
+        compilerOptions {
+            freeCompilerArgs.add("-Xwhen-guards")
         }
     }
 }

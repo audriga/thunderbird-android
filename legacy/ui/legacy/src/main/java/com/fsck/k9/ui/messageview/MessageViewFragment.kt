@@ -1,11 +1,12 @@
 package com.fsck.k9.ui.messageview
 
-import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.IntentSender.SendIntentException
+import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
 import android.os.SystemClock
@@ -17,18 +18,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat.Type.navigationBars
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import app.k9mail.core.android.common.activity.CreateDocumentResultContract
 import app.k9mail.core.ui.legacy.designsystem.atom.icon.Icons
-import app.k9mail.core.ui.theme.api.Theme
-import app.k9mail.legacy.account.Account
-import app.k9mail.legacy.account.AccountManager
 import app.k9mail.legacy.message.controller.MessageReference
-import app.k9mail.legacy.preferences.GeneralSettingsManager
-import app.k9mail.legacy.ui.theme.ThemeManager
 import com.fsck.k9.K9
 import com.fsck.k9.activity.MessageCompose
 import com.fsck.k9.activity.MessageLoaderHelper
@@ -48,16 +48,23 @@ import com.fsck.k9.mailstore.MessageViewInfo
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.base.extensions.withArguments
 import com.fsck.k9.ui.choosefolder.ChooseFolderActivity
+import com.fsck.k9.ui.choosefolder.ChooseFolderResultContract
 import com.fsck.k9.ui.messagedetails.MessageDetailsFragment
 import com.fsck.k9.ui.messagesource.MessageSourceActivity
 import com.fsck.k9.ui.messageview.MessageCryptoPresenter.MessageCryptoMvpView
 import com.fsck.k9.ui.settings.account.AccountSettingsActivity
 import com.fsck.k9.ui.share.ShareIntentBuilder
 import java.util.Locale
+import net.thunderbird.core.android.account.AccountManager
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.ui.theme.api.Theme
+import net.thunderbird.core.ui.theme.manager.ThemeManager
 import org.koin.android.ext.android.inject
 import org.openintents.openpgp.util.OpenPgpIntentStarter
-import timber.log.Timber
 
+@Suppress("LargeClass")
 class MessageViewFragment :
     Fragment(),
     ConfirmationDialogFragmentListener,
@@ -69,6 +76,19 @@ class MessageViewFragment :
     private val messagingController: MessagingController by inject()
     private val shareIntentBuilder: ShareIntentBuilder by inject()
     private val generalSettingsManager: GeneralSettingsManager by inject()
+
+    private val createDocumentLauncher: ActivityResultLauncher<CreateDocumentResultContract.Input> =
+        registerForActivityResult(CreateDocumentResultContract()) { documentUri ->
+            onCreateDocumentResult(documentUri)
+        }
+    private val chooseFolderForCopyLauncher: ActivityResultLauncher<ChooseFolderResultContract.Input> =
+        registerForActivityResult(ChooseFolderResultContract(ChooseFolderActivity.Action.COPY)) { result ->
+            onChooseFolderCopyResult(result)
+        }
+    private val chooseFolderForMoveLauncher: ActivityResultLauncher<ChooseFolderResultContract.Input> =
+        registerForActivityResult(ChooseFolderResultContract(ChooseFolderActivity.Action.MOVE)) { result ->
+            onChooseFolderMoveResult(result)
+        }
 
     private lateinit var messageTopView: MessageTopView
 
@@ -85,7 +105,7 @@ class MessageViewFragment :
     private var destinationFolderId: Long? = null
     private lateinit var fragmentListener: MessageViewFragmentListener
 
-    private lateinit var account: Account
+    private lateinit var account: LegacyAccount
     lateinit var messageReference: MessageReference
     private var showAccountChip: Boolean = true
 
@@ -167,6 +187,19 @@ class MessageViewFragment :
         messageTopView.setOnDownloadButtonClickListener {
             onDownloadButtonClicked()
         }
+
+        initializeMessageTopViewInsets(messageTopView)
+    }
+
+    private fun initializeMessageTopViewInsets(messageTopView: MessageTopView) {
+        val view = messageTopView.findViewById<View>(R.id.message_container)
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { v, windowsInsets ->
+            val insets = windowsInsets.getInsets(navigationBars())
+            v.setPadding(0, 0, 0, insets.bottom)
+
+            windowsInsets
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -176,7 +209,7 @@ class MessageViewFragment :
     }
 
     private fun loadMessage(messageReference: MessageReference) {
-        Timber.d("MessageViewFragment displaying message %s", messageReference)
+        Log.d("MessageViewFragment displaying message %s", messageReference)
 
         account = accountManager.getAccount(messageReference.accountUuid)
             ?: error("Account ${messageReference.accountUuid} not found")
@@ -286,7 +319,7 @@ class MessageViewFragment :
         menu.findItem(R.id.compose).isVisible = true
 
         val toggleTheme = menu.findItem(R.id.toggle_message_view_theme)
-        if (generalSettingsManager.getSettings().fixedMessageViewTheme) {
+        if (generalSettingsManager.getConfig().display.coreSettings.fixedMessageViewTheme) {
             toggleTheme.isVisible = false
         } else {
             // Set title of menu item to switch to dark/light theme
@@ -512,7 +545,14 @@ class MessageViewFragment :
             return
         }
 
-        startRefileActivity(FolderOperation.MOVE, ACTIVITY_CHOOSE_FOLDER_MOVE)
+        chooseFolderForMoveLauncher.launch(
+            input = ChooseFolderResultContract.Input(
+                accountUuid = account.uuid,
+                currentFolderId = messageReference.folderId,
+                scrollToFolderId = account.lastSelectedFolderId,
+                messageReference = messageReference,
+            ),
+        )
     }
 
     fun onCopy() {
@@ -524,7 +564,14 @@ class MessageViewFragment :
             return
         }
 
-        startRefileActivity(FolderOperation.COPY, ACTIVITY_CHOOSE_FOLDER_COPY)
+        chooseFolderForCopyLauncher.launch(
+            input = ChooseFolderResultContract.Input(
+                accountUuid = account.uuid,
+                currentFolderId = messageReference.folderId,
+                scrollToFolderId = account.lastSelectedFolderId,
+                messageReference = messageReference,
+            ),
+        )
     }
 
     private fun onMoveToDrafts() {
@@ -537,30 +584,19 @@ class MessageViewFragment :
     }
 
     fun onArchive() {
-        onRefile(account.archiveFolderId)
+        if (!account.hasArchiveFolder()) return
+
+        if (!messagingController.isMoveCapable(messageReference)) {
+            Toast.makeText(activity, R.string.move_copy_cannot_copy_unsynced_message, Toast.LENGTH_LONG).show()
+            return
+        }
+
+        fragmentListener.performNavigationAfterMessageRemoval()
+        messagingController.archiveMessage(messageReference)
     }
 
     private fun onSpam() {
         onRefile(account.spamFolderId)
-    }
-
-    private fun startRefileActivity(operation: FolderOperation, requestCode: Int) {
-        val action = if (operation == FolderOperation.MOVE) {
-            ChooseFolderActivity.Action.MOVE
-        } else {
-            ChooseFolderActivity.Action.COPY
-        }
-
-        val intent = ChooseFolderActivity.buildLaunchIntent(
-            context = requireActivity(),
-            action = action,
-            accountUuid = account.uuid,
-            currentFolderId = messageReference.folderId,
-            scrollToFolderId = account.lastSelectedFolderId,
-            messageReference = messageReference,
-        )
-
-        startActivityForResult(intent, requestCode)
     }
 
     @Deprecated("Switch to Activity Result API")
@@ -571,14 +607,6 @@ class MessageViewFragment :
         } else if (requestCode and REQUEST_MASK_CRYPTO_PRESENTER == REQUEST_MASK_CRYPTO_PRESENTER) {
             val maskedRequestCode = requestCode xor REQUEST_MASK_CRYPTO_PRESENTER
             messageCryptoPresenter.onActivityResult(maskedRequestCode, resultCode, data)
-        }
-
-        if (resultCode != Activity.RESULT_OK) return
-
-        when (requestCode) {
-            REQUEST_CODE_CREATE_DOCUMENT -> onCreateDocumentResult(data)
-            ACTIVITY_CHOOSE_FOLDER_MOVE -> onChooseFolderMoveResult(data)
-            ACTIVITY_CHOOSE_FOLDER_COPY -> onChooseFolderCopyResult(data)
         }
     }
 
@@ -598,17 +626,18 @@ class MessageViewFragment :
         }
     }
 
-    private fun onCreateDocumentResult(data: Intent?) {
-        if (data != null && data.data != null) {
-            createAttachmentController(currentAttachmentViewInfo).saveAttachmentTo(data.data)
-        }
+    private fun onCreateDocumentResult(uri: Uri?) {
+        if (uri == null) return
+        require(uri.scheme == ContentResolver.SCHEME_CONTENT) { "content: URI required" }
+
+        createAttachmentController(currentAttachmentViewInfo).saveAttachmentTo(uri)
     }
 
-    private fun onChooseFolderMoveResult(data: Intent?) {
-        if (data == null) return
+    private fun onChooseFolderMoveResult(result: ChooseFolderResultContract.Result?) {
+        if (result == null) return
 
-        val destinationFolderId = data.getLongExtra(ChooseFolderActivity.RESULT_SELECTED_FOLDER_ID, -1L)
-        val messageReferenceString = data.getStringExtra(ChooseFolderActivity.RESULT_MESSAGE_REFERENCE)
+        val destinationFolderId = result.folderId
+        val messageReferenceString = result.messageReference
         val messageReference = MessageReference.parse(messageReferenceString)
         if (this.messageReference != messageReference) return
 
@@ -619,11 +648,11 @@ class MessageViewFragment :
         moveMessage(messageReference, destinationFolderId)
     }
 
-    private fun onChooseFolderCopyResult(data: Intent?) {
-        if (data == null) return
+    private fun onChooseFolderCopyResult(result: ChooseFolderResultContract.Result?) {
+        if (result == null) return
 
-        val destinationFolderId = data.getLongExtra(ChooseFolderActivity.RESULT_SELECTED_FOLDER_ID, -1L)
-        val messageReferenceString = data.getStringExtra(ChooseFolderActivity.RESULT_MESSAGE_REFERENCE)
+        val destinationFolderId = result.folderId
+        val messageReferenceString = result.messageReference
         val messageReference = MessageReference.parse(messageReferenceString)
         if (this.messageReference != messageReference) return
 
@@ -925,7 +954,7 @@ class MessageViewFragment :
                     maskedRequestCode,
                 )
             } catch (e: SendIntentException) {
-                Timber.e(e, "Irrecoverable error calling PendingIntent!")
+                Log.e(e, "Irrecoverable error calling PendingIntent!")
             }
 
             return true
@@ -941,14 +970,13 @@ class MessageViewFragment :
     override fun onSaveAttachment(attachment: AttachmentViewInfo) {
         currentAttachmentViewInfo = attachment
 
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            type = attachment.mimeType
-            putExtra(Intent.EXTRA_TITLE, attachment.displayName)
-            addCategory(Intent.CATEGORY_OPENABLE)
-        }
-
         try {
-            startActivityForResult(intent, REQUEST_CODE_CREATE_DOCUMENT)
+            createDocumentLauncher.launch(
+                input = CreateDocumentResultContract.Input(
+                    title = attachment.displayName,
+                    mimeType = attachment.mimeType,
+                ),
+            )
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(requireContext(), R.string.error_activity_not_found, Toast.LENGTH_LONG).show()
         }
@@ -962,11 +990,6 @@ class MessageViewFragment :
         activity?.invalidateMenu()
     }
 
-    private enum class FolderOperation {
-        COPY,
-        MOVE,
-    }
-
     companion object {
         const val REQUEST_MASK_LOADER_HELPER = 1 shl 8
         const val REQUEST_MASK_CRYPTO_PRESENTER = 1 shl 9
@@ -977,10 +1000,6 @@ class MessageViewFragment :
 
         private const val STATE_WAS_MESSAGE_MARKED_AS_OPENED = "wasMessageMarkedAsOpened"
         private const val STATE_IS_ACTIVE = "isActive"
-
-        private const val ACTIVITY_CHOOSE_FOLDER_MOVE = 1
-        private const val ACTIVITY_CHOOSE_FOLDER_COPY = 2
-        private const val REQUEST_CODE_CREATE_DOCUMENT = 3
 
         fun newInstance(reference: MessageReference, showAccountChip: Boolean): MessageViewFragment {
             return MessageViewFragment().withArguments(

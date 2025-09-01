@@ -7,9 +7,10 @@ import androidx.annotation.VisibleForTesting;
 import com.fsck.k9.CoreResourceProvider;
 import app.k9mail.legacy.di.DI;
 import com.fsck.k9.mail.BoundaryGenerator;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeMessage;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 
 
 public class SimpleMessageBuilder extends MessageBuilder {
@@ -18,13 +19,18 @@ public class SimpleMessageBuilder extends MessageBuilder {
         MessageIdGenerator messageIdGenerator = MessageIdGenerator.getInstance();
         BoundaryGenerator boundaryGenerator = BoundaryGenerator.getInstance();
         CoreResourceProvider resourceProvider = DI.get(CoreResourceProvider.class);
-        return new SimpleMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider);
+        GeneralSettingsManager settingsManager = DI.get(GeneralSettingsManager.class);
+        return new SimpleMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider, settingsManager);
     }
 
     @VisibleForTesting
-    SimpleMessageBuilder(MessageIdGenerator messageIdGenerator, BoundaryGenerator boundaryGenerator,
-            CoreResourceProvider resourceProvider) {
-        super(messageIdGenerator, boundaryGenerator, resourceProvider);
+    SimpleMessageBuilder(
+        MessageIdGenerator messageIdGenerator,
+        BoundaryGenerator boundaryGenerator,
+        CoreResourceProvider resourceProvider,
+        GeneralSettingsManager settingsManager
+        ) {
+        super(messageIdGenerator, boundaryGenerator, resourceProvider, settingsManager);
     }
 
     @Override

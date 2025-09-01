@@ -3,14 +3,15 @@ package com.fsck.k9.view
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.webkit.WebSettings.LayoutAlgorithm
 import android.webkit.WebSettings.RenderPriority
 import android.webkit.WebView
 import com.fsck.k9.mailstore.AttachmentResolver
+import net.thunderbird.core.android.common.view.showInDarkMode
+import net.thunderbird.core.android.common.view.showInLightMode
+import net.thunderbird.core.logging.legacy.Log
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import timber.log.Timber
 
 import app.k9mail.legacy.message.controller.MessageReference
 
@@ -26,7 +27,7 @@ class MessageWebView : WebView, KoinComponent {
         try {
             settings.blockNetworkLoads = false
         } catch (e: SecurityException) {
-            Timber.e(e, "Failed to unblock network loads. Missing INTERNET permission?")
+            Log.e(e, "Failed to unblock network loads. Missing INTERNET permission?")
         }
     }
 
@@ -36,12 +37,7 @@ class MessageWebView : WebView, KoinComponent {
         scrollBarStyle = SCROLLBARS_INSIDE_OVERLAY
         isLongClickable = true
 
-        if (config.useDarkMode) {
-            val typedValue = TypedValue()
-            context.theme.resolveAttribute(android.R.attr.windowBackground, typedValue, true)
-            val backgroundColor = typedValue.data
-            setBackgroundColor(backgroundColor)
-        }
+        configureDarkLightMode(this, config)
 
         with(settings) {
             setSupportZoom(true)
@@ -70,6 +66,17 @@ class MessageWebView : WebView, KoinComponent {
 
         // Disable network images by default. This is overridden by preferences.
         blockNetworkData(false)
+    }
+
+    private fun configureDarkLightMode(
+        webView: WebView,
+        config: WebViewConfig,
+    ) {
+        if (config.useDarkMode) {
+            webView.showInDarkMode()
+        } else {
+            webView.showInLightMode()
+        }
     }
 
     private fun disableDisplayZoomControls() {

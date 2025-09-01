@@ -1,14 +1,17 @@
 package com.fsck.k9.notification
 
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.mailstore.LocalMessage
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import net.thunderbird.core.android.account.LegacyAccount
 
 /**
  * Manages notifications for new messages
  */
-internal class NewMailNotificationManager(
+internal class NewMailNotificationManager
+@OptIn(ExperimentalTime::class)
+constructor(
     private val contentCreator: NotificationContentCreator,
     private val notificationRepository: NotificationRepository,
     private val baseNotificationDataCreator: BaseNotificationDataCreator,
@@ -16,7 +19,7 @@ internal class NewMailNotificationManager(
     private val summaryNotificationDataCreator: SummaryNotificationDataCreator,
     private val clock: Clock,
 ) {
-    fun restoreNewMailNotifications(account: Account): NewMailNotificationData? {
+    fun restoreNewMailNotifications(account: LegacyAccount): NewMailNotificationData? {
         val notificationData = notificationRepository.restoreNotifications(account) ?: return null
 
         val addLockScreenNotification = notificationData.isSingleMessageNotification
@@ -38,7 +41,11 @@ internal class NewMailNotificationManager(
         )
     }
 
-    fun addNewMailNotification(account: Account, message: LocalMessage, silent: Boolean): NewMailNotificationData? {
+    fun addNewMailNotification(
+        account: LegacyAccount,
+        message: LocalMessage,
+        silent: Boolean,
+    ): NewMailNotificationData? {
         val content = contentCreator.createFromMessage(account, message)
 
         val result = notificationRepository.addNotification(account, content, timestamp = now()) ?: return null
@@ -64,7 +71,7 @@ internal class NewMailNotificationManager(
     }
 
     fun removeNewMailNotifications(
-        account: Account,
+        account: LegacyAccount,
         clearNewMessageState: Boolean,
         selector: (List<MessageReference>) -> List<MessageReference>,
     ): NewMailNotificationData? {
@@ -97,7 +104,7 @@ internal class NewMailNotificationManager(
         )
     }
 
-    fun clearNewMailNotifications(account: Account, clearNewMessageState: Boolean): List<Int> {
+    fun clearNewMailNotifications(account: LegacyAccount, clearNewMessageState: Boolean): List<Int> {
         notificationRepository.clearNotifications(account, clearNewMessageState)
         return NotificationIds.getAllMessageNotificationIds(account)
     }
@@ -107,7 +114,7 @@ internal class NewMailNotificationManager(
     }
 
     private fun createSingleNotificationData(
-        account: Account,
+        account: LegacyAccount,
         notificationId: Int,
         content: NotificationContent,
         timestamp: Long,
@@ -130,5 +137,6 @@ internal class NewMailNotificationManager(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun now(): Long = clock.now().toEpochMilliseconds()
 }

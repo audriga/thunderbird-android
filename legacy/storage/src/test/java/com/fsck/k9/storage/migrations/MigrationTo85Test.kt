@@ -2,14 +2,14 @@ package com.fsck.k9.storage.migrations
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
-import app.k9mail.legacy.account.Account
-import app.k9mail.legacy.account.Account.FolderMode
 import assertk.assertThat
 import assertk.assertions.containsExactlyInAnyOrder
 import com.fsck.k9.mailstore.MigrationsHelper
 import com.fsck.k9.storage.messages.FolderEntry
 import com.fsck.k9.storage.messages.readFolders
 import kotlin.test.Test
+import net.thunderbird.core.android.account.FolderMode
+import net.thunderbird.core.android.account.LegacyAccount
 import org.junit.After
 import org.junit.runner.RunWith
 import org.mockito.kotlin.doAnswer
@@ -186,15 +186,15 @@ class MigrationTo85Test {
         )
     }
 
-    private fun createAccount(): Account {
-        return mock<Account> {
+    private fun createAccount(): LegacyAccount {
+        return mock<LegacyAccount> {
             on { folderNotifyNewMailMode } doAnswer { folderNotifyMode }
         }
     }
 
-    private fun createMigrationsHelper(account: Account): MigrationsHelper {
+    private fun createMigrationsHelper(account: LegacyAccount): MigrationsHelper {
         return object : MigrationsHelper {
-            override fun getAccount(): Account {
+            override fun getAccount(): LegacyAccount {
                 return account
             }
 

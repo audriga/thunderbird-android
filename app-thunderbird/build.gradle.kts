@@ -1,6 +1,7 @@
 plugins {
     id(ThunderbirdPlugins.App.androidCompose)
     alias(libs.plugins.dependency.guard)
+    id("thunderbird.app.version.info")
     id("thunderbird.quality.badging")
 }
 
@@ -16,73 +17,74 @@ android {
         applicationId = "net.thunderbird.android"
         testApplicationId = "net.thunderbird.android.tests"
 
-        versionCode = 2
-        versionName = "0.1"
+        versionCode = 4
+        versionName = "14.0"
 
+        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Thunderbird for Android\"")
+    }
+
+    androidResources {
         // Keep in sync with the resource string array "supported_languages"
-        resourceConfigurations.addAll(
-            listOf(
-                "ar",
-                "be",
-                "bg",
-                "br",
-                "ca",
-                "co",
-                "cs",
-                "cy",
-                "da",
-                "de",
-                "el",
-                "en",
-                "en_GB",
-                "eo",
-                "es",
-                "et",
-                "eu",
-                "fa",
-                "fi",
-                "fr",
-                "fy",
-                "gd",
-                "gl",
-                "hr",
-                "hu",
-                "in",
-                "is",
-                "it",
-                "iw",
-                "ja",
-                "ko",
-                "lt",
-                "lv",
-                "ml",
-                "nb",
-                "nl",
-                "pl",
-                "pt_BR",
-                "pt_PT",
-                "ro",
-                "ru",
-                "sk",
-                "sl",
-                "sq",
-                "sr",
-                "sv",
-                "tr",
-                "uk",
-                "vi",
-                "zh_CN",
-                "zh_TW",
-            ),
+        localeFilters += listOf(
+            "ar",
+            "be",
+            "bg",
+            "ca",
+            "co",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "en-rGB",
+            "eo",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "fy",
+            "ga",
+            "gl",
+            "hr",
+            "hu",
+            "in",
+            "is",
+            "it",
+            "iw",
+            "ja",
+            "ko",
+            "lt",
+            "lv",
+            "nb",
+            "nl",
+            "nn",
+            "pl",
+            "pt-rBR",
+            "pt-rPT",
+            "ro",
+            "ru",
+            "sl",
+            "sk",
+            "sq",
+            "sr",
+            "sv",
+            "tr",
+            "uk",
+            "vi",
+            "zh-rCN",
+            "zh-rTW",
         )
-
-        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Thunderbird\"")
     }
 
     signingConfigs {
-        createSigningConfig(project, SigningType.TB_RELEASE)
-        createSigningConfig(project, SigningType.TB_BETA)
-        createSigningConfig(project, SigningType.TB_DAILY)
+        val useUploadKey = properties.getOrDefault("tb.useUploadKey", "true") == "true"
+
+        createSigningConfig(project, SigningType.TB_RELEASE, isUpload = useUploadKey)
+        createSigningConfig(project, SigningType.TB_BETA, isUpload = useUploadKey)
+        createSigningConfig(project, SigningType.TB_DAILY, isUpload = useUploadKey)
     }
 
     buildTypes {
@@ -94,7 +96,7 @@ android {
             isShrinkResources = false
             isDebuggable = true
 
-            buildConfigField("String", "RELEASE_CHANNEL", "null")
+            buildConfigField("String", "GLEAN_RELEASE_CHANNEL", "null")
         }
 
         release {
@@ -109,7 +111,7 @@ android {
                 "proguard-rules.pro",
             )
 
-            buildConfigField("String", "RELEASE_CHANNEL", "\"release\"")
+            buildConfigField("String", "GLEAN_RELEASE_CHANNEL", "\"release\"")
         }
 
         create("beta") {
@@ -129,7 +131,7 @@ android {
                 "proguard-rules.pro",
             )
 
-            buildConfigField("String", "RELEASE_CHANNEL", "\"beta\"")
+            buildConfigField("String", "GLEAN_RELEASE_CHANNEL", "\"beta\"")
         }
 
         create("daily") {
@@ -149,7 +151,29 @@ android {
                 "proguard-rules.pro",
             )
 
-            buildConfigField("String", "RELEASE_CHANNEL", "\"daily\"")
+            // See https://bugzilla.mozilla.org/show_bug.cgi?id=1918151
+            buildConfigField("String", "GLEAN_RELEASE_CHANNEL", "\"nightly\"")
+        }
+    }
+
+    flavorDimensions += listOf("app")
+    productFlavors {
+        create("foss") {
+            dimension = "app"
+            buildConfigField("String", "PRODUCT_FLAVOR_APP", "\"foss\"")
+        }
+
+        create("full") {
+            dimension = "app"
+            buildConfigField("String", "PRODUCT_FLAVOR_APP", "\"full\"")
+        }
+    }
+
+    @Suppress("UnstableApiUsage")
+    bundle {
+        language {
+            // Don't split by language. Otherwise our in-app language switcher won't work.
+            enableSplit = false
         }
     }
 
@@ -161,14 +185,27 @@ android {
         resources {
             excludes += listOf(
                 "META-INF/*.kotlin_module",
-                "META-INF/*.version",
-                 "META-INF/*.md", // TODO
                 "kotlin/**",
                 "DebugProbesKt.bin",
             )
         }
     }
 }
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.packaging.resources.excludes.addAll(
+            "META-INF/*.version",
+        )
+    }
+}
+
+// Initialize placeholders for the product flavor and build type combinations needed for dependency declarations.
+// They are required to avoid "Unresolved configuration" errors.
+val fullDebugImplementation by configurations.creating
+val fullDailyImplementation by configurations.creating
+val fullBetaImplementation by configurations.creating
+val fullReleaseImplementation by configurations.creating
 
 dependencies {
     implementation(projects.appCommon)
@@ -179,29 +216,29 @@ dependencies {
     implementation(projects.legacy.core)
     implementation(projects.legacy.ui.legacy)
 
-    implementation(projects.core.featureflags)
+    implementation(projects.core.featureflag)
+
+    implementation(projects.feature.account.settings.impl)
+    implementation(projects.feature.mail.message.list)
 
     implementation(projects.feature.widget.messageList)
+    implementation(projects.feature.widget.messageListGlance)
     implementation(projects.feature.widget.shortcut)
     implementation(projects.feature.widget.unread)
+
+    // SML
     implementation(libs.mustache)
     implementation(libs.jackson)
-
-    // TODO
-    //implementation(libs.ical4j)
-    //implementation(libs.ical4jvcard)
     implementation(libs.ical4jserializer)
-
     implementation(files("../libs/h2lj.jar"))
     implementation(files("../libs/hetc.jar"))
     implementation(files("../libs/ld2h.jar"))
 
-    //implementation files('libs/h2lj.jar', 'libs/hetc.jar', 'libs/ld2h.jar')
 
     debugImplementation(projects.feature.telemetry.noop)
-    releaseImplementation(projects.feature.telemetry.glean)
-    "betaImplementation"(projects.feature.telemetry.glean)
-    "dailyImplementation"(projects.feature.telemetry.glean)
+    "dailyImplementation"(projects.feature.telemetry.noop)
+    "betaImplementation"(projects.feature.telemetry.noop)
+    releaseImplementation(projects.feature.telemetry.noop)
 
     implementation(libs.androidx.work.runtime)
 
@@ -209,13 +246,44 @@ dependencies {
     debugImplementation(projects.backend.demo)
     debugImplementation(projects.feature.autodiscovery.demo)
 
-    testImplementation(libs.robolectric)
+    "fossImplementation"(projects.feature.funding.link)
 
-    // Required for DependencyInjectionTest to be able to resolve OpenPgpApiManager
+    fullDebugImplementation(projects.feature.funding.googleplay)
+    fullDailyImplementation(projects.feature.funding.googleplay)
+    fullBetaImplementation(projects.feature.funding.googleplay)
+    fullReleaseImplementation(projects.feature.funding.googleplay)
+
+    implementation(projects.feature.onboarding.migration.thunderbird)
+    implementation(projects.feature.migration.launcher.thunderbird)
+
+    // TODO remove once OAuth ids have been moved from TBD to TBA
+    "betaImplementation"(libs.appauth)
+    releaseImplementation(libs.appauth)
+
+    // Required for DependencyInjectionTest
+    testImplementation(projects.feature.account.api)
+    testImplementation(projects.feature.account.common)
     testImplementation(projects.plugins.openpgpApiLib.openpgpApi)
-    testImplementation(projects.feature.account.setup)
+    testImplementation(libs.appauth)
 }
 
 dependencyGuard {
-    configuration("releaseRuntimeClasspath")
+    configuration("fossDailyRuntimeClasspath")
+    configuration("fossBetaRuntimeClasspath")
+    configuration("fossReleaseRuntimeClasspath")
+
+    configuration("fullDailyRuntimeClasspath")
+    configuration("fullBetaRuntimeClasspath")
+    configuration("fullReleaseRuntimeClasspath")
+}
+
+tasks.register("printConfigurations") {
+    doLast {
+        configurations.forEach { configuration ->
+            println("Configuration: ${configuration.name}")
+            configuration.dependencies.forEach { dependency ->
+                println("  - ${dependency.group}:${dependency.name}:${dependency.version}")
+            }
+        }
+    }
 }

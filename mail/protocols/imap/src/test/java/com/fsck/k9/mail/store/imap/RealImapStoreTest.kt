@@ -9,7 +9,6 @@ import assertk.assertions.isSameInstanceAs
 import com.fsck.k9.mail.AuthType
 import com.fsck.k9.mail.ConnectionSecurity
 import com.fsck.k9.mail.FolderType
-import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.ServerSettings
 import com.fsck.k9.mail.oauth.OAuth2TokenProvider
 import com.fsck.k9.mail.ssl.TrustedSocketFactory
@@ -18,6 +17,7 @@ import com.fsck.k9.mail.store.imap.ImapStoreSettings.createExtra
 import java.io.IOException
 import java.util.ArrayDeque
 import java.util.Deque
+import net.thunderbird.core.common.exception.MessagingException
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.kotlin.doReturn
@@ -114,6 +114,23 @@ class RealImapStoreTest {
 
         verify(imapConnection, never()).executeSimpleCommand("""LIST "" "*" RETURN (SPECIAL-USE)""")
         verify(imapConnection).executeSimpleCommand("""LIST "" "*"""")
+    }
+
+    @Test
+    fun `getFolder() should not corrupt UTF8 folder names`() {
+        val imapStore = createTestImapStore(isSubscribedFoldersOnly = false)
+        val imapConnection = createMockConnection().stub {
+            on { executeSimpleCommand("""LIST "" "*"""") } doReturn listOf(
+                createImapResponse("""* LIST () "." "Chèvre"""", true),
+                createImapResponse("6 OK Success"),
+            )
+        }
+        imapStore.enqueueImapConnection(imapConnection)
+
+        val folders = imapStore.getFolders()
+
+        assertThat(folders).isNotNull()
+        assertThat(folders.map { it.name }).containsExactly("INBOX", "Chèvre")
     }
 
     @Test
@@ -218,7 +235,6 @@ class RealImapStoreTest {
         assertThat(folders).isNotNull()
         assertThat(folders.map { it.serverId }).containsExactly("INBOX", "INBOX.FolderOne", "INBOX.FolderTwo")
         assertThat(folders.map { it.name }).containsExactly("INBOX", "FolderOne", "FolderTwo")
-        assertThat(folders.map { it.oldServerId }).containsExactly("INBOX", "FolderOne", "FolderTwo")
     }
 
     @Test
@@ -239,7 +255,6 @@ class RealImapStoreTest {
         assertThat(folders).isNotNull()
         assertThat(folders.map { it.serverId }).containsExactly("INBOX", "INBOX.FolderOne", "FolderTwo")
         assertThat(folders.map { it.name }).containsExactly("INBOX", "FolderOne", "FolderTwo")
-        assertThat(folders.mapNotNull { it.oldServerId }).containsExactly("INBOX", "FolderOne")
     }
 
     @Test

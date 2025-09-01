@@ -8,6 +8,10 @@ import assertk.assertions.isTrue
 import com.fsck.k9.preferences.K9StoragePersister.StoragePersistOperationCallback
 import com.fsck.k9.preferences.K9StoragePersister.StoragePersistOperations
 import com.fsck.k9.storage.K9RobolectricTest
+import net.thunderbird.core.logging.testing.TestLogger
+import net.thunderbird.core.preference.storage.InMemoryStorage
+import net.thunderbird.core.preference.storage.Storage
+import net.thunderbird.core.preference.storage.StorageUpdater
 import org.junit.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.kotlin.doAnswer
@@ -17,17 +21,20 @@ import org.mockito.kotlin.stubbing
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 
-class StorageEditorTest : K9RobolectricTest() {
-    private val storage: Storage = Storage(mapOf("storage-key" to "storage-value"))
+class DefaultStorageEditorTest : K9RobolectricTest() {
+
+    private val logger = TestLogger()
+    private val storage: Storage =
+        InMemoryStorage(mapOf("storage-key" to "storage-value"), logger)
     private val storageUpdater = TestStorageUpdater(storage)
     private val storagePersister = mock<K9StoragePersister>()
     private val storagePersisterOps = mock<StoragePersistOperations>()
-    private val editor = K9StorageEditor(storageUpdater, storagePersister)
+    private val editor = K9StorageEditor(storageUpdater, storagePersister, logger)
 
     private val workingMap = mutableMapOf<String, String>()
 
     private val newValues: Map<String, String>
-        get() = storageUpdater.newStorage!!.all
+        get() = storageUpdater.newStorage!!.getAll()
 
     @Test
     fun commit_exception() {
@@ -47,7 +54,7 @@ class StorageEditorTest : K9RobolectricTest() {
         val success = editor.commit()
 
         assertThat(success).isTrue()
-        assertThat(newValues).isEqualTo(storage.all)
+        assertThat(newValues).isEqualTo(storage.getAll())
 
         verifyNoMoreInteractions(storagePersisterOps)
     }

@@ -103,7 +103,7 @@
     <string name="size_format_kilobytes">%.1f kB</string>
     <string name="size_format_bytes">%d B</string>
     <plurals name="notification_new_messages_title">
-        <item quantity="one"><xliff:g id="new_message_count">%d</xliff:g>nyt brev</item>
+        <item quantity="one"><xliff:g id="new_message_count">%d</xliff:g> nyt brev</item>
         <item quantity="other"><xliff:g id="new_message_count">%d</xliff:g> nye meddelelser</item>
     </plurals>
     <string name="notification_additional_messages">+ <xliff:g id="additional_messages">%1$d</xliff:g> mere på <xliff:g id="account">%2$s</xliff:g></string>
@@ -302,12 +302,6 @@
     <string name="account_settings_push_advanced_title">Avanceret</string>
     <string name="account_settings_title_fmt">Konto opsætning</string>
     <string name="account_settings_notify_label">Vis besked når ny mail er modtaget</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Påmindelses mapper</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Alle</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Kun primære mapper</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">Primære og sekundære mapper</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Alle undtaget sekundære mapper</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">Ingen</string>
     <string name="account_settings_notify_sync_label">Besked om synkronisering</string>
     <string name="account_settings_email_label">Din mailaddresse</string>
     <string name="account_settings_notify_summary">Vis besked i statusbar når mail ankommer</string>
@@ -395,48 +389,11 @@
     <string name="account_settings_message_age_3_months">de seneste 3 måneder</string>
     <string name="account_settings_message_age_6_months">de seneste 6 måneder</string>
     <string name="account_settings_message_age_1_year">det seneste år</string>
-    <string name="account_settings_folder_display_mode_label">Mapper som ønskes vist</string>
-    <string name="account_settings_folder_display_mode_all">Alle</string>
-    <string name="account_settings_folder_display_mode_first_class">Kun primære mapper</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">Primære og sekundære mapper</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Alle undtaget sekundære mapper</string>
-    <string name="account_settings_folder_sync_mode_label">Hent/send mail fra mapper (Sync)</string>
-    <string name="account_settings_folder_sync_mode_all">Alle</string>
-    <string name="account_settings_folder_sync_mode_first_class">Kun primære mapper</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">Primære og sekundære mapper</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Alle undtaget sekundære mapper</string>
-    <string name="account_settings_folder_sync_mode_none">Ingen</string>
-    <string name="account_settings_folder_push_mode_label">Hent/send mail fra mapper (Push)</string>
-    <string name="account_settings_folder_push_mode_all">Alle</string>
-    <string name="account_settings_folder_push_mode_first_class">Kun primære mapper</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">Primære og sekundære mapper</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Alle undtaget sekundære mapper</string>
-    <string name="account_settings_folder_push_mode_none">Ingen</string>
     <string name="account_settings_sync_remote_deletetions_label">Synkroniser fjern-sletning</string>
     <string name="account_settings_sync_remote_deletetions_summary">Fjern mails når de slettes på server</string>
     <string name="account_settings_openpgp_missing">Mangler OpenPGP program - er det afinstalleret?</string>
     <string name="folder_settings_title">Mappe opsætning</string>
     <string name="folder_settings_in_top_group_label">Vis i topgruppen</string>
-    <string name="folder_settings_in_top_group_summary">Vis nær toppen af mappelisten</string>
-    <string name="folder_settings_folder_display_mode_label">Mappeklasse for visning</string>
-    <string name="folder_settings_folder_display_mode_normal">Ingen</string>
-    <string name="folder_settings_folder_display_mode_first_class">Primær</string>
-    <string name="folder_settings_folder_display_mode_second_class">Sekundær</string>
-    <string name="folder_settings_folder_sync_mode_label">Mappeklasse for poll mail</string>
-    <string name="folder_settings_folder_sync_mode_normal">Ingen</string>
-    <string name="folder_settings_folder_sync_mode_first_class">Primær</string>
-    <string name="folder_settings_folder_sync_mode_second_class">Sekundær</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Samme som visnings-klasse</string>
-    <string name="folder_settings_folder_push_mode_label">Mappeklasse for push mail</string>
-    <string name="folder_settings_folder_push_mode_normal">Ingen</string>
-    <string name="folder_settings_folder_push_mode_first_class">Primær</string>
-    <string name="folder_settings_folder_push_mode_second_class">Sekundær</string>
-    <string name="folder_settings_folder_push_mode_inherited">Samme som test klasse</string>
-    <string name="folder_settings_folder_notify_mode_label">Klasse for mappe-besked</string>
-    <string name="folder_settings_folder_notify_mode_normal">Ingen</string>
-    <string name="folder_settings_folder_notify_mode_first_class">Primære</string>
-    <string name="folder_settings_folder_notify_mode_second_class">Sekundære</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Samme som Push-klasse</string>
     <string name="folder_settings_clear_local_folder_action">Fjern lokalt lagrede mails</string>
     <string name="account_settings_incoming_label">Indgående server</string>
     <string name="account_settings_incoming_summary">Konfigurer indgående mail server</string>
@@ -522,11 +479,6 @@
     <string name="sort_by_attach">Vedhæftning</string>
     <string name="account_delete_dlg_title">Fjern konto</string>
     <string name="folder_list_filter_hint">Mappenavn indeholder</string>
-    <string name="folder_list_display_mode_label">Mapper</string>
-    <string name="folder_list_display_mode_all">Vis alle mapper</string>
-    <string name="folder_list_display_mode_first_class">Vis kun primære mapper</string>
-    <string name="folder_list_display_mode_first_and_second_class">Vis primære og sekundære mapper</string>
-    <string name="folder_list_display_mode_not_second_class">Vis alle pånær sekundære mapper</string>
     <string name="account_settings_signature__location_label">Signaturposition</string>
     <string name="account_settings_signature__location_before_quoted_text">Før citeret tekst</string>
     <string name="account_settings_signature__location_after_quoted_text">Efter citeret tekst</string>
@@ -573,7 +525,6 @@
     <string name="integrated_inbox_title">Fælles indbakke</string>
     <string name="integrated_inbox_detail">Alle mails i fælles mapper</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Inkluder i fælles indbakke</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Alle mails vises i fælles indbakke</string>
     <string name="account_settings_no_folder_selected">Ingen</string>
     <string name="account_settings_automatic_special_folder">Automatisk (%s)</string>
     <string name="font_size_settings_title">Skriftstørrelse</string>

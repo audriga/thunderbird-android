@@ -1,14 +1,14 @@
 package com.fsck.k9.message
 
-import app.k9mail.legacy.account.Account
 import com.fsck.k9.helper.ReplyToParser
 import com.fsck.k9.mail.Message
+import net.thunderbird.core.android.account.LegacyAccount
 
 /**
  * Figures out which reply actions are available to the user.
  */
 class ReplyActionStrategy(private val replyRoParser: ReplyToParser) {
-    fun getReplyActions(account: Account, message: Message): ReplyActions {
+    fun getReplyActions(account: LegacyAccount, message: Message): ReplyActions {
         val recipientsToReplyTo = replyRoParser.getRecipientsToReplyTo(message, account)
         val recipientsToReplyAllTo = replyRoParser.getRecipientsToReplyAllTo(message, account)
 

@@ -33,13 +33,14 @@ import app.k9mail.feature.account.common.ui.AppTitleTopHeader
 import app.k9mail.feature.onboarding.permissions.R
 import app.k9mail.feature.onboarding.permissions.ui.PermissionsContract.Event
 import app.k9mail.feature.onboarding.permissions.ui.PermissionsContract.State
+import net.thunderbird.core.ui.compose.common.modifier.testTagAsResourceId
 import app.k9mail.feature.account.common.R as CommonR
 
 @Composable
 internal fun PermissionsContent(
     state: State,
     onEvent: (Event) -> Unit,
-    appName: String,
+    brandName: String,
 ) {
     val scrollState = rememberScrollState()
 
@@ -52,15 +53,16 @@ internal fun PermissionsContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(innerPadding),
-        ) {
+        ) { contentPadding ->
             Column(
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .verticalScroll(state = scrollState),
+                    .verticalScroll(state = scrollState)
+                    .padding(contentPadding),
             ) {
-                HeaderArea(appName = appName)
+                HeaderArea(brandName = brandName)
 
                 ContentArea(state, onEvent)
 
@@ -74,13 +76,13 @@ internal fun PermissionsContent(
 
 @Composable
 private fun HeaderArea(
-    appName: String,
+    brandName: String,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AppTitleTopHeader(
-            title = appName,
+            title = brandName,
         )
 
         TextHeadlineSmall(
@@ -151,7 +153,7 @@ private fun BottomBar(
     ) {
         ResponsiveWidthContainer(
             modifier = Modifier.fillMaxWidth(),
-        ) {
+        ) { contentPadding ->
             Row(
                 modifier = Modifier
                     .padding(
@@ -160,7 +162,8 @@ private fun BottomBar(
                         top = MainTheme.spacings.default,
                         bottom = MainTheme.spacings.double,
                     )
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(contentPadding),
                 horizontalArrangement = Arrangement.End,
             ) {
                 Crossfade(
@@ -170,13 +173,15 @@ private fun BottomBar(
                     ButtonFilled(
                         text = stringResource(CommonR.string.account_common_button_next),
                         onClick = { onEvent(Event.NextClicked) },
-                        modifier = Modifier.hide(!isNextButtonVisible),
+                        modifier = Modifier.hide(!isNextButtonVisible)
+                            .testTagAsResourceId("onboarding_permissions_next_button"),
                     )
 
                     ButtonText(
                         text = stringResource(R.string.onboarding_permissions_skip_button),
                         onClick = { onEvent(Event.NextClicked) },
-                        modifier = Modifier.hide(isNextButtonVisible),
+                        modifier = Modifier.hide(isNextButtonVisible)
+                            .testTagAsResourceId("onboarding_permissions_skip_button"),
                     )
                 }
             }

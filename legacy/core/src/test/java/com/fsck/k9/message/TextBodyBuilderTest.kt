@@ -3,9 +3,15 @@ package com.fsck.k9.message
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.fsck.k9.message.quote.InsertableHtmlContent
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.logging.testing.TestLogger
+import net.thunderbird.core.preference.GeneralSettings
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import org.mockito.Mockito.mock
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 @RunWith(Parameterized::class)
 class TextBodyBuilderTest(val testData: TestData) {
@@ -153,7 +159,11 @@ class TextBodyBuilderTest(val testData: TestData) {
     private val toTest: TextBodyBuilder
 
     init {
-        toTest = TextBodyBuilder(MESSAGE_TEXT)
+        Log.logger = TestLogger()
+        toTest = TextBodyBuilder(
+            MESSAGE_TEXT,
+            mock { on { getConfig() } doReturn GeneralSettings() },
+        )
         toTest.setAppendSignature(testData.appendSignature)
         toTest.setIncludeQuotedText(testData.includeQuotedText)
         toTest.setInsertSeparator(testData.insertSeparator)

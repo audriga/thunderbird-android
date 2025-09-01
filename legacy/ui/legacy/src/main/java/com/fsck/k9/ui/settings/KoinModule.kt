@@ -8,14 +8,20 @@ import com.fsck.k9.ui.settings.export.SettingsExportViewModel
 import com.fsck.k9.ui.settings.general.GeneralSettingsDataStore
 import com.fsck.k9.ui.settings.general.GeneralSettingsViewModel
 import java.util.concurrent.Executors
-import org.koin.androidx.viewmodel.dsl.viewModel
+import net.thunderbird.core.logging.file.FileLogSink
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val settingsUiModule = module {
     viewModel { SettingsViewModel(accountManager = get()) }
 
-    viewModel { GeneralSettingsViewModel(logFileWriter = get()) }
+    viewModel {
+        GeneralSettingsViewModel(
+            logFileWriter = get(),
+            syncDebugFileLogSink = get<FileLogSink>(named("syncDebug")),
+        )
+    }
     factory {
         GeneralSettingsDataStore(
             jobManager = get(),
@@ -43,7 +49,6 @@ val settingsUiModule = module {
 
     viewModel {
         SettingsExportViewModel(
-            context = get(),
             accountManager = get(),
             settingsExporter = get(),
         )

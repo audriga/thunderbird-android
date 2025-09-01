@@ -1,6 +1,5 @@
 package app.k9mail.feature.widget.message.list
 
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.mailstore.MessageDetailsAccessor
 import app.k9mail.legacy.mailstore.MessageMapper
 import app.k9mail.legacy.message.controller.MessageReference
@@ -8,10 +7,13 @@ import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.ui.helper.DisplayAddressHelper
 import java.util.Calendar
 import java.util.Locale
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.preference.GeneralSettingsManager
 
 internal class MessageListItemMapper(
     private val messageHelper: MessageHelper,
-    private val account: Account,
+    private val account: LegacyAccount,
+    private val generalSettingsManager: GeneralSettingsManager,
 ) : MessageMapper<MessageListItem> {
     private val calendar: Calendar = Calendar.getInstance()
 
@@ -24,7 +26,11 @@ internal class MessageListItemMapper(
         val showRecipients = DisplayAddressHelper.shouldShowRecipients(account, message.folderId)
         val displayAddress = if (showRecipients) toAddresses.firstOrNull() else fromAddresses.firstOrNull()
         val displayName = if (showRecipients) {
-            messageHelper.getRecipientDisplayNames(toAddresses.toTypedArray()).toString()
+            messageHelper.getRecipientDisplayNames(
+                addresses = toAddresses.toTypedArray(),
+                isShowCorrespondentNames = generalSettingsManager.getConfig().display.isShowCorrespondentNames,
+                isChangeContactNameColor = generalSettingsManager.getConfig().display.isChangeContactNameColor,
+            ).toString()
         } else {
             messageHelper.getSenderDisplayName(displayAddress).toString()
         }
@@ -57,7 +63,7 @@ internal class MessageListItemMapper(
         return String.format("%d %s", dayOfMonth, month)
     }
 
-    private fun createUniqueId(account: Account, messageId: Long): Long {
+    private fun createUniqueId(account: LegacyAccount, messageId: Long): Long {
         return ((account.accountNumber + 1).toLong() shl ACCOUNT_NUMBER_BIT_SHIFT) + messageId
     }
 

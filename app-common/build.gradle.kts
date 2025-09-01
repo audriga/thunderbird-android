@@ -2,11 +2,47 @@ plugins {
     id(ThunderbirdPlugins.Library.android)
 }
 
-dependencies {
-    api(projects.legacy.common)
-    implementation(projects.feature.migration.provider)
+android {
+    namespace = "net.thunderbird.app.common"
+
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
-android {
-    namespace = "app.k9mail.common"
+dependencies {
+    api(projects.legacy.common)
+    api(projects.legacy.ui.legacy)
+
+    api(projects.feature.account.core)
+    api(projects.feature.launcher)
+    api(projects.feature.navigation.drawer.api)
+
+    implementation(projects.legacy.core)
+    implementation(projects.core.android.account)
+
+    implementation(projects.core.logging.api)
+    implementation(projects.core.logging.implComposite)
+    implementation(projects.core.logging.implConsole)
+    implementation(projects.core.logging.implLegacy)
+    implementation(projects.core.logging.implFile)
+
+    implementation(projects.core.featureflag)
+    implementation(projects.core.ui.legacy.theme2.common)
+
+    implementation(projects.feature.account.avatar.api)
+    implementation(projects.feature.account.avatar.impl)
+    implementation(projects.feature.account.setup)
+    implementation(projects.feature.mail.account.api)
+    implementation(projects.feature.migration.provider)
+    implementation(projects.feature.notification.api)
+    implementation(projects.feature.notification.impl)
+    implementation(projects.feature.widget.messageList)
+
+    implementation(projects.mail.protocols.imap)
+
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.lifecycle.process)
+
+    testImplementation(projects.feature.account.fake)
 }

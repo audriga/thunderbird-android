@@ -16,10 +16,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import app.k9mail.core.android.common.contact.ContactRepository
-import app.k9mail.core.common.mail.EmailAddress
-import app.k9mail.core.common.mail.toEmailAddressOrNull
-import app.k9mail.legacy.account.Account
-import app.k9mail.legacy.account.Account.ShowPictures
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mailstore.AttachmentViewInfo
@@ -31,6 +27,10 @@ import com.fsck.k9.view.ThemeUtils
 import com.fsck.k9.view.ToolableViewAnimator
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.account.ShowPictures
+import net.thunderbird.core.common.mail.EmailAddress
+import net.thunderbird.core.common.mail.toEmailAddressOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -109,7 +109,7 @@ class MessageTopView(
         setShowDownloadButton(messageViewInfo)
     }
 
-    fun showMessage(account: Account, messageViewInfo: MessageViewInfo, messageReference: MessageReference?) {
+    fun showMessage(account: LegacyAccount, messageViewInfo: MessageViewInfo, messageReference: MessageReference?) {
         resetAndPrepareMessageView(messageViewInfo)
 
         val showPicturesSetting = account.showPictures
@@ -198,7 +198,7 @@ class MessageTopView(
         }
     }
 
-    fun setHeaders(message: Message?, account: Account?, showStar: Boolean) {
+    fun setHeaders(message: Message?, account: LegacyAccount?, showStar: Boolean) {
         messageHeaderView.populate(message, account, showStar, showAccountChip)
         messageHeaderView.visibility = VISIBLE
     }

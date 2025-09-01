@@ -8,8 +8,9 @@ android {
 }
 
 dependencies {
-    implementation(projects.core.ui.compose.designsystem)
     implementation(projects.core.common)
+    implementation(projects.core.ui.compose.designsystem)
+    implementation(projects.core.ui.compose.navigation)
 
     implementation(projects.mail.common)
     implementation(projects.mail.protocols.imap)
@@ -25,6 +26,7 @@ dependencies {
     implementation(projects.feature.account.server.certificate)
     api(projects.feature.account.server.validation)
 
+    testImplementation(projects.core.logging.testing)
     testImplementation(projects.core.ui.compose.testing)
 
     testImplementation(platform(libs.forkhandles.bom))

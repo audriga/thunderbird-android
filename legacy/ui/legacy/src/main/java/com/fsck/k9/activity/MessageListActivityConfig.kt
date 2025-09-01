@@ -1,11 +1,12 @@
 package com.fsck.k9.activity
 
-import app.k9mail.legacy.preferences.AppTheme
-import app.k9mail.legacy.preferences.GeneralSettingsManager
-import app.k9mail.legacy.preferences.SubTheme
 import com.fsck.k9.K9
-import com.fsck.k9.SwipeAction
 import com.fsck.k9.UiDensity
+import net.thunderbird.core.common.action.SwipeAction
+import net.thunderbird.core.preference.AppTheme
+import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.preference.SplitViewMode
+import net.thunderbird.core.preference.SubTheme
 
 data class MessageListActivityConfig(
     val appTheme: AppTheme,
@@ -23,7 +24,7 @@ data class MessageListActivityConfig(
     val messageViewTheme: SubTheme,
     val messageListPreviewLines: Int,
     val messageListDensity: UiDensity,
-    val splitViewMode: K9.SplitViewMode,
+    val splitViewMode: SplitViewMode,
     val fontSizeMessageListSubject: Int,
     val fontSizeMessageListSender: Int,
     val fontSizeMessageListDate: Int,
@@ -35,28 +36,31 @@ data class MessageListActivityConfig(
     val fontSizeMessageViewContentAsPercent: Int,
     val swipeRightAction: SwipeAction,
     val swipeLeftAction: SwipeAction,
+    val generalSettingsManager: GeneralSettingsManager,
 ) {
 
     companion object {
-        fun create(generalSettingsManager: GeneralSettingsManager): MessageListActivityConfig {
-            val settings = generalSettingsManager.getSettings()
+        fun create(
+            generalSettingsManager: GeneralSettingsManager,
+        ): MessageListActivityConfig {
+            val settings = generalSettingsManager.getConfig()
             return MessageListActivityConfig(
-                appTheme = settings.appTheme,
-                isShowUnifiedInbox = K9.isShowUnifiedInbox,
-                isShowMessageListStars = K9.isShowMessageListStars,
-                isShowCorrespondentNames = K9.isShowCorrespondentNames,
-                isMessageListSenderAboveSubject = K9.isMessageListSenderAboveSubject,
-                isShowContactName = K9.isShowContactName,
-                isChangeContactNameColor = K9.isChangeContactNameColor,
-                isShowContactPicture = K9.isShowContactPicture,
-                isColorizeMissingContactPictures = K9.isColorizeMissingContactPictures,
-                isUseBackgroundAsUnreadIndicator = K9.isUseBackgroundAsUnreadIndicator,
-                isShowComposeButton = K9.isShowComposeButtonOnMessageList,
+                appTheme = settings.display.coreSettings.appTheme,
+                isShowUnifiedInbox = settings.display.inboxSettings.isShowUnifiedInbox,
+                isShowMessageListStars = settings.display.inboxSettings.isShowMessageListStars,
+                isShowCorrespondentNames = settings.display.isShowCorrespondentNames,
+                isMessageListSenderAboveSubject = settings.display.inboxSettings.isMessageListSenderAboveSubject,
+                isShowContactName = settings.display.isShowContactName,
+                isChangeContactNameColor = settings.display.isChangeContactNameColor,
+                isShowContactPicture = settings.display.isShowContactPicture,
+                isColorizeMissingContactPictures = settings.display.isColorizeMissingContactPictures,
+                isUseBackgroundAsUnreadIndicator = settings.display.isUseBackgroundAsUnreadIndicator,
+                isShowComposeButton = settings.display.inboxSettings.isShowComposeButtonOnMessageList,
                 contactNameColor = K9.contactNameColor,
-                messageViewTheme = settings.messageViewTheme,
+                messageViewTheme = settings.display.coreSettings.messageViewTheme,
                 messageListPreviewLines = K9.messageListPreviewLines,
                 messageListDensity = K9.messageListDensity,
-                splitViewMode = K9.splitViewMode,
+                splitViewMode = settings.display.coreSettings.splitViewMode,
                 fontSizeMessageListSubject = K9.fontSizes.messageListSubject,
                 fontSizeMessageListSender = K9.fontSizes.messageListSender,
                 fontSizeMessageListDate = K9.fontSizes.messageListDate,
@@ -68,6 +72,7 @@ data class MessageListActivityConfig(
                 fontSizeMessageViewContentAsPercent = K9.fontSizes.messageViewContentAsPercent,
                 swipeRightAction = K9.swipeRightAction,
                 swipeLeftAction = K9.swipeLeftAction,
+                generalSettingsManager = generalSettingsManager,
             )
         }
     }

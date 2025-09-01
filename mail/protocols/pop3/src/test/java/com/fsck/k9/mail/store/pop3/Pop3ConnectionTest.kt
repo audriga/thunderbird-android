@@ -15,14 +15,17 @@ import com.fsck.k9.mail.ConnectionSecurity
 import com.fsck.k9.mail.ConnectionSecurity.NONE
 import com.fsck.k9.mail.ConnectionSecurity.SSL_TLS_REQUIRED
 import com.fsck.k9.mail.ConnectionSecurity.STARTTLS_REQUIRED
-import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.MissingCapabilityException
-import com.fsck.k9.mail.helpers.TestTrustedSocketFactory
 import com.fsck.k9.mail.ssl.TrustedSocketFactory
+import com.fsck.k9.mail.testing.security.TestTrustedSocketFactory
 import java.io.IOException
 import java.security.NoSuchAlgorithmException
 import javax.net.ssl.SSLException
+import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.logging.testing.TestLogger
 import okio.ByteString.Companion.encodeUtf8
+import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doThrow
@@ -31,7 +34,12 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verifyNoInteractions
 
 class Pop3ConnectionTest {
-    private val socketFactory = TestTrustedSocketFactory.newInstance()
+    private val socketFactory = TestTrustedSocketFactory
+
+    @Before
+    fun setUp() {
+        Log.logger = TestLogger()
+    }
 
     @Test
     fun `when TrustedSocketFactory throws wrapped CertificateChainException, open() should throw`() {

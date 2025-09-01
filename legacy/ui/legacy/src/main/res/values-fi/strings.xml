@@ -96,7 +96,7 @@
     <string name="status_network_error">Yhteysvirhe</string>
     <string name="status_invalid_id_error">Viestiä ei löytynyt</string>
     <string name="status_loading_error">Viestin lataamisvirhe</string>
-    <string name="load_more_messages_fmt">Lataa <xliff:g id="messages_to_load">%d</xliff:g> lisää</string>
+    <string name="load_more_messages_fmt">Lataa kohteeseen <xliff:g id="messages_to_load">%d</xliff:g> lisää</string>
     <string name="size_format_gigabytes">%.1f Gt</string>
     <string name="size_format_megabytes">%.1f Mt</string>
     <string name="size_format_kilobytes">%.1f kt</string>
@@ -235,7 +235,7 @@
     <string name="general_settings_ui_density_default">Oletus</string>
     <string name="general_settings_ui_density_relaxed">Rento</string>
     <string name="global_settings_privacy_hide_useragent">Piilota sähköpostisovellus</string>
-    <string name="global_settings_privacy_hide_useragent_detail">Poista K-9-tunnistetiedot viestin otsaketiedoista</string>
+    <string name="global_settings_privacy_hide_useragent_detail">Poista User-Agent viestin otsakeista</string>
     <string name="global_settings_privacy_hide_timezone">Piilota aikavyöhyke</string>
     <string name="global_settings_privacy_hide_timezone_detail">Käytä UTC-aikaa paikallisen aikavyöhykkeen sijaan sähköpostin otsakkeissa</string>
     <string name="global_settings_notification_quick_delete_title">Näytä Poista-painike</string>
@@ -303,12 +303,6 @@
     <string name="account_settings_push_advanced_title">Lisäasetukset</string>
     <string name="account_settings_title_fmt">Yleiset</string>
     <string name="account_settings_notify_label">Saapuneiden viestien ilmoitukset</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Ilmoitukset kansioista</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Kaikki</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Vain 1. luokan kansiot</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">1. ja 2. luokan kansiot</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Kaikki paitsi 2. luokan kansiot</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">Ei mitään</string>
     <string name="account_settings_notify_sync_label">Synkronointi-ilmoitukset</string>
     <string name="account_settings_email_label">Sähköpostiosoite</string>
     <string name="account_settings_notify_summary">Näytä tilapalkissa ilmoitus uusista viesteistä</string>
@@ -397,48 +391,11 @@
     <string name="account_settings_message_age_3_months">viimeiset 3 kuukautta</string>
     <string name="account_settings_message_age_6_months">viimeiset 6 kuukautta</string>
     <string name="account_settings_message_age_1_year">viime vuosi</string>
-    <string name="account_settings_folder_display_mode_label">Näytä kansiot</string>
-    <string name="account_settings_folder_display_mode_all">Kaikki</string>
-    <string name="account_settings_folder_display_mode_first_class">Vain 1. luokan kansiot</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">1. ja 2. luokan kansiot</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Kaikki paitsi 2. luokan kansiot</string>
-    <string name="account_settings_folder_sync_mode_label">Tarkistettavat kansiot</string>
-    <string name="account_settings_folder_sync_mode_all">Kaikki</string>
-    <string name="account_settings_folder_sync_mode_first_class">Vain 1. luokan kansiot</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">1. ja 2. luokan kansiot</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Kaikki paitsi 2. luokan kansiot</string>
-    <string name="account_settings_folder_sync_mode_none">Ei mitään</string>
-    <string name="account_settings_folder_push_mode_label">Push-kysely</string>
-    <string name="account_settings_folder_push_mode_all">Kaikki</string>
-    <string name="account_settings_folder_push_mode_first_class">Vain 1. luokan kansiot</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">1. ja 2. luokan kansiot</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Kaikki paitsi 2. luokan kansiot</string>
-    <string name="account_settings_folder_push_mode_none">Ei mitään</string>
     <string name="account_settings_sync_remote_deletetions_label">Synkronoi etäpoistot</string>
     <string name="account_settings_sync_remote_deletetions_summary">Poista viestit, kun ne poistetaan palvelimelta</string>
     <string name="account_settings_openpgp_missing">OpenPGP-sovellus puuttuu - poistettiinko se?</string>
     <string name="folder_settings_title">Kansioiden asetukset</string>
     <string name="folder_settings_in_top_group_label">Näytä yläryhmässä</string>
-    <string name="folder_settings_in_top_group_summary">Näytä yläosassa lähellä kansiolistaa</string>
-    <string name="folder_settings_folder_display_mode_label">Näytettävän kansion luokka</string>
-    <string name="folder_settings_folder_display_mode_normal">Ei luokkaa</string>
-    <string name="folder_settings_folder_display_mode_first_class">1. luokka</string>
-    <string name="folder_settings_folder_display_mode_second_class">2. luokka</string>
-    <string name="folder_settings_folder_sync_mode_label">Poll-luokka</string>
-    <string name="folder_settings_folder_sync_mode_normal">Ei mitään</string>
-    <string name="folder_settings_folder_sync_mode_first_class">1. luokka</string>
-    <string name="folder_settings_folder_sync_mode_second_class">2. luokka</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Sama kuin näytettävällä kansiolla</string>
-    <string name="folder_settings_folder_push_mode_label">Push-luokka</string>
-    <string name="folder_settings_folder_push_mode_normal">Ei luokkaa</string>
-    <string name="folder_settings_folder_push_mode_first_class">1. luokka</string>
-    <string name="folder_settings_folder_push_mode_second_class">2. luokka</string>
-    <string name="folder_settings_folder_push_mode_inherited">Sama kuin poll-luokka</string>
-    <string name="folder_settings_folder_notify_mode_label">Kansion ilmoitusluokka</string>
-    <string name="folder_settings_folder_notify_mode_normal">Ei luokkaa</string>
-    <string name="folder_settings_folder_notify_mode_first_class">1. luokka</string>
-    <string name="folder_settings_folder_notify_mode_second_class">2. luokka</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Sama kuin push-luokka</string>
     <string name="folder_settings_clear_local_folder_action">Poista paikalliset viestit</string>
     <string name="account_settings_incoming_label">Saapuvan postin palvelin</string>
     <string name="account_settings_incoming_summary">Määritä saapuvan postin palvelin</string>
@@ -525,11 +482,6 @@
     <string name="sort_by_attach">Liitteiden mukaan</string>
     <string name="account_delete_dlg_title">Poista tili</string>
     <string name="folder_list_filter_hint">Kansion nimi sisältää</string>
-    <string name="folder_list_display_mode_label">Kansiot</string>
-    <string name="folder_list_display_mode_all">Näytä kaikki</string>
-    <string name="folder_list_display_mode_first_class">Näytä vain 1. luokan kansiot</string>
-    <string name="folder_list_display_mode_first_and_second_class">Näytä 1. ja 2. luokan kansiot</string>
-    <string name="folder_list_display_mode_not_second_class">Näytä kaikki paitsi 2. luokan kansiot</string>
     <string name="account_settings_signature__location_label">Allekirjoituksen sijainti</string>
     <string name="account_settings_signature__location_before_quoted_text">Ennen lainattua viestiä</string>
     <string name="account_settings_signature__location_after_quoted_text">Lainatun viestin jälkeen</string>
@@ -571,13 +523,11 @@
     <string name="account_setup_push_limit_1000">1000 kansiota</string>
     <string name="animations_title">Animaatio</string>
     <string name="animations_summary">Käytä koreita visuaalisia tehosteita</string>
-    <string name="volume_navigation_title">Liikkuminen äänipainikkeilla viestinäkymässä</string>
     <string name="show_unified_inbox_title">Näytä \"Yhdistetty saapuneet\"</string>
     <string name="show_starred_count_title">Näytä tähdellä merkittyjen viestien määrä</string>
     <string name="integrated_inbox_title">Yhdistetty saapuneet</string>
     <string name="integrated_inbox_detail">Kaikki viestit Yhdistetty saapuneet -kansiossa</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Yhdistä</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Kaikki viestit näytetään Yhdistetty saapuneet -kansiossa</string>
     <string name="account_settings_no_folder_selected">Ei mitään</string>
     <string name="account_settings_automatic_special_folder">Automaattinen (%s)</string>
     <string name="font_size_settings_title">Kirjasinkoko</string>
@@ -924,4 +874,27 @@ Voit säilyttää tämän viestin ja käyttää sitä varmuuskopioina salausavai
     <string name="general_settings_post_mark_as_unread_action_stay">Pysy nykyisessä viestissä</string>
     <string name="general_settings_post_mark_as_unread_action_title">Kun viesti on merkitty lukemattomaksi</string>
     <string name="general_settings_post_mark_as_unread_action_return_to_list">Palaa viestiluetteloon</string>
+    <string name="about_app_authors_thunderbird">Sovelluksen mobiilitiimi</string>
+    <string name="save_attachment_action">Tallenna liite</string>
+    <string name="folder_settings_notifications_label">Ilmoitukset</string>
+    <string name="empty_spam_action">Tyhjennä roskaposti</string>
+    <string name="volume_navigation_title_short">Äänenvoimakkuusnäppäimen navigointi</string>
+    <string name="volume_navigation_summary">Voit siirtyä viestien välillä käyttämällä äänenvoimakkuusnäppäimiä viestinäkymässä</string>
+    <string name="dialog_confirm_empty_spam_title">Vahvista roskapostin tyhjentäminen</string>
+    <string name="settings_list_action_support">Tue <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="settings_ui_data_collection">Tietojen keruu</string>
+    <string name="about_title">Tietoja <xliff:g id="app_name">%s</xliff:g>:sta</string>
+    <string name="folder_settings_push_label">Ota työntö käyttöön</string>
+    <string name="account_delete_dlg_instructions_fmt">Tili \\<xliff:g id="account">%1$s</xliff:g>\" poistetaan <xliff:g id="app_name">%2$s</xliff:g>:sta.</string>
+    <string name="expand_content_description">Laajenna</string>
+    <string name="dialog_openkeychain_info_text">OpenKeychain-sovellus vaaditaan päästä-päähän-salauksen tuen mahdollistamiseksi.</string>
+    <string name="dialog_confirm_empty_spam_message">Haluatko tyhjentää roskapostikansion?</string>
+    <string name="push_info_notification_explanation_text">Työnnä-toimintoa käytettäessä <xliff:g id="app_name">%1$s</xliff:g> ylläpitää yhteyttä sähköpostipalvelimeen. Android vaatii jatkuvan ilmoituksen näyttämistä, kun sovellus on aktiivinen taustalla. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
+    <string name="push_notification_state_alarm_permission_missing">Puuttuva lupa hälytysten ajoittamiseksi</string>
+    <string name="push_notification_grant_alarm_permission">Napauta myöntääksesi luvan.</string>
+    <string name="folder_settings_visible_label">Näytä kansio</string>
+    <string name="folder_settings_sync_label">Ota synkronointi käyttöön</string>
+    <string name="settings_ui_telemetry_title">Käyttö- ja tekniset tiedot</string>
+    <string name="settings_ui_telemetry_description">Jakaa tämän sovelluksen suorituskyky-, käyttö-, laitteisto- ja mukautustiedot Mozillan kanssa auttaakseen meitä parantamaan Thunderbirdia</string>
+    <string name="folder_list_show_hidden_folders">Näytä piilotetut kansiot</string>
 </resources>

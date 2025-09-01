@@ -1,0 +1,86 @@
+---
+name: Deploy docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+
+  workflow_dispatch:
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-docs:
+    if: ${{ github.repository_owner == 'thunderbird' }}
+    runs-on: ubuntu-latest
+    environment: botmobile
+    steps:
+      - name: App token generate
+        uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b  # v2.1.1
+        if: ${{ vars.BOT_CLIENT_ID }}
+        id: app-token
+        with:
+          app-id: ${{ vars.BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token || github.token }}
+
+      - name: Cargo cache
+        uses: actions-rust-lang/setup-rust-toolchain@ab6845274e2ff01cd4462007e1a9d9df1ab49f42  # v1.14.0
+
+      - name: Install mdbook and extensions
+        run: ./docs/install.sh
+
+      - name: Build docs
+        run: mdbook build docs --dest-dir=./../book/docs/latest
+
+      - name: Test docs
+        run: mdbook test docs
+
+      - name: Clean docs
+        run: |
+          rm -rf book/docs/latest/assets/draw.io
+          rm book/docs/latest/.gitignore
+          rm book/docs/latest/install.sh
+
+          # Restore mermaid.min.js, it has already been copied over to book/docs/latest
+          git restore .
+
+
+      - name: Deploy docs to gh-pages
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug || 'github-actions'}}
+          APP_USER_ID: ${{ vars.BOT_USER_ID || '41898282' }}
+        run: |
+          git config --global user.name "${APP_SLUG}"
+          git config --global user.email "${APP_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+
+          # Fetch the gh-pages branch
+          git fetch origin gh-pages || git checkout --orphan gh-pages
+          git checkout gh-pages
+
+           # Get the short commit hash
+          COMMIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+
+          # Keep necessary files and clean `docs/latest/`
+          mkdir -p docs/latest  # Ensure the folder exists
+          find docs/latest -mindepth 1 -delete  # Delete old files inside docs/latest
+
+          # Copy new docs to gh-pages branch
+          cp -r book/docs/latest/* docs/latest/
+
+          # Remove
+          rm -rf book
+
+          # Add, commit, and push changes
+          git add .
+          git commit -m "Deploy docs update from [${COMMIT_HASH}]" || echo "No changes to commit"
+          git push --force-with-lease origin gh-pages

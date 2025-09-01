@@ -2,14 +2,19 @@ package com.fsck.k9.contacts
 
 import android.content.Context
 import android.view.ContextThemeWrapper
-import app.k9mail.legacy.ui.theme.ThemeManager
-import com.fsck.k9.K9
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.getIntArray
 import com.fsck.k9.ui.resolveColorAttribute
+import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.ui.theme.manager.ThemeManager
 
-class ContactLetterBitmapConfig(context: Context, themeManager: ThemeManager) {
-    val hasDefaultBackgroundColor: Boolean = !K9.isColorizeMissingContactPictures
+class ContactLetterBitmapConfig(
+    context: Context,
+    themeManager: ThemeManager,
+    generalSettingsManager: GeneralSettingsManager,
+) {
+    val hasDefaultBackgroundColor: Boolean = !generalSettingsManager.getConfig()
+        .display.isColorizeMissingContactPictures
     val defaultBackgroundColor: Int
     val backgroundColors: IntArray
 

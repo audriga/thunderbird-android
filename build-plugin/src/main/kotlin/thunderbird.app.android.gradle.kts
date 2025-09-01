@@ -2,13 +2,14 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("thunderbird.quality.detekt.typed")
+    id("thunderbird.quality.spotless")
 }
 
 android {
-    configureSharedConfig()
+    configureSharedConfig(project)
 
     defaultConfig {
-        targetSdk = ThunderbirdProjectConfig.androidSdkTarget
+        targetSdk = ThunderbirdProjectConfig.Android.sdkTarget
     }
 
     buildFeatures {
@@ -20,12 +21,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = ThunderbirdProjectConfig.javaCompatibilityVersion.toString()
-    }
-
-    lint {
-        checkDependencies = true
-        lintConfig = file("${rootProject.projectDir}/config/lint/lint.xml")
+        jvmTarget = ThunderbirdProjectConfig.Compiler.javaCompatibility.toString()
     }
 
     dependenciesInfo {
@@ -35,7 +31,7 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.android.desugar)
+    coreLibraryDesugaring(libs.android.desugar.nio)
 
     implementation(platform(libs.kotlin.bom))
     implementation(platform(libs.koin.bom))

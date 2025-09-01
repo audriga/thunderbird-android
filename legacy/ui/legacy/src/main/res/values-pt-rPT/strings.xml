@@ -97,7 +97,7 @@
     <string name="status_network_error">Erro de ligação</string>
     <string name="status_invalid_id_error">Mensagem não encontrada</string>
     <string name="status_loading_error">Erro ao carregar mensagem</string>
-    <string name="load_more_messages_fmt">Carregar mais <xliff:g id="messages_to_load">%d</xliff:g></string>
+    <string name="load_more_messages_fmt">Carregar mais <xliff:g id="messages_to_load">%d</xliff:g> mensagens</string>
     <string name="size_format_gigabytes">%.1f GB</string>
     <string name="size_format_megabytes">%.1f MB</string>
     <string name="size_format_kilobytes">%.1f kB</string>
@@ -199,7 +199,7 @@
     <string name="global_settings_registered_name_color_changed">Colorir nomes na sua lista de contactos</string>
     <string name="general_settings_contact_name_color_label">Cor do nome de contacto</string>
     <string name="global_settings_messageview_fixedwidth_label">Fontes de largura fixa</string>
-    <string name="global_settings_messageview_fixedwidth_summary">Usar uma fonte de largura fixa quando forem visualizadas mensagens em texto simples</string>
+    <string name="global_settings_messageview_fixedwidth_summary">Usa uma fonte de largura fixa ao exibir mensagens de texto simples</string>
     <string name="global_settings_messageview_autofit_width_label">Ajustar automaticamente as mensagens</string>
     <string name="global_settings_messageview_autofit_width_summary">Encolher as mensagens para caberem no ecrã</string>
     <string name="global_settings_confirm_actions_title">Confirmar ações</string>
@@ -306,12 +306,6 @@
     <string name="account_settings_push_advanced_title">Avançado</string>
     <string name="account_settings_title_fmt">Configurações da conta</string>
     <string name="account_settings_notify_label">Notificação de novos emails</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Notificações de pastas</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Todas</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Apenas pastas de 1ª classe</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">Pastas de 1ª e 2ª classe</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Todas excepto pastas de 2ª classe</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">Nenhuma</string>
     <string name="account_settings_notify_sync_label">Notificações de sincronização</string>
     <string name="account_settings_email_label">O seu endereço de email</string>
     <string name="account_settings_notify_summary">Notificar na barra de estado na chegada de novos emails</string>
@@ -400,48 +394,11 @@
     <string name="account_settings_message_age_3_months">os últimos 3 meses</string>
     <string name="account_settings_message_age_6_months">os últimos 6 meses</string>
     <string name="account_settings_message_age_1_year">o último ano</string>
-    <string name="account_settings_folder_display_mode_label">Pastas para exibição</string>
-    <string name="account_settings_folder_display_mode_all">Todas</string>
-    <string name="account_settings_folder_display_mode_first_class">Apenas pastas de 1ª classe</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">Pastas de 1ª e 2ª classe</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Todas excepto pastas de 2ª classe</string>
-    <string name="account_settings_folder_sync_mode_label">Verificar pastas</string>
-    <string name="account_settings_folder_sync_mode_all">Todas</string>
-    <string name="account_settings_folder_sync_mode_first_class">Apenas pastas de 1ª classe</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">Pastas de 1ª e 2ª classe</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Todas excepto pastas de 2ª classe</string>
-    <string name="account_settings_folder_sync_mode_none">Nenhuma</string>
-    <string name="account_settings_folder_push_mode_label">Push de pastas</string>
-    <string name="account_settings_folder_push_mode_all">Todas</string>
-    <string name="account_settings_folder_push_mode_first_class">Apenas pastas de 1ª classe</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">Pastas de 1ª e 2ª classe</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Todas excepto pastas de 2ª classe</string>
-    <string name="account_settings_folder_push_mode_none">Nenhuma</string>
     <string name="account_settings_sync_remote_deletetions_label">Sincronizar as eliminações do servidor</string>
     <string name="account_settings_sync_remote_deletetions_summary">Remove as mensagens quando eliminadas no servidor</string>
     <string name="account_settings_openpgp_missing">Falta uma aplicação OpenPGP; foi desinstalada? </string>
     <string name="folder_settings_title">Configurações da pasta</string>
     <string name="folder_settings_in_top_group_label">Mostrar no grupo do topo</string>
-    <string name="folder_settings_in_top_group_summary">Mostrar junto ao topo da lista de pastas</string>
-    <string name="folder_settings_folder_display_mode_label">Classe de exibição da pasta</string>
-    <string name="folder_settings_folder_display_mode_normal">Sem Classe</string>
-    <string name="folder_settings_folder_display_mode_first_class">1ª classe</string>
-    <string name="folder_settings_folder_display_mode_second_class">2ª classe</string>
-    <string name="folder_settings_folder_sync_mode_label">Classe de verificação de pasta</string>
-    <string name="folder_settings_folder_sync_mode_normal">Nenhuma</string>
-    <string name="folder_settings_folder_sync_mode_first_class">1ª classe</string>
-    <string name="folder_settings_folder_sync_mode_second_class">2ª classe</string>
-    <string name="folder_settings_folder_sync_mode_inherited">A mesma que a classe de exibição</string>
-    <string name="folder_settings_folder_push_mode_label">Classe de push da pasta</string>
-    <string name="folder_settings_folder_push_mode_normal">Sem Classe</string>
-    <string name="folder_settings_folder_push_mode_first_class">1ª classe</string>
-    <string name="folder_settings_folder_push_mode_second_class">2ª classe</string>
-    <string name="folder_settings_folder_push_mode_inherited">Igual à classe de sondagem</string>
-    <string name="folder_settings_folder_notify_mode_label">Classe de notificação da pasta</string>
-    <string name="folder_settings_folder_notify_mode_normal">Sem Classe</string>
-    <string name="folder_settings_folder_notify_mode_first_class">1ª classe</string>
-    <string name="folder_settings_folder_notify_mode_second_class">2ª classe</string>
-    <string name="folder_settings_folder_notify_mode_inherited">A mesma que a classe de push</string>
     <string name="folder_settings_clear_local_folder_action">Apagar mensagens locais</string>
     <string name="account_settings_incoming_label">Servidor de entrada</string>
     <string name="account_settings_incoming_summary">Configure o servidor de email de entrada</string>
@@ -528,11 +485,6 @@
     <string name="sort_by_attach">Anexos</string>
     <string name="account_delete_dlg_title">Remover conta</string>
     <string name="folder_list_filter_hint">Nome da pasta contém</string>
-    <string name="folder_list_display_mode_label">Mostrar pastas…</string>
-    <string name="folder_list_display_mode_all">Todas as pastas</string>
-    <string name="folder_list_display_mode_first_class">Pastas de 1ª classe</string>
-    <string name="folder_list_display_mode_first_and_second_class">Pastas de 1ª &amp; 2ª classe</string>
-    <string name="folder_list_display_mode_not_second_class">Ocultar pastas de 2ª classe</string>
     <string name="account_settings_signature__location_label">Posição da assinatura</string>
     <string name="account_settings_signature__location_before_quoted_text">Antes da mensagem citada</string>
     <string name="account_settings_signature__location_after_quoted_text">Depois da mensagem citada</string>
@@ -574,13 +526,11 @@
     <string name="account_setup_push_limit_1000">1000 pastas</string>
     <string name="animations_title">Animação</string>
     <string name="animations_summary">Usar efeitos visuais exuberantes</string>
-    <string name="volume_navigation_title">Navegação com os botões de volume na visualização de mensagens</string>
     <string name="show_unified_inbox_title">Mostrar caixa de entrada unificada</string>
     <string name="show_starred_count_title">Mostrar contagem de estrelas</string>
     <string name="integrated_inbox_title">Caixa de entrada unificada</string>
     <string name="integrated_inbox_detail">Todas as mensagens em pastas unificadas</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Unificar</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Todas as mensagens são mostradas na caixa de entrada unificada</string>
     <string name="account_settings_no_folder_selected">Nenhuma</string>
     <string name="account_settings_automatic_special_folder">Automático (%s)</string>
     <string name="font_size_settings_title">Tamanho da letra</string>
@@ -932,12 +882,26 @@ Pode manter esta mensagem e usá-la como uma cópia de segurança para a sua cha
     <string name="general_settings_post_remove_action_title">Depois de apagar ou mover mensagem</string>
     <string name="background_work_notification_remove_account">A remover conta…</string>
     <string name="about_app_authors_thunderbird">Equipa do Thunderbird Mobile</string>
-    <string name="account_delete_dlg_instructions_fmt">A conta \"<xliff:g id="account">%s</xliff:g>\"será removida de <xliff:g id="app_name">%s</xliff:g>.</string>
-    <string name="default_signature">-- 
-\nEnviado do meu Android com <xliff:g id="app_name">%s</xliff:g>. Por favor, desculpe a minha brevidade.</string>
+    <string name="account_delete_dlg_instructions_fmt">A conta \"<xliff:g id="account">%1$s</xliff:g>\"será removida de <xliff:g id="app_name">%2$s</xliff:g>.</string>
     <string name="push_notification_state_alarm_permission_missing">Falta a permissão para agendar alarmes</string>
     <string name="push_notification_grant_alarm_permission">Toque para conceder a permissão.</string>
     <string name="about_title">Acerca de <xliff:g id="app_name">%s</xliff:g></string>
     <string name="push_info_notification_explanation_text">Ao usar o Push, <xliff:g id="app_name">%1$s</xliff:g> mantém uma conexão ao servidor de e-mail. O Android requer que uma notificação seja mostrada enquanto a app é executada em segundo plano. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
     <string name="dialog_openkeychain_info_text">A app OpenKeychain é necessária para ativar o apoio de criptografia de ponta a ponta.</string>
+    <string name="folder_settings_push_label">Ativar Push</string>
+    <string name="folder_settings_notifications_label">Notificações</string>
+    <string name="empty_spam_action">Esvaziar spam</string>
+    <string name="save_attachment_action">Gravar anexo</string>
+    <string name="folder_settings_visible_label">Mostrar pasta</string>
+    <string name="volume_navigation_title_short">Navegação com o botão de volume</string>
+    <string name="folder_settings_sync_label">Ativar sincronização</string>
+    <string name="settings_ui_data_collection">Coleta de dados</string>
+    <string name="settings_ui_telemetry_title">Dados de uso e técnicos</string>
+    <string name="folder_list_show_hidden_folders">Mostrar pastas escondidas</string>
+    <string name="settings_ui_telemetry_description">Partilha dados de desempenho, uso, hardware e personalização desta app com a Mozilla, para nos ajudar a melhorar o Thunderbird</string>
+    <string name="settings_list_action_support">Apoie o <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="volume_navigation_summary">Navegue entre as mensagens usando os botões de volume</string>
+    <string name="dialog_confirm_empty_spam_title">Confirmar esvaziamento do spam</string>
+    <string name="dialog_confirm_empty_spam_message">Deseja esvaziar a pasta de spam?</string>
+    <string name="expand_content_description">Expandir</string>
 </resources>

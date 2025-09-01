@@ -283,12 +283,6 @@
     <string name="account_settings_push_advanced_title">Avanzado</string>
     <string name="account_settings_title_fmt">Configuración de conta</string>
     <string name="account_settings_notify_label">Notificar correo novo</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Cartafoles de notificacións</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Todas</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Só 1a clase</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">1a e 2a Clase</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Todas agás 1a e 2a clase</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">ningunha</string>
     <string name="account_settings_notify_sync_label">Notificar sincronización</string>
     <string name="account_settings_email_label">O teu entderezo de correo</string>
     <string name="account_settings_notify_summary">Avisarme no estatus cando chegue correo novo</string>
@@ -377,48 +371,11 @@
     <string name="account_settings_message_age_3_months">os últimos 3 meses</string>
     <string name="account_settings_message_age_6_months">os últimos 6 meses</string>
     <string name="account_settings_message_age_1_year">o último ano</string>
-    <string name="account_settings_folder_display_mode_label">Carpetas a amosar</string>
-    <string name="account_settings_folder_display_mode_all">Todas</string>
-    <string name="account_settings_folder_display_mode_first_class">Só 1a clase</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">1a y 2a Clase</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Todas agás as de 2a clase</string>
-    <string name="account_settings_folder_sync_mode_label">Comprobación de carpetas</string>
-    <string name="account_settings_folder_sync_mode_all">Todas</string>
-    <string name="account_settings_folder_sync_mode_first_class">Só 1a clase</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">1a e 2a Clase</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Todas agás 1a e 2a clase</string>
-    <string name="account_settings_folder_sync_mode_none">ningunha</string>
-    <string name="account_settings_folder_push_mode_label">Subscripción de carpetas</string>
-    <string name="account_settings_folder_push_mode_all">Todas</string>
-    <string name="account_settings_folder_push_mode_first_class">Sólo 1a clase</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">1a e 2a Clase</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Todas agás 1a e 2a clase</string>
-    <string name="account_settings_folder_push_mode_none">ningunha</string>
     <string name="account_settings_sync_remote_deletetions_label">Sincronizar eliminacións</string>
     <string name="account_settings_sync_remote_deletetions_summary">Eliminar as mensaxes cando se borren d servidor</string>
     <string name="account_settings_openpgp_missing">Falta o aplicativo OpenPGP - foi desinstalado?</string>
     <string name="folder_settings_title">Configuración de carpeta</string>
     <string name="folder_settings_in_top_group_label">Amosar ao principio</string>
-    <string name="folder_settings_in_top_group_summary">Amosar cerca do principio da lista</string>
-    <string name="folder_settings_folder_display_mode_label">Clase de carpeta</string>
-    <string name="folder_settings_folder_display_mode_normal">Sen Clase</string>
-    <string name="folder_settings_folder_display_mode_first_class">1a Clase</string>
-    <string name="folder_settings_folder_display_mode_second_class">2a Clase</string>
-    <string name="folder_settings_folder_sync_mode_label">Clase de consulta de cartafol</string>
-    <string name="folder_settings_folder_sync_mode_normal">ningunha</string>
-    <string name="folder_settings_folder_sync_mode_first_class">1a Clase</string>
-    <string name="folder_settings_folder_sync_mode_second_class">2a Clase</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Aa mesma que a de visualización</string>
-    <string name="folder_settings_folder_push_mode_label">Clase en subscripción</string>
-    <string name="folder_settings_folder_push_mode_normal">Sen Clase</string>
-    <string name="folder_settings_folder_push_mode_first_class">1a Clase</string>
-    <string name="folder_settings_folder_push_mode_second_class">2a Clase</string>
-    <string name="folder_settings_folder_push_mode_inherited">Igual que a clase de enquisa</string>
-    <string name="folder_settings_folder_notify_mode_label">Clase de notificación de cartafol</string>
-    <string name="folder_settings_folder_notify_mode_normal">Sen Clase</string>
-    <string name="folder_settings_folder_notify_mode_first_class">1a Clase</string>
-    <string name="folder_settings_folder_notify_mode_second_class">2a Clase</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Igual que Clase no envío</string>
     <string name="folder_settings_clear_local_folder_action">Borrar mensaxes locais</string>
     <string name="account_settings_incoming_label">Servidor de entrada</string>
     <string name="account_settings_incoming_summary">Configurar servidor de entrada</string>
@@ -487,11 +444,6 @@
     <string name="sort_by_attach">Adxuntos</string>
     <string name="account_delete_dlg_title">Eliminar conta</string>
     <string name="folder_list_filter_hint">Nome do cartafol contén</string>
-    <string name="folder_list_display_mode_label">Carpetas…</string>
-    <string name="folder_list_display_mode_all">Ver todas as carpetas</string>
-    <string name="folder_list_display_mode_first_class">Ver só carpetas de 1a Clase</string>
-    <string name="folder_list_display_mode_first_and_second_class">Ver carpetas de 1a e 2a Clase</string>
-    <string name="folder_list_display_mode_not_second_class">Ver todas agás as de 2a Clase</string>
     <string name="account_settings_signature__location_label">Posición da sinatura</string>
     <string name="account_settings_signature__location_before_quoted_text">Antes do texto citado</string>
     <string name="account_settings_signature__location_after_quoted_text">Despois do texto citado</string>
@@ -538,7 +490,6 @@
     <string name="integrated_inbox_title">Entrada unificada</string>
     <string name="integrated_inbox_detail">Mensajes na Entrada unificada</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Unificar</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Todas as mensaxes amosaranse nunha bandexa unificada</string>
     <string name="account_settings_no_folder_selected">ningunha</string>
     <string name="account_settings_automatic_special_folder">Automático (%s)</string>
     <string name="font_size_settings_title">Tamaño letra</string>
@@ -863,7 +814,7 @@ Podes conservar esta mensaxe e usala como copia de seguridade da túa chave secr
     <!--A user visible label for the name and email address copied to the clipboard-->
     <!--Might be displayed in a notification when deleting an account (in the background)-->
     <!--For unread messages the first line of a message list item is modified by this to improve the experience for people with screen readers.-->
-<string name="new_messages_title">Novas mensaxes</string>
+    <string name="new_messages_title">Novas mensaxes</string>
     <string name="unsubscribe_action">Cancelar a subscrición</string>
     <string name="message_view_me_text">eu</string>
     <string name="message_view_show_remote_images_action">Mostra imaxes remotas</string>
@@ -892,7 +843,6 @@ Podes conservar esta mensaxe e usala como copia de seguridade da túa chave secr
     <string name="action_add_to_contacts">Engadir aos contactos</string>
     <string name="action_compose_message_to">Redactar un correo dirixido a</string>
     <string name="action_copy_email_address">Copiar enderezo de correo electrónico</string>
-    <string name="volume_navigation_title">Navegación coa tecla de volume na vista de mensaxes</string>
     <string name="general_settings_show_compose_button_title">Mostrar o botón flotante de redacción</string>
     <string name="message_list_error_title">Erro</string>
     <string name="account_settings_vibrate_pattern_2">Patrón 2</string>
@@ -929,4 +879,9 @@ Podes conservar esta mensaxe e usala como copia de seguridade da túa chave secr
     <string name="message_list_content_description_unread_prefix">sen ler, %s</string>
     <string name="push_notification_grant_alarm_permission">Toque para garantir o permiso.</string>
     <string name="push_notification_state_alarm_permission_missing">Faltan permisos para programar alarmas</string>
+    <string name="about_app_authors_thunderbird">Equipo Thunderbird Mobile</string>
+    <string name="folder_settings_notifications_label">Notificacións</string>
+    <string name="folder_settings_push_label">Activar Push</string>
+    <string name="about_title">Acerca de <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="account_delete_dlg_instructions_fmt">A conta \"<xliff:g id="account">%1$s</xliff:g>\" eliminarase de <xliff:g id="app_name">%2$s</xliff:g>.</string>
 </resources>

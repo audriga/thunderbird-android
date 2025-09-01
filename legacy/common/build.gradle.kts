@@ -10,11 +10,13 @@ dependencies {
     implementation(projects.backend.imap)
     implementation(projects.backend.pop3)
 
-    implementation(projects.core.featureflags)
+    implementation(projects.core.featureflag)
+    implementation(projects.core.logging.api)
     implementation(projects.feature.launcher)
 
     implementation(projects.feature.account.setup)
     implementation(projects.feature.account.edit)
+    implementation(projects.feature.navigation.drawer.api)
     implementation(projects.feature.settings.import)
 
     implementation(projects.feature.widget.unread)
@@ -22,9 +24,7 @@ dependencies {
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.work.runtime)
     implementation(libs.preferencex)
-    implementation(libs.timber)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.appauth)
 
@@ -35,10 +35,9 @@ dependencies {
         debugImplementation(libs.leakcanary.android)
     }
 
-    // Required for DependencyInjectionTest to be able to resolve OpenPgpApiManager
-    testImplementation(projects.plugins.openpgpApiLib.openpgpApi)
-
+    testImplementation(projects.core.logging.testing)
     testImplementation(libs.robolectric)
+    testImplementation(projects.feature.account.fake)
 }
 
 android {

@@ -5,27 +5,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
-
 import android.content.Context;
-
 import app.k9mail.legacy.account.Account.SmlVariant;
-import app.k9mail.legacy.notification.NotificationLight;
-import app.k9mail.legacy.account.Account;
-import app.k9mail.legacy.account.Account.DeletePolicy;
-import app.k9mail.legacy.account.Account.Expunge;
-import app.k9mail.legacy.account.Account.FolderMode;
-import app.k9mail.legacy.account.Account.MessageFormat;
-import app.k9mail.legacy.account.Account.QuoteStyle;
-import app.k9mail.legacy.account.Account.ShowPictures;
-import app.k9mail.legacy.account.Account.SortType;
-import app.k9mail.legacy.account.Account.SpecialFolderSelection;
-import com.fsck.k9.AccountPreferenceSerializer;
 import app.k9mail.legacy.di.DI;
 import com.fsck.k9.K9;
 import com.fsck.k9.core.R;
-import com.fsck.k9.mailstore.StorageManager;
 import com.fsck.k9.preferences.Settings.BooleanSetting;
 import com.fsck.k9.preferences.Settings.ColorSetting;
 import com.fsck.k9.preferences.Settings.EnumSetting;
@@ -35,14 +20,34 @@ import com.fsck.k9.preferences.Settings.PseudoEnumSetting;
 import com.fsck.k9.preferences.Settings.SettingsDescription;
 import com.fsck.k9.preferences.Settings.StringSetting;
 import com.fsck.k9.preferences.Settings.V;
+import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo104;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo53;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo54;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo74;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo80;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo81;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo91;
-
+import net.thunderbird.core.android.account.AccountDefaultsProvider;
+import net.thunderbird.core.android.account.DeletePolicy;
+import net.thunderbird.core.android.account.Expunge;
+import net.thunderbird.core.android.account.FolderMode;
+import net.thunderbird.core.android.account.MessageFormat;
+import net.thunderbird.core.android.account.QuoteStyle;
+import net.thunderbird.core.android.account.ShowPictures;
+import net.thunderbird.core.android.account.SortType;
+import net.thunderbird.feature.account.storage.profile.AvatarTypeDto;
+import net.thunderbird.feature.mail.folder.api.SpecialFolderSelection;
+import net.thunderbird.feature.notification.NotificationLight;
 import static com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo53.FOLDER_NONE;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_MESSAGE_FORMAT_AUTO;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_MESSAGE_READ_RECEIPT;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_QUOTED_TEXT_SHOWN;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_QUOTE_PREFIX;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_REMOTE_SEARCH_NUM_RESULTS;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_REPLY_AFTER_QUOTE;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_SORT_ASCENDING;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_STRIP_SIGNATURE;
+import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_VISIBLE_LIMIT;
 
 
 class AccountSettingsDescriptions {
@@ -79,13 +84,13 @@ class AccountSettingsDescriptions {
                 new V(1, new ColorSetting(0xFF0000FF))
         ));
         s.put("defaultQuotedTextShown", Settings.versions(
-                new V(1, new BooleanSetting(AccountPreferenceSerializer.DEFAULT_QUOTED_TEXT_SHOWN))
+                new V(1, new BooleanSetting(DEFAULT_QUOTED_TEXT_SHOWN))
         ));
         s.put("deletePolicy", Settings.versions(
                 new V(1, new DeletePolicySetting(DeletePolicy.NEVER))
         ));
         s.put("displayCount", Settings.versions(
-                new V(1, new IntegerResourceSetting(K9.DEFAULT_VISIBLE_LIMIT,
+                new V(1, new IntegerResourceSetting(DEFAULT_VISIBLE_LIMIT,
                         R.array.display_count_values))
         ));
         s.put("draftsFolderName", Settings.versions(
@@ -97,14 +102,17 @@ class AccountSettingsDescriptions {
                         R.array.expunge_policy_values))
         ));
         s.put("folderDisplayMode", Settings.versions(
-                new V(1, new EnumSetting<>(FolderMode.class, FolderMode.NOT_SECOND_CLASS))
+                new V(1, new EnumSetting<>(FolderMode.class, FolderMode.NOT_SECOND_CLASS)),
+                new V(100, null)
         ));
         s.put("folderPushMode", Settings.versions(
                 new V(1, new EnumSetting<>(FolderMode.class, FolderMode.FIRST_CLASS)),
-                new V(72, new EnumSetting<>(FolderMode.class, FolderMode.NONE))
+                new V(72, new EnumSetting<>(FolderMode.class, FolderMode.NONE)),
+                new V(98, null)
         ));
         s.put("folderSyncMode", Settings.versions(
-                new V(1, new EnumSetting<>(FolderMode.class, FolderMode.FIRST_CLASS))
+                new V(1, new EnumSetting<>(FolderMode.class, FolderMode.FIRST_CLASS)),
+                new V(99, null)
         ));
         s.put("idleRefreshMinutes", Settings.versions(
                 new V(1, new IntegerArraySetting(24, new int[] { 1, 2, 3, 6, 12, 24, 36, 48, 60 })),
@@ -117,9 +125,6 @@ class AccountSettingsDescriptions {
         s.put("ledColor", Settings.versions(
                 new V(1, new ColorSetting(0xFF0000FF)),
                 new V(80, null)
-        ));
-        s.put("localStorageProvider", Settings.versions(
-                new V(1, new StorageProviderSetting())
         ));
         s.put("markMessageAsReadOnView", Settings.versions(
                 new V(7, new BooleanSetting(true))
@@ -138,13 +143,16 @@ class AccountSettingsDescriptions {
                 new V(1, new IntegerResourceSetting(-1, R.array.message_age_values))
         ));
         s.put("messageFormat", Settings.versions(
-                new V(1, new EnumSetting<>(MessageFormat.class, AccountPreferenceSerializer.DEFAULT_MESSAGE_FORMAT))
+                new V(1, new EnumSetting<>(
+                    MessageFormat.class,
+                    AccountDefaultsProvider.getDEFAULT_MESSAGE_FORMAT()
+                ))
         ));
         s.put("messageFormatAuto", Settings.versions(
-                new V(2, new BooleanSetting(AccountPreferenceSerializer.DEFAULT_MESSAGE_FORMAT_AUTO))
+                new V(2, new BooleanSetting(DEFAULT_MESSAGE_FORMAT_AUTO))
         ));
         s.put("messageReadReceipt", Settings.versions(
-                new V(1, new BooleanSetting(AccountPreferenceSerializer.DEFAULT_MESSAGE_READ_RECEIPT))
+                new V(1, new BooleanSetting(DEFAULT_MESSAGE_READ_RECEIPT))
         ));
         s.put("notifyMailCheck", Settings.versions(
                 new V(1, new BooleanSetting(false))
@@ -160,13 +168,13 @@ class AccountSettingsDescriptions {
                 new V(1, new BooleanSetting(true))
         ));
         s.put("quotePrefix", Settings.versions(
-                new V(1, new StringSetting(AccountPreferenceSerializer.DEFAULT_QUOTE_PREFIX))
+                new V(1, new StringSetting(DEFAULT_QUOTE_PREFIX))
         ));
         s.put("quoteStyle", Settings.versions(
-                new V(1, new EnumSetting<>(QuoteStyle.class, AccountPreferenceSerializer.DEFAULT_QUOTE_STYLE))
+                new V(1, new EnumSetting<>(QuoteStyle.class, AccountDefaultsProvider.getDEFAULT_QUOTE_STYLE()))
         ));
         s.put("replyAfterQuote", Settings.versions(
-                new V(1, new BooleanSetting(AccountPreferenceSerializer.DEFAULT_REPLY_AFTER_QUOTE))
+                new V(1, new BooleanSetting(DEFAULT_REPLY_AFTER_QUOTE))
         ));
         s.put("ring", Settings.versions(
                 new V(1, new BooleanSetting(true))
@@ -179,10 +187,10 @@ class AccountSettingsDescriptions {
                 new V(53, new StringSetting(null))
         ));
         s.put("sortTypeEnum", Settings.versions(
-                new V(9, new EnumSetting<>(SortType.class, Account.DEFAULT_SORT_TYPE))
+                new V(9, new EnumSetting<>(SortType.class, AccountDefaultsProvider.getDEFAULT_SORT_TYPE()))
         ));
         s.put("sortAscending", Settings.versions(
-                new V(9, new BooleanSetting(Account.DEFAULT_SORT_ASCENDING))
+                new V(9, new BooleanSetting(DEFAULT_SORT_ASCENDING))
         ));
         s.put("showPicturesEnum", Settings.versions(
                 new V(1, new EnumSetting<>(ShowPictures.class, ShowPictures.NEVER))
@@ -195,7 +203,7 @@ class AccountSettingsDescriptions {
                 new V(53, new StringSetting(null))
         ));
         s.put("stripSignature", Settings.versions(
-                new V(2, new BooleanSetting(AccountPreferenceSerializer.DEFAULT_STRIP_SIGNATURE))
+                new V(2, new BooleanSetting(DEFAULT_STRIP_SIGNATURE))
         ));
         s.put("subscribedFoldersOnly", Settings.versions(
                 new V(1, new BooleanSetting(false))
@@ -229,7 +237,7 @@ class AccountSettingsDescriptions {
                 new V(1, new IntegerRangeSetting(1, 10, 5))
         ));
         s.put("remoteSearchNumResults", Settings.versions(
-                new V(18, new IntegerResourceSetting(AccountPreferenceSerializer.DEFAULT_REMOTE_SEARCH_NUM_RESULTS,
+                new V(18, new IntegerResourceSetting(DEFAULT_REMOTE_SEARCH_NUM_RESULTS,
                         R.array.remote_search_num_results_values))
         ));
         s.put("remoteSearchFullText", Settings.versions(
@@ -293,6 +301,18 @@ class AccountSettingsDescriptions {
         s.put("demoView", Settings.versions(
             new V(99, new BooleanSetting(false))
         ));
+        s.put("avatarType", Settings.versions(
+                new V(104, new EnumSetting<>(AvatarTypeDto.class, AvatarTypeDto.MONOGRAM))
+        ));
+        s.put("avatarMonogram", Settings.versions(
+            new V(104, new StringSetting("XX"))
+        ));
+        s.put("avatarImageUri", Settings.versions(
+            new V(104, new StringSetting(null))
+        ));
+        s.put("avatarIconName", Settings.versions(
+            new V(104, new StringSetting(null))
+        ));
         // note that there is no setting for openPgpProvider, because this will have to be set up together
         // with the actual provider after import anyways.
 
@@ -305,6 +325,7 @@ class AccountSettingsDescriptions {
         u.put(80, new AccountSettingsUpgraderTo80());
         u.put(81, new AccountSettingsUpgraderTo81());
         u.put(91, new AccountSettingsUpgraderTo91());
+        u.put(104, new AccountSettingsUpgraderTo104());
 
         UPGRADERS = Collections.unmodifiableMap(u);
     }
@@ -411,29 +432,6 @@ class AccountSettingsDescriptions {
         public String fromString(String value) {
             //TODO: add validation
             return value;
-        }
-    }
-
-    private static class StorageProviderSetting extends SettingsDescription<String> {
-        private final Context context = DI.get(Context.class);
-
-        StorageProviderSetting() {
-            super(null);
-        }
-
-        @Override
-        public String getDefaultValue() {
-            return StorageManager.getInstance(context).getDefaultProviderId();
-        }
-
-        @Override
-        public String fromString(String value) {
-            StorageManager storageManager = StorageManager.getInstance(context);
-            Set<String> providers = storageManager.getAvailableProviders();
-            if (providers.contains(value)) {
-                return value;
-            }
-            throw new RuntimeException("Validation failed");
         }
     }
 

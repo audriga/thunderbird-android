@@ -3,15 +3,17 @@ package com.fsck.k9.notification
 import android.app.Notification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import app.k9mail.legacy.account.Account
 import com.fsck.k9.helper.ExceptionHelper
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.preference.GeneralSettingsManager
 
 internal class SendFailedNotificationController(
     private val notificationHelper: NotificationHelper,
     private val actionBuilder: NotificationActionCreator,
     private val resourceProvider: NotificationResourceProvider,
+    private val generalSettingsManager: GeneralSettingsManager,
 ) {
-    fun showSendFailedNotification(account: Account, exception: Exception) {
+    fun showSendFailedNotification(account: LegacyAccount, exception: Exception) {
         val title = resourceProvider.sendFailedTitle()
         val text = ExceptionHelper.getRootCauseMessage(exception)
 
@@ -38,17 +40,17 @@ internal class SendFailedNotificationController(
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPublicVersion(createLockScreenNotification(account))
             .setCategory(NotificationCompat.CATEGORY_ERROR)
-            .setErrorAppearance()
+            .setErrorAppearance(generalSettingsManager = generalSettingsManager)
 
         notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
-    fun clearSendFailedNotification(account: Account) {
+    fun clearSendFailedNotification(account: LegacyAccount) {
         val notificationId = NotificationIds.getSendFailedNotificationId(account)
         notificationManager.cancel(notificationId)
     }
 
-    private fun createLockScreenNotification(account: Account): Notification {
+    private fun createLockScreenNotification(account: LegacyAccount): Notification {
         return notificationHelper
             .createNotificationBuilder(account, NotificationChannelManager.ChannelType.MISCELLANEOUS)
             .setSmallIcon(resourceProvider.iconWarning)

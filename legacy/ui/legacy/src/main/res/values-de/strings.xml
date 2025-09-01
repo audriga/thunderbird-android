@@ -22,8 +22,6 @@
     <string name="changelog_snackbar_text">Finde heraus, was es Neues in diesem Release gibt</string>
     <!--Button text of the "snack bar" that is displayed when the app was updated.-->
     <string name="changelog_snackbar_button_text">Ansehen</string>
-    <!--Default signature-->
-    <string name="default_signature">-- \nDiese Nachricht wurde von meinem Android-Gerät mit <xliff:g id="app_name">%s</xliff:g> gesendet.</string>
     <!--General strings that include the app name-->
     <!--=== General strings ==================================================================-->
     <string name="authors">Autoren</string>
@@ -198,7 +196,7 @@
     <string name="global_settings_registered_name_color_changed">Namen in deiner Kontaktliste einfärben</string>
     <string name="general_settings_contact_name_color_label">Farbe des Kontaktnamens</string>
     <string name="global_settings_messageview_fixedwidth_label">Monotype-Schriftart</string>
-    <string name="global_settings_messageview_fixedwidth_summary">Schriftart mit gleicher Zeichenbreite für Nur-Text-Nachrichten verwenden</string>
+    <string name="global_settings_messageview_fixedwidth_summary">Schriftart mit fester Zeichenbreite für Nur-Text-Nachrichten verwenden</string>
     <string name="global_settings_messageview_autofit_width_label">Nachrichtendarstellung</string>
     <string name="global_settings_messageview_autofit_width_summary">Nachrichten auf Displaygröße verkleinern</string>
     <string name="global_settings_confirm_actions_title">Bestätigungsdialog</string>
@@ -305,12 +303,6 @@
     <string name="account_settings_push_advanced_title">Erweitert</string>
     <string name="account_settings_title_fmt">Kontoeinstellungen</string>
     <string name="account_settings_notify_label">Bei neuen Nachrichten</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Benachrichtigungsordner</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Alle</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Nur Hauptordner</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">Haupt- und Nebenordner</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Alle außer Nebenordner</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">Kein</string>
     <string name="account_settings_notify_sync_label">Benachrichtigung bei Synchronisation</string>
     <string name="account_settings_email_label">Deine E-Mail-Adresse</string>
     <string name="account_settings_notify_summary">Benachrichtigung in der Statuszeile anzeigen, wenn eine neue Nachricht empfangen wird</string>
@@ -399,48 +391,11 @@
     <string name="account_settings_message_age_3_months">der letzten 3 Monate</string>
     <string name="account_settings_message_age_6_months">der letzten 6 Monate</string>
     <string name="account_settings_message_age_1_year">des letzten Jahres</string>
-    <string name="account_settings_folder_display_mode_label">Angezeigte Ordner</string>
-    <string name="account_settings_folder_display_mode_all">Alle</string>
-    <string name="account_settings_folder_display_mode_first_class">Nur Hauptordner</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">Haupt- und Nebenordner</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Alle außer Nebenordner</string>
-    <string name="account_settings_folder_sync_mode_label">Abzufragende Ordner</string>
-    <string name="account_settings_folder_sync_mode_all">Alle</string>
-    <string name="account_settings_folder_sync_mode_first_class">Nur Hauptordner</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">Haupt- und Nebenordner</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Alle außer Nebenordner</string>
-    <string name="account_settings_folder_sync_mode_none">Keine</string>
-    <string name="account_settings_folder_push_mode_label">Push-Ordner</string>
-    <string name="account_settings_folder_push_mode_all">Alle Ordner</string>
-    <string name="account_settings_folder_push_mode_first_class">Nur Hauptordner</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">Haupt- und Nebenordner</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Alle außer Nebenordner</string>
-    <string name="account_settings_folder_push_mode_none">Keine Ordner</string>
     <string name="account_settings_sync_remote_deletetions_label">Löschungen vom Server übernehmen</string>
     <string name="account_settings_sync_remote_deletetions_summary">Nachrichten löschen, wenn sie vom Server gelöscht wurden</string>
     <string name="account_settings_openpgp_missing">Fehlende OpenPGP-App – wurde sie deinstalliert?</string>
     <string name="folder_settings_title">Ordnereinstellungen</string>
     <string name="folder_settings_in_top_group_label">Oben anzeigen</string>
-    <string name="folder_settings_in_top_group_summary">Ordner am Anfang der Ordnerliste anzeigen</string>
-    <string name="folder_settings_folder_display_mode_label">Anzeigeklasse</string>
-    <string name="folder_settings_folder_display_mode_normal">Keine Klasse</string>
-    <string name="folder_settings_folder_display_mode_first_class">Hauptordner</string>
-    <string name="folder_settings_folder_display_mode_second_class">Nebenordner</string>
-    <string name="folder_settings_folder_sync_mode_label">Abfrageklasse</string>
-    <string name="folder_settings_folder_sync_mode_normal">Keine</string>
-    <string name="folder_settings_folder_sync_mode_first_class">Hauptordner</string>
-    <string name="folder_settings_folder_sync_mode_second_class">Nebenordner</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Wie Anzeigeklasse</string>
-    <string name="folder_settings_folder_push_mode_label">Push-Klasse</string>
-    <string name="folder_settings_folder_push_mode_normal">Keine Klasse</string>
-    <string name="folder_settings_folder_push_mode_first_class">Hauptordner</string>
-    <string name="folder_settings_folder_push_mode_second_class">Nebenordner</string>
-    <string name="folder_settings_folder_push_mode_inherited">Wie Abfrageklasse</string>
-    <string name="folder_settings_folder_notify_mode_label">Benachrichtigungsklasse</string>
-    <string name="folder_settings_folder_notify_mode_normal">Keine Klasse</string>
-    <string name="folder_settings_folder_notify_mode_first_class">Hauptordner</string>
-    <string name="folder_settings_folder_notify_mode_second_class">Nebenordner</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Wie Push-Klasse</string>
     <string name="folder_settings_clear_local_folder_action">Lokale Nachrichten löschen</string>
     <string name="account_settings_incoming_label">Posteingangsserver</string>
     <string name="account_settings_incoming_summary">Einstellungen des Posteingangsservers bearbeiten</string>
@@ -527,11 +482,6 @@
     <string name="sort_by_attach">Anhang</string>
     <string name="account_delete_dlg_title">Konto entfernen</string>
     <string name="folder_list_filter_hint">Ordnername enthält</string>
-    <string name="folder_list_display_mode_label">Ordner anzeigen…</string>
-    <string name="folder_list_display_mode_all">Alle Ordner anzeigen</string>
-    <string name="folder_list_display_mode_first_class">Nur Hauptordner anzeigen</string>
-    <string name="folder_list_display_mode_first_and_second_class">Haupt- und Nebenordner anzeigen</string>
-    <string name="folder_list_display_mode_not_second_class">Alle außer Nebenordner anzeigen</string>
     <string name="account_settings_signature__location_label">Position der Signatur</string>
     <string name="account_settings_signature__location_before_quoted_text">Vor zitierter Nachricht</string>
     <string name="account_settings_signature__location_after_quoted_text">Nach zitierter Nachricht</string>
@@ -573,13 +523,11 @@
     <string name="account_setup_push_limit_1000">1000 Ordner</string>
     <string name="animations_title">Animationen</string>
     <string name="animations_summary">Aufwendige visuelle Effekte benutzen</string>
-    <string name="volume_navigation_title">Per Lautstärketasten durch Nachrichtenansicht navigieren</string>
     <string name="show_unified_inbox_title">Gemeinsamen Posteingang anzeigen</string>
     <string name="show_starred_count_title">Anzahl der wichtigen Nachrichten anzeigen</string>
     <string name="integrated_inbox_title">Gemeinsamer Posteingang</string>
     <string name="integrated_inbox_detail">Alle Nachrichten aus integrierten Ordnern</string>
     <string name="folder_settings_include_in_integrated_inbox_label">In gem. Posteingang integrieren</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Nachrichten im gemeinsamen Posteingang anzeigen</string>
     <string name="account_settings_no_folder_selected">Keine</string>
     <string name="account_settings_automatic_special_folder">Automatisch (%s)</string>
     <string name="font_size_settings_title">Schriftgröße</string>
@@ -929,10 +877,36 @@ Du kannst diese Nachricht aufheben und sie als Backup für deinen geheimen Schl�
     <string name="push_notification_state_alarm_permission_missing">Fehlende Berechtigung zur Zeitplanung von Alarmen</string>
     <string name="push_notification_grant_alarm_permission">Antippen, um die Berechtigung zu erteilen.</string>
     <string name="dialog_openkeychain_info_text">Die App OpenKeychain ist erforderlich, um die Unterstützung für die Ende-zu-Ende-Verschlüsselung zu aktivieren.</string>
-    <string name="account_delete_dlg_instructions_fmt">Das Konto \"<xliff:g id="account">%s</xliff:g>\" wird aus <xliff:g id="app_name">%s</xliff:g> entfernt.</string>
+    <string name="account_delete_dlg_instructions_fmt">Das Konto \"<xliff:g id="account">%1$s</xliff:g>\" wird aus <xliff:g id="app_name">%2$s</xliff:g> entfernt.</string>
     <string name="about_title">Über <xliff:g id="app_name">%s</xliff:g></string>
     <string name="push_info_notification_explanation_text">Wenn Push verwendet wird, hält <xliff:g id="app_name">%1$s</xliff:g> eine Verbindung zum Mailserver aufrecht. Bei Android muss eine laufende Benachrichtigung angezeigt werden, während die App im Hintergrund aktiv ist. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
     <string name="about_app_authors_thunderbird">Thunderbird Mobile Team</string>
+    <string name="folder_settings_notifications_label">Benachrichtigungen</string>
+    <string name="settings_ui_telemetry_description">Leistungs-, Nutzungs-, Hardware- und Individualisierungsdaten über diese App mit Mozilla teilen, um uns zu helfen, Thunderbird zu verbessern</string>
+    <string name="settings_ui_data_collection">Datenerfassung</string>
+    <string name="settings_ui_telemetry_title">Nutzung und technische Daten</string>
+    <string name="folder_settings_push_label">Push aktivieren</string>
+    <string name="folder_settings_sync_label">Synchronisation aktivieren</string>
+    <string name="folder_list_show_hidden_folders">Ausgeblendete Ordner anzeigen</string>
+    <string name="folder_settings_visible_label">Ordner anzeigen</string>
+    <string name="settings_list_action_support">Support <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="volume_navigation_summary">In der Nachrichtenübersicht mit den Lautstärketasten zwischen den Nachrichten navigieren</string>
+    <string name="save_attachment_action">Anhang speichern</string>
+    <string name="volume_navigation_title_short">Navigation mit Lautstärketasten</string>
+    <string name="expand_content_description">Erweitern</string>
+    <string name="empty_spam_action">Spam leeren</string>
+    <string name="dialog_confirm_empty_spam_title">Leeren des Spams bestätigen</string>
+    <string name="dialog_confirm_empty_spam_message">Möchtest du den Spam leeren?</string>
+    <string name="camera_permission_denied">Kameraberechtigung verweigert! Fotoaufnahme nicht möglich</string>
+    <string name="open_camera">Kamera öffnen</string>
+    <string name="attach_file">Datei anhängen</string>
+    <string name="debug_sync_export_logs_title">Synchronisationsprotokolle exportieren</string>
+    <string name="debug_enable_sync_debug_logging_title">Synchronisation des Fehlerprotokolls aktivieren</string>
+    <string name="debug_enable_sync_debug_logging_summary">Diagnoseinformationen zur Synchronisation für 24 Stunden protokollieren</string>
+    <string name="swipe_action_change_swipe_gestures">Ändere \nWischgesten</string>
+    <string name="archiving_not_available_for_this_account">Archivierung ist für dieses Konto nicht verfügbar.</string>
+    <string name="swipe_action_archive_folder_not_set">Archivordner einrichten</string>
+    <string name="debug_open_secret_debug_screen">Geheime Fehleranalyse-Ansicht öffnen</string>
     <string name="sml_switch_text">Sende inhalt als SML</string>
     <string name="account_settings_sml_variant_label">Zu sendende SML Variante</string>
     <string name="account_settings_sml_variant_sml_in_html">SML in HTML</string>

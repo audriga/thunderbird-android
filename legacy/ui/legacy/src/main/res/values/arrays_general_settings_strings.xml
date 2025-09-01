@@ -45,6 +45,7 @@
         <item>Nederlands</item>
         <item>Norsk</item>
         <item>Norsk Bokmål</item>
+        <item>Norsk Nynorsk</item>
         <item>O\'zbek</item>
         <item>Polski</item>
         <item>Português</item>
@@ -86,11 +87,6 @@
         <item>中文(简体)</item>
         <item>中文(繁體)</item>
         <item>日本語</item>
-    </string-array>
-
-    <string-array name="theme_entries_legacy">
-        <item>@string/setting_theme_light</item>
-        <item>@string/setting_theme_dark</item>
     </string-array>
 
     <string-array name="theme_entries">

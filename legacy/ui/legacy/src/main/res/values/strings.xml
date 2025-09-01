@@ -6,6 +6,9 @@
     <string name="about_app_authors_k9">The K-9 Dog Walkers</string>
     <string name="about_app_authors_thunderbird">Thunderbird Mobile Team</string>
     <string name="about_app_authors_audriga">Audriga TBD</string>
+    <string name="open_camera">Open Camera</string>
+    <string name="attach_file">Attach File</string>
+    <string name="camera_permission_denied">Camera Permission Denied! Unable to take photo</string>
     <string name="source_code">Source code</string>
     <string name="app_license">Apache License, Version 2.0</string>
     <string name="about_project_title">Open Source Project</string>
@@ -25,7 +28,7 @@
     <string name="changelog_snackbar_button_text">View</string>
 
     <!-- General strings that include the app name -->
-    <string name="account_delete_dlg_instructions_fmt">The account \"<xliff:g id="account">%s</xliff:g>\" will be removed from <xliff:g id="app_name">%s</xliff:g>.</string>
+    <string name="account_delete_dlg_instructions_fmt">The account \"<xliff:g id="account">%1$s</xliff:g>\" will be removed from <xliff:g id="app_name">%2$s</xliff:g>.</string>
 
 
     <!-- === General strings ================================================================== -->
@@ -100,6 +103,7 @@
     <string name="read_receipt_enabled">Will request read receipt</string>
     <string name="read_receipt_disabled">Will not request read receipt</string>
     <string name="add_attachment_action">Add attachment</string>
+    <string name="empty_spam_action">Empty Spam</string>
     <string name="empty_trash_action">Empty Trash</string>
     <string name="expunge_action">Expunge</string>
     <string name="about_action">About</string>
@@ -166,12 +170,17 @@
 
     <string name="version">Version</string>
     <string name="debug_enable_debug_logging_title">Enable debug logging</string>
+    <string name="debug_enable_sync_debug_logging_title">Enable sync debug logging</string>
     <string name="debug_enable_debug_logging_summary">Log extra diagnostic information</string>
+    <string name="debug_enable_sync_debug_logging_summary">Log sync diagnostic information for 24 hours</string>
+
     <string name="debug_enable_sensitive_logging_title">Log sensitive information</string>
     <string name="debug_enable_sensitive_logging_summary">May show passwords in logs.</string>
     <string name="debug_export_logs_title">Export logs</string>
+    <string name="debug_sync_export_logs_title">Export Sync logs</string>
     <string name="debug_export_logs_success">Export successful. Logs might contain sensitive information. Be careful who you send them to.</string>
     <string name="debug_export_logs_failure">Export failed.</string>
+    <string name="debug_open_secret_debug_screen">Open Secret debug screen</string>
 
     <string name="message_list_load_more_messages_action">Load more messages</string>
     <string name="message_to_fmt">To:<xliff:g id="counterParty">%s</xliff:g></string>
@@ -196,6 +205,7 @@
     <string name="message_compose_description_delete_quoted_text">Remove quoted text</string>
     <string name="message_compose_description_edit_quoted_text">Edit quoted text</string>
     <string name="remove_attachment_action">Remove attachment</string>
+    <string name="save_attachment_action">Save attachment</string>
 
     <string name="message_to_label">To:</string>
     <string name="message_view_cc_label">Cc:</string>
@@ -237,7 +247,7 @@
     <string name="general_settings_contact_name_color_label">Contact name color</string>
 
     <string name="global_settings_messageview_fixedwidth_label">Fixed-width fonts</string>
-    <string name="global_settings_messageview_fixedwidth_summary">Use a fixed-width font when showing plain-text messages</string>
+    <string name="global_settings_messageview_fixedwidth_summary">Use a fixed-width font when showing plain text messages</string>
     <string name="global_settings_messageview_autofit_width_label">Auto-fit messages</string>
     <string name="global_settings_messageview_autofit_width_summary">Shrink messages to fit the screen</string>
 
@@ -378,13 +388,6 @@
     <string name="account_settings_title_fmt">Account settings</string>
     <string name="account_settings_notify_label">New mail notifications</string>
 
-    <string name="account_settings_folder_notify_new_mail_mode_label">Notifications folders</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">All</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Only 1st Class folders</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">1st and 2nd Class folders</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">All except 2nd Class folders</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">None</string>
-
     <string name="account_settings_notify_sync_label">Sync notifications</string>
     <string name="account_settings_email_label">Your email address</string>
     <string name="account_settings_notify_summary">Notify in status bar when mail arrives</string>
@@ -490,26 +493,6 @@
     <string name="account_settings_message_age_6_months">the last 6 months</string>
     <string name="account_settings_message_age_1_year">the last year</string>
 
-    <string name="account_settings_folder_display_mode_label">Folders to display</string>
-    <string name="account_settings_folder_display_mode_all">All</string>
-    <string name="account_settings_folder_display_mode_first_class">Only 1st Class folders</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">1st and 2nd Class folders</string>
-    <string name="account_settings_folder_display_mode_not_second_class">All except 2nd Class folders</string>
-
-    <string name="account_settings_folder_sync_mode_label">Poll folders</string>
-    <string name="account_settings_folder_sync_mode_all">All</string>
-    <string name="account_settings_folder_sync_mode_first_class">Only 1st Class folders</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">1st and 2nd Class folders</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">All except 2nd Class folders</string>
-    <string name="account_settings_folder_sync_mode_none">None</string>
-
-    <string name="account_settings_folder_push_mode_label">Push folders</string>
-    <string name="account_settings_folder_push_mode_all">All</string>
-    <string name="account_settings_folder_push_mode_first_class">Only 1st Class folders</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">1st and 2nd Class folders</string>
-    <string name="account_settings_folder_push_mode_not_second_class">All except 2nd Class folders</string>
-    <string name="account_settings_folder_push_mode_none">None</string>
-
     <string name="account_settings_sync_remote_deletetions_label">Sync server deletions</string>
     <string name="account_settings_sync_remote_deletetions_summary">Remove messages when deleted on server</string>
 
@@ -518,25 +501,10 @@
     <string name="folder_settings_title">Folder settings</string>
 
     <string name="folder_settings_in_top_group_label">Show in top group</string>
-    <string name="folder_settings_in_top_group_summary">Show near the top of the folder list</string>
 
-    <string name="folder_settings_folder_display_mode_label">Folder display class</string>
-    <string name="folder_settings_folder_display_mode_normal">No Class</string>
-    <string name="folder_settings_folder_display_mode_first_class">1st Class</string>
-    <string name="folder_settings_folder_display_mode_second_class">2nd Class</string>
-
-    <string name="folder_settings_folder_sync_mode_label">Folder poll class</string>
-    <string name="folder_settings_folder_sync_mode_normal">None</string>
-    <string name="folder_settings_folder_sync_mode_first_class">1st Class</string>
-    <string name="folder_settings_folder_sync_mode_second_class">2nd Class</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Same as display class</string>
-
-    <string name="folder_settings_folder_push_mode_label">Folder push class</string>
-    <string name="folder_settings_folder_push_mode_normal">No Class</string>
-    <string name="folder_settings_folder_push_mode_first_class">1st Class</string>
-    <string name="folder_settings_folder_push_mode_second_class">2nd Class</string>
-    <string name="folder_settings_folder_push_mode_inherited">Same as poll class</string>
-
+    <string name="folder_settings_visible_label">Show folder</string>
+    <string name="folder_settings_sync_label">Enable sync</string>
+    <string name="folder_settings_push_label">Enable Push</string>
     <string name="folder_settings_notifications_label">Notifications</string>
     <string name="folder_settings_clear_local_folder_action">Clear local messages</string>
 
@@ -640,12 +608,7 @@
     <string name="account_delete_dlg_title">Remove Account</string>
 
     <string name="folder_list_filter_hint">Folder name contains</string>
-
-    <string name="folder_list_display_mode_label">Show folders…</string>
-    <string name="folder_list_display_mode_all">All folders</string>
-    <string name="folder_list_display_mode_first_class">1st Class folders</string>
-    <string name="folder_list_display_mode_first_and_second_class">1st &amp; 2nd Class folders</string>
-    <string name="folder_list_display_mode_not_second_class">Hide 2nd Class folders</string>
+    <string name="folder_list_show_hidden_folders">Show hidden folders</string>
 
     <string name="account_settings_signature__location_label">Signature position</string>
     <string name="account_settings_signature__location_before_quoted_text">Before quoted message</string>
@@ -696,7 +659,8 @@
     <string name="animations_title">Animation</string>
     <string name="animations_summary">Use gaudy visual effects</string>
 
-    <string name="volume_navigation_title">Volume key navigation in message view</string>
+    <string name="volume_navigation_title_short">Volume key navigation</string>
+    <string name="volume_navigation_summary">Navigate between messages using the volume keys in message view</string>
 
     <string name="show_unified_inbox_title">Show Unified Inbox</string>
     <string name="show_starred_count_title">Show starred count</string>
@@ -705,7 +669,6 @@
     <string name="integrated_inbox_detail">All messages in unified folders</string>
 
     <string name="folder_settings_include_in_integrated_inbox_label">Unify</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">All messages are shown in Unified Inbox</string>
 
     <string name="account_settings_no_folder_selected">None</string>
     <string name="account_settings_automatic_special_folder">Automatic (%s)</string>
@@ -767,6 +730,9 @@
     <string name="dialog_confirm_mark_all_as_read_title">Confirm mark all as read</string>
     <string name="dialog_confirm_mark_all_as_read_message">Do you want to mark all messages as read?</string>
 
+    <string name="dialog_confirm_empty_spam_title">Confirm empty spam</string>
+    <string name="dialog_confirm_empty_spam_message">Do you want to empty the spam folder?</string>
+
     <string name="dialog_confirm_empty_trash_title">Confirm empty trash</string>
     <string name="dialog_confirm_empty_trash_message">Do you want to empty the trash folder?</string>
 
@@ -785,6 +751,7 @@
 
     <string name="settings_list_backup_category">Backup</string>
     <string name="settings_list_miscellaneous_category">Miscellaneous</string>
+    <string name="settings_list_action_support">Support <xliff:g id="app_name">%s</xliff:g></string>
 
     <string name="settings_export_title">Export settings</string>
     <string name="settings_export_button">Export</string>
@@ -885,6 +852,7 @@
     <string name="recipient_to">To</string>
     <string name="recipient_from">From</string>
     <string name="reply_to_label">Reply to</string>
+    <string name="expand_content_description">Expand</string>
     <string name="unknown_recipient">&lt;Unknown Recipient&gt;</string>
     <string name="unknown_sender">&lt;Unknown Sender&gt;</string>
     <string name="address_type_home">Home</string>
@@ -1062,6 +1030,8 @@ You can keep this message and use it as a backup for your secret key. If you wan
     <string name="swipe_action_remove_star">Remove star</string>
     <!-- Name of the swipe action to archive a message. Try to keep it short. -->
     <string name="swipe_action_archive">Archive</string>
+    <string name="swipe_action_archive_folder_not_set">Set Up Archive Folder</string>
+    <string name="swipe_action_change_swipe_gestures">Change \nSwipe Gestures</string>
     <!-- Name of the swipe action to delete a message. Try to keep it short. -->
     <string name="swipe_action_delete">Delete</string>
     <!-- Name of the swipe action to move a message to the Spam folder. Try to keep it short. -->
@@ -1123,6 +1093,7 @@ You can keep this message and use it as a backup for your secret key. If you wan
     <string name="settings_ui_telemetry_title">Usage and technical data</string>
     <!-- Description of the "Usage and technical data" setting used in the "data collection" section of the general settings screen -->
     <string name="settings_ui_telemetry_description">Shares performance, usage, hardware and customization data about this app with Mozilla to help us make Thunderbird better</string>
+    <string name="archiving_not_available_for_this_account">Archiving is not available for this account.</string>
     <string name="sml_switch_text">Send content as SML</string>
     <string name="account_settings_sml_variant_label">SML variant to send</string>
     <string name="account_settings_sml_variant_sml_in_html">SML in HTML</string>

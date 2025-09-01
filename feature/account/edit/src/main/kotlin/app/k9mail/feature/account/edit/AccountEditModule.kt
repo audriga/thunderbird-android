@@ -5,6 +5,8 @@ import app.k9mail.feature.account.edit.domain.AccountEditDomainContract
 import app.k9mail.feature.account.edit.domain.usecase.GetAccountState
 import app.k9mail.feature.account.edit.domain.usecase.LoadAccountState
 import app.k9mail.feature.account.edit.domain.usecase.SaveServerSettings
+import app.k9mail.feature.account.edit.navigation.AccountEditNavigation
+import app.k9mail.feature.account.edit.navigation.DefaultAccountEditNavigation
 import app.k9mail.feature.account.edit.ui.server.settings.modify.ModifyIncomingServerSettingsViewModel
 import app.k9mail.feature.account.edit.ui.server.settings.modify.ModifyOutgoingServerSettingsViewModel
 import app.k9mail.feature.account.edit.ui.server.settings.save.SaveIncomingServerSettingsViewModel
@@ -13,7 +15,7 @@ import app.k9mail.feature.account.oauth.featureAccountOAuthModule
 import app.k9mail.feature.account.server.certificate.featureAccountServerCertificateModule
 import app.k9mail.feature.account.server.settings.featureAccountServerSettingsModule
 import app.k9mail.feature.account.server.validation.featureAccountServerValidationModule
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val featureAccountEditModule = module {
@@ -24,6 +26,8 @@ val featureAccountEditModule = module {
         featureAccountServerSettingsModule,
         featureAccountServerValidationModule,
     )
+
+    single<AccountEditNavigation> { DefaultAccountEditNavigation() }
 
     factory<AccountEditDomainContract.UseCase.LoadAccountState> {
         LoadAccountState(

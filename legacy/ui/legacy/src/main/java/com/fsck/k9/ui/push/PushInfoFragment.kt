@@ -13,15 +13,15 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import app.k9mail.core.common.provider.AppNameProvider
 import com.fsck.k9.controller.push.PushController
 import com.fsck.k9.notification.NotificationChannelManager
 import com.fsck.k9.ui.R
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
+import net.thunderbird.core.common.provider.AppNameProvider
 import org.koin.android.ext.android.inject
 
-private const val LEARN_MORE_URL = "https://k9mail.app/go/push-info"
+private const val LEARN_MORE_URL = "https://support.mozilla.org/kb/configure-push-email-thunderbird-android"
 
 class PushInfoFragment : Fragment() {
     private val notificationChannelManager: NotificationChannelManager by inject()

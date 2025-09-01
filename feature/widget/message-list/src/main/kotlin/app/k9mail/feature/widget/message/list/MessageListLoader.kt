@@ -1,19 +1,21 @@
 package app.k9mail.feature.widget.message.list
 
-import app.k9mail.legacy.account.Account
-import app.k9mail.legacy.account.Account.SortType
 import app.k9mail.legacy.mailstore.MessageListRepository
 import com.fsck.k9.Preferences
 import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.mailstore.MessageColumns
-import com.fsck.k9.search.SqlQueryBuilder
 import com.fsck.k9.search.getAccounts
-import timber.log.Timber
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.account.SortType
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.feature.search.legacy.sql.SqlWhereClause
 
 internal class MessageListLoader(
     private val preferences: Preferences,
     private val messageListRepository: MessageListRepository,
     private val messageHelper: MessageHelper,
+    private val generalSettingsManager: GeneralSettingsManager,
 ) {
 
     @Suppress("TooGenericExceptionCaught")
@@ -21,7 +23,7 @@ internal class MessageListLoader(
         return try {
             getMessageListInfo(config)
         } catch (e: Exception) {
-            Timber.e(e, "Error while fetching message list")
+            Log.e(e, "Error while fetching message list")
 
             // TODO: Return an error object instead of an empty list
             emptyList()
@@ -39,10 +41,10 @@ internal class MessageListLoader(
         return messageListItems
     }
 
-    private fun loadMessageListForAccount(account: Account, config: MessageListConfig): List<MessageListItem> {
+    private fun loadMessageListForAccount(account: LegacyAccount, config: MessageListConfig): List<MessageListItem> {
         val accountUuid = account.uuid
         val sortOrder = buildSortOrder(config)
-        val mapper = MessageListItemMapper(messageHelper, account)
+        val mapper = MessageListItemMapper(messageHelper, account, generalSettingsManager)
 
         return if (config.showingThreadedList) {
             val (selection, selectionArgs) = buildSelection(config)
@@ -54,15 +56,11 @@ internal class MessageListLoader(
     }
 
     private fun buildSelection(config: MessageListConfig): Pair<String, Array<String>> {
-        val query = StringBuilder()
-        val queryArgs = mutableListOf<String>()
+        val whereClause = SqlWhereClause.Builder()
+            .withConditions(config.search.conditions)
+            .build()
 
-        SqlQueryBuilder.buildWhereClause(config.search.conditions, query, queryArgs)
-
-        val selection = query.toString()
-        val selectionArgs = queryArgs.toTypedArray()
-
-        return selection to selectionArgs
+        return whereClause.selection to whereClause.selectionArgs.toTypedArray()
     }
 
     private fun buildSortOrder(config: MessageListConfig): String {

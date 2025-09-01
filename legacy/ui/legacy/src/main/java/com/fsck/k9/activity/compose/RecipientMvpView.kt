@@ -71,6 +71,9 @@ class RecipientMvpView(private val activity: MessageCompose) : View.OnFocusChang
     val bccRecipients: List<Recipient>
         get() = bccView.objects
 
+    val isToAddressAdded: Boolean
+        get() = presenter.isToAddressAdded()
+
     val isCcTextEmpty: Boolean
         get() = ccView.text.isEmpty()
 
@@ -142,10 +145,9 @@ class RecipientMvpView(private val activity: MessageCompose) : View.OnFocusChang
     }
 
     fun setCryptoProvider(openPgpProvider: String?) {
-        // TODO move "show advanced" into settings, or somewhere?
-        toView.setCryptoProvider(openPgpProvider, false)
-        ccView.setCryptoProvider(openPgpProvider, false)
-        bccView.setCryptoProvider(openPgpProvider, false)
+        toView.setCryptoProvider(openPgpProvider)
+        ccView.setCryptoProvider(openPgpProvider)
+        bccView.setCryptoProvider(openPgpProvider)
     }
 
     fun requestFocusOnToField() {

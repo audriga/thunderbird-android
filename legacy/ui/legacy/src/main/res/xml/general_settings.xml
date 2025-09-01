@@ -359,7 +359,8 @@
 
         <CheckBoxPreference
             android:key="volume_navigation"
-            android:title="@string/volume_navigation_title"
+            android:title="@string/volume_navigation_title_short"
+            android:summary="@string/volume_navigation_summary"
             />
 
         <ListPreference
@@ -541,12 +542,21 @@
             android:summary="@string/debug_enable_debug_logging_summary"
             android:title="@string/debug_enable_debug_logging_title"
             />
+        <CheckBoxPreference
+            android:key="sync_debug_logging"
+            android:summary="@string/debug_enable_sync_debug_logging_summary"
+            android:title="@string/debug_enable_sync_debug_logging_title"
+            />
 
         <CheckBoxPreference
             android:key="sensitive_logging"
             android:summary="@string/debug_enable_sensitive_logging_summary"
             android:title="@string/debug_enable_sensitive_logging_title"
             />
+
+        <Preference
+            android:key="debug_secret_debug_screen"
+            android:title="@string/debug_open_secret_debug_screen" />
 
     </PreferenceScreen>
 

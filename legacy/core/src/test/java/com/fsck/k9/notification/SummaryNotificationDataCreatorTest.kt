@@ -1,7 +1,5 @@
 package com.fsck.k9.notification
 
-import app.k9mail.core.testing.TestClock
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.message.controller.MessageReference
 import assertk.assertThat
 import assertk.assertions.contains
@@ -11,26 +9,54 @@ import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
 import com.fsck.k9.K9
-import kotlinx.datetime.Clock
+import java.util.Calendar
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.preference.GeneralSettings
+import net.thunderbird.core.preference.display.DisplaySettings
+import net.thunderbird.core.preference.network.NetworkSettings
+import net.thunderbird.core.preference.notification.NotificationPreference
+import net.thunderbird.core.preference.privacy.PrivacySettings
+import net.thunderbird.core.testing.TestClock
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 private val TIMESTAMP = 0L
 
+@OptIn(ExperimentalTime::class)
 class SummaryNotificationDataCreatorTest {
     private val account = createAccount()
-    private val notificationDataCreator = SummaryNotificationDataCreator(SingleMessageNotificationDataCreator())
+    private val testClock = TestClock()
+    private var generalSettings = GeneralSettings(
+        display = DisplaySettings(),
+        network = NetworkSettings(),
+        notification = NotificationPreference(
+            quietTimeStarts = "23:00",
+            quietTimeEnds = "00:00",
+        ),
+        privacy = PrivacySettings(),
+    )
+    private val notificationDataCreator = SummaryNotificationDataCreator(
+        singleMessageNotificationDataCreator = SingleMessageNotificationDataCreator(),
+        generalSettingsManager = mock {
+            on { getConfig() } doReturn generalSettings
+        },
+    )
 
     @Before
     fun setUp() {
         startKoin {
             modules(
                 module {
-                    single<Clock> { TestClock() }
+                    single<Clock> { testClock }
                 },
             )
         }
@@ -56,10 +82,18 @@ class SummaryNotificationDataCreatorTest {
 
     @Test
     fun `single notification during quiet time`() {
+        setClockTo("23:01")
         setQuietTime(true)
         val notificationData = createNotificationData()
 
-        val result = notificationDataCreator.createSummaryNotificationData(
+        val result = SummaryNotificationDataCreator(
+            singleMessageNotificationDataCreator = SingleMessageNotificationDataCreator(),
+            generalSettingsManager = mock {
+                on { getConfig() } doReturn generalSettings.copy(
+                    notification = generalSettings.notification.copy(isQuietTimeEnabled = true),
+                )
+            },
+        ).createSummaryNotificationData(
             notificationData,
             silent = false,
         )
@@ -84,10 +118,18 @@ class SummaryNotificationDataCreatorTest {
 
     @Test
     fun `inbox-style notification during quiet time`() {
+        setClockTo("23:01")
         setQuietTime(true)
         val notificationData = createNotificationDataWithMultipleMessages()
 
-        val result = notificationDataCreator.createSummaryNotificationData(
+        val result = SummaryNotificationDataCreator(
+            singleMessageNotificationDataCreator = SingleMessageNotificationDataCreator(),
+            generalSettingsManager = mock {
+                on { getConfig() } doReturn generalSettings.copy(
+                    notification = generalSettings.notification.copy(isQuietTimeEnabled = true),
+                )
+            },
+        ).createSummaryNotificationData(
             notificationData,
             silent = false,
         )
@@ -233,11 +275,9 @@ class SummaryNotificationDataCreatorTest {
     }
 
     private fun setQuietTime(quietTime: Boolean) {
-        K9.isQuietTimeEnabled = quietTime
-        if (quietTime) {
-            K9.quietTimeStarts = "0:00"
-            K9.quietTimeEnds = "23:59"
-        }
+        generalSettings = generalSettings.copy(
+            notification = generalSettings.notification.copy(isQuietTimeEnabled = quietTime),
+        )
     }
 
     private fun setDeleteAction(mode: K9.NotificationQuickDelete) {
@@ -248,8 +288,8 @@ class SummaryNotificationDataCreatorTest {
         K9.isConfirmDeleteFromNotification = confirm
     }
 
-    private fun createAccount(): Account {
-        return Account("00000000-0000-0000-0000-000000000000").apply {
+    private fun createAccount(): LegacyAccount {
+        return LegacyAccount("00000000-0000-0000-0000-000000000000").apply {
             accountNumber = 42
         }
     }
@@ -279,5 +319,15 @@ class SummaryNotificationDataCreatorTest {
             }
         }
         return createNotificationData(contentList)
+    }
+
+    private fun setClockTo(time: String) {
+        val (hourOfDay, minute) = time.split(':').map { it.toInt() }
+
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+        calendar.set(Calendar.MINUTE, minute)
+
+        testClock.changeTimeTo(Instant.fromEpochMilliseconds(calendar.timeInMillis))
     }
 }

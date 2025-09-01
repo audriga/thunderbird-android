@@ -20,7 +20,8 @@ val mainModule = module {
         Preferences(
             storagePersister = get(),
             localStoreProvider = get(),
-            accountPreferenceSerializer = get(),
+            legacyAccountStorageHandler = get(),
+            accountDefaultsProvider = get(),
         )
     }
     single { get<Context>().resources }
@@ -32,5 +33,4 @@ val mainModule = module {
     single { LocalKeyStoreManager(get()) }
     single<TrustedSocketFactory> { DefaultTrustedSocketFactory(get(), get()) }
     factory { EmailAddressValidator() }
-    factory { ServerSettingsSerializer() }
 }

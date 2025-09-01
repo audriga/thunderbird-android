@@ -9,15 +9,15 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
-import app.k9mail.legacy.account.AccountManager
 import com.fsck.k9.helper.MimeTypeUtil
 import com.fsck.k9.helper.mapToSet
 import com.fsck.k9.preferences.SettingsExporter
 import kotlin.concurrent.thread
+import net.thunderbird.core.android.account.AccountManager
+import net.thunderbird.core.logging.legacy.Log
 import okio.ByteString.Companion.toByteString
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
-import timber.log.Timber
 
 /**
  * A `ContentProvider` that makes settings available to another app.
@@ -40,7 +40,7 @@ class SettingsProvider : ContentProvider(), KoinComponent {
 
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? {
         if (!isTrustedCaller()) {
-            Timber.d("Caller must be in the allowlist")
+            Log.d("Caller must be in the allowlist")
             return null
         }
 
@@ -127,16 +127,16 @@ class SettingsProvider : ContentProvider(), KoinComponent {
         }
 
         if (callerSignature == null) {
-            Timber.v("Couldn't retrieve caller signature")
+            Log.v("Couldn't retrieve caller signature")
             return false
         }
 
         val callerSignatureHash = callerSignature.toByteArray().toByteString().sha256().hex()
         val result = callerSignatureHash in expectedHashes
         if (result) {
-            Timber.d("Caller %s signature fingerprint matches %s", callerPackage, callerSignatureHash)
+            Log.d("Caller %s signature fingerprint matches %s", callerPackage, callerSignatureHash)
         } else {
-            Timber.d("Failed! Signature mismatch for calling package %s (%s)", callerPackage, callerSignatureHash)
+            Log.d("Failed! Signature mismatch for calling package %s (%s)", callerPackage, callerSignatureHash)
         }
 
         return result
@@ -148,13 +148,14 @@ class SettingsProvider : ContentProvider(), KoinComponent {
         val packageInfo = packageManager.getPackageInfo(callerPackage, PackageManager.GET_SIGNATURES)
 
         // We don't expect our callers to have multiple signers, so we don't service such requests.
-        if (packageInfo.signatures.size != 1) {
+        val signatures = packageInfo.signatures
+        if (signatures == null || signatures.size != 1) {
             return null
         }
 
         // In case of signature rotation, this will report the oldest used certificate, pretending that the signature
         // rotation never took place. We can only rely on our allowlist being up-to-date in this case.
-        return packageInfo.signatures[0]
+        return signatures.firstOrNull()
     }
 
     @TargetApi(Build.VERSION_CODES.P)
@@ -164,15 +165,16 @@ class SettingsProvider : ContentProvider(), KoinComponent {
         val packageInfo = packageManager.getPackageInfo(callerPackage, PackageManager.GET_SIGNING_CERTIFICATES)
 
         // We don't expect our callers to have multiple signers, so we don't service such requests.
-        if (packageInfo.signingInfo.hasMultipleSigners()) {
+        val signingInfo = packageInfo.signingInfo
+        if (signingInfo == null || signingInfo.hasMultipleSigners()) {
             return null
         }
 
         // We currently don't support servicing requests from callers that performed certificate rotation.
-        if (packageInfo.signingInfo.hasPastSigningCertificates()) {
+        if (signingInfo.hasPastSigningCertificates()) {
             return null
         }
 
-        return packageInfo.signingInfo.signingCertificateHistory[0]
+        return signingInfo.signingCertificateHistory?.firstOrNull()
     }
 }

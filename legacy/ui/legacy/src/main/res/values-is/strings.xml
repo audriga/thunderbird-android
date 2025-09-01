@@ -304,12 +304,6 @@
     <string name="account_settings_push_advanced_title">Ítarlegt</string>
     <string name="account_settings_title_fmt">Aðgangsstillingar</string>
     <string name="account_settings_notify_label">Tilkynningar um nýjan póst</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Tilkynningamöppur</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Allar</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Einungis 1. flokks möppur</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">1. og 2. flokks möppur</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Allt nema 2. flokks möppur</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">Engin</string>
     <string name="account_settings_notify_sync_label">Tilkynningar vegna samstillingar</string>
     <string name="account_settings_email_label">Tölvupóstfangið þitt</string>
     <string name="account_settings_notify_summary">Gefa merki á stöðustiku þegar nýr póstur berst</string>
@@ -398,48 +392,11 @@
     <string name="account_settings_message_age_3_months">síðustu 3 mánuðum</string>
     <string name="account_settings_message_age_6_months">síðustu 6 mánuðum</string>
     <string name="account_settings_message_age_1_year">síðasta ári</string>
-    <string name="account_settings_folder_display_mode_label">Möppur sem á að birta</string>
-    <string name="account_settings_folder_display_mode_all">Allar</string>
-    <string name="account_settings_folder_display_mode_first_class">Einungis 1. flokks möppur</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">1. og 2. flokks möppur</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Allt nema 2. flokks möppur</string>
-    <string name="account_settings_folder_sync_mode_label">Vakta möppur</string>
-    <string name="account_settings_folder_sync_mode_all">Allar</string>
-    <string name="account_settings_folder_sync_mode_first_class">Einungis 1. flokks möppur</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">1. og 2. flokks möppur</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Allt nema 2. flokks möppur</string>
-    <string name="account_settings_folder_sync_mode_none">Engin</string>
-    <string name="account_settings_folder_push_mode_label">Ýta möppum</string>
-    <string name="account_settings_folder_push_mode_all">Allar</string>
-    <string name="account_settings_folder_push_mode_first_class">Einungis 1. flokks möppur</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">1. og 2. flokks möppur</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Allt nema 2. flokks möppur</string>
-    <string name="account_settings_folder_push_mode_none">Engin</string>
     <string name="account_settings_sync_remote_deletetions_label">Eyðing á samstilltum póstþjóni</string>
     <string name="account_settings_sync_remote_deletetions_summary">Fjarlægja skilaboð þegar þeim er eytt á póstþjóni</string>
     <string name="account_settings_openpgp_missing">OpenPGP-forrit vantar - var það fjarlægt?</string>
     <string name="folder_settings_title">Stillingar möppu</string>
     <string name="folder_settings_in_top_group_label">Birta í efsta hópi</string>
-    <string name="folder_settings_in_top_group_summary">Sýna nálægt efri enda möppulista</string>
-    <string name="folder_settings_folder_display_mode_label">Birtingarflokkur möppu</string>
-    <string name="folder_settings_folder_display_mode_normal">Enginn flokkur</string>
-    <string name="folder_settings_folder_display_mode_first_class">1. flokkur</string>
-    <string name="folder_settings_folder_display_mode_second_class">2. flokkur</string>
-    <string name="folder_settings_folder_sync_mode_label">Flokkur möppuvöktunar</string>
-    <string name="folder_settings_folder_sync_mode_normal">Engin</string>
-    <string name="folder_settings_folder_sync_mode_first_class">1. flokkur</string>
-    <string name="folder_settings_folder_sync_mode_second_class">2. flokkur</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Sama og birtingarflokkur</string>
-    <string name="folder_settings_folder_push_mode_label">Ýtingarflokkur möppu</string>
-    <string name="folder_settings_folder_push_mode_normal">Enginn flokkur</string>
-    <string name="folder_settings_folder_push_mode_first_class">1. flokkur</string>
-    <string name="folder_settings_folder_push_mode_second_class">2. flokkur</string>
-    <string name="folder_settings_folder_push_mode_inherited">Sama og flokkur möppuvöktunar</string>
-    <string name="folder_settings_folder_notify_mode_label">Tilkynningaflokkur möppu</string>
-    <string name="folder_settings_folder_notify_mode_normal">Enginn flokkur</string>
-    <string name="folder_settings_folder_notify_mode_first_class">1. flokkur</string>
-    <string name="folder_settings_folder_notify_mode_second_class">2. flokkur</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Sama og ýtingarflokkur</string>
     <string name="folder_settings_clear_local_folder_action">Hreinsa staðvær skilaboð</string>
     <string name="account_settings_incoming_label">Inn-póstþjónn</string>
     <string name="account_settings_incoming_summary">Stilla móttöku-póstþjón</string>
@@ -526,11 +483,6 @@
     <string name="sort_by_attach">Viðhengi</string>
     <string name="account_delete_dlg_title">Fjarlægja aðganginn</string>
     <string name="folder_list_filter_hint">Nafn möppu inniheldur</string>
-    <string name="folder_list_display_mode_label">Birta möppur…</string>
-    <string name="folder_list_display_mode_all">Allar möppur</string>
-    <string name="folder_list_display_mode_first_class">1. flokks möppur</string>
-    <string name="folder_list_display_mode_first_and_second_class">1. og 2. flokks möppur</string>
-    <string name="folder_list_display_mode_not_second_class">Fela 2. flokks möppur</string>
     <string name="account_settings_signature__location_label">Staðsetning undirskriftar</string>
     <string name="account_settings_signature__location_before_quoted_text">Á undan tilvitnun</string>
     <string name="account_settings_signature__location_after_quoted_text">Á eftir tilvitnun</string>
@@ -572,13 +524,11 @@
     <string name="account_setup_push_limit_1000">1000 möppur</string>
     <string name="animations_title">Hreyfingar</string>
     <string name="animations_summary">Nota skrautlegar sjónbrellur</string>
-    <string name="volume_navigation_title">Flakk með hljóðstyrkshnöppum í skilaboðasýn</string>
     <string name="show_unified_inbox_title">Birta sameinað innhólf</string>
     <string name="show_starred_count_title">Birta fjölda stjarna</string>
     <string name="integrated_inbox_title">Sameinað innhólf</string>
     <string name="integrated_inbox_detail">Öll skilaboð í sameinuðum möppum</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Sameina</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Öll skilaboð eru birt í sameinuðu innhólfi</string>
     <string name="account_settings_no_folder_selected">Engin</string>
     <string name="account_settings_automatic_special_folder">Sjálfvirkt  (%s)</string>
     <string name="font_size_settings_title">Leturstærð</string>
@@ -624,13 +574,13 @@
     </plurals>
     <string name="dialog_confirm_delete_confirm_button">Já</string>
     <string name="dialog_confirm_delete_cancel_button">Nei</string>
-    <string name="dialog_confirm_mark_all_as_read_title">Staðfestu að merkja allt sem lesið</string>
+    <string name="dialog_confirm_mark_all_as_read_title">Staðfesta að merkja allt sem lesið</string>
     <string name="dialog_confirm_mark_all_as_read_message">Viltu merkja öll skilaboð sem lesin?</string>
     <string name="dialog_confirm_empty_trash_title">Staðfesta tæmingu úr rusli</string>
     <string name="dialog_confirm_empty_trash_message">Viltu tæma ruslmöppuna?</string>
     <string name="dialog_confirm_mark_all_as_read_confirm_button">Já</string>
     <string name="dialog_confirm_mark_all_as_read_cancel_button">Nei</string>
-    <string name="dialog_confirm_spam_title">Staðfestu færslu í ruslpóstmöppu</string>
+    <string name="dialog_confirm_spam_title">Staðfesta færslu í ruslpóstmöppu</string>
     <plurals name="dialog_confirm_spam_message">
         <item quantity="one">Viltu í alvörunni flytja þessi skilaboð í ruslpóstmöppuna?</item>
         <item quantity="other">Viltu í alvörunni flytja <xliff:g id="message_count">%1$d</xliff:g> skilaboð í ruslpóstmöppuna?</item>
@@ -928,10 +878,27 @@ Til að setja Autocrypt upp á nýju tæki, farðu þá eftir leiðbeiningunum s
     <string name="push_notification_state_alarm_permission_missing">Vantar heimild til að setja áminningar á áætlun</string>
     <string name="push_notification_grant_alarm_permission">Ýttu til að veita heimild.</string>
     <string name="about_title">Um <xliff:g id="app_name">%s</xliff:g></string>
-    <string name="default_signature">--
-\nSent úr Android-tækinu mínu með <xliff:g id="app_name">%s</xliff:g>. Afsakaðu hvað ég er stuttorður.</string>
     <string name="dialog_openkeychain_info_text">Forritið OpenKeychain er nauðsynlegt til að virkja stuðning við enda-í-enda dulritun.</string>
-    <string name="account_delete_dlg_instructions_fmt">Reikningurinn \"<xliff:g id="account">%s</xliff:g>\" verður fjarlægður úr <xliff:g id="app_name">%s</xliff:g>.</string>
+    <string name="account_delete_dlg_instructions_fmt">Reikningurinn \"<xliff:g id="account">%1$s</xliff:g>\" verður fjarlægður úr <xliff:g id="app_name">%2$s</xliff:g>.</string>
     <string name="push_info_notification_explanation_text">Þegar ýti-tilkynningar eru notaðar, viðheldur <xliff:g id="app_name">%1$s</xliff:g> tengingu við póstþjóninn. Android krefst þess að birta tilkynningu um það á meðan forritið er enn virkt í bakgrunni. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
     <string name="about_app_authors_thunderbird">Thunderbird Mobile teymið</string>
+    <string name="settings_ui_telemetry_description">Deilir með Mozilla gögnum um afköst, notkun, vélbúnað og sérsníðingu þessa forrits til að hjálpa okkur að gera Thunderbird betra</string>
+    <string name="folder_settings_notifications_label">Tilkynningar</string>
+    <string name="folder_settings_push_label">Virkja ýti-samstillingu (push)</string>
+    <string name="settings_ui_telemetry_title">Notkun og tæknileg gögn</string>
+    <string name="settings_ui_data_collection">Gagnasöfnun</string>
+    <string name="folder_settings_sync_label">Virkja samstillingu</string>
+    <string name="folder_settings_visible_label">Sýna möppu</string>
+    <string name="folder_list_show_hidden_folders">Sýna faldar möppur</string>
+    <string name="settings_list_action_support">Styðja <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="volume_navigation_summary">Fara á milli skilaboða með hljóðstyrkshnöppum í skilaboðasýn</string>
+    <string name="save_attachment_action">Vista viðhengi</string>
+    <string name="volume_navigation_title_short">Flakk með hljóðstyrkshnöppum</string>
+    <string name="expand_content_description">Fletta út</string>
+    <string name="dialog_confirm_empty_spam_message">Viltu tæma ruslpóstmöppuna?</string>
+    <string name="empty_spam_action">Tæma ruslpóst</string>
+    <string name="dialog_confirm_empty_spam_title">Staðfesta eyðingu ruslpósts</string>
+    <string name="open_camera">Opna myndavél</string>
+    <string name="attach_file">Hengja við skrá</string>
+    <string name="camera_permission_denied">Heimild til að nota myndavél var hafnað! Tekst ekki að taka mynd</string>
 </resources>

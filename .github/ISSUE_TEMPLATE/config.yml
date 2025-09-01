@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: K-9 Mail Forum
-    url: https://forum.k9mail.app/
-    about: Most issues are not bugs. Ask the community for help.
+  - name: Feature request
+    url: https://connect.mozilla.org/t5/ideas/idb-p/ideas/label-name/thunderbird%20android
+    about: Submit your ideas to improve Thunderbird for Android
+  - name: Mozilla support forum (SUMO)
+    url: https://support.mozilla.org/products/thunderbird-android
+    about: Many issues are not bugs, ask the community for help

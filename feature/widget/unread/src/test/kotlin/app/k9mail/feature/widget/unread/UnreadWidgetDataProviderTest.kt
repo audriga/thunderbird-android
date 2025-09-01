@@ -1,13 +1,9 @@
 package app.k9mail.feature.widget.unread
 
 import android.content.Context
-import app.k9mail.core.mail.folder.api.Folder
-import app.k9mail.core.mail.folder.api.FolderType
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.mailstore.FolderRepository
 import app.k9mail.legacy.message.controller.MessageCounts
 import app.k9mail.legacy.message.controller.MessageCountsProvider
-import app.k9mail.legacy.search.SearchAccount
 import app.k9mail.legacy.ui.folder.FolderNameFormatter
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -15,6 +11,12 @@ import assertk.assertions.isNull
 import com.fsck.k9.CoreResourceProvider
 import com.fsck.k9.Preferences
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider
+import kotlinx.coroutines.flow.Flow
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.feature.mail.folder.api.Folder
+import net.thunderbird.feature.mail.folder.api.FolderType
+import net.thunderbird.feature.search.legacy.LocalMessageSearch
+import net.thunderbird.feature.search.legacy.SearchAccount
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -118,7 +120,7 @@ class UnreadWidgetDataProviderTest : AutoCloseKoinTest() {
         assertThat(widgetData).isNull()
     }
 
-    private fun createAccount(): Account = mock {
+    private fun createAccount(): LegacyAccount = mock {
         on { uuid } doReturn ACCOUNT_UUID
         on { displayName } doReturn ACCOUNT_NAME
     }
@@ -128,7 +130,7 @@ class UnreadWidgetDataProviderTest : AutoCloseKoinTest() {
     }
 
     private fun createMessageCountsProvider() = object : MessageCountsProvider {
-        override fun getMessageCounts(account: Account): MessageCounts {
+        override fun getMessageCounts(account: LegacyAccount): MessageCounts {
             return MessageCounts(unread = ACCOUNT_UNREAD_COUNT, starred = 0)
         }
 
@@ -136,7 +138,15 @@ class UnreadWidgetDataProviderTest : AutoCloseKoinTest() {
             return MessageCounts(unread = SEARCH_ACCOUNT_UNREAD_COUNT, starred = 0)
         }
 
-        override fun getUnreadMessageCount(account: Account, folderId: Long): Int {
+        override fun getMessageCounts(search: LocalMessageSearch): MessageCounts {
+            throw UnsupportedOperationException()
+        }
+
+        override fun getMessageCountsFlow(search: LocalMessageSearch): Flow<MessageCounts> {
+            throw UnsupportedOperationException()
+        }
+
+        override fun getUnreadMessageCount(account: LegacyAccount, folderId: Long): Int {
             return FOLDER_UNREAD_COUNT
         }
     }

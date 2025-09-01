@@ -1,7 +1,5 @@
 package com.fsck.k9.notification
 
-import app.k9mail.core.testing.TestClock
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.mailstore.MessageStoreManager
 import app.k9mail.legacy.message.controller.MessageReference
 import assertk.assertThat
@@ -20,8 +18,22 @@ import com.fsck.k9.mailstore.LocalStore
 import com.fsck.k9.mailstore.LocalStoreProvider
 import com.fsck.k9.mailstore.NotificationMessage
 import kotlin.test.assertNotNull
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.preference.GeneralSettings
+import net.thunderbird.core.preference.display.DisplaySettings
+import net.thunderbird.core.preference.network.NetworkSettings
+import net.thunderbird.core.preference.notification.NotificationPreference
+import net.thunderbird.core.preference.privacy.PrivacySettings
+import net.thunderbird.core.testing.TestClock
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
+import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.context.GlobalContext.stopKoin
+import org.koin.dsl.module
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
@@ -33,6 +45,7 @@ private const val ACCOUNT_COLOR = 0xFF112233L.toInt()
 private const val FOLDER_ID = 42L
 private const val TIMESTAMP = 23L
 
+@OptIn(ExperimentalTime::class)
 class NewMailNotificationManagerTest {
     private val mockedNotificationMessages = mutableListOf<NotificationMessage>()
     private val account = createAccount()
@@ -44,9 +57,38 @@ class NewMailNotificationManagerTest {
         createNotificationRepository(),
         BaseNotificationDataCreator(),
         SingleMessageNotificationDataCreator(),
-        SummaryNotificationDataCreator(SingleMessageNotificationDataCreator()),
+        SummaryNotificationDataCreator(
+            singleMessageNotificationDataCreator = SingleMessageNotificationDataCreator(),
+            generalSettingsManager = mock {
+                on { getConfig() } doReturn GeneralSettings(
+                    display = DisplaySettings(),
+                    network = NetworkSettings(),
+                    notification = NotificationPreference(
+                        quietTimeStarts = "23:00",
+                        quietTimeEnds = "00:00",
+                    ),
+                    privacy = PrivacySettings(),
+                )
+            },
+        ),
         clock,
     )
+
+    @Before
+    fun setUp() {
+        startKoin {
+            modules(
+                module {
+                    single<Clock> { TestClock() }
+                },
+            )
+        }
+    }
+
+    @After
+    fun tearDown() {
+        stopKoin()
+    }
 
     @Test
     fun `add first notification`() {
@@ -360,8 +402,8 @@ class NewMailNotificationManagerTest {
         }
     }
 
-    private fun createAccount(): Account {
-        return Account(ACCOUNT_UUID).apply {
+    private fun createAccount(): LegacyAccount {
+        return LegacyAccount(ACCOUNT_UUID).apply {
             name = ACCOUNT_NAME
             chipColor = ACCOUNT_COLOR
         }

@@ -18,66 +18,73 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.k9mail.core.ui.compose.designsystem.atom.Surface
 import app.k9mail.core.ui.compose.designsystem.atom.button.ButtonFilled
 import app.k9mail.core.ui.compose.designsystem.atom.button.ButtonText
 import app.k9mail.core.ui.compose.designsystem.atom.text.TextBodyLarge
+import app.k9mail.core.ui.compose.designsystem.atom.text.TextBodySmall
 import app.k9mail.core.ui.compose.designsystem.atom.text.TextDisplayMedium
 import app.k9mail.core.ui.compose.designsystem.template.LazyColumnWithHeaderFooter
 import app.k9mail.core.ui.compose.designsystem.template.ResponsiveContent
 import app.k9mail.core.ui.compose.theme2.MainTheme
 import app.k9mail.feature.onboarding.welcome.R
+import net.thunderbird.core.ui.compose.common.modifier.testTagAsResourceId
 
 private const val CIRCLE_COLOR = 0xFFEEEEEE
-private const val CIRCLE_SIZE_DP = 300
-private const val LOGO_SIZE_DP = 200
+private const val CIRCLE_SIZE_DP = 200
+private const val LOGO_SIZE_DP = 125
 
 @Composable
 internal fun WelcomeContent(
     onStartClick: () -> Unit,
     onImportClick: () -> Unit,
     appName: String,
+    showImportButton: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier,
     ) {
-        ResponsiveContent {
+        ResponsiveContent { contentPadding ->
             LazyColumnWithHeaderFooter(
                 modifier = Modifier.fillMaxSize(),
+                contentPadding = contentPadding,
+                verticalArrangement = Arrangement.SpaceEvenly,
+                header = {
+                    WelcomeHeaderSection(title = appName)
+                },
                 footer = {
-                    WelcomeFooter(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = MainTheme.spacings.quadruple),
+                    WelcomeFooterSection(
+                        showImportButton = showImportButton,
                         onStartClick = onStartClick,
                         onImportClick = onImportClick,
                     )
                 },
-                verticalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                item {
-                    WelcomeLogo(
-                        modifier = Modifier
-                            .defaultItemModifier()
-                            .padding(top = MainTheme.spacings.double),
-                    )
-                }
-                item {
-                    WelcomeTitle(
-                        title = appName,
-                        modifier = Modifier.defaultItemModifier(),
-                    )
-                }
-                item {
-                    WelcomeMessage(
-                        modifier = Modifier.defaultItemModifier(),
-                        appName = appName,
-                    )
-                }
-            }
+                content = {
+                    item { WelcomeMessageItem() }
+                },
+            )
         }
+    }
+}
+
+@Composable
+private fun WelcomeHeaderSection(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultItemModifier()
+            .padding(top = MainTheme.spacings.quadruple),
+        verticalArrangement = Arrangement.spacedBy(MainTheme.spacings.double),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        WelcomeLogo()
+        WelcomeTitleItem(title = title)
     }
 }
 
@@ -107,39 +114,92 @@ private fun WelcomeLogo(
 }
 
 @Composable
+private fun WelcomeTitleItem(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+    ) {
+        WelcomeTitle(
+            title = title,
+            modifier = Modifier.defaultItemModifier(),
+        )
+    }
+}
+
+@Composable
 private fun WelcomeTitle(
     title: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.padding(horizontal = MainTheme.spacings.quadruple),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         TextDisplayMedium(
             text = title,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun WelcomeMessageItem(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+    ) {
+        WelcomeMessage(
+            modifier = Modifier.defaultItemModifier(),
         )
     }
 }
 
 @Composable
 private fun WelcomeMessage(
-    appName: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = Modifier
-            .padding(start = MainTheme.spacings.quadruple, end = MainTheme.spacings.quadruple)
+            .padding(horizontal = MainTheme.spacings.quadruple)
             .then(modifier),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         TextBodyLarge(
-            text = stringResource(id = R.string.onboarding_welcome_message, appName),
+            text = stringResource(id = R.string.onboarding_welcome_text),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun WelcomeFooterSection(
+    showImportButton: Boolean,
+    onStartClick: () -> Unit,
+    onImportClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = MainTheme.spacings.quadruple),
+    ) {
+        WelcomeFooter(
+            showImportButton = showImportButton,
+            onStartClick = onStartClick,
+            onImportClick = onImportClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = MainTheme.spacings.quadruple),
         )
     }
 }
 
 @Composable
 private fun WelcomeFooter(
+    showImportButton: Boolean,
     onStartClick: () -> Unit,
     onImportClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -152,10 +212,20 @@ private fun WelcomeFooter(
         ButtonFilled(
             text = stringResource(id = R.string.onboarding_welcome_start_button),
             onClick = onStartClick,
+            modifier = Modifier.testTagAsResourceId("onboarding_welcome_start_button"),
         )
-        ButtonText(
-            text = stringResource(id = R.string.onboarding_welcome_import_button),
-            onClick = onImportClick,
+        if (showImportButton) {
+            ButtonText(
+                text = stringResource(id = R.string.onboarding_welcome_import_button),
+                onClick = onImportClick,
+            )
+        }
+
+        TextBodySmall(
+            text = stringResource(R.string.onboarding_welcome_developed_by),
+            modifier = Modifier
+                .padding(top = MainTheme.spacings.quadruple)
+                .padding(horizontal = MainTheme.spacings.double),
         )
     }
 }

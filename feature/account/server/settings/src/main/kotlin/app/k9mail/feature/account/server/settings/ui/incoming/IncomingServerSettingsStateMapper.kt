@@ -8,6 +8,7 @@ import app.k9mail.feature.account.common.domain.entity.toConnectionSecurity
 import app.k9mail.feature.account.common.domain.entity.toMailConnectionSecurity
 import app.k9mail.feature.account.common.domain.input.NumberInputField
 import app.k9mail.feature.account.common.domain.input.StringInputField
+import app.k9mail.feature.account.server.settings.ui.common.toInvalidEmailDomain
 import app.k9mail.feature.account.server.settings.ui.incoming.IncomingServerSettingsContract.State
 import com.fsck.k9.mail.ServerSettings
 import com.fsck.k9.mail.store.imap.ImapStoreSettings
@@ -19,7 +20,7 @@ import com.fsck.k9.mail.store.imap.ImapStoreSettings.pathPrefix
 fun AccountState.toIncomingServerSettingsState() = incomingServerSettings?.toIncomingServerSettingsState()
     ?: State(
         username = StringInputField(value = emailAddress ?: ""),
-        isLoading = false,
+        server = StringInputField(value = emailAddress?.toInvalidEmailDomain() ?: ""),
     )
 
 private fun ServerSettings.toIncomingServerSettingsState(): State {
@@ -36,9 +37,6 @@ private fun ServerSettings.toIncomingServerSettingsState(): State {
         imapPrefix = StringInputField(value = pathPrefix ?: ""),
         imapUseCompression = isUseCompression,
         imapSendClientInfo = isSendClientInfo,
-
-        isLoading = false,
-        error = null,
     )
 }
 

@@ -20,7 +20,6 @@ object Icons {
         val Add = R.drawable.ic_add
         val AddCircle = R.drawable.ic_add_circle
         val Adjust = R.drawable.ic_adjust
-        val AllInbox = R.drawable.ic_all_inbox
         val Archive = R.drawable.ic_archive
         val ArrowBack = R.drawable.ic_arrow_back
         val Attachment = R.drawable.ic_attachment
@@ -45,6 +44,7 @@ object Icons {
         val Error = R.drawable.ic_error
         val ExpandLess = R.drawable.ic_expand_less
         val ExpandMore = R.drawable.ic_expand_more
+        val Favorite = R.drawable.ic_favorite
         val FilterList = R.drawable.ic_filter_list
         val Folder = R.drawable.ic_folder
         val Forum = R.drawable.ic_forum

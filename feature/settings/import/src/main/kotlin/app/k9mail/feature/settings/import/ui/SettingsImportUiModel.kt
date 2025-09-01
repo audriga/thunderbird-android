@@ -3,6 +3,8 @@ package app.k9mail.feature.settings.import.ui
 import app.k9mail.feature.settings.import.ui.SettingsListItem.GeneralSettings
 
 internal class SettingsImportUiModel {
+    private var isShowMigrationActions = false
+
     var settingsList: List<SettingsListItem> = emptyList()
     var isSettingsListVisible = false
     var isSettingsListEnabled = true
@@ -11,7 +13,9 @@ internal class SettingsImportUiModel {
     var closeButtonLabel: CloseButtonLabel = CloseButtonLabel.OK
     var isPickDocumentButtonVisible = true
     var isPickDocumentButtonEnabled = true
-    var isPickAppButtonVisible = true
+    var isScanQrCodeButtonVisible = isShowMigrationActions
+    var isScanQrCodeButtonEnabled = true
+    var isPickAppButtonVisible = isShowMigrationActions
     var isPickAppButtonEnabled = false
     var isPickAppButtonPermanentlyDisabled = true
     var isLoadingProgressVisible = false
@@ -29,6 +33,7 @@ internal class SettingsImportUiModel {
 
     fun enablePickButtons() {
         isPickDocumentButtonEnabled = true
+        isScanQrCodeButtonEnabled = true
         maybeEnablePickAppButton()
     }
 
@@ -41,6 +46,7 @@ internal class SettingsImportUiModel {
     fun disablePickButtons() {
         statusText = StatusText.HIDDEN
         isPickDocumentButtonEnabled = false
+        isScanQrCodeButtonEnabled = false
         isPickAppButtonEnabled = false
     }
 
@@ -58,6 +64,7 @@ internal class SettingsImportUiModel {
     fun showLoadingProgress() {
         isLoadingProgressVisible = true
         isPickDocumentButtonVisible = false
+        isScanQrCodeButtonVisible = false
         isPickAppButtonVisible = false
         isSettingsListEnabled = false
         statusText = StatusText.HIDDEN
@@ -92,7 +99,9 @@ internal class SettingsImportUiModel {
         isLoadingProgressVisible = false
         isPickDocumentButtonVisible = true
         isPickDocumentButtonEnabled = true
-        isPickAppButtonVisible = true
+        isScanQrCodeButtonVisible = isShowMigrationActions
+        isScanQrCodeButtonEnabled = true
+        isPickAppButtonVisible = isShowMigrationActions
         maybeEnablePickAppButton()
         statusText = StatusText.IMPORT_READ_FAILURE
         importButton = ButtonState.DISABLED
@@ -104,7 +113,9 @@ internal class SettingsImportUiModel {
         isSettingsListVisible = false
         isPickDocumentButtonVisible = true
         isPickDocumentButtonEnabled = true
-        isPickAppButtonVisible = true
+        isScanQrCodeButtonVisible = isShowMigrationActions
+        isScanQrCodeButtonEnabled = true
+        isPickAppButtonVisible = isShowMigrationActions
         maybeEnablePickAppButton()
         statusText = StatusText.IMPORT_FAILURE
         importButton = ButtonState.DISABLED
@@ -124,6 +135,7 @@ internal class SettingsImportUiModel {
         isSettingsListVisible = true
         isLoadingProgressVisible = false
         isPickDocumentButtonVisible = false
+        isScanQrCodeButtonVisible = false
         isPickAppButtonVisible = false
         updateImportButtonFromSelection()
     }
@@ -179,6 +191,12 @@ internal class SettingsImportUiModel {
                 showSuccessText()
             }
         }
+    }
+
+    fun showMigrationActions() {
+        isShowMigrationActions = true
+        isScanQrCodeButtonVisible = true
+        isPickAppButtonVisible = true
     }
 }
 

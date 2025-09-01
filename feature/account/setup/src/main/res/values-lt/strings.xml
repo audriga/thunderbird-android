@@ -21,6 +21,7 @@
     <plurals name="account_setup_options_email_check_frequency_minutes">
         <item quantity="one">Kas %d minutę</item>
         <item quantity="few">Kas %d minutes</item>
+        <item quantity="many">Kas %d minučių</item>
         <item quantity="other">Kas %d minučių</item>
     </plurals>
     <string name="account_setup_options_show_notifications_label">Rodyti pranešimus</string>
@@ -41,7 +42,7 @@
     <string name="account_setup_options_section_sync_options">Sinchronizavimo nustatymai</string>
     <string name="account_setup_create_account_creating">Kuriama paskyra…</string>
     <string name="account_setup_create_account_created">Paskyra sėkmingai sukurta</string>
-    <string name="account_setup_error_network">Tinklas</string>
+    <string name="account_setup_error_network">Tinklo klaida. Patikrinkite tinklo nustatymus ir bandykite dar kartą.</string>
     <string name="account_setup_error_unknown">Nenumatyta klaida</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_required">El. pašto adresą įvesti būtina.</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_not_allowed">Šis el. pašto adresas neleidžiamas.</string>
@@ -54,11 +55,13 @@
     <plurals name="account_setup_options_email_check_frequency_hours">
         <item quantity="one">Kas %d valandą</item>
         <item quantity="few">Kas %d valandas</item>
+        <item quantity="many">Kas %d valandų</item>
         <item quantity="other">Kas %d valandų</item>
     </plurals>
     <plurals name="account_setup_options_email_display_count_messages">
         <item quantity="one">%d laiškas</item>
         <item quantity="few">%d laiškai</item>
+        <item quantity="many">%d laiškų</item>
         <item quantity="other">%d laiškų</item>
     </plurals>
     <string name="account_setup_create_account_error">Kuriant paskyrą, įvyko klaida</string>

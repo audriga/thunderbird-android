@@ -2,17 +2,17 @@ package app.k9mail.feature.widget.unread
 
 import android.content.Context
 import android.content.Intent
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.mailstore.FolderRepository
 import app.k9mail.legacy.message.controller.MessageCountsProvider
-import app.k9mail.legacy.search.LocalSearch
-import app.k9mail.legacy.search.SearchAccount
 import app.k9mail.legacy.ui.folder.FolderNameFormatter
 import com.fsck.k9.CoreResourceProvider
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageList
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider
-import timber.log.Timber
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.feature.search.legacy.LocalMessageSearch
+import net.thunderbird.feature.search.legacy.SearchAccount
 
 class UnreadWidgetDataProvider(
     private val context: Context,
@@ -59,7 +59,7 @@ class UnreadWidgetDataProvider(
         return UnreadWidgetData(configuration, title, unreadCount, clickIntent)
     }
 
-    private fun getClickIntentForAccount(account: Account): Intent {
+    private fun getClickIntentForAccount(account: LegacyAccount): Intent {
         val folderId = defaultFolderProvider.getDefaultFolder(account)
         return getClickIntentForFolder(account, folderId)
     }
@@ -81,18 +81,18 @@ class UnreadWidgetDataProvider(
         return UnreadWidgetData(configuration, title, unreadCount, clickIntent)
     }
 
-    private fun getFolderDisplayName(account: Account, folderId: Long): String {
+    private fun getFolderDisplayName(account: LegacyAccount, folderId: Long): String {
         val folder = folderRepository.getFolder(account, folderId)
         return if (folder != null) {
             folderNameFormatter.displayName(folder)
         } else {
-            Timber.e("Error loading folder for account %s, folder ID: %d", account, folderId)
+            Log.e("Error loading folder for account %s, folder ID: %d", account, folderId)
             ""
         }
     }
 
-    private fun getClickIntentForFolder(account: Account, folderId: Long): Intent {
-        val search = LocalSearch()
+    private fun getClickIntentForFolder(account: LegacyAccount, folderId: Long): Intent {
+        val search = LocalMessageSearch()
         search.addAllowedFolder(folderId)
         search.addAccountUuid(account.uuid)
 

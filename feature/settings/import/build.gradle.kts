@@ -7,10 +7,6 @@ android {
     // Using "importing" because "import" is not allowed in Java package names (it's fine with Kotlin, though)
     namespace = "app.k9mail.feature.settings.importing"
     resourcePrefix = "settings_import_"
-
-    lint {
-        baseline = file("lint-baseline.xml")
-    }
 }
 
 dependencies {
@@ -19,12 +15,14 @@ dependencies {
     implementation(projects.core.ui.compose.designsystem)
     implementation(projects.core.ui.legacy.designsystem)
 
+    implementation(projects.feature.migration.launcher.api)
     implementation(projects.feature.account.oauth)
     implementation(libs.appauth)
 
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.fragment.compose)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.fastadapter)
 
-    implementation(libs.timber)
+    testImplementation(projects.core.logging.testing)
 }

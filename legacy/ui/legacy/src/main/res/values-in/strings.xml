@@ -173,7 +173,7 @@
     <string name="global_settings_registered_name_color_label">Warnai kontak</string>
     <string name="global_settings_registered_name_color_changed">Warnai nama di daftar kontak Anda</string>
     <string name="global_settings_messageview_fixedwidth_label">Fon lebar tetap</string>
-    <string name="global_settings_messageview_fixedwidth_summary">Gunakan fon lebar tetap saat menampilkan pesan teks biasa</string>
+    <string name="global_settings_messageview_fixedwidth_summary">Gunakan fon berlebar tetap saat menampilkan pesan teks biasa</string>
     <string name="global_settings_messageview_autofit_width_label">Pesan pas otomatis</string>
     <string name="global_settings_messageview_autofit_width_summary">Kecilkan pesan agar sesuai dengan layar</string>
     <string name="global_settings_confirm_actions_title">Konfirmasi tindakan</string>
@@ -203,7 +203,7 @@
     <!--Title of the setting to specify the density of the message list-->
     <string name="general_settings_ui_density_default">Bawaan</string>
     <string name="global_settings_privacy_hide_useragent">Sembunyikan klien surat</string>
-    <string name="global_settings_privacy_hide_useragent_detail">Buang Agen Pengguna K-9 dari tajuk surat</string>
+    <string name="global_settings_privacy_hide_useragent_detail">Hapus Agen Pengguna K-9 dari tajuk surat</string>
     <string name="global_settings_privacy_hide_timezone">Sembunyikan zona waktu</string>
     <string name="global_settings_privacy_hide_timezone_detail">Gunakan UTC, bukan zona waktu lokal di tajuk surat dan tajuk balasan</string>
     <string name="global_settings_notification_quick_delete_title">Tampilkan tombol \'Hapus\'</string>
@@ -270,12 +270,6 @@
     <string name="account_settings_push_advanced_title">Lanjutan</string>
     <string name="account_settings_title_fmt">Pengaturan akun</string>
     <string name="account_settings_notify_label">Notifikasi surat baru</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Folder notifikasi</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">Semua</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Hanya folder Kelas 1</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">Hanya folder Kelas 1 dan 2</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">Semuanya kecuali folder Kelas 2</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">Tidak ada</string>
     <string name="account_settings_notify_sync_label">Sinkronkan notifikasi</string>
     <string name="account_settings_email_label">Alamat surel Anda</string>
     <string name="account_settings_notify_summary">Beri tahu di bilah status saat ada surat masuk</string>
@@ -359,47 +353,11 @@
     <string name="account_settings_message_age_3_months">3 bulan terakhir</string>
     <string name="account_settings_message_age_6_months">6 bulan terakhir</string>
     <string name="account_settings_message_age_1_year">tahun lalu</string>
-    <string name="account_settings_folder_display_mode_label">Folder yang ditampilkan</string>
-    <string name="account_settings_folder_display_mode_all">Semua</string>
-    <string name="account_settings_folder_display_mode_first_class">Hanya folder Kelas 1</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">Hanya folder Kelas 2</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Semuanya kecuali folder Kelas 2</string>
-    <string name="account_settings_folder_sync_mode_label">Folder polling</string>
-    <string name="account_settings_folder_sync_mode_all">Semua</string>
-    <string name="account_settings_folder_sync_mode_first_class">Hanya folder Kelas 1</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">Hanya folder Kelas 2</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Semuanya kecuali folder Kelas 2</string>
-    <string name="account_settings_folder_sync_mode_none">Tidak ada</string>
-    <string name="account_settings_folder_push_mode_label">Folder dorongan</string>
-    <string name="account_settings_folder_push_mode_all">Semua</string>
-    <string name="account_settings_folder_push_mode_first_class">Hanya folder Kelas 1</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">Hanya folder Kelas 2</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Semuanya kecuali folder Kelas 2</string>
-    <string name="account_settings_folder_push_mode_none">Tidak ada</string>
     <string name="account_settings_sync_remote_deletetions_label">Sinkronkan penghapusan server</string>
     <string name="account_settings_sync_remote_deletetions_summary">Hapus pesan saat dihapus di server</string>
     <string name="account_settings_openpgp_missing">Aplikasi OpenPGP tidak ada - apakah sudah dihapus?</string>
     <string name="folder_settings_title">Pengaturan folder</string>
     <string name="folder_settings_in_top_group_label">Perlihatkan di grup teratas</string>
-    <string name="folder_settings_in_top_group_summary">Tunjukkan di dekat bagian atas daftar folder</string>
-    <string name="folder_settings_folder_display_mode_label">Kelas tampilan folder</string>
-    <string name="folder_settings_folder_display_mode_normal">Tak ada kelas</string>
-    <string name="folder_settings_folder_display_mode_first_class">Kelas 1</string>
-    <string name="folder_settings_folder_display_mode_second_class">Kelas 2</string>
-    <string name="folder_settings_folder_sync_mode_label">Kelas polling folder</string>
-    <string name="folder_settings_folder_sync_mode_normal">Tidak ada</string>
-    <string name="folder_settings_folder_sync_mode_first_class">Kelas 1</string>
-    <string name="folder_settings_folder_sync_mode_second_class">Kelas 2</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Sama dengan kelas tampilan</string>
-    <string name="folder_settings_folder_push_mode_label">Kelas dorong folder</string>
-    <string name="folder_settings_folder_push_mode_normal">Tak ada kelas</string>
-    <string name="folder_settings_folder_push_mode_first_class">Kelas 1</string>
-    <string name="folder_settings_folder_push_mode_second_class">Kelas 2</string>
-    <string name="folder_settings_folder_notify_mode_label">Kelas notifikasi folder</string>
-    <string name="folder_settings_folder_notify_mode_normal">Tak ada kelas</string>
-    <string name="folder_settings_folder_notify_mode_first_class">Kelas 1</string>
-    <string name="folder_settings_folder_notify_mode_second_class">Kelas 2</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Sama seperti kelas dorong</string>
     <string name="folder_settings_clear_local_folder_action">Bersihkan pesan lokal</string>
     <string name="account_settings_incoming_label">Server masuk</string>
     <string name="account_settings_incoming_summary">Konfigurasikan server surat masuk</string>
@@ -468,11 +426,6 @@
     <string name="sort_by_attach">Lampiran</string>
     <string name="account_delete_dlg_title">Hapus akun</string>
     <string name="folder_list_filter_hint">Nama folder mengandung</string>
-    <string name="folder_list_display_mode_label">Perlihatkan folder…</string>
-    <string name="folder_list_display_mode_all">Semua folder</string>
-    <string name="folder_list_display_mode_first_class">Folder kelas 1</string>
-    <string name="folder_list_display_mode_first_and_second_class">Folder kelas 1 &amp; 2</string>
-    <string name="folder_list_display_mode_not_second_class">Sembunyikan folder kelas 2</string>
     <string name="account_settings_signature__location_label">Posisi tanda tangan</string>
     <string name="account_settings_signature__location_before_quoted_text">Sebelum kutipan pesan</string>
     <string name="account_settings_signature__location_after_quoted_text">Setelah kutipan pesan</string>
@@ -518,7 +471,6 @@
     <string name="integrated_inbox_title">Kotak Masuk Terpadu</string>
     <string name="integrated_inbox_detail">Semua pesan dalam folder terpadu</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Satukan</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Semua pesan ditampilkan di Kotak Masuk Terpadu</string>
     <string name="account_settings_no_folder_selected">Tidak ada</string>
     <string name="account_settings_automatic_special_folder">Otomatis (%s)</string>
     <string name="font_size_settings_title">Ukuran fon</string>
@@ -860,7 +812,6 @@
     <string name="account_settings_notification_channels_label">Kategori notifikasi</string>
     <string name="account_settings_open_notification_settings_messages_summary">Atur notifikasi untuk pesan baru</string>
     <string name="account_settings_open_notification_settings_miscellaneous_summary">Atur pemberitahuan kesalahan dan status</string>
-    <string name="folder_settings_folder_push_mode_inherited">Sama seperti kelas polling</string>
     <string name="account_settings_vibration">Getaran</string>
     <string name="account_settings_vibrate_pattern_1">Pola 1</string>
     <string name="account_settings_vibrate_pattern_2">Pola 2</string>
@@ -876,7 +827,6 @@
     <string name="account_settings_notification_light_yellow">Kuning</string>
     <string name="account_settings_notification_light_cyan">Sian</string>
     <string name="account_settings_notification_light_magenta">Magenta</string>
-    <string name="volume_navigation_title">Navigasi tombol volume dalam tampilan pesan</string>
     <string name="font_size_message_view_recipients">Penerima</string>
     <string name="save_or_discard_draft_message_changes">Simpan atau Buang perubahan?</string>
     <string name="push_notification_state_initializing">Inisialisasi…</string>
@@ -924,7 +874,24 @@
     <string name="push_info_notification_explanation_text">Saat menggunakan Dorongan, <xliff:g id="app_name">%1$s</xliff:g> mempertahankan koneksi ke server surel. Android memerlukan tampilan notifikasi yang sedang berlangsung saat aplikasi aktif di latar belakang. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
     <string name="about_app_authors_thunderbird">Tim Thunderbird Mobile</string>
     <string name="about_title">Tentang <xliff:g id="app_name">%s</xliff:g></string>
-    <string name="account_delete_dlg_instructions_fmt">Akun \"<xliff:g id="account">%s</xliff:g>\" akan dihapus dari <xliff:g id="app_name">%s</xliff:g>.</string>
-    <string name="default_signature">--
-\nDikirim dari perangkat Android saya dengan <xliff:g id="app_name">%s</xliff:g>. Mohon maaf atas singkatnya penjelasan saya.</string>
+    <string name="account_delete_dlg_instructions_fmt">Akun \"<xliff:g id="account">%1$s</xliff:g>\" akan dihapus dari <xliff:g id="app_name">%2$s</xliff:g>.</string>
+    <string name="save_attachment_action">Simpan lampiran</string>
+    <string name="volume_navigation_title_short">Navigasi kunci volume</string>
+    <string name="folder_settings_sync_label">Nyalakan sinkronisasi</string>
+    <string name="settings_ui_data_collection">Pengumpulan data</string>
+    <string name="folder_settings_visible_label">Tampilkan folder</string>
+    <string name="folder_list_show_hidden_folders">Tampilkan folder tersembunyi</string>
+    <string name="folder_settings_notifications_label">Notifikasi</string>
+    <string name="folder_settings_push_label">Aktifkan Push</string>
+    <string name="settings_list_action_support">Mendukung <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="dialog_confirm_empty_spam_title">Konfirmasikan spam kosong</string>
+    <string name="settings_ui_telemetry_title">Data penggunaan dan teknis</string>
+    <string name="dialog_confirm_empty_spam_message">Apakah Anda ingin mengosongkan folder spam?</string>
+    <string name="settings_ui_telemetry_description">Berbagi data perfoma, penggunaan, perangkat keras, dan personalisasi mengenai aplikasi ini dengan Mozilla untuk membantu kami membuat Thunderbird lebih baik</string>
+    <string name="empty_spam_action">Kosongkan Spam</string>
+    <string name="volume_navigation_summary">Menavigasi di antara pesan memakai tombol volume pada tampilan pesan</string>
+    <string name="expand_content_description">Memperluas</string>
+    <string name="attach_file">Lampirkan Berkas</string>
+    <string name="camera_permission_denied">Izin Kamera Ditolak! Tidak bisa mengambil foto</string>
+    <string name="open_camera">Buka Kamera</string>
 </resources>

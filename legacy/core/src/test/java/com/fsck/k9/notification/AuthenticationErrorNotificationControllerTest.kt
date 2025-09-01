@@ -5,10 +5,23 @@ import android.app.PendingIntent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
-import app.k9mail.core.android.testing.RobolectricTest
-import app.k9mail.legacy.account.Account
-import com.fsck.k9.testing.MockHelper.mockBuilder
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.testing.MockHelper.mockBuilder
+import net.thunderbird.core.android.testing.RobolectricTest
+import net.thunderbird.core.preference.GeneralSettings
+import net.thunderbird.core.preference.display.DisplaySettings
+import net.thunderbird.core.preference.network.NetworkSettings
+import net.thunderbird.core.preference.notification.NotificationPreference
+import net.thunderbird.core.preference.privacy.PrivacySettings
+import net.thunderbird.core.testing.TestClock
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
+import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.context.GlobalContext.stopKoin
+import org.koin.dsl.module
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
@@ -35,6 +48,23 @@ class AuthenticationErrorNotificationControllerTest : RobolectricTest() {
     private val account = createFakeAccount()
     private val controller = TestAuthenticationErrorNotificationController()
     private val contentIntent = mock<PendingIntent>()
+
+    @OptIn(ExperimentalTime::class)
+    @Before
+    fun setUp() {
+        startKoin {
+            modules(
+                module {
+                    single<Clock> { TestClock() }
+                },
+            )
+        }
+    }
+
+    @After
+    fun tearDown() {
+        stopKoin()
+    }
 
     @Test
     fun showAuthenticationErrorNotification_withIncomingServer_shouldCreateNotification() {
@@ -104,7 +134,7 @@ class AuthenticationErrorNotificationControllerTest : RobolectricTest() {
         }
     }
 
-    private fun createFakeAccount(): Account {
+    private fun createFakeAccount(): LegacyAccount {
         return mock {
             on { accountNumber } doReturn ACCOUNT_NUMBER
             on { displayName } doReturn ACCOUNT_NAME
@@ -112,9 +142,21 @@ class AuthenticationErrorNotificationControllerTest : RobolectricTest() {
     }
 
     internal inner class TestAuthenticationErrorNotificationController :
-        AuthenticationErrorNotificationController(notificationHelper, mock(), resourceProvider) {
+        AuthenticationErrorNotificationController(
+            notificationHelper,
+            mock(),
+            resourceProvider,
+            mock {
+                on { getSettings() } doReturn GeneralSettings(
+                    network = NetworkSettings(),
+                    display = DisplaySettings(),
+                    notification = NotificationPreference(),
+                    privacy = PrivacySettings(),
+                )
+            },
+        ) {
 
-        override fun createContentIntent(account: Account, incoming: Boolean): PendingIntent {
+        override fun createContentIntent(account: LegacyAccount, incoming: Boolean): PendingIntent {
             return contentIntent
         }
     }

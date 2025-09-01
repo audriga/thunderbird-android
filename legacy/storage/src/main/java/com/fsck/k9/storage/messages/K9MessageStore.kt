@@ -1,30 +1,30 @@
 package com.fsck.k9.storage.messages
 
-import app.k9mail.core.mail.folder.api.FolderDetails
-import app.k9mail.legacy.account.Account.FolderMode
 import app.k9mail.legacy.mailstore.CreateFolderInfo
 import app.k9mail.legacy.mailstore.FolderMapper
 import app.k9mail.legacy.mailstore.MessageMapper
 import app.k9mail.legacy.mailstore.MessageStore
 import app.k9mail.legacy.mailstore.MoreMessages
 import app.k9mail.legacy.mailstore.SaveMessageData
-import app.k9mail.legacy.search.ConditionsTreeNode
 import com.fsck.k9.mail.Flag
-import com.fsck.k9.mail.FolderClass
 import com.fsck.k9.mail.FolderType
 import com.fsck.k9.mail.Header
 import com.fsck.k9.mailstore.LockableDatabase
-import com.fsck.k9.mailstore.StorageManager
+import com.fsck.k9.mailstore.StorageFilesProvider
 import com.fsck.k9.message.extractors.BasicPartInfoExtractor
 import java.util.Date
+import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.feature.mail.folder.api.FolderDetails
+import net.thunderbird.feature.search.legacy.SearchConditionTreeNode
 
 class K9MessageStore(
     database: LockableDatabase,
-    storageManager: StorageManager,
+    storageFilesProvider: StorageFilesProvider,
     basicPartInfoExtractor: BasicPartInfoExtractor,
-    accountUuid: String,
+    generalSettingsManager: GeneralSettingsManager,
 ) : MessageStore {
-    private val attachmentFileManager = AttachmentFileManager(storageManager, accountUuid)
+    private val attachmentFileManager = AttachmentFileManager(storageFilesProvider, generalSettingsManager)
     private val threadMessageOperations = ThreadMessageOperations()
     private val saveMessageOperations = SaveMessageOperations(
         database,
@@ -45,7 +45,7 @@ class K9MessageStore(
     private val updateFolderOperations = UpdateFolderOperations(database)
     private val deleteFolderOperations = DeleteFolderOperations(database, attachmentFileManager)
     private val keyValueStoreOperations = KeyValueStoreOperations(database)
-    private val databaseOperations = DatabaseOperations(database, storageManager, accountUuid)
+    private val databaseOperations = DatabaseOperations(database, storageFilesProvider)
 
     override fun saveRemoteMessage(folderId: Long, messageServerId: String, messageData: SaveMessageData) {
         saveMessageOperations.saveRemoteMessage(folderId, messageServerId, messageData)
@@ -141,9 +141,9 @@ class K9MessageStore(
         deleteMessageOperations.destroyMessages(folderId, messageServerIds)
     }
 
-    override fun createFolders(folders: List<CreateFolderInfo>) {
+    @Throws(MessagingException::class)
+    override fun createFolders(folders: List<CreateFolderInfo>): Set<Long> =
         createFolderOperations.createFolders(folders)
-    }
 
     override fun <T> getFolder(folderId: Long, mapper: FolderMapper<T>): T? {
         return retrieveFolderOperations.getFolder(folderId, mapper)
@@ -158,11 +158,11 @@ class K9MessageStore(
     }
 
     override fun <T> getDisplayFolders(
-        displayMode: FolderMode,
+        includeHiddenFolders: Boolean,
         outboxFolderId: Long?,
         mapper: FolderMapper<T>,
     ): List<T> {
-        return retrieveFolderOperations.getDisplayFolders(displayMode, outboxFolderId, mapper)
+        return retrieveFolderOperations.getDisplayFolders(includeHiddenFolders, outboxFolderId, mapper)
     }
 
     override fun areAllIncludedInUnifiedInbox(folderIds: Collection<Long>): Boolean {
@@ -185,11 +185,11 @@ class K9MessageStore(
         return retrieveFolderOperations.getUnreadMessageCount(folderId)
     }
 
-    override fun getUnreadMessageCount(conditions: ConditionsTreeNode?): Int {
+    override fun getUnreadMessageCount(conditions: SearchConditionTreeNode?): Int {
         return retrieveFolderOperations.getUnreadMessageCount(conditions)
     }
 
-    override fun getStarredMessageCount(conditions: ConditionsTreeNode?): Int {
+    override fun getStarredMessageCount(conditions: SearchConditionTreeNode?): Int {
         return retrieveFolderOperations.getStarredMessageCount(conditions)
     }
 
@@ -209,16 +209,16 @@ class K9MessageStore(
         updateFolderOperations.setIncludeInUnifiedInbox(folderId, includeInUnifiedInbox)
     }
 
-    override fun setDisplayClass(folderId: Long, folderClass: FolderClass) {
-        updateFolderOperations.setDisplayClass(folderId, folderClass)
+    override fun setVisible(folderId: Long, visible: Boolean) {
+        updateFolderOperations.setVisible(folderId, visible)
     }
 
-    override fun setSyncClass(folderId: Long, folderClass: FolderClass) {
-        updateFolderOperations.setSyncClass(folderId, folderClass)
+    override fun setSyncEnabled(folderId: Long, enable: Boolean) {
+        updateFolderOperations.setSyncEnabled(folderId, enable)
     }
 
-    override fun setPushClass(folderId: Long, folderClass: FolderClass) {
-        updateFolderOperations.setPushClass(folderId, folderClass)
+    override fun setPushEnabled(folderId: Long, enable: Boolean) {
+        updateFolderOperations.setPushEnabled(folderId, enable)
     }
 
     override fun setNotificationsEnabled(folderId: Long, enable: Boolean) {
@@ -243,6 +243,14 @@ class K9MessageStore(
 
     override fun setVisibleLimit(folderId: Long, visibleLimit: Int) {
         updateFolderOperations.setVisibleLimit(folderId, visibleLimit)
+    }
+
+    override fun setPushDisabled() {
+        updateFolderOperations.setPushDisabled()
+    }
+
+    override fun hasPushEnabledFolder(): Boolean {
+        return checkFolderOperations.hasPushEnabledFolder()
     }
 
     override fun deleteFolders(folderServerIds: List<String>) {

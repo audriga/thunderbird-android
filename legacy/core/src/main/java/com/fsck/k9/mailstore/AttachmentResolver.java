@@ -12,10 +12,10 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import app.k9mail.legacy.di.DI;
-import timber.log.Timber;
+import net.thunderbird.core.logging.legacy.Log;
 
 import com.fsck.k9.mail.Body;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
@@ -73,7 +73,7 @@ public class AttachmentResolver {
                         result.put(contentId, attachmentInfo.internalUri);
                     }
                 } catch (MessagingException e) {
-                    Timber.e(e, "Error extracting attachment info");
+                    Log.e(e, "Error extracting attachment info");
                 }
             }
         }

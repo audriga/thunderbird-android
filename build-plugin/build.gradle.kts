@@ -1,22 +1,26 @@
 plugins {
     `kotlin-dsl`
-    `kotlin-dsl-precompiled-script-plugins`
 }
 
 dependencies {
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 
-    implementation(plugin(libs.plugins.kotlin.jvm))
     implementation(plugin(libs.plugins.kotlin.android))
+    implementation(plugin(libs.plugins.kotlin.jvm))
+    implementation(plugin(libs.plugins.kotlin.multiplatform))
+    implementation(plugin(libs.plugins.kotlin.parcelize))
+    implementation(plugin(libs.plugins.kotlin.serialization))
 
     implementation(plugin(libs.plugins.android.application))
     implementation(plugin(libs.plugins.android.library))
 
-    implementation(plugin(libs.plugins.compose.compiler))
+    implementation(plugin(libs.plugins.compose))
 
-    implementation(plugin(libs.plugins.spotless))
-    implementation(plugin(libs.plugins.detekt))
+    implementation(plugin(libs.plugins.jetbrains.compose))
+
     implementation(plugin(libs.plugins.dependency.check))
+    implementation(plugin(libs.plugins.detekt))
+    implementation(plugin(libs.plugins.spotless))
 
     implementation(libs.diff.utils)
     compileOnly(libs.android.tools.common)

@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="unread_widget_select_account">Vis antall uleste for …</string>
     <string name="unread_widget_account_title">Konto</string>
     <string name="unread_widget_account_summary">Kontoen antall uleste meldinger skal vises for</string>
     <string name="unread_widget_unified_inbox_account_summary">Samlet innboks</string>
     <string name="unread_widget_folder_enabled_title">Mappeantall</string>
-    <string name="unread_widget_folder_enabled_summary">Vis antall uleste for bare én mappe</string>
+    <string name="unread_widget_folder_enabled_summary">Vis antall uleste for kun én mappe</string>
     <string name="unread_widget_folder_title">Mappe</string>
     <string name="unread_widget_folder_summary">Mappen antall uleste meldinger skal vises for</string>
     <string name="unread_widget_action_done">Ferdig</string>
@@ -13,4 +13,5 @@
     <string name="unread_widget_account_not_selected">Ingen konto valgt</string>
     <string name="unread_widget_folder_not_selected">Ingen mappe valgt</string>
     <string name="unread_widget_choose_account_title">Velg konto</string>
+    <string name="unread_widget_label">Antall uleste</string>
 </resources>

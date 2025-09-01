@@ -10,9 +10,6 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
-import app.k9mail.core.android.testing.RobolectricTest
-import app.k9mail.core.testing.TestClock
-import app.k9mail.legacy.account.Account
 import assertk.Assert
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -27,6 +24,10 @@ import com.fsck.k9.mail.Address
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.helper.RelativeDateTimeFormatter
 import com.google.android.material.textview.MaterialTextView
+import kotlin.time.ExperimentalTime
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.testing.RobolectricTest
+import net.thunderbird.core.testing.TestClock
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.robolectric.Robolectric
@@ -38,7 +39,7 @@ private const val DATE_DEFAULT_FONT_SIZE = 14f
 
 class MessageListAdapterTest : RobolectricTest() {
     val activity = Robolectric.buildActivity(AppCompatActivity::class.java).create().get()
-    val context: Context = ContextThemeWrapper(activity, R.style.Theme_Legacy_Test)
+    val context: Context = ContextThemeWrapper(activity, com.google.android.material.R.style.Theme_Material3_Light)
 
     val contactsPictureLoader: ContactPictureLoader = mock()
     val listItemListener: MessageListItemActionListener = mock()
@@ -413,6 +414,7 @@ class MessageListAdapterTest : RobolectricTest() {
             density,
         )
 
+        @OptIn(ExperimentalTime::class)
         return MessageListAdapter(
             theme = context.theme,
             res = context.resources,
@@ -425,7 +427,9 @@ class MessageListAdapterTest : RobolectricTest() {
     }
 
     fun createMessageListItem(
-        account: Account = Account(SOME_ACCOUNT_UUID),
+        account: LegacyAccount = LegacyAccount(
+            SOME_ACCOUNT_UUID,
+        ),
         subject: String? = "irrelevant",
         threadCount: Int = 0,
         messageDate: Long = 0L,

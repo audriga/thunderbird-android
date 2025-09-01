@@ -1,6 +1,5 @@
 package com.fsck.k9.controller
 
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.mailstore.MessageStoreManager
 import app.k9mail.legacy.mailstore.SaveMessageData
 import com.fsck.k9.K9
@@ -10,12 +9,13 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingReplace
 import com.fsck.k9.mail.FetchProfile
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.MessageDownloadState
-import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.mailstore.SaveMessageDataCreator
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.logging.legacy.Log
 import org.jetbrains.annotations.NotNull
-import timber.log.Timber
 
 internal class DraftOperations(
     private val messagingController: @NotNull MessagingController,
@@ -24,7 +24,7 @@ internal class DraftOperations(
 ) {
 
     fun saveDraft(
-        account: Account,
+        account: LegacyAccount,
         message: Message,
         existingDraftId: Long?,
         plaintextSubject: String?,
@@ -40,13 +40,13 @@ internal class DraftOperations(
 
             messageId
         } catch (e: MessagingException) {
-            Timber.e(e, "Unable to save message as draft.")
+            Log.e(e, "Unable to save message as draft.")
             null
         }
     }
 
     private fun saveAndUploadDraft(
-        account: Account,
+        account: LegacyAccount,
         message: Message,
         folderId: Long,
         existingDraftId: Long?,
@@ -84,7 +84,7 @@ internal class DraftOperations(
     }
 
     private fun saveDraftLocally(
-        account: Account,
+        account: LegacyAccount,
         message: Message,
         folderId: Long,
         existingDraftId: Long?,
@@ -96,7 +96,7 @@ internal class DraftOperations(
         return messageStore.saveLocalMessage(folderId, messageData, existingDraftId)
     }
 
-    fun processPendingReplace(command: PendingReplace, account: Account) {
+    fun processPendingReplace(command: PendingReplace, account: LegacyAccount) {
         val localStore = messagingController.getLocalStoreOrThrow(account)
         val localFolder = localStore.getFolder(command.folderId)
         localFolder.open()
@@ -106,10 +106,10 @@ internal class DraftOperations(
         val uploadMessageId = command.uploadMessageId
         val localMessage = localFolder.getMessage(uploadMessageId)
         if (localMessage == null) {
-            Timber.w("Couldn't find local copy of message to upload [ID: %d]", uploadMessageId)
+            Log.w("Couldn't find local copy of message to upload [ID: %d]", uploadMessageId)
             return
         } else if (!localMessage.uid.startsWith(K9.LOCAL_UID_PREFIX)) {
-            Timber.i("Message [ID: %d] to be uploaded already has a server ID set. Skipping upload.", uploadMessageId)
+            Log.i("Message [ID: %d] to be uploaded already has a server ID set. Skipping upload.", uploadMessageId)
         } else {
             uploadMessage(backend, account, localFolder, localMessage)
         }
@@ -119,12 +119,12 @@ internal class DraftOperations(
 
     private fun uploadMessage(
         backend: Backend,
-        account: Account,
+        account: LegacyAccount,
         localFolder: LocalFolder,
         localMessage: LocalMessage,
     ) {
         val folderServerId = localFolder.serverId
-        Timber.d("Uploading message [ID: %d] to remote folder '%s'", localMessage.databaseId, folderServerId)
+        Log.d("Uploading message [ID: %d] to remote folder '%s'", localMessage.databaseId, folderServerId)
 
         val fetchProfile = FetchProfile().apply {
             add(FetchProfile.Item.BODY)
@@ -134,7 +134,7 @@ internal class DraftOperations(
         val messageServerId = backend.uploadMessage(folderServerId, localMessage)
 
         if (messageServerId == null) {
-            Timber.w(
+            Log.w(
                 "Failed to get a server ID for the uploaded message. Removing local copy [ID: %d]",
                 localMessage.databaseId,
             )
@@ -153,7 +153,7 @@ internal class DraftOperations(
 
     private fun deleteMessage(backend: Backend, localFolder: LocalFolder, messageId: Long) {
         val messageServerId = localFolder.getMessageUidById(messageId) ?: run {
-            Timber.i("Couldn't find local copy of message [ID: %d] to be deleted. Skipping delete.", messageId)
+            Log.i("Couldn't find local copy of message [ID: %d] to be deleted. Skipping delete.", messageId)
             return
         }
 

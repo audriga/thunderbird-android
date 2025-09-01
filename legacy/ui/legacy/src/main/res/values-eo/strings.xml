@@ -4,12 +4,12 @@
     <!--This should make it easier for forks to change the branding-->
     <!--Used in AndroidManifest.xml-->
     <!--Used in the about dialog-->
-    <string name="about_app_authors_k9">Programistoj de K-9</string>
+    <string name="about_app_authors_k9">The K-9 Dog Walkers (la programistoj de K-9)</string>
     <string name="source_code">Fontkodo</string>
     <string name="app_license">Apache License, versio 2.0</string>
     <string name="about_project_title">Malfermkoda projekto</string>
     <string name="about_website_title">Retejo</string>
-    <string name="user_forum_title">Forumo</string>
+    <string name="user_forum_title">Uzantojn forumo</string>
     <string name="about_libraries">Bibliotekoj</string>
     <string name="license">Permesilo</string>
     <string name="changelog_title">Ŝanĝoprotokolo</string>
@@ -39,7 +39,7 @@
     <string name="reply_action">Respondi</string>
     <string name="reply_all_action">Respondi al ĉiuj</string>
     <string name="delete_action">Forigi</string>
-    <string name="archive_action">Arĥivigi</string>
+    <string name="archive_action">Arĥivi</string>
     <string name="spam_action">Trudmesaĝo</string>
     <string name="forward_action">Plusendi</string>
     <string name="forward_as_attachment_action">Plusendi kiel kunsendaĵon</string>
@@ -107,8 +107,8 @@
     <string name="notification_action_mark_all_as_read">Marki ĉiujn kiel legitajn</string>
     <string name="notification_action_delete">Forigi</string>
     <string name="notification_action_delete_all">Forigi ĉiujn</string>
-    <string name="notification_action_archive">Arĥivigi</string>
-    <string name="notification_action_archive_all">Arĥivigi ĉiujn</string>
+    <string name="notification_action_archive">Arĥivi</string>
+    <string name="notification_action_archive_all">Arĥivi ĉiujn</string>
     <string name="notification_action_spam">Trudmesaĝo</string>
     <string name="notification_certificate_error_title">Eraro pri atestilo por <xliff:g id="account">%s</xliff:g></string>
     <string name="notification_certificate_error_text">Kontrolu agordojn de servilo</string>
@@ -126,11 +126,11 @@
     <string name="notification_channel_messages_title">Mesaĝoj</string>
     <string name="notification_channel_messages_description">Sciigoj pri novaj mesaĝoj</string>
     <string name="notification_channel_miscellaneous_title">Diversaj</string>
-    <string name="notification_channel_miscellaneous_description">Aliaj sciigoj, ekzemple pri eraroj</string>
+    <string name="notification_channel_miscellaneous_description">Aliaj sciigoj, ekzemple pri eraroj, ktp.</string>
     <string name="send_failure_subject">Malsukcesis sendi iujn mesaĝojn</string>
     <string name="version">Versio</string>
     <string name="debug_enable_debug_logging_title">Aktivigi senerarigan protokoladon</string>
-    <string name="debug_enable_debug_logging_summary">Protokolas aldonajn informojn pri senerarigo.</string>
+    <string name="debug_enable_debug_logging_summary">Protokolas aldonajn informojn pri senerarigo</string>
     <string name="debug_enable_sensitive_logging_title">Protokoli konfidajn informojn</string>
     <string name="debug_enable_sensitive_logging_summary">Protokoloj povas enhavi viajn pasvortojn.</string>
     <string name="message_list_load_more_messages_action">Ŝargi pli da mesaĝoj</string>
@@ -151,7 +151,7 @@
     <string name="error_contact_address_not_found">Neniu retpoŝtadreso trovita por tiu ĉi kontakto.</string>
     <string name="message_compose_attachments_skipped_toast">Iuj kunsendaĵoj ne povas esti plusenditaj, ĉar ili ne estas elŝutitaj.</string>
     <string name="message_compose_attachments_forward_toast">Tiu ĉi retletero ne povas esti plusendita, ĉar iuj kunsendaĵoj ne estas elŝutitaj.</string>
-    <string name="message_compose_show_quoted_text_action">Enhavi citatan mesaĝon</string>
+    <string name="message_compose_show_quoted_text_action">Enhavigi citatan mesaĝon</string>
     <string name="message_compose_description_delete_quoted_text">Forigi citatan tekston</string>
     <string name="message_compose_description_edit_quoted_text">Redakti citatan tekston</string>
     <string name="remove_attachment_action">Forigi kunsendaĵon</string>
@@ -170,16 +170,16 @@
     <string name="message_discarded_toast">Mesaĝo nuligita</string>
     <string name="message_saved_toast">Mesaĝo konservita kiel malneto</string>
     <string name="global_settings_flag_label">Montri steletojn</string>
-    <string name="global_settings_flag_summary">Steletoj indikas markitajn mesaĝojn.</string>
+    <string name="global_settings_flag_summary">Steletoj indikas markitajn mesaĝojn</string>
     <string name="global_settings_preview_lines_label">Antaŭmontri liniojn</string>
     <string name="global_settings_show_correspondent_names_label">Montri nomojn de korespondantoj</string>
-    <string name="global_settings_show_correspondent_names_summary">Montras nomojn de korespondantoj anstataŭ iliajn retpoŝtadresojn.</string>
+    <string name="global_settings_show_correspondent_names_summary">Montras nomojn de korespondantoj anstataŭ iliajn retpoŝtadresojn</string>
     <string name="global_settings_sender_above_subject_label">Korespondanto supre temo</string>
     <string name="global_settings_sender_above_subject_summary">Montras nomon de korespondanto supre de linio de temo, anstataŭ sube</string>
     <string name="global_settings_show_contact_name_label">Montri nomojn de kontaktoj</string>
     <string name="global_settings_show_contact_name_summary">Uzas nomojn de ricevontojn el via adresaro kiam tio ĉi eblas</string>
     <string name="global_settings_registered_name_color_label">Kolorigi kontaktojn</string>
-    <string name="global_settings_registered_name_color_changed">Kolorigi nomojn en adresaro</string>
+    <string name="global_settings_registered_name_color_changed">Kolorigas nomojn en adresaro</string>
     <string name="global_settings_messageview_fixedwidth_label">Egallarĝaj tiparoj</string>
     <string name="global_settings_messageview_fixedwidth_summary">Uzas egallarĝan tiparon por vidigi plattekstajn mesaĝojn</string>
     <string name="global_settings_messageview_autofit_width_label">Aŭtomate adapti mesaĝojn al ekrana larĝo</string>
@@ -188,7 +188,7 @@
     <string name="global_settings_confirm_actions_summary">Montras averton kiam vi faras elektitajn agojn</string>
     <string name="global_settings_confirm_action_delete">Forigi</string>
     <string name="global_settings_confirm_action_delete_starred">Forigi steletigitajn (nur en mesaĝa vido)</string>
-    <string name="global_settings_confirm_action_spam">Trudmesaĝo</string>
+    <string name="global_settings_confirm_action_spam">Movi en trudmesaĝujo</string>
     <string name="global_settings_confirm_menu_discard">Ignori mesaĝon</string>
     <string name="global_settings_confirm_menu_mark_all_read">Marki ĉiujn kiel legitajn</string>
     <string name="global_settings_confirm_action_delete_notif">Forigi (el sciigo)</string>
@@ -201,17 +201,17 @@
     <!--Name of the swipe action to mark as message as read/unread-->
     <!--Name of the swipe action to add/remove a star-->
     <!--Name of the swipe action to archive a message-->
-    <string name="general_settings_swipe_action_archive">Arĥivo</string>
+    <string name="general_settings_swipe_action_archive">Arĥivi</string>
     <!--Name of the swipe action to delete a message-->
     <string name="general_settings_swipe_action_delete">Forigi</string>
     <!--Name of the swipe action to move a message to the spam folder-->
-    <string name="general_settings_swipe_action_spam">Trudmesaĝo</string>
+    <string name="general_settings_swipe_action_spam">Meti en Trudmesaĝujo</string>
     <!--Name of the swipe action to move a message to another folder-->
     <string name="general_settings_swipe_action_move">Movi</string>
     <!--Title of the setting to specify the density of the message list-->
     <string name="general_settings_ui_density_default">Norma</string>
     <string name="global_settings_privacy_hide_useragent">Kaŝi retpoŝtilan nomon</string>
-    <string name="global_settings_privacy_hide_useragent_detail">Forviŝi nomon de klienta aplikaĵo K-9 el mesaĝokapo</string>
+    <string name="global_settings_privacy_hide_useragent_detail">Forviŝi nomon de klienta aplikaĵo el mesaĝokapo</string>
     <string name="global_settings_privacy_hide_timezone">Kaŝi horzonon</string>
     <string name="global_settings_privacy_hide_timezone_detail">Uzi UTC anstataŭ lokan horzonon en mesaĝokapo kaj respond-kampo</string>
     <string name="global_settings_notification_quick_delete_title">Montri butonon \'Forigi\'</string>
@@ -242,7 +242,7 @@
     <string name="drafts_folder_label">Malnetujo</string>
     <string name="sent_folder_label">Senditujo</string>
     <string name="trash_folder_label">Rubujo</string>
-    <string name="archive_folder_label">Arĥivo</string>
+    <string name="archive_folder_label">Arĥivujo</string>
     <string name="spam_folder_label">Trudmesaĝujo</string>
     <string name="account_setup_incoming_subscribed_folders_only_label">Montri nur abonitajn mesaĝujojn</string>
     <string name="account_setup_auto_expand_folder">Ĉiam etendi mesaĝujon</string>
@@ -279,12 +279,6 @@
     <string name="account_settings_push_advanced_title">Spertaj</string>
     <string name="account_settings_title_fmt">Agordoj de konto</string>
     <string name="account_settings_notify_label">Sciigoj pri novaj mesaĝoj</string>
-    <string name="account_settings_folder_notify_new_mail_mode_label">Sciigoj el mesaĝujoj</string>
-    <string name="account_settings_folder_notify_new_mail_mode_all">El ĉiuj</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_class">Nur el mesaĝujoj de klaso 1</string>
-    <string name="account_settings_folder_notify_new_mail_mode_first_and_second_class">El mesaĝujoj de klaso 1 kaj 2</string>
-    <string name="account_settings_folder_notify_new_mail_mode_not_second_class">El ĉiuj escepte de klaso 2</string>
-    <string name="account_settings_folder_notify_new_mail_mode_none">El neniuj</string>
     <string name="account_settings_notify_sync_label">Sciigoj pri samtempigo</string>
     <string name="account_settings_email_label">Via retpoŝtadreso</string>
     <string name="account_settings_notify_summary">Sciigas en stata breto kiam retletero alvenas</string>
@@ -373,48 +367,11 @@
     <string name="account_settings_message_age_3_months">antaŭaj 3 monatoj</string>
     <string name="account_settings_message_age_6_months">antaŭaj 6 monatoj</string>
     <string name="account_settings_message_age_1_year">antaŭa jaro</string>
-    <string name="account_settings_folder_display_mode_label">Mesaĝujoj por montri</string>
-    <string name="account_settings_folder_display_mode_all">Ĉiuj</string>
-    <string name="account_settings_folder_display_mode_first_class">Nur mesaĝujoj de klaso 1</string>
-    <string name="account_settings_folder_display_mode_first_and_second_class">Mesaĝujoj de klasoj 1 kaj 2</string>
-    <string name="account_settings_folder_display_mode_not_second_class">Ĉiuj escepte de klaso 2</string>
-    <string name="account_settings_folder_sync_mode_label">Kontroli mesaĝujojn</string>
-    <string name="account_settings_folder_sync_mode_all">Ĉiuj</string>
-    <string name="account_settings_folder_sync_mode_first_class">Nur mesaĝujoj de klaso 1</string>
-    <string name="account_settings_folder_sync_mode_first_and_second_class">Mesaĝujoj de klasoj 1 kaj 2</string>
-    <string name="account_settings_folder_sync_mode_not_second_class">Ĉiuj escepte de klaso 2</string>
-    <string name="account_settings_folder_sync_mode_none">Neniuj</string>
-    <string name="account_settings_folder_push_mode_label">Puŝ-kontroli mesaĝujojn</string>
-    <string name="account_settings_folder_push_mode_all">Ĉiuj</string>
-    <string name="account_settings_folder_push_mode_first_class">Nur mesaĝujoj de klaso 1</string>
-    <string name="account_settings_folder_push_mode_first_and_second_class">Mesaĝujoj de klasoj 1 kaj 2</string>
-    <string name="account_settings_folder_push_mode_not_second_class">Ĉiuj escepte de klaso 2</string>
-    <string name="account_settings_folder_push_mode_none">Neniuj</string>
     <string name="account_settings_sync_remote_deletetions_label">Samtempigo de forigadoj kun servilo</string>
     <string name="account_settings_sync_remote_deletetions_summary">Forigi mesaĝojn kiam forigitaj el servilo</string>
     <string name="account_settings_openpgp_missing">Mankas OpenPGP-aplikaĵo - eble malinstalita?</string>
     <string name="folder_settings_title">Agordoj de mesaĝujo</string>
     <string name="folder_settings_in_top_group_label">Montri supre</string>
-    <string name="folder_settings_in_top_group_summary">Montras ĉe supro de mesaĝuj-listo</string>
-    <string name="folder_settings_folder_display_mode_label">Montr-klaso de mesaĝujo</string>
-    <string name="folder_settings_folder_display_mode_normal">Neniu klaso</string>
-    <string name="folder_settings_folder_display_mode_first_class">Klaso 1</string>
-    <string name="folder_settings_folder_display_mode_second_class">Klaso 2</string>
-    <string name="folder_settings_folder_sync_mode_label">Samtempig-klaso de mesaĝujo</string>
-    <string name="folder_settings_folder_sync_mode_normal">Nenia</string>
-    <string name="folder_settings_folder_sync_mode_first_class">Klaso 1</string>
-    <string name="folder_settings_folder_sync_mode_second_class">Klaso 2</string>
-    <string name="folder_settings_folder_sync_mode_inherited">Sama kiel montr-klaso</string>
-    <string name="folder_settings_folder_push_mode_label">Puŝ-kontrol-klaso de mesaĝujo</string>
-    <string name="folder_settings_folder_push_mode_normal">Neniu klaso</string>
-    <string name="folder_settings_folder_push_mode_first_class">Klaso 1</string>
-    <string name="folder_settings_folder_push_mode_second_class">Klaso 2</string>
-    <string name="folder_settings_folder_push_mode_inherited">Sama kiel samtempig-klaso</string>
-    <string name="folder_settings_folder_notify_mode_label">Sciig-klaso de mesaĝujo</string>
-    <string name="folder_settings_folder_notify_mode_normal">Neniu klaso</string>
-    <string name="folder_settings_folder_notify_mode_first_class">Klaso 1</string>
-    <string name="folder_settings_folder_notify_mode_second_class">Klaso 2</string>
-    <string name="folder_settings_folder_notify_mode_inherited">Sama kiel puŝ-kontrol-klaso</string>
     <string name="folder_settings_clear_local_folder_action">Forviŝi lokajn mesaĝojn</string>
     <string name="account_settings_incoming_label">Enira servilo</string>
     <string name="account_settings_incoming_summary">Agordoj de enira retpoŝta servilo</string>
@@ -423,7 +380,7 @@
     <string name="account_settings_description_label">Konta nomo</string>
     <string name="account_settings_name_label">Via nomo</string>
     <string name="notifications_title">Sciigoj</string>
-    <string name="account_settings_vibrate_enable">Vibrado</string>
+    <string name="account_settings_vibrate_enable">Vibri</string>
     <string name="account_settings_vibrate_pattern_default">Norma</string>
     <string name="account_settings_vibrate_times">Kiom da vibroj</string>
     <string name="account_settings_ringtone">Son-sciigo pri nova mesaĝo</string>
@@ -483,11 +440,6 @@
     <string name="sort_by_attach">Kunsendaĵoj</string>
     <string name="account_delete_dlg_title">Forigi konton</string>
     <string name="folder_list_filter_hint">Nomo de mesaĝujo enhavas</string>
-    <string name="folder_list_display_mode_label">Montri mesaĝujojn…</string>
-    <string name="folder_list_display_mode_all">Ĉiuj mesaĝujoj</string>
-    <string name="folder_list_display_mode_first_class">Mesaĝujoj de klaso 1</string>
-    <string name="folder_list_display_mode_first_and_second_class">Mesaĝujoj de klasoj 1 kaj 2</string>
-    <string name="folder_list_display_mode_not_second_class">Kaŝi mesaĝujojn de klaso 2</string>
     <string name="account_settings_signature__location_label">Pozicio de subskribo</string>
     <string name="account_settings_signature__location_before_quoted_text">Antaŭ citata mesaĝo</string>
     <string name="account_settings_signature__location_after_quoted_text">Post citata mesaĝo</string>
@@ -534,7 +486,6 @@
     <string name="integrated_inbox_title">Unuigita ricevujo</string>
     <string name="integrated_inbox_detail">Ĉiuj mesaĝoj en unuigitaj mesaĝujoj</string>
     <string name="folder_settings_include_in_integrated_inbox_label">Unuigi</string>
-    <string name="folder_settings_include_in_integrated_inbox_summary">Vidigas ĉiujn mesaĝojn en unuigita ricevujo</string>
     <string name="account_settings_no_folder_selected">Nenia</string>
     <string name="account_settings_automatic_special_folder">Aŭtomate (%s)</string>
     <string name="font_size_settings_title">Tipara grando</string>
@@ -593,7 +544,7 @@
     <string name="dialog_confirm_spam_confirm_button">Jes</string>
     <string name="dialog_confirm_spam_cancel_button">Ne</string>
     <string name="dialog_attachment_progress_title">Elŝutado de kunsendaĵo</string>
-    <string name="settings_list_backup_category">Sekurkopio</string>
+    <string name="settings_list_backup_category">Sekurkopioj</string>
     <string name="settings_list_miscellaneous_category">Diversaj</string>
     <string name="settings_export_title">Elporti agordojn</string>
     <string name="settings_export_button">Elporti</string>
@@ -637,7 +588,7 @@
         <item quantity="other">Elŝutado de %d rezultoj</item>
     </plurals>
     <plurals name="remote_search_downloading_limited">
-        <item quantity="one">Elŝutado de %1$d el %2$d rezultoj</item>
+        <item quantity="one">Elŝutado de %1$d el %2$d rezulto</item>
         <item quantity="other">Elŝutado de %1$d el %2$d rezultoj</item>
     </plurals>
     <string name="remote_search_error">Fora serĉo fiaskis</string>
@@ -771,7 +722,7 @@
     <string name="openpgp_encryption">OpenPGP-ĉifrado</string>
     <string name="account_settings_crypto_prefer_encrypt">Reciproke aŭtomata ĉifrado</string>
     <string name="dialog_autocrypt_mutual_title">Reciproke aŭtomata ĉifrado</string>
-    <string name="dialog_autocrypt_mutual_description_1">Mesaĝoj norme estos ĉifritaj laŭ elekto aŭ kiam respondi al ĉifrita mesaĝo</string>
+    <string name="dialog_autocrypt_mutual_description_1">Mesaĝoj norme estos ĉifritaj laŭ elekto aŭ kiam respondi al ĉifrita mesaĝo.</string>
     <string name="dialog_autocrypt_mutual_description_2">Se ambaŭ sendanto kaj ricevanto aktivigas tiun ĉi reĝimon, ĉifrado estos implicite aktivigita.</string>
     <string name="dialog_autocrypt_mutual_learn_more">Vi povas <a href="https://k9mail.app/2018/02/26/OpenPGP-Considerations-Part-III-Autocrypt.html">klaki tien ĉi</a> por sciiĝi pli (en la angla).</string>
     <string name="general_settings_title">Ĝeneralaj agordoj</string>
@@ -811,7 +762,7 @@ Vi povas konservi tiun ĉi mesaĝon kaj uzi ĝin kiel sekurkopion de via privata
     <string name="push_info_configure_notification_text">Tamen Android ebligas kaŝi tiun sciigon.</string>
     <string name="push_info_learn_more_text">Pli da informoj</string>
     <string name="push_info_configure_notification_action">Agordi sciigon</string>
-    <string name="push_info_disable_push_text">Se vi ne bezonas tujajn sciigojn pri novaj mesaĝoj, malaktivigu puŝ-sciigojn kaj uzu periodajn petojn «pooling». Periodaj petoj «pooling» kontrolas pri novaj retleteroj en ripetiĝanta tempintervalo kaj ne postulas vidigi la puŝ-sciigon,</string>
+    <string name="push_info_disable_push_text">Se vi ne bezonas tujajn sciigojn pri novaj mesaĝoj, malaktivigu puŝ-sciigojn kaj uzu periodajn petojn «pooling». Periodaj petoj «pooling» kontrolas pri novaj retleteroj en ripetiĝanta tempintervalo kaj ne postulas vidigi la puŝ-sciigon.</string>
     <string name="push_info_disable_push_action">Malaktivigi puŝ-sciigojn</string>
     <!--Name of the swipe action to select a message. Try to keep it short.-->
     <string name="swipe_action_select">Elekti</string>
@@ -825,7 +776,7 @@ Vi povas konservi tiun ĉi mesaĝon kaj uzi ĝin kiel sekurkopion de via privata
     <!--Name of the swipe action to remove the star from a message. Try to keep it short.-->
     <string name="swipe_action_remove_star">Malsteletigi</string>
     <!--Name of the swipe action to archive a message. Try to keep it short.-->
-    <string name="swipe_action_archive">Arĥivo</string>
+    <string name="swipe_action_archive">Arĥivi</string>
     <!--Name of the swipe action to delete a message. Try to keep it short.-->
     <string name="swipe_action_delete">Forigi</string>
     <!--Name of the swipe action to move a message to the Spam folder. Try to keep it short.-->
@@ -858,4 +809,92 @@ Vi povas konservi tiun ĉi mesaĝon kaj uzi ĝin kiel sekurkopion de via privata
     <!--A user visible label for the name and email address copied to the clipboard-->
     <!--Might be displayed in a notification when deleting an account (in the background)-->
     <!--For unread messages the first line of a message list item is modified by this to improve the experience for people with screen readers.-->
+    <string name="save_attachment_action">Savi kunsendaĵon</string>
+    <string name="new_messages_title">Novaj mesaĝoj</string>
+    <string name="notification_certificate_error_public">Atestila eraro</string>
+    <string name="debug_export_logs_failure">Elportado malsukcesis.</string>
+    <string name="message_view_me_text">mi</string>
+    <string name="unsubscribe_action">Malaboni</string>
+    <string name="notification_notify_error_title">Sciiga eraro</string>
+    <string name="message_view_show_remote_images_action">Montri forajn bildojn</string>
+    <string name="changelog_snackbar_button_text">Vidi</string>
+    <string name="about_title">Pri <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="account_delete_dlg_instructions_fmt">La konto \"<xliff:g id="account">%1$s</xliff:g>\" estos forigita el <xliff:g id="app_name">%2$s</xliff:g>.</string>
+    <string name="get_help_title">Ricevi helpon</string>
+    <string name="message_view_recipients_format">al <xliff:g id="recipients">%s</xliff:g></string>
+    <string name="message_view_additional_recipient_prefix">+</string>
+    <string name="general_settings_contact_name_color_label">Koloro de la kontakojn nomoj</string>
+    <string name="debug_export_logs_title">Elporti protokolojn</string>
+    <string name="general_settings_post_remove_action_show_previous_message">Montri la antaŭan mesaĝon</string>
+    <string name="general_settings_post_remove_action_return_to_list">Reiri al la listo de mesaĝoj</string>
+    <string name="general_settings_post_remove_action_title">Post mesaĝon forigado aŭ movado</string>
+    <string name="general_settings_post_mark_as_unread_action_title">Post mesaĝon markado kiel nelegitan</string>
+    <string name="general_settings_post_remove_action_show_next_message">Montri la sekvan mesaĝon</string>
+    <string name="general_settings_post_mark_as_unread_action_return_to_list">Reiri al la listo de mesaĝoj</string>
+    <string name="general_settings_post_mark_as_unread_action_stay">Resti ĉe la nuna mesaĝo</string>
+    <string name="general_settings_right_swipe_title">Viŝado dekstren</string>
+    <string name="general_settings_left_swipe_title">Viŝado maldekstren</string>
+    <string name="general_settings_swipe_actions_title">Viŝadagoj</string>
+    <string name="general_settings_swipe_action_toggle_selection">Elekti/malelekti</string>
+    <string name="general_settings_swipe_action_toggle_star">Steletigi/Malsteletigi</string>
+    <string name="account_settings_notification_light_yellow">Flava</string>
+    <string name="account_settings_notification_light_white">Blanka</string>
+    <string name="account_settings_notification_light_red">Ruĝa</string>
+    <string name="account_settings_notification_light_blue">Blua</string>
+    <string name="general_settings_swipe_action_toggle_read">Marki kiel legitan/nelegitan</string>
+    <string name="account_settings_notification_light_cyan">Cejana</string>
+    <string name="account_settings_vibration">Vibrado</string>
+    <string name="account_settings_notification_light_default_color">Sistema implicita koloro</string>
+    <string name="account_settings_notification_light_green">Verda</string>
+    <string name="folder_settings_notifications_label">Sciigoj</string>
+    <string name="folder_settings_push_label">Aktivigi puŝ-sciigojn</string>
+    <string name="account_settings_vibrate_summary_disabled">Malaktivigita</string>
+    <string name="folder_settings_sync_label">Aktivigi la samtempigon</string>
+    <string name="folder_list_show_hidden_folders">Montri kaŝitajn mesaĝujojn</string>
+    <string name="account_settings_notification_light_label">Ŝciiglumo</string>
+    <string name="account_settings_notification_light_disabled">Malaktivigita</string>
+    <string name="folder_settings_visible_label">Montri mesaĝujon</string>
+    <string name="volume_navigation_title_short">Navigado per laŭtecklavoj</string>
+    <string name="volume_navigation_summary">En mesaĝa vido, navigi inter mesaĝoj per laŭtecklavoj</string>
+    <string name="swipe_action_mark_as_read">Marki kiel legitan</string>
+    <string name="message_list_error_folder_not_found">Mesaĝujo ne trovita</string>
+    <string name="message_details_missing_date">La dato mankas en la mesaĝkapo</string>
+    <string name="message_list_content_description_unread_prefix">nelegita, %s</string>
+    <string name="settings_ui_telemetry_title">Uzada kaj teknika datumoj</string>
+    <string name="general_settings_ui_density_compact">Kompakta</string>
+    <string name="account_settings_notification_light_magenta">Maĝenta</string>
+    <string name="general_settings_show_compose_button_title">Montri ŝveban ‘ekskribi’ butonon</string>
+    <string name="general_settings_ui_density_relaxed">Malkompakta</string>
+    <string name="general_settings_message_list_density_title">Denseco</string>
+    <string name="settings_ui_telemetry_description">Kunhavigi kun Mozilla datumoj pri tiun apon efikeco, uzado, aparataro kaj agordo por helpi nin plibonigi Thunderbird</string>
+    <string name="action_copy_name_and_email_address">Kopii nomon kaj retpoŝtadreson</string>
+    <string name="swipe_action_move">Movi…</string>
+    <string name="message_details_loading_error">Eraro okazis dum ŝargado de la mesaĝon detaloj.</string>
+    <string name="background_work_notification_remove_account">Konton forigado…</string>
+    <string name="font_size_message_view_recipients">Ricevintoj</string>
+    <string name="action_add_to_contacts">Aldoni al kontaktaro</string>
+    <string name="push_notification_grant_alarm_permission">Tuŝu por doni la permeson.</string>
+    <string name="push_notification_state_alarm_permission_missing">Mankas permeson plani alarmojn</string>
+    <string name="action_compose_message_to">Ekskribi mesaĝon al</string>
+    <string name="message_list_error_title">Eraro</string>
+    <string name="dialog_openkeychain_info_text">La apo OpenKeychain estas bezonata por ĉifrado de-fino-al-fino.</string>
+    <string name="action_copy_email_address">Kopii retpoŝtadreson</string>
+    <string name="settings_list_action_support">Subteni <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="clipboard_label_name_and_email_address">Nomo kaj retpoŝtadreso</string>
+    <string name="settings_ui_data_collection">Datumojn kolekto</string>
+    <string name="message_details_toolbar_title">Mesaĝon detaloj</string>
+    <string name="push_info_notification_explanation_text">Dum la uzo de puŝ-sciigoj, <xliff:g id="app_name">%1$s</xliff:g> daŭrigas konekton al la retpoŝta servilo. Android postulas montri daŭran sciigon kiam la apo estas fone aktiva. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
+    <string name="account_settings_vibrate_pattern_5">Ritmo 5</string>
+    <string name="account_settings_vibrate_pattern_1">Ritmo 1</string>
+    <string name="account_settings_vibrate_pattern_3">Ritmo 3</string>
+    <string name="account_settings_vibrate_pattern_4">Ritmo 4</string>
+    <string name="account_settings_vibrate_pattern_label">Ritmo de vibrado</string>
+    <string name="account_settings_vibrate_pattern_2">Ritmo 2</string>
+    <string name="notification_notify_error_text">Eraro okazis provante krei sisteman sciigon pri nova mesaĝo. Estas probable kaŭze de manka sciiga sono.\n\nTuŝetu por malfermi sciigajn agordojn.</string>
+    <string name="dialog_confirm_empty_spam_title">Konfirmi malplenigo trudmesaĝujon</string>
+    <string name="dialog_confirm_empty_spam_message">Ĉu vi volas malplenigi la trudmesaĝujon?</string>
+    <string name="empty_spam_action">Malplenigi trudmesaĝujon</string>
+    <string name="expand_content_description">Etendi</string>
+    <string name="about_app_authors_thunderbird">Teamo Thunderbird por Poŝaparatoj</string>
+    <string name="debug_export_logs_success">Eksportado sukcesis. Protokoloj eble enhavas malpublikendajn informojn. Atentu kiun vi sendos ilin.</string>
 </resources>

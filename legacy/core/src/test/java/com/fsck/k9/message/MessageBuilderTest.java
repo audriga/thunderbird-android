@@ -12,23 +12,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import app.k9mail.core.android.testing.RobolectricTest;
-import app.k9mail.legacy.account.Account.QuoteStyle;
+import androidx.annotation.NonNull;
+import kotlinx.coroutines.flow.Flow;
+import net.thunderbird.core.android.testing.RobolectricTest;
+import net.thunderbird.core.android.account.QuoteStyle;
 import com.fsck.k9.CoreResourceProvider;
-import app.k9mail.legacy.account.Identity;
+import net.thunderbird.core.android.account.Identity;
 import com.fsck.k9.TestCoreResourceProvider;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.BoundaryGenerator;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.Message.RecipientType;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeHeader;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.message.MessageBuilder.Callback;
 import com.fsck.k9.message.quote.InsertableHtmlContent;
+import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.core.logging.testing.TestLogger;
+import net.thunderbird.core.preference.AppTheme;
+import net.thunderbird.core.preference.BackgroundSync;
+import net.thunderbird.core.preference.GeneralSettings;
+import net.thunderbird.core.preference.GeneralSettingsManager;
+import net.thunderbird.core.preference.SubTheme;
+import net.thunderbird.core.preference.notification.NotificationPreference;
+import net.thunderbird.core.preference.privacy.PrivacySettings;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -195,10 +207,39 @@ public class MessageBuilderTest extends RobolectricTest {
     private BoundaryGenerator boundaryGenerator;
     private CoreResourceProvider resourceProvider = new TestCoreResourceProvider();
     private Callback callback;
+    private final GeneralSettingsManager fakeSettingsManager = new GeneralSettingsManager() {
+        @NonNull
+        @Override
+        public GeneralSettings getSettings() {
+            return new GeneralSettings();
+        }
+
+        @NonNull
+        @Override
+        public Flow<GeneralSettings> getSettingsFlow() {
+            throw new UnsupportedOperationException("not implemented");
+        }
+
+        @Override
+        public @NotNull GeneralSettings getConfig() {
+            return getSettings();
+        }
+
+        @Override
+        public @NotNull Flow<@NotNull GeneralSettings> getConfigFlow() {
+            throw new UnsupportedOperationException("not implemented");
+        }
+
+        @Override
+        public void save(@NotNull GeneralSettings config) {
+            throw new UnsupportedOperationException("not implemented");
+        }
+    };
 
 
     @Before
     public void setUp() throws Exception {
+        Log.logger = new TestLogger();
         messageIdGenerator = mock(MessageIdGenerator.class);
         when(messageIdGenerator.generateMessageId(any(Message.class))).thenReturn(TEST_MESSAGE_ID);
 
@@ -342,7 +383,7 @@ public class MessageBuilderTest extends RobolectricTest {
 
     @Test
     public void buildWithException_shouldThrow() throws MessagingException {
-        MessageBuilder messageBuilder = new SimpleMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider) {
+        MessageBuilder messageBuilder = new SimpleMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider, fakeSettingsManager) {
             @Override
             protected void buildMessageInternal() {
                 queueMessageBuildException(new MessagingException("expected error"));
@@ -358,7 +399,7 @@ public class MessageBuilderTest extends RobolectricTest {
     @Test
     public void buildWithException_detachAndReattach_shouldThrow() throws MessagingException {
         Callback anotherCallback = mock(Callback.class);
-        MessageBuilder messageBuilder = new SimpleMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider) {
+        MessageBuilder messageBuilder = new SimpleMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider, fakeSettingsManager) {
             @Override
             protected void buildMessageInternal() {
                 queueMessageBuildException(new MessagingException("expected error"));
@@ -433,7 +474,7 @@ public class MessageBuilderTest extends RobolectricTest {
 
     private MessageBuilder createSimpleMessageBuilder() {
         Identity identity = createIdentity();
-        return new SimpleMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider)
+        return new SimpleMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider, fakeSettingsManager)
                 .setSubject(TEST_SUBJECT)
                 .setSentDate(SENT_DATE)
                 .setHideTimeZone(true)

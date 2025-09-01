@@ -33,7 +33,7 @@ class Settings {
      *
      * @see SettingsExporter
      */
-    public static final int VERSION = 99;
+    public static final int VERSION = 105;
 
     static Map<String, Object> validate(int version, Map<String, TreeMap<Integer, SettingsDescription<?>>> settings,
             Map<String, String> importedSettings, boolean useDefaultValues) {
@@ -63,7 +63,7 @@ class Settings {
 
             boolean useDefaultValue;
             if (!importedSettings.containsKey(key)) {
-                Timber.v("Key \"%s\" wasn't found in the imported file.%s",
+                Log.v("Key \"%s\" wasn't found in the imported file.%s",
                         key,
                         (useDefaultValues) ? " Using default value." : "");
 
@@ -75,7 +75,7 @@ class Settings {
                     validatedSettings.put(key, internalValue);
                     useDefaultValue = false;
                 } catch (InvalidSettingValueException e) {
-                    Timber.v("Key \"%s\" has invalid value \"%s\" in imported file. %s",
+                    Log.v("Key \"%s\" has invalid value \"%s\" in imported file. %s",
                             key,
                             prettyValue,
                             (useDefaultValues) ? "Using default value." : "Skipping.");
@@ -125,7 +125,7 @@ class Settings {
 
                 serializedSettings.put(settingName, stringValue);
             } else {
-                Timber.w("Settings.convert() called with a setting that should have been removed: %s", settingName);
+                Log.w("Settings.convert() called with a setting that should have been removed: %s", settingName);
             }
         }
 

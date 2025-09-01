@@ -7,8 +7,9 @@ import com.fsck.k9.preferences.ServerSettingsDescriptions.PASSWORD
 import com.fsck.k9.preferences.ServerSettingsDescriptions.USERNAME
 import com.fsck.k9.preferences.Settings.InvalidSettingValueException
 import java.io.InputStream
-import timber.log.Timber
+import net.thunderbird.core.logging.legacy.Log
 
+@Suppress("LongParameterList")
 class SettingsImporter internal constructor(
     private val settingsFileParser: SettingsFileParser,
     private val generalSettingsValidator: GeneralSettingsValidator,
@@ -17,6 +18,7 @@ class SettingsImporter internal constructor(
     private val accountSettingsUpgrader: AccountSettingsUpgrader,
     private val generalSettingsWriter: GeneralSettingsWriter,
     private val accountSettingsWriter: AccountSettingsWriter,
+    private val unifiedInboxConfigurator: UnifiedInboxConfigurator,
 ) {
     /**
      * Parses an import [InputStream] and returns information on whether it contains global settings and/or account
@@ -28,7 +30,7 @@ class SettingsImporter internal constructor(
      *
      * @throws SettingsImportExportException In case of an error.
      */
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "ThrowsCount")
     @Throws(SettingsImportExportException::class)
     fun getImportStreamContents(inputStream: InputStream): ImportContents {
         try {
@@ -44,7 +46,10 @@ class SettingsImporter internal constructor(
                 )
             }
 
-            // TODO: throw exception if neither global settings nor account settings could be found
+            if (!globalSettings && accounts.isEmpty()) {
+                throw SettingsImportExportException("Neither global settings nor account settings could be found")
+            }
+
             return ImportContents(globalSettings, accounts)
         } catch (e: SettingsImportExportException) {
             throw e
@@ -90,14 +95,18 @@ class SettingsImporter internal constructor(
                     val importResult = importAccount(contents.contentVersion, account)
                     importedAccounts.add(importResult)
                 } catch (e: InvalidSettingValueException) {
-                    Timber.e(e, "Encountered invalid setting while importing account \"%s\"", account.name)
+                    Log.e(e, "Encountered invalid setting while importing account \"%s\"", account.name)
 
                     erroneousAccounts.add(AccountDescription(account.name!!, account.uuid))
                 } catch (e: Exception) {
-                    Timber.e(e, "Exception while importing account \"%s\"", account.name)
+                    Log.e(e, "Exception while importing account \"%s\"", account.name)
 
                     erroneousAccounts.add(AccountDescription(account.name!!, account.uuid))
                 }
+            }
+
+            if (!globalSettingsImported) {
+                unifiedInboxConfigurator.configureUnifiedInbox()
             }
 
             return ImportResults(globalSettingsImported, importedAccounts, erroneousAccounts)
@@ -114,13 +123,13 @@ class SettingsImporter internal constructor(
         importAccountUuids: List<String>,
     ): SettingsFile.Contents {
         if (importGeneralSettings && contents.globalSettings == null) {
-            Timber.w("Was asked to import global settings but none found.")
+            Log.w("Was asked to import global settings but none found.")
         }
 
         val accountUuids = contents.accounts.mapCollectionToSet { it.uuid }
         for (importAccountUuid in importAccountUuids) {
             if (importAccountUuid !in accountUuids) {
-                Timber.w("Was asked to import account %s. But this account wasn't found.", importAccountUuid)
+                Log.w("Was asked to import account %s. But this account wasn't found.", importAccountUuid)
             }
         }
 
@@ -139,7 +148,7 @@ class SettingsImporter internal constructor(
 
             generalSettingsWriter.write(currentSettings)
         } catch (e: Exception) {
-            Timber.e(e, "Exception while importing general settings")
+            Log.e(e, "Exception while importing general settings")
             false
         }
     }
@@ -159,7 +168,8 @@ class SettingsImporter internal constructor(
         val incomingAuthenticationType = incoming.settings[AUTHENTICATION_TYPE] as String
         val incomingPassword = incoming.settings[PASSWORD] as? String
         val incomingPasswordNeeded =
-            incomingAuthenticationType != "EXTERNAL" && incomingAuthenticationType != "XOAUTH2" &&
+            incomingAuthenticationType != "EXTERNAL" &&
+                incomingAuthenticationType != "XOAUTH2" &&
                 incomingPassword.isNullOrEmpty()
 
         var authorizationNeeded = incomingAuthenticationType == "XOAUTH2"
@@ -170,8 +180,10 @@ class SettingsImporter internal constructor(
         val outgoingUsername = outgoing.settings[USERNAME] as String
         val outgoingPassword = outgoing.settings[PASSWORD] as? String
         val outgoingPasswordNeeded =
-            outgoingAuthenticationType != "EXTERNAL" && outgoingAuthenticationType != "XOAUTH2" &&
-                outgoingUsername.isNotEmpty() && outgoingPassword.isNullOrEmpty()
+            outgoingAuthenticationType != "EXTERNAL" &&
+                outgoingAuthenticationType != "XOAUTH2" &&
+                outgoingUsername.isNotEmpty() &&
+                outgoingPassword.isNullOrEmpty()
 
         authorizationNeeded = authorizationNeeded || outgoingAuthenticationType == "XOAUTH2"
 

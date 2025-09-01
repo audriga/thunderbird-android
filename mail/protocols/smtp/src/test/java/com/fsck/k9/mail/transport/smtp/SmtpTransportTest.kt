@@ -12,16 +12,19 @@ import com.fsck.k9.mail.AuthType
 import com.fsck.k9.mail.AuthenticationFailedException
 import com.fsck.k9.mail.ConnectionSecurity
 import com.fsck.k9.mail.Message
-import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.MissingCapabilityException
 import com.fsck.k9.mail.ServerSettings
-import com.fsck.k9.mail.XOAuth2ChallengeParserTest
 import com.fsck.k9.mail.filter.Base64
-import com.fsck.k9.mail.helpers.TestMessageBuilder
-import com.fsck.k9.mail.helpers.TestTrustedSocketFactory
 import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mail.oauth.OAuth2TokenProvider
+import com.fsck.k9.mail.testing.XOAuth2ChallengeParserTestData
+import com.fsck.k9.mail.testing.message.TestMessageBuilder
+import com.fsck.k9.mail.testing.security.TestTrustedSocketFactory
 import com.fsck.k9.mail.transport.mockServer.MockSmtpServer
+import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.logging.testing.TestLogger
+import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.kotlin.doReturn
@@ -35,15 +38,20 @@ private const val PASSWORD = "password"
 private val CLIENT_CERTIFICATE_ALIAS: String? = null
 
 class SmtpTransportTest {
-    private val socketFactory = TestTrustedSocketFactory.newInstance()
+    private val socketFactory = TestTrustedSocketFactory
     private val oAuth2TokenProvider = createMockOAuth2TokenProvider()
+
+    @Before
+    fun setUp() {
+        Log.logger = TestLogger()
+    }
 
     @Test
     fun `open() should issue EHLO command`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 OK")
         }
         val transport = startServerAndCreateSmtpTransportWithoutAuthentication(server)
@@ -58,8 +66,8 @@ class SmtpTransportTest {
     fun `open() without AUTH LOGIN extension should connect when not using authentication`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 OK")
         }
         val transport = startServerAndCreateSmtpTransportWithoutAuthentication(server)
@@ -74,8 +82,8 @@ class SmtpTransportTest {
     fun `open() with AUTH PLAIN extension`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH PLAIN LOGIN")
             expect("AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=")
             output("235 2.7.0 Authentication successful")
@@ -92,8 +100,8 @@ class SmtpTransportTest {
     fun `open() with AUTH LOGIN extension`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH LOGIN")
             expect("AUTH LOGIN")
             output("250 OK")
@@ -114,8 +122,8 @@ class SmtpTransportTest {
     fun `open() without LOGIN and PLAIN AUTH extensions should throw`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH")
             expect("QUIT")
             output("221 BYE")
@@ -135,8 +143,8 @@ class SmtpTransportTest {
     fun `open() with CRAM-MD5 AUTH extension`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH CRAM-MD5")
             expect("AUTH CRAM-MD5")
             output("334 " + Base64.encode("<24609.1047914046@localhost>"))
@@ -155,8 +163,8 @@ class SmtpTransportTest {
     fun `open() without CRAM-MD5 AUTH extension should throw`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH PLAIN LOGIN")
             expect("QUIT")
             output("221 BYE")
@@ -176,8 +184,8 @@ class SmtpTransportTest {
     fun `open() with OAUTHBEARER method`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH OAUTHBEARER")
             expect("AUTH OAUTHBEARER bixhPXVzZXIsAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
             output("235 2.7.0 Authentication successful")
@@ -194,8 +202,8 @@ class SmtpTransportTest {
     fun `open() with OAUTHBEARER method when XOAUTH2 method is also available`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH XOAUTH2 OAUTHBEARER")
             expect("AUTH OAUTHBEARER bixhPXVzZXIsAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
             output("235 2.7.0 Authentication successful")
@@ -212,8 +220,8 @@ class SmtpTransportTest {
     fun `open() with XOAUTH2 extension`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH XOAUTH2")
             expect("AUTH XOAUTH2 dXNlcj11c2VyAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
             output("235 2.7.0 Authentication successful")
@@ -230,12 +238,12 @@ class SmtpTransportTest {
     fun `open() with XOAUTH2 extension should throw on 401 response`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-ENHANCEDSTATUSCODES")
             output("250 AUTH XOAUTH2")
             expect("AUTH XOAUTH2 dXNlcj11c2VyAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
-            output("334 " + XOAuth2ChallengeParserTest.STATUS_401_RESPONSE)
+            output("334 " + XOAuth2ChallengeParserTestData.STATUS_401_RESPONSE)
             expect("")
             output("535-5.7.1 Username and Password not accepted. Learn more at")
             output("535 5.7.1 http://support.google.com/mail/bin/answer.py?answer=14257 hx9sm5317360pbc.68")
@@ -264,11 +272,11 @@ class SmtpTransportTest {
     fun `open() with XOAUTH2 extension should invalidate and retry on 400 response`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH XOAUTH2")
             expect("AUTH XOAUTH2 dXNlcj11c2VyAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
-            output("334 " + XOAuth2ChallengeParserTest.STATUS_400_RESPONSE)
+            output("334 " + XOAuth2ChallengeParserTestData.STATUS_400_RESPONSE)
             expect("")
             output("535-5.7.1 Username and Password not accepted. Learn more at")
             output("535 5.7.1 http://support.google.com/mail/bin/answer.py?answer=14257 hx9sm5317360pbc.68")
@@ -292,11 +300,11 @@ class SmtpTransportTest {
     fun `open() with XOAUTH2 extension should invalidate and retry on invalid JSON response`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH XOAUTH2")
             expect("AUTH XOAUTH2 dXNlcj11c2VyAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
-            output("334 " + XOAuth2ChallengeParserTest.INVALID_RESPONSE)
+            output("334 " + XOAuth2ChallengeParserTestData.INVALID_RESPONSE)
             expect("")
             output("535-5.7.1 Username and Password not accepted. Learn more at")
             output("535 5.7.1 http://support.google.com/mail/bin/answer.py?answer=14257 hx9sm5317360pbc.68")
@@ -320,11 +328,11 @@ class SmtpTransportTest {
     fun `open() with XOAUTH2 extension should invalidate and retry on missing status JSON response`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH XOAUTH2")
             expect("AUTH XOAUTH2 dXNlcj11c2VyAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
-            output("334 " + XOAuth2ChallengeParserTest.MISSING_STATUS_RESPONSE)
+            output("334 " + XOAuth2ChallengeParserTestData.MISSING_STATUS_RESPONSE)
             expect("")
             output("535-5.7.1 Username and Password not accepted. Learn more at")
             output("535 5.7.1 http://support.google.com/mail/bin/answer.py?answer=14257 hx9sm5317360pbc.68")
@@ -348,17 +356,17 @@ class SmtpTransportTest {
     fun `open() with XOAUTH2 extension should throw on multiple failures`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-ENHANCEDSTATUSCODES")
             output("250 AUTH XOAUTH2")
             expect("AUTH XOAUTH2 dXNlcj11c2VyAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
-            output("334 " + XOAuth2ChallengeParserTest.STATUS_400_RESPONSE)
+            output("334 " + XOAuth2ChallengeParserTestData.STATUS_400_RESPONSE)
             expect("")
             output("535-5.7.1 Username and Password not accepted. Learn more at")
             output("535 5.7.1 http://support.google.com/mail/bin/answer.py?answer=14257 hx9sm5317360pbc.68")
             expect("AUTH XOAUTH2 dXNlcj11c2VyAWF1dGg9QmVhcmVyIG5ld1Rva2VuAQE=")
-            output("334 " + XOAuth2ChallengeParserTest.STATUS_400_RESPONSE)
+            output("334 " + XOAuth2ChallengeParserTestData.STATUS_400_RESPONSE)
             expect("")
             output("535-5.7.1 Username and Password not accepted. Learn more at")
             output("535 5.7.1 http://support.google.com/mail/bin/answer.py?answer=14257 hx9sm5317360pbc.68")
@@ -384,8 +392,8 @@ class SmtpTransportTest {
     fun `open() with XOAUTH2 extension should throw on failure to fetch token`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH XOAUTH2")
             expect("QUIT")
             output("221 BYE")
@@ -408,8 +416,8 @@ class SmtpTransportTest {
     fun `open() without OAUTHBEARER extension should throw`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH PLAIN LOGIN")
             expect("QUIT")
             output("221 BYE")
@@ -429,8 +437,8 @@ class SmtpTransportTest {
     fun `open() with AUTH EXTERNAL extension`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH EXTERNAL")
             expect("AUTH EXTERNAL dXNlcg==")
             output("235 2.7.0 Authentication successful")
@@ -447,8 +455,8 @@ class SmtpTransportTest {
     fun `open() without AUTH EXTERNAL extension should throw`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH")
             expect("QUIT")
             output("221 BYE")
@@ -468,9 +476,9 @@ class SmtpTransportTest {
     fun `open() with EHLO failing should try HELO`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
+            expect("EHLO " + SMTP_HELLO_NAME)
             output("502 5.5.1, Unrecognized command.")
-            expect("HELO [127.0.0.1]")
+            expect("HELO " + SMTP_HELLO_NAME)
             output("250 localhost")
         }
         val transport = startServerAndCreateSmtpTransportWithoutAuthentication(server)
@@ -485,12 +493,12 @@ class SmtpTransportTest {
     fun `open() with support for ENHANCEDSTATUSCODES should throw strip enhanced status codes from error message`() {
         val server = MockSmtpServer()
         server.output("220 localhost Simple Mail Transfer Service Ready")
-        server.expect("EHLO [127.0.0.1]")
-        server.output("250-localhost Hello client.localhost")
+        server.expect("EHLO " + SMTP_HELLO_NAME)
+        server.output("250-localhost Hello " + SMTP_HELLO_NAME)
         server.output("250-ENHANCEDSTATUSCODES")
         server.output("250 AUTH XOAUTH2")
         server.expect("AUTH XOAUTH2 dXNlcj11c2VyAWF1dGg9QmVhcmVyIG9sZFRva2VuAQE=")
-        server.output("334 " + XOAuth2ChallengeParserTest.STATUS_401_RESPONSE)
+        server.output("334 " + XOAuth2ChallengeParserTestData.STATUS_401_RESPONSE)
         server.expect("")
         server.output("535-5.7.1 Username and Password not accepted. Learn more at")
         server.output("535 5.7.1 http://support.google.com/mail/bin/answer.py?answer=14257 hx9sm5317360pbc.68")
@@ -518,7 +526,7 @@ class SmtpTransportTest {
     fun `open() with many extensions should parse all`() {
         val server = MockSmtpServer().apply {
             output("220 smtp.gmail.com ESMTP x25sm19117693wrx.27 - gsmtp")
-            expect("EHLO [127.0.0.1]")
+            expect("EHLO " + SMTP_HELLO_NAME)
             output("250-smtp.gmail.com at your service, [86.147.34.216]")
             output("250-SIZE 35882577")
             output("250-8BITMIME")
@@ -542,15 +550,15 @@ class SmtpTransportTest {
     fun `open() with STARTTLS`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello 127.0.0.1")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-STARTTLS")
             output("250 HELP")
             expect("STARTTLS")
             output("220 Ready to start TLS")
             startTls()
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello 127.0.0.1")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 AUTH PLAIN LOGIN")
             expect("AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=")
             output("235 2.7.0 Authentication successful")
@@ -571,8 +579,8 @@ class SmtpTransportTest {
     fun `open() with STARTTLS but without STARTTLS capability should throw`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello 127.0.0.1")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 HELP")
             expect("QUIT")
             closeConnection()
@@ -660,6 +668,61 @@ class SmtpTransportTest {
             expect("MAIL FROM:<user@localhost> BODY=8BITMIME")
             output("250 OK")
             expect("RCPT TO:<user2@localhost>")
+            output("250 OK")
+            expect("DATA")
+            output("354 End data with <CR><LF>.<CR><LF>")
+            expect("[message data]")
+            expect(".")
+            output("250 OK: queued as 12345")
+            expect("QUIT")
+            output("221 BYE")
+            closeConnection()
+        }
+        val transport = startServerAndCreateSmtpTransport(server)
+
+        transport.sendMessage(message)
+
+        server.verifyConnectionClosed()
+        server.verifyInteractionCompleted()
+    }
+
+    @Test
+    fun `sendMessage() with unicode recipient and supporting server`() {
+        val message = createMessageWithUnicodeRecipient()
+        val server = createServerAndSetupForPlainAuthentication("SMTPUTF8").apply {
+            expect("MAIL FROM:<user@localhost> SMTPUTF8")
+            output("250 OK")
+            expect("RCPT TO:<user2@dømi.example>")
+            output("250 OK")
+            expect("DATA")
+            output("354 End data with <CR><LF>.<CR><LF>")
+            expect("[message data]")
+            expect(".")
+            output("250 OK: queued as 12345")
+            expect("QUIT")
+            output("221 BYE")
+            closeConnection()
+        }
+        val transport = startServerAndCreateSmtpTransport(server)
+
+        transport.sendMessage(message)
+
+        server.verifyConnectionClosed()
+        server.verifyInteractionCompleted()
+    }
+
+    @Test
+    fun `sendMessage() with unicode recipient and plain server`() {
+        val message = createMessageWithUnicodeRecipient()
+        val server = createServerAndSetupForPlainAuthentication("8BITMIME").apply {
+            expect("MAIL FROM:<user@localhost> BODY=8BITMIME")
+            output("250 OK")
+            // Many servers reject this as nonstandard, but some
+            // accept it. The purpose of this commit is to change the
+            // behaviour when SMTPUTF8 is supported. Therefore this
+            // test checks that Thunderbird behaves as previously when
+            // the server does not support SMTPUTF8.
+            expect("RCPT TO:<user2@dømi.example>")
             output("250 OK")
             expect("DATA")
             output("354 End data with <CR><LF>.<CR><LF>")
@@ -929,11 +992,18 @@ class SmtpTransportTest {
             .build()
     }
 
+    private fun createMessageWithUnicodeRecipient(): Message {
+        return TestMessageBuilder()
+            .from("user@localhost")
+            .to("user2@dømi.example")
+            .build()
+    }
+
     private fun createServerAndSetupForPlainAuthentication(vararg extensions: String): MockSmtpServer {
         return MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
 
             for (extension in extensions) {
                 output("250-$extension")

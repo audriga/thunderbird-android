@@ -14,11 +14,11 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import app.k9mail.core.common.provider.AppNameProvider
 import com.fsck.k9.ui.R
 import com.google.android.material.textview.MaterialTextView
+import net.thunderbird.core.common.provider.AppNameProvider
+import net.thunderbird.core.logging.legacy.Log
 import org.koin.android.ext.android.inject
-import timber.log.Timber
 
 class AboutFragment : Fragment() {
     private val appNameProvider: AppNameProvider by inject()
@@ -34,7 +34,7 @@ class AboutFragment : Fragment() {
         titleTextView.text = getString(R.string.about_title, appNameProvider.appName)
 
         val versionTextView = view.findViewById<MaterialTextView>(R.id.version)
-        versionTextView.text = getVersionNumber()
+        versionTextView.text = getVersionNumber() ?: "?"
 
         val versionLayout = view.findViewById<View>(R.id.versionLayout)
         versionLayout.setOnClickListener { displayChangeLog() }
@@ -78,14 +78,14 @@ class AboutFragment : Fragment() {
         findNavController().navigate(R.id.action_aboutScreen_to_changelogScreen)
     }
 
-    private fun getVersionNumber(): String {
+    private fun getVersionNumber(): String? {
         return try {
             val context = requireContext()
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             packageInfo.versionName
         } catch (e: PackageManager.NameNotFoundException) {
-            Timber.e(e, "Error getting PackageInfo")
-            "?"
+            Log.e(e, "Error getting PackageInfo")
+            null
         }
     }
 
@@ -103,6 +103,7 @@ class AboutFragment : Fragment() {
             ),
             Library("AppAuth for Android", "https://github.com/openid/AppAuth-Android", "Apache License, Version 2.0"),
             Library("Apache HttpComponents", "https://hc.apache.org/", "Apache License, Version 2.0"),
+            Library("AutoValue", "https://github.com/google/auto", "Apache License, Version 2.0"),
             Library("CircleImageView", "https://github.com/hdodenhof/CircleImageView", "Apache License, Version 2.0"),
             Library("ckChangeLog", "https://github.com/cketti/ckChangeLog", "Apache License, Version 2.0"),
             Library("Commons IO", "https://commons.apache.org/io/", "Apache License, Version 2.0"),
@@ -127,26 +128,31 @@ class AboutFragment : Fragment() {
                 "Apache License, Version 2.0",
             ),
             Library("Koin", "https://insert-koin.io/", "Apache License, Version 2.0"),
-            Library("Kotlin Parcelize Runtime", "https://github.com/JetBrains/kotlin", "Apache License, Version 2.0"),
             Library(
-                "KotlinX Coroutines",
-                "https://github.com/Kotlin/kotlinx.coroutines",
+                "Kotlin Android Extensions Runtime",
+                "https://github.com/JetBrains/kotlin/tree/master/plugins/android-extensions/android-extensions-runtime",
                 "Apache License, Version 2.0",
             ),
+            Library("Kotlin Parcelize Runtime", "https://github.com/JetBrains/kotlin", "Apache License, Version 2.0"),
             Library(
                 "Kotlin Standard Library",
                 "https://kotlinlang.org/api/latest/jvm/stdlib/",
                 "Apache License, Version 2.0",
             ),
             Library(
-                "KotlinX Immutable Collections",
-                "https://github.com/Kotlin/kotlinx.collections.immutable",
+                "KotlinX Coroutines",
+                "https://github.com/Kotlin/kotlinx.coroutines",
                 "Apache License, Version 2.0",
             ),
             Library("KotlinX DateTime", "https://github.com/Kotlin/kotlinx-datetime", "Apache License, Version 2.0"),
             Library(
-                "Kotlin Android Extensions Runtime",
-                "https://github.com/JetBrains/kotlin/tree/master/plugins/android-extensions/android-extensions-runtime",
+                "KotlinX Immutable Collections",
+                "https://github.com/Kotlin/kotlinx.collections.immutable",
+                "Apache License, Version 2.0",
+            ),
+            Library(
+                "KotlinX Serialization",
+                "https://github.com/Kotlin/kotlinx.serialization",
                 "Apache License, Version 2.0",
             ),
             Library(
@@ -159,7 +165,6 @@ class AboutFragment : Fragment() {
                 "https://github.com/material-components/material-components-android",
                 "Apache License, Version 2.0",
             ),
-            Library("Material Drawer", "https://github.com/mikepenz/MaterialDrawer", "Apache License, Version 2.0"),
             Library("Mime4j", "https://james.apache.org/mime4j/", "Apache License, Version 2.0"),
             Library("MiniDNS", "https://github.com/MiniDNS/minidns", "Multiple, Apache License, Version 2.0"),
             Library("Moshi", "https://github.com/square/moshi", "Apache License, Version 2.0"),
@@ -172,12 +177,14 @@ class AboutFragment : Fragment() {
             ),
             Library("SearchPreference", "https://github.com/ByteHamster/SearchPreference", "MIT License"),
             Library("SLF4J", "https://www.slf4j.org/", "MIT License"),
+            Library("Stately", "https://github.com/touchlab/Stately", "Apache License, Version 2.0"),
             Library("Timber", "https://github.com/JakeWharton/timber", "Apache License, Version 2.0"),
             Library(
                 "TokenAutoComplete",
                 "https://github.com/splitwise/TokenAutoComplete/",
                 "Apache License, Version 2.0",
             ),
+            Library("ZXing", "https://github.com/zxing/zxing", "Apache License, Version 2.0"),
         )
     }
 }

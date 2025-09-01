@@ -8,14 +8,22 @@ import assertk.assertions.index
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import com.fsck.k9.mail.crlf
 import com.fsck.k9.mail.filter.Base64
+import com.fsck.k9.mail.testing.crlf
 import com.fsck.k9.mailstore.MimePartStreamParser
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.logging.testing.TestLogger
+import org.junit.Before
 import org.junit.Test
 
 class AutocryptGossipHeaderParserTest {
 
     private val autocryptGossipHeaderParser = AutocryptGossipHeaderParser.getInstance()
+
+    @Before
+    fun setUp() {
+        Log.logger = TestLogger()
+    }
 
     @Test
     fun parseFromPart() {

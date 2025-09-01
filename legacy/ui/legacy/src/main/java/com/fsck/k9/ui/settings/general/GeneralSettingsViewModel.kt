@@ -1,17 +1,25 @@
 package com.fsck.k9.ui.settings.general
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fsck.k9.logging.LogFileWriter
+import app.k9mail.feature.launcher.FeatureLauncherActivity
+import app.k9mail.feature.launcher.FeatureLauncherTarget
+import com.fsck.k9.ui.BuildConfig
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
+import net.thunderbird.core.android.logging.LogFileWriter
+import net.thunderbird.core.logging.file.FileLogSink
+import net.thunderbird.core.logging.legacy.Log
 
-class GeneralSettingsViewModel(private val logFileWriter: LogFileWriter) : ViewModel() {
+class GeneralSettingsViewModel(
+    private val logFileWriter: LogFileWriter,
+    private val syncDebugFileLogSink: FileLogSink,
+) : ViewModel() {
     private var snackbarJob: Job? = null
     private val uiStateFlow = MutableStateFlow<GeneralSettingsUiState>(GeneralSettingsUiState.Idle)
     val uiState: Flow<GeneralSettingsUiState> = uiStateFlow
@@ -19,12 +27,40 @@ class GeneralSettingsViewModel(private val logFileWriter: LogFileWriter) : ViewM
     fun exportLogs(contentUri: Uri) {
         viewModelScope.launch {
             setExportingState()
-
             try {
                 logFileWriter.writeLogTo(contentUri)
                 showSnackbar(GeneralSettingsUiState.Success)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to write log to URI: %s", contentUri)
+                Log.e(e, "Failed to write log to URI: %s", contentUri)
+                showSnackbar(GeneralSettingsUiState.Failure)
+            }
+        }
+    }
+
+    fun fileExport(contentUri: String) {
+        viewModelScope.launch {
+            setExportingState()
+            try {
+                syncDebugFileLogSink.export(contentUri)
+                showSnackbar(GeneralSettingsUiState.Success)
+            } catch (e: Exception) {
+                Log.e(e, "Failed to write log to URI")
+                showSnackbar(GeneralSettingsUiState.Failure)
+            }
+        }
+    }
+
+    fun showExportSnackbar(isSuccess: Boolean) {
+        viewModelScope.launch {
+            setExportingState()
+            try {
+                if (isSuccess) {
+                    showSnackbar(GeneralSettingsUiState.Success)
+                } else {
+                    showSnackbar(GeneralSettingsUiState.Failure)
+                }
+            } catch (e: Exception) {
+                Log.e(e, "Failed to write log to URI")
                 showSnackbar(GeneralSettingsUiState.Failure)
             }
         }
@@ -51,6 +87,12 @@ class GeneralSettingsViewModel(private val logFileWriter: LogFileWriter) : ViewM
 
     private fun sendUiState(uiState: GeneralSettingsUiState) {
         uiStateFlow.value = uiState
+    }
+
+    fun onOpenSecretDebugScreen(context: Context) {
+        if (BuildConfig.DEBUG) {
+            FeatureLauncherActivity.launch(context = context, target = FeatureLauncherTarget.SecretDebugSettings)
+        }
     }
 
     companion object {

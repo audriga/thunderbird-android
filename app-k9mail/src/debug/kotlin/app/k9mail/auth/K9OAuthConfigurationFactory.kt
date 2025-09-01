@@ -1,14 +1,15 @@
 package app.k9mail.auth
 
-import app.k9mail.core.common.oauth.OAuthConfiguration
-import app.k9mail.core.common.oauth.OAuthConfigurationFactory
 import com.fsck.k9.BuildConfig
+import net.thunderbird.core.common.oauth.OAuthConfiguration
+import net.thunderbird.core.common.oauth.OAuthConfigurationFactory
 
 @Suppress("ktlint:standard:max-line-length")
 class K9OAuthConfigurationFactory : OAuthConfigurationFactory {
     override fun createConfigurations(): Map<List<String>, OAuthConfiguration> {
         return mapOf(
             createAolConfiguration(),
+            createFastmailConfiguration(),
             createGmailConfiguration(),
             createMicrosoftConfiguration(),
             createYahooConfiguration(),
@@ -24,6 +25,19 @@ class K9OAuthConfigurationFactory : OAuthConfigurationFactory {
             scopes = listOf("mail-w"),
             authorizationEndpoint = "https://api.login.aol.com/oauth2/request_auth",
             tokenEndpoint = "https://api.login.aol.com/oauth2/get_token",
+            redirectUri = "${BuildConfig.APPLICATION_ID}://oauth2redirect",
+        )
+    }
+
+    private fun createFastmailConfiguration(): Pair<List<String>, OAuthConfiguration> {
+        return listOf(
+            "imap.fastmail.com",
+            "smtp.fastmail.com",
+        ) to OAuthConfiguration(
+            clientId = "353641ae",
+            scopes = listOf("https://www.fastmail.com/dev/protocol-imap", "https://www.fastmail.com/dev/protocol-smtp"),
+            authorizationEndpoint = "https://api.fastmail.com/oauth/authorize",
+            tokenEndpoint = "https://api.fastmail.com/oauth/refresh",
             redirectUri = "${BuildConfig.APPLICATION_ID}://oauth2redirect",
         )
     }
@@ -47,9 +61,12 @@ class K9OAuthConfigurationFactory : OAuthConfigurationFactory {
         return listOf(
             "outlook.office365.com",
             "smtp.office365.com",
+            "smtp-mail.outlook.com",
         ) to OAuthConfiguration(
             clientId = "e647013a-ada4-4114-b419-e43d250f99c5",
             scopes = listOf(
+                "openid",
+                "email",
                 "https://outlook.office.com/IMAP.AccessAsUser.All",
                 "https://outlook.office.com/SMTP.Send",
                 "offline_access",

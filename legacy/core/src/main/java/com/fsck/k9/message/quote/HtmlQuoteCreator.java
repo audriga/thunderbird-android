@@ -6,13 +6,14 @@ import java.util.regex.Pattern;
 
 import com.fsck.k9.CoreResourceProvider;
 import app.k9mail.legacy.di.DI;
-import timber.log.Timber;
-
-import app.k9mail.legacy.account.Account.QuoteStyle;
+import com.fsck.k9.message.html.HTMLTag;
+import net.thunderbird.core.android.account.QuoteStyle;
+import net.thunderbird.core.logging.legacy.Log;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.Message.RecipientType;
 import com.fsck.k9.message.html.HtmlConverter;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 
 
 public class HtmlQuoteCreator {
@@ -43,11 +44,11 @@ public class HtmlQuoteCreator {
      * @return Modified insertable message.
      */
     public static InsertableHtmlContent quoteOriginalHtmlMessage(Message originalMessage,
-            String messageBody, QuoteStyle quoteStyle) {
+            String messageBody, QuoteStyle quoteStyle, GeneralSettingsManager generalSettingsManager) {
         CoreResourceProvider resourceProvider = DI.get(CoreResourceProvider.class);
         InsertableHtmlContent insertable = findInsertionPoints(messageBody);
 
-        String sentDate = new QuoteDateFormatter().format(originalMessage.getSentDate());
+        String sentDate = new QuoteDateFormatter(generalSettingsManager).format(originalMessage.getSentDate());
         String fromAddress = Address.toString(originalMessage.getFrom());
         if (quoteStyle == QuoteStyle.PREFIX) {
             StringBuilder header = new StringBuilder();
@@ -68,12 +69,14 @@ public class HtmlQuoteCreator {
             insertable.insertIntoQuotedFooter(footer);
         } else if (quoteStyle == QuoteStyle.HEADER) {
 
+            HTMLTag span = HTMLTag.SPAN; //Fixes #9236
+
             StringBuilder header = new StringBuilder();
             header.append("<div style='font-size:10.0pt;font-family:\"Tahoma\",\"sans-serif\";padding:3.0pt 0in 0in 0in'>\r\n");
             header.append("<hr style='border:none;border-top:solid #E1E1E1 1.0pt'>\r\n"); // This gets converted into a horizontal line during html to text conversion.
             if (originalMessage.getFrom() != null && fromAddress.length() != 0) {
                 header.append("<b>").append(resourceProvider.messageHeaderFrom()).append("</b> ")
-                        .append(HtmlConverter.textToHtmlFragment(fromAddress))
+                        .append(HtmlConverter.textToHtmlFragment(fromAddress, span))
                         .append("<br>\r\n");
             }
             if (sentDate.length() != 0) {
@@ -83,17 +86,18 @@ public class HtmlQuoteCreator {
             }
             if (originalMessage.getRecipients(RecipientType.TO) != null && originalMessage.getRecipients(RecipientType.TO).length != 0) {
                 header.append("<b>").append(resourceProvider.messageHeaderTo()).append("</b> ")
-                        .append(HtmlConverter.textToHtmlFragment(Address.toString(originalMessage.getRecipients(RecipientType.TO))))
+                        .append(HtmlConverter.textToHtmlFragment(Address.toString(originalMessage.getRecipients(RecipientType.TO)),
+                            span))
                         .append("<br>\r\n");
             }
             if (originalMessage.getRecipients(RecipientType.CC) != null && originalMessage.getRecipients(RecipientType.CC).length != 0) {
                 header.append("<b>").append(resourceProvider.messageHeaderCc()).append("</b> ")
-                        .append(HtmlConverter.textToHtmlFragment(Address.toString(originalMessage.getRecipients(RecipientType.CC))))
+                        .append(HtmlConverter.textToHtmlFragment(Address.toString(originalMessage.getRecipients(RecipientType.CC)), span))
                         .append("<br>\r\n");
             }
             if (originalMessage.getSubject() != null) {
                 header.append("<b>").append(resourceProvider.messageHeaderSubject()).append("</b> ")
-                        .append(HtmlConverter.textToHtmlFragment(originalMessage.getSubject()))
+                        .append(HtmlConverter.textToHtmlFragment(originalMessage.getSubject(), span))
                         .append("<br>\r\n");
             }
             header.append("</div>\r\n");
@@ -145,7 +149,7 @@ public class HtmlQuoteCreator {
             hasBodyTag = true;
         }
 
-        Timber.d("Open: hasHtmlTag:%s hasHeadTag:%s hasBodyTag:%s", hasHtmlTag, hasHeadTag, hasBodyTag);
+        Log.d("Open: hasHtmlTag:%s hasHeadTag:%s hasBodyTag:%s", hasHtmlTag, hasHeadTag, hasBodyTag);
 
         // Given our inspections, let's figure out where to start our content.
         // This is the ideal case -- there's a BODY tag and we insert ourselves just after it.
@@ -196,7 +200,7 @@ public class HtmlQuoteCreator {
             hasBodyEndTag = true;
         }
 
-        Timber.d("Close: hasHtmlEndTag:%s hasBodyEndTag:%s", hasHtmlEndTag, hasBodyEndTag);
+        Log.d("Close: hasHtmlEndTag:%s hasBodyEndTag:%s", hasHtmlEndTag, hasBodyEndTag);
 
         // Now figure out where to put our footer.
         // This is the ideal case -- there's a BODY tag and we insert ourselves just before it.

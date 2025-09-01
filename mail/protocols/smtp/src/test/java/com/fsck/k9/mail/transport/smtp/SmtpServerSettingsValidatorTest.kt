@@ -10,14 +10,18 @@ import com.fsck.k9.mail.AuthType
 import com.fsck.k9.mail.ClientCertificateError
 import com.fsck.k9.mail.ConnectionSecurity
 import com.fsck.k9.mail.ServerSettings
-import com.fsck.k9.mail.helpers.FakeTrustManager
-import com.fsck.k9.mail.helpers.SimpleTrustedSocketFactory
 import com.fsck.k9.mail.oauth.AuthStateStorage
 import com.fsck.k9.mail.oauth.OAuth2TokenProvider
 import com.fsck.k9.mail.server.ServerSettingsValidationResult
+import com.fsck.k9.mail.testing.security.FakeTrustManager
+import com.fsck.k9.mail.testing.security.SimpleTrustedSocketFactory
 import com.fsck.k9.mail.transport.mockServer.MockSmtpServer
 import java.net.UnknownHostException
 import kotlin.test.Test
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.logging.testing.TestLogger
+import okio.ByteString.Companion.encodeUtf8
+import org.junit.Before
 
 private const val USERNAME = "user"
 private const val PASSWORD = "password"
@@ -33,12 +37,17 @@ class SmtpServerSettingsValidatorTest {
         oAuth2TokenProviderFactory = null,
     )
 
+    @Before
+    fun setUp() {
+        Log.logger = TestLogger()
+    }
+
     @Test
     fun `valid server settings with password should return Success`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-ENHANCEDSTATUSCODES")
             output("250-AUTH PLAIN LOGIN")
             output("250 HELP")
@@ -77,8 +86,8 @@ class SmtpServerSettingsValidatorTest {
         )
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-ENHANCEDSTATUSCODES")
             output("250-AUTH PLAIN LOGIN OAUTHBEARER")
             output("250 HELP")
@@ -108,11 +117,65 @@ class SmtpServerSettingsValidatorTest {
     }
 
     @Test
+    fun `valid server settings with primary email different from username on OAuth should return Success`() {
+        // Arrange
+        val expectedUser = "expected@email.com"
+        val serverSettingsValidator = SmtpServerSettingsValidator(
+            trustedSocketFactory = trustedSocketFactory,
+            oAuth2TokenProviderFactory = { authStateStorage ->
+                assertThat(authStateStorage.getAuthorizationState()).isEqualTo(AUTHORIZATION_STATE)
+                FakeOAuth2TokenProvider(primaryEmail = expectedUser)
+            },
+        )
+
+        val server = MockSmtpServer().apply {
+            output("220 localhost Simple Mail Transfer Service Ready")
+            expect("EHLO $SMTP_HELLO_NAME")
+            output("250-localhost Hello $SMTP_HELLO_NAME")
+            output("250-ENHANCEDSTATUSCODES")
+            output("250-AUTH PLAIN LOGIN XOAUTH2")
+            output("250 HELP")
+
+            val ouathBearer = "user=${expectedUser}\u0001auth=Bearer ${AUTHORIZATION_TOKEN}\u0001\u0001"
+                .encodeUtf8()
+                .base64()
+
+            expect("AUTH XOAUTH2 $ouathBearer")
+            output("235 2.7.0 Authentication successful")
+            expect("QUIT")
+            closeConnection()
+        }
+
+        server.start()
+
+        val serverSettings = ServerSettings(
+            type = "smtp",
+            host = server.host,
+            port = server.port,
+            connectionSecurity = ConnectionSecurity.NONE,
+            authenticationType = AuthType.XOAUTH2,
+            username = USERNAME,
+            password = null,
+            clientCertificateAlias = CLIENT_CERTIFICATE_ALIAS,
+        )
+
+        val authStateStorage = FakeAuthStateStorage(authorizationState = AUTHORIZATION_STATE)
+
+        // Act
+        val result = serverSettingsValidator.checkServerSettings(serverSettings, authStateStorage)
+
+        // Assert
+        assertThat(result).isInstanceOf<ServerSettingsValidationResult.Success>()
+        server.verifyConnectionClosed()
+        server.verifyInteractionCompleted()
+    }
+
+    @Test
     fun `authentication error should return AuthenticationError`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello client.localhost")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-ENHANCEDSTATUSCODES")
             output("250-AUTH PLAIN LOGIN")
             output("250 HELP")
@@ -170,8 +233,8 @@ class SmtpServerSettingsValidatorTest {
     fun `missing capability should return MissingServerCapabilityError`() {
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello 127.0.0.1")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250 HELP")
             expect("QUIT")
             closeConnection()
@@ -201,8 +264,8 @@ class SmtpServerSettingsValidatorTest {
         trustedSocketFactory.injectClientCertificateError(ClientCertificateError.RetrievalFailure)
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello 127.0.0.1")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-STARTTLS")
             output("250 HELP")
             expect("STARTTLS")
@@ -234,8 +297,8 @@ class SmtpServerSettingsValidatorTest {
         trustedSocketFactory.injectClientCertificateError(ClientCertificateError.CertificateExpired)
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello 127.0.0.1")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-STARTTLS")
             output("250 HELP")
             expect("STARTTLS")
@@ -267,8 +330,8 @@ class SmtpServerSettingsValidatorTest {
         fakeTrustManager.shouldThrowException = true
         val server = MockSmtpServer().apply {
             output("220 localhost Simple Mail Transfer Service Ready")
-            expect("EHLO [127.0.0.1]")
-            output("250-localhost Hello 127.0.0.1")
+            expect("EHLO " + SMTP_HELLO_NAME)
+            output("250-localhost Hello " + SMTP_HELLO_NAME)
             output("250-STARTTLS")
             output("250 HELP")
             expect("STARTTLS")
@@ -334,7 +397,7 @@ class SmtpServerSettingsValidatorTest {
     }
 }
 
-class FakeOAuth2TokenProvider : OAuth2TokenProvider {
+class FakeOAuth2TokenProvider(override val primaryEmail: String? = null) : OAuth2TokenProvider {
     override fun getToken(timeoutMillis: Long): String {
         return AUTHORIZATION_TOKEN
     }

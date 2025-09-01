@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import app.k9mail.core.ui.compose.designsystem.atom.text.TextDisplayMedium
+import app.k9mail.core.ui.compose.designsystem.atom.text.TextDisplayMediumAutoResize
 import app.k9mail.core.ui.compose.designsystem.template.ResponsiveWidthContainer
 import app.k9mail.core.ui.compose.theme2.MainTheme
 
@@ -30,7 +30,7 @@ fun AppTitleTopHeader(
                 bottom = MainTheme.spacings.default,
             )
             .then(modifier),
-    ) {
+    ) { contentPadding ->
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -38,6 +38,7 @@ fun AppTitleTopHeader(
                     start = MainTheme.spacings.half,
                     end = MainTheme.spacings.quadruple,
                 )
+                .padding(contentPadding)
                 .then(modifier),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
@@ -51,7 +52,7 @@ fun AppTitleTopHeader(
                 contentDescription = null,
             )
 
-            TextDisplayMedium(text = title)
+            TextDisplayMediumAutoResize(text = title)
         }
     }
 }

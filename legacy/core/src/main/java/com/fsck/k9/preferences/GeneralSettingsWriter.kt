@@ -1,13 +1,14 @@
 package com.fsck.k9.preferences
 
-import com.fsck.k9.AccountPreferenceSerializer
 import com.fsck.k9.K9
 import com.fsck.k9.Preferences
-import timber.log.Timber
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.preference.storage.StorageEditor
+import net.thunderbird.feature.account.storage.legacy.LegacyAccountStorageHandler
 
 internal class GeneralSettingsWriter(
     private val preferences: Preferences,
-    private val generalSettingsManager: RealGeneralSettingsManager,
+    private val generalSettingsManager: DefaultGeneralSettingsManager,
 ) {
     fun write(settings: InternalSettingsMap): Boolean {
         // Convert general settings to the string representation used in preference storage
@@ -20,17 +21,17 @@ internal class GeneralSettingsWriter(
         mergedSettings.putAll(stringSettings)
 
         for ((key, value) in mergedSettings) {
-            editor.putStringWithLogging(key, value)
+            editor.putStringWithLogging(key, value, generalSettingsManager.getConfig().debugging.isDebugLoggingEnabled)
         }
 
         return if (editor.commit()) {
-            Timber.v("Committed general settings to the preference storage.")
+            Log.v("Committed general settings to the preference storage.")
 
             generalSettingsManager.loadSettings()
 
             true
         } else {
-            Timber.v("Failed to commit general settings to the preference storage")
+            Log.v("Failed to commit general settings to the preference storage")
             false
         }
     }
@@ -39,19 +40,19 @@ internal class GeneralSettingsWriter(
 /**
  * Write to a [StorageEditor] while logging what is written if debug logging is enabled.
  */
-internal fun StorageEditor.putStringWithLogging(key: String, value: String?) {
-    if (K9.isDebugLoggingEnabled) {
+internal fun StorageEditor.putStringWithLogging(key: String, value: String?, isDebugLoggingEnabled: Boolean) {
+    if (isDebugLoggingEnabled) {
         var outputValue = value
         if (!K9.isSensitiveDebugLoggingEnabled &&
             (
-                key.endsWith("." + AccountPreferenceSerializer.OUTGOING_SERVER_SETTINGS_KEY) ||
-                    key.endsWith("." + AccountPreferenceSerializer.INCOMING_SERVER_SETTINGS_KEY)
+                key.endsWith("." + LegacyAccountStorageHandler.OUTGOING_SERVER_SETTINGS_KEY) ||
+                    key.endsWith("." + LegacyAccountStorageHandler.INCOMING_SERVER_SETTINGS_KEY)
                 )
         ) {
             outputValue = "*sensitive*"
         }
 
-        Timber.v("Setting %s=%s", key, outputValue)
+        Log.v("Setting %s=%s", key, outputValue)
     }
 
     putString(key, value)

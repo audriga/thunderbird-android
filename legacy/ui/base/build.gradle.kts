@@ -5,7 +5,7 @@ plugins {
 dependencies {
     implementation(projects.legacy.core)
 
-    api(projects.legacy.ui.theme)
+    api(projects.core.ui.theme.manager)
 
     api(libs.androidx.appcompat)
     api(libs.androidx.activity)
@@ -16,7 +16,6 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.biometric)
-    implementation(libs.timber)
     implementation(libs.kotlinx.coroutines.core)
 }
 

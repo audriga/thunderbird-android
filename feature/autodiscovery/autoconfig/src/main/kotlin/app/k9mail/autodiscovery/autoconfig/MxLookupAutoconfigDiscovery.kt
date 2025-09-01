@@ -5,12 +5,13 @@ import app.k9mail.autodiscovery.api.AutoDiscoveryResult
 import app.k9mail.autodiscovery.api.AutoDiscoveryResult.NoUsableSettingsFound
 import app.k9mail.autodiscovery.api.AutoDiscoveryResult.Settings
 import app.k9mail.autodiscovery.api.AutoDiscoveryRunnable
-import app.k9mail.core.common.mail.EmailAddress
-import app.k9mail.core.common.mail.toDomain
-import app.k9mail.core.common.net.Domain
-import com.fsck.k9.logging.Timber
 import java.io.IOException
+import net.thunderbird.core.common.mail.EmailAddress
+import net.thunderbird.core.common.mail.toDomain
+import net.thunderbird.core.common.net.Domain
+import net.thunderbird.core.logging.legacy.Log
 import okhttp3.OkHttpClient
+import org.minidns.dnsname.InvalidDnsNameException
 
 class MxLookupAutoconfigDiscovery internal constructor(
     private val mxResolver: SuspendableMxResolver,
@@ -47,7 +48,7 @@ class MxLookupAutoconfigDiscovery internal constructor(
 
         var latestResult: AutoDiscoveryResult = NoUsableSettingsFound
         for (domainToCheck in listOfNotNull(mxSubDomain, mxBaseDomain)) {
-            for (autoconfigUrl in urlProvider.getAutoconfigUrls(domainToCheck)) {
+            for (autoconfigUrl in urlProvider.getAutoconfigUrls(domainToCheck, email)) {
                 val discoveryResult = autoconfigFetcher.fetchAutoconfig(autoconfigUrl, email)
                 if (discoveryResult is Settings) {
                     return discoveryResult.copy(
@@ -67,7 +68,10 @@ class MxLookupAutoconfigDiscovery internal constructor(
         return try {
             mxResolver.lookup(domain).takeIf { it.mxNames.isNotEmpty() }
         } catch (e: IOException) {
-            Timber.d(e, "Failed to get MX record for domain: %s", domain.value)
+            Log.d(e, "Failed to get MX record for domain: %s", domain.value)
+            null
+        } catch (e: InvalidDnsNameException) {
+            Log.d(e, "Invalid DNS name for domain: %s", domain.value)
             null
         }
     }
@@ -81,7 +85,10 @@ class MxLookupAutoconfigDiscovery internal constructor(
     }
 }
 
-fun createMxLookupAutoconfigDiscovery(okHttpClient: OkHttpClient): MxLookupAutoconfigDiscovery {
+fun createMxLookupAutoconfigDiscovery(
+    okHttpClient: OkHttpClient,
+    config: AutoconfigUrlConfig,
+): MxLookupAutoconfigDiscovery {
     val baseDomainExtractor = OkHttpBaseDomainExtractor()
     val autoconfigFetcher = RealAutoconfigFetcher(
         fetcher = OkHttpFetcher(okHttpClient),
@@ -91,7 +98,7 @@ fun createMxLookupAutoconfigDiscovery(okHttpClient: OkHttpClient): MxLookupAutoc
         mxResolver = SuspendableMxResolver(MiniDnsMxResolver()),
         baseDomainExtractor = baseDomainExtractor,
         subDomainExtractor = RealSubDomainExtractor(baseDomainExtractor),
-        urlProvider = IspDbAutoconfigUrlProvider(),
+        urlProvider = createPostMxLookupAutoconfigUrlProvider(config),
         autoconfigFetcher = autoconfigFetcher,
     )
 }

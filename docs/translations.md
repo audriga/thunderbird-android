@@ -1,20 +1,81 @@
+# Managing strings
+
+We use Android's [resource system](https://developer.android.com/guide/topics/resources/localization) to localize
+user-visible strings in our apps.
+
+Our source language is English (American English to be more precise, but simply "English" (en) on Weblate).
+
+Translations of source strings happen exclusively in our
+[Weblate project](https://hosted.weblate.org/projects/tb-android/). This means the source language is only modified by
+changes to this repository, i.e. via pull requests. Translations are only updated on Weblate and then merged into this
+repository by the Thunderbird team. This is to avoid overlapping changes in both repositories that will lead to merge
+conflicts.
+
+## Adding a string
+
+Add a new string to the appropriate `res/values/strings.xml` file.
+
+Please don't add any translations for this new string to this repository. If you can also provide a translation for the
+new string, wait until the change is merged into this repository and propagated to Weblate. Then translate the new
+string on Weblate.
+
+## Changing a string
+
+Changing a string is only acceptable if you are fixing typos or grammar in English. If you need to change the meaning of
+a string, or otherwise make a change that would affect other strings, please instead remove the string and add a new one
+with a different key.
+
+## Removing a string
+
+Remove the source string from `res/values/strings.xml`. Don't modify translations under `res/values-<lang>/strings.xml`.
+The next merge from Weblate will automatically get rid of the translated strings.
+
+## Changing translations in this repository
+
+This should be avoided whenever possible, as it can create merge conflicts between Weblate and this repository. If you
+need to change individual strings, please translate them on Weblate instead. If a mechanical change is necessary across
+all languages, this should be discussed with the core team who will use this procedure:
+
+1. Lock all components on Weblate by clicking the "Lock" button in the
+   [repository maintenance](https://hosted.weblate.org/projects/tb-android/#repository) screen.
+2. Commit all outstanding changes by clicking the "Commit" button in the same screen.
+3. Trigger creating a pull request containing translation updates from Weblate by clicking the "Push" button in the
+   repository maintenance screen.
+4. Merge that pull request containing updates from Weblate into this repository.
+5. Create a pull request to change the translated files, following the established procedures to get it merged. Make
+   sure you've rebased against the latest changes.
+6. Wait for the changes in this repository to be automatically propagated to and processed by Weblate.
+7. Unlock components on Weblate by clicking the "Unlock" button in the
+   [repository maintenance](https://hosted.weblate.org/projects/tb-android/#repository) screen.
+
+## Merging Weblate pull requests
+
+When merging a pull request from Weblate, please check the following:
+
+* If the PR contains changes to the cs, lt or sk locales, make sure that plural forms are correctly
+  maintained. Weblate does not manage this automatically due to https://github.com/WeblateOrg/weblate/issues/7520 . You
+  will need to manually add a patch that makes sure the strings have both a `many` and an `other` translation. If you
+  don't speak the language, using the same value for the two variants is an acceptable trade-off.
+
 # Managing translations
 
-Right now we're using the `resourceConfigurations` mechanism provided by the Android Gradle Plugin to limit which
-languages are included in builds of the app.
-See e.g. https://github.com/thunderbird/thunderbird-android/blob/176a520e86bfe6875ad409a7565d122406dc7550/app-k9mail/build.gradle.kts#L40-L48
+Right now we're using the `androidResources.localeFilters` mechanism provided by the Android Gradle Plugin to limit
+which languages are included in builds of the app,
+See [localFilters](<https://developer.android.com/reference/tools/gradle-api/8.8/com/android/build/api/dsl/ApplicationAndroidResources#localeFilters()>).
 
 This list needs to be kept in sync with the string array `supported_languages`, so the in-app language picker offers
 exactly the languages that are included in the app.
 
 ## Removing a language
 
-1. Remove the language code from the `resourceConfigurations` list in `app-k9mail/build.gradle.kts`.
+1. Remove the language code from the `androidResources.localeFilters` list in `app-thunderbird/build.gradle.kts` and
+   `app-k9mail/build.gradle.kts`.
 2. Remove the entry from `supported_languages` in `app/core/src/main/res/values/arrays_general_settings_values.xml`.
 
 ## Adding a language
 
-1. Add the language code to the `resourceConfigurations` list in `app-k9mail/build.gradle.kts`.
+1. Add the language code to the `androidResources.localeFilters` list in `app-thunderbird/build.gradle.kts` and
+   `app-k9mail/build.gradle.kts`.
 2. Add an entry to `supported_languages` in `app/core/src/main/res/values/arrays_general_settings_values.xml`.
 3. Make sure that `language_values` in `app/core/src/main/res/values/arrays_general_settings_values.xml` contains an
    entry for the language code you just added. If not:
@@ -41,9 +102,8 @@ When adding a new code module that is including translatable strings, a new comp
 10. Under "Monolingual base language file", enter the path to the string source file,
     e.g. `feature/account/common/src/main/res/values/strings.xml`.
 11. Uncheck "Edit base file".
-12. Change "Adding new translation" to "Contact maintainers".
-13. For "Translation license", select "Apache License 2.0".
-14. Press the "Save" button.
+12. For "Translation license", select "Apache License 2.0".
+13. Press the "Save" button.
 
 ## Things to note
 

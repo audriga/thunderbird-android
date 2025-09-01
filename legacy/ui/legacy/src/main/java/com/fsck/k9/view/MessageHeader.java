@@ -12,13 +12,11 @@ import android.view.View.OnLongClickListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.TooltipCompat;
 import app.k9mail.core.ui.legacy.designsystem.atom.icon.Icons;
-import app.k9mail.legacy.account.Account;
 import app.k9mail.legacy.di.DI;
 import com.fsck.k9.FontSizes;
 import com.fsck.k9.K9;
@@ -42,12 +40,15 @@ import com.fsck.k9.ui.messageview.MessageViewRecipientFormatter;
 import com.fsck.k9.ui.messageview.RecipientNamesView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.textview.MaterialTextView;
+import net.thunderbird.core.android.account.LegacyAccount;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 
 
 public class MessageHeader extends LinearLayout implements OnClickListener, OnLongClickListener {
     private static final int DEFAULT_SUBJECT_LINES = 3;
 
     private final MessageViewRecipientFormatter recipientFormatter = DI.get(MessageViewRecipientFormatter.class);
+    private final GeneralSettingsManager generalSettingsManager = DI.get(GeneralSettingsManager.class);
     private final ReplyActionStrategy replyActionStrategy = DI.get(ReplyActionStrategy.class);
     private final MessageHelper messageHelper = DI.get(MessageHelper.class);
     private final FontSizes fontSizes = K9.getFontSizes();
@@ -194,7 +195,7 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
         starView.setOnClickListener(listener);
     }
 
-    public void populate(final Message message, final Account account, boolean showStar, boolean showAccountChip) {
+    public void populate(final Message message, final LegacyAccount account, boolean showStar, boolean showAccountChip) {
         if (showAccountChip) {
             accountNameView.setVisibility(View.VISIBLE);
             accountNameView.setText(account.getDisplayName());
@@ -209,7 +210,7 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
             fromAddress = fromAddresses[0];
         }
 
-        if (K9.isShowContactPicture()) {
+        if (generalSettingsManager.getConfig().getDisplay().isShowContactPicture()) {
             contactPictureView.setVisibility(View.VISIBLE);
             if (fromAddress != null) {
                 ContactPictureLoader contactsPictureLoader = ContactPicture.getContactPictureLoader();
@@ -244,7 +245,7 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
         setVisibility(View.VISIBLE);
     }
 
-    private void setRecipientNames(Message message, Account account) {
+    private void setRecipientNames(Message message, LegacyAccount account) {
         DisplayRecipientsExtractor displayRecipientsExtractor = new DisplayRecipientsExtractor(recipientFormatter,
                 recipientNamesView.getMaxNumberOfRecipientNames());
 
@@ -254,7 +255,7 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
                 displayRecipients.getNumberOfRecipients());
     }
 
-    private void setReplyActions(Message message, Account account) {
+    private void setReplyActions(Message message, LegacyAccount account) {
         ReplyActions replyActions = replyActionStrategy.getReplyActions(account, message);
         this.replyActions = replyActions;
 

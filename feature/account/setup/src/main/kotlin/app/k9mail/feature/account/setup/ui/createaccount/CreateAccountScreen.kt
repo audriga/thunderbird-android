@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import app.k9mail.core.common.provider.AppNameProvider
 import app.k9mail.core.ui.compose.common.mvi.observe
 import app.k9mail.core.ui.compose.designsystem.template.Scaffold
 import app.k9mail.feature.account.common.ui.AppTitleTopHeader
@@ -14,13 +13,14 @@ import app.k9mail.feature.account.setup.domain.entity.AccountUuid
 import app.k9mail.feature.account.setup.ui.createaccount.CreateAccountContract.Effect
 import app.k9mail.feature.account.setup.ui.createaccount.CreateAccountContract.Event
 import app.k9mail.feature.account.setup.ui.createaccount.CreateAccountContract.ViewModel
+import net.thunderbird.core.common.provider.BrandNameProvider
 
 @Composable
 internal fun CreateAccountScreen(
     onNext: (AccountUuid) -> Unit,
     onBack: () -> Unit,
     viewModel: ViewModel,
-    appNameProvider: AppNameProvider,
+    brandNameProvider: BrandNameProvider,
     modifier: Modifier = Modifier,
 ) {
     val (state, dispatch) = viewModel.observe { effect ->
@@ -41,7 +41,7 @@ internal fun CreateAccountScreen(
     Scaffold(
         topBar = {
             AppTitleTopHeader(
-                title = appNameProvider.appName,
+                title = brandNameProvider.brandName,
             )
         },
         bottomBar = {

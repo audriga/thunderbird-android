@@ -1,10 +1,6 @@
 package com.fsck.k9.storage.messages
 
-import app.k9mail.legacy.account.Account.FolderMode
 import app.k9mail.legacy.mailstore.MoreMessages
-import app.k9mail.legacy.search.LocalSearch
-import app.k9mail.legacy.search.api.SearchAttribute
-import app.k9mail.legacy.search.api.SearchField
 import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasSize
@@ -14,17 +10,27 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import com.fsck.k9.mail.FolderClass
 import com.fsck.k9.mail.FolderType
 import com.fsck.k9.mailstore.FolderNotFoundException
 import com.fsck.k9.mailstore.toDatabaseFolderType
 import com.fsck.k9.storage.RobolectricTest
+import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.logging.testing.TestLogger
+import net.thunderbird.feature.search.legacy.LocalMessageSearch
+import net.thunderbird.feature.search.legacy.api.MessageSearchField
+import net.thunderbird.feature.search.legacy.api.SearchAttribute
+import org.junit.Before
 import org.junit.Test
 
 class RetrieveFolderOperationsTest : RobolectricTest() {
     private val sqliteDatabase = createDatabase()
     private val lockableDatabase = createLockableDatabaseMock(sqliteDatabase)
     private val retrieveFolderOperations = RetrieveFolderOperations(lockableDatabase)
+
+    @Before
+    fun setUp() {
+        Log.logger = TestLogger()
+    }
 
     @Test
     fun `get folder`() {
@@ -35,10 +41,10 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             isLocalOnly = false,
             integrate = true,
             inTopGroup = true,
-            displayClass = "FIRST_CLASS",
-            syncClass = "FIRST_CLASS",
+            visible = true,
+            syncEnabled = true,
             notificationsEnabled = true,
-            pushClass = "NO_CLASS",
+            pushEnabled = true,
         )
 
         val result = retrieveFolderOperations.getFolder(folderId) { folder ->
@@ -49,10 +55,10 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             assertThat(folder.isLocalOnly).isEqualTo(false)
             assertThat(folder.isIntegrate).isEqualTo(true)
             assertThat(folder.isInTopGroup).isEqualTo(true)
-            assertThat(folder.displayClass).isEqualTo(FolderClass.FIRST_CLASS)
-            assertThat(folder.syncClass).isEqualTo(FolderClass.FIRST_CLASS)
+            assertThat(folder.isVisible).isEqualTo(true)
+            assertThat(folder.isSyncEnabled).isEqualTo(true)
             assertThat(folder.isNotificationsEnabled).isEqualTo(true)
-            assertThat(folder.pushClass).isEqualTo(FolderClass.NO_CLASS)
+            assertThat(folder.isPushEnabled).isEqualTo(true)
             true
         }
 
@@ -69,10 +75,10 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             isLocalOnly = true,
             integrate = true,
             inTopGroup = true,
-            displayClass = FolderClass.FIRST_CLASS.name,
-            syncClass = null,
+            visible = true,
+            syncEnabled = false,
             notificationsEnabled = true,
-            pushClass = null,
+            pushEnabled = false,
         )
 
         val result = retrieveFolderOperations.getFolder(folderId) { folder ->
@@ -83,10 +89,10 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             assertThat(folder.isLocalOnly).isEqualTo(true)
             assertThat(folder.isIntegrate).isEqualTo(true)
             assertThat(folder.isInTopGroup).isEqualTo(true)
-            assertThat(folder.displayClass).isEqualTo(FolderClass.FIRST_CLASS)
-            assertThat(folder.syncClass).isEqualTo(FolderClass.INHERITED)
+            assertThat(folder.isVisible).isEqualTo(true)
+            assertThat(folder.isSyncEnabled).isEqualTo(false)
             assertThat(folder.isNotificationsEnabled).isEqualTo(true)
-            assertThat(folder.pushClass).isEqualTo(FolderClass.SECOND_CLASS)
+            assertThat(folder.isPushEnabled).isEqualTo(false)
             true
         }
 
@@ -109,10 +115,10 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             isLocalOnly = false,
             integrate = true,
             inTopGroup = true,
-            displayClass = "FIRST_CLASS",
-            syncClass = "FIRST_CLASS",
+            visible = true,
+            syncEnabled = true,
             notificationsEnabled = true,
-            pushClass = "NO_CLASS",
+            pushEnabled = false,
         )
 
         val result = retrieveFolderOperations.getFolder("folder1") { folder ->
@@ -123,10 +129,10 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             assertThat(folder.isLocalOnly).isEqualTo(false)
             assertThat(folder.isIntegrate).isEqualTo(true)
             assertThat(folder.isInTopGroup).isEqualTo(true)
-            assertThat(folder.displayClass).isEqualTo(FolderClass.FIRST_CLASS)
-            assertThat(folder.syncClass).isEqualTo(FolderClass.FIRST_CLASS)
+            assertThat(folder.isVisible).isEqualTo(true)
+            assertThat(folder.isSyncEnabled).isEqualTo(true)
             assertThat(folder.isNotificationsEnabled).isEqualTo(true)
-            assertThat(folder.pushClass).isEqualTo(FolderClass.NO_CLASS)
+            assertThat(folder.isPushEnabled).isEqualTo(false)
             true
         }
 
@@ -149,10 +155,10 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             isLocalOnly = false,
             integrate = true,
             inTopGroup = true,
-            displayClass = "FIRST_CLASS",
-            syncClass = "FIRST_CLASS",
+            visible = true,
+            syncEnabled = true,
             notificationsEnabled = true,
-            pushClass = "NO_CLASS",
+            pushEnabled = false,
         )
 
         val result = retrieveFolderOperations.getFolders { folder ->
@@ -163,10 +169,10 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             assertThat(folder.isLocalOnly).isEqualTo(false)
             assertThat(folder.isIntegrate).isEqualTo(true)
             assertThat(folder.isInTopGroup).isEqualTo(true)
-            assertThat(folder.displayClass).isEqualTo(FolderClass.FIRST_CLASS)
-            assertThat(folder.syncClass).isEqualTo(FolderClass.FIRST_CLASS)
+            assertThat(folder.isVisible).isEqualTo(true)
+            assertThat(folder.isSyncEnabled).isEqualTo(true)
             assertThat(folder.isNotificationsEnabled).isEqualTo(true)
-            assertThat(folder.pushClass).isEqualTo(FolderClass.NO_CLASS)
+            assertThat(folder.isPushEnabled).isEqualTo(false)
             true
         }
 
@@ -201,15 +207,15 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
     }
 
     @Test
-    fun `get first class display folders`() {
+    fun `get visible display folders`() {
         val (folderId1, folderId2, _) = listOf(
-            sqliteDatabase.createFolder(name = "Folder 1", displayClass = "FIRST_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 2", displayClass = "SECOND_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 3", displayClass = "NO_CLASS"),
+            sqliteDatabase.createFolder(name = "Folder 1", visible = true),
+            sqliteDatabase.createFolder(name = "Folder 2", visible = false),
+            sqliteDatabase.createFolder(name = "Folder 3", visible = false),
         )
 
         val result = retrieveFolderOperations.getDisplayFolders(
-            displayMode = FolderMode.FIRST_CLASS,
+            includeHiddenFolders = false,
             outboxFolderId = folderId2,
         ) { folder ->
             folder.id to folder.name
@@ -219,38 +225,15 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
     }
 
     @Test
-    fun `get everything but second class display folders`() {
-        val (folderId1, _, folderId3) = listOf(
-            sqliteDatabase.createFolder(name = "Folder 1", displayClass = "FIRST_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 2", displayClass = "SECOND_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 3", displayClass = "NO_CLASS"),
+    fun `get all display folders`() {
+        val (folderId1, folderId2, folderId3) = listOf(
+            sqliteDatabase.createFolder(name = "Folder 1", visible = true),
+            sqliteDatabase.createFolder(name = "Folder 2", visible = true),
+            sqliteDatabase.createFolder(name = "Folder 3", visible = false),
         )
 
         val result = retrieveFolderOperations.getDisplayFolders(
-            displayMode = FolderMode.NOT_SECOND_CLASS,
-            outboxFolderId = folderId1,
-        ) { folder ->
-            folder.id to folder.name
-        }
-
-        assertThat(result).isEqualTo(
-            listOf(
-                folderId1 to "Folder 1",
-                folderId3 to "Folder 3",
-            ),
-        )
-    }
-
-    @Test
-    fun `get first and second class display folders`() {
-        val (folderId1, folderId2, _) = listOf(
-            sqliteDatabase.createFolder(name = "Folder 1", displayClass = "FIRST_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 2", displayClass = "SECOND_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 3", displayClass = "NO_CLASS"),
-        )
-
-        val result = retrieveFolderOperations.getDisplayFolders(
-            displayMode = FolderMode.FIRST_AND_SECOND_CLASS,
+            includeHiddenFolders = true,
             outboxFolderId = folderId1,
         ) { folder ->
             folder.id to folder.name
@@ -260,18 +243,23 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
             listOf(
                 folderId1 to "Folder 1",
                 folderId2 to "Folder 2",
+                folderId3 to "Folder 3",
             ),
         )
     }
 
     @Test
     fun `get display folders with message count`() {
-        val (folderId1, folderId2, folderId3, folderId4) = listOf(
-            sqliteDatabase.createFolder(name = "Folder 1", displayClass = "FIRST_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 2", displayClass = "SECOND_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 3", displayClass = "FIRST_CLASS"),
-            sqliteDatabase.createFolder(name = "Folder 4", displayClass = "NO_CLASS"),
+        val folderIds = listOf(
+            sqliteDatabase.createFolder(name = "Folder 1"),
+            sqliteDatabase.createFolder(name = "Folder 2"),
+            sqliteDatabase.createFolder(name = "Folder 3"),
+            sqliteDatabase.createFolder(name = "Folder 4"),
         )
+        val folderId1 = folderIds[0]
+        val folderId2 = folderIds[1]
+        val folderId3 = folderIds[2]
+        val folderId4 = folderIds[3]
         sqliteDatabase.createMessage(uid = "msg1", folderId = folderId1, read = true)
         sqliteDatabase.createMessage(uid = "msg2", folderId = folderId2, read = true)
         sqliteDatabase.createMessage(uid = "msg3", folderId = folderId3, read = true)
@@ -279,7 +267,7 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
         sqliteDatabase.createMessage(uid = "msg5", folderId = folderId3, read = false)
 
         val result = retrieveFolderOperations.getDisplayFolders(
-            displayMode = FolderMode.ALL,
+            includeHiddenFolders = true,
             outboxFolderId = folderId2,
         ) { folder ->
             Triple(folder.id, folder.name, folder.unreadMessageCount)
@@ -516,7 +504,11 @@ class RetrieveFolderOperationsTest : RobolectricTest() {
         assertThat(result).isEqualTo(MoreMessages.TRUE)
     }
 
-    private val unifiedInboxConditions = LocalSearch().apply {
-        and(SearchField.INTEGRATE, "1", SearchAttribute.EQUALS)
+    private val unifiedInboxConditions = LocalMessageSearch().apply {
+        and(
+            MessageSearchField.INTEGRATE,
+            "1",
+            SearchAttribute.EQUALS,
+        )
     }.conditions
 }

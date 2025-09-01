@@ -8,14 +8,20 @@ import android.content.pm.PackageInfo
 import android.content.pm.ProviderInfo
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
-import app.k9mail.core.android.testing.RobolectricTest
 import assertk.all
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.prop
 import com.fsck.k9.provider.AttachmentTempFileProvider
 import kotlin.test.Test
+import net.thunderbird.core.android.testing.RobolectricTest
+import net.thunderbird.core.preference.GeneralSettingsManager
+import org.junit.After
 import org.junit.Before
+import org.koin.core.context.GlobalContext.stopKoin
+import org.koin.core.context.startKoin
+import org.koin.dsl.module
+import org.mockito.kotlin.mock
 import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 
@@ -26,9 +32,21 @@ class ViewIntentFinderTest : RobolectricTest() {
 
     @Before
     fun setUp() {
+        startKoin {
+            modules(
+                module {
+                    single { mock<GeneralSettingsManager>() }
+                },
+            )
+        }
         // The AttachmentTempFileProvider methods called by ViewIntentFinder require the AUTHORITY property to be
         // set. The most robust way to accomplish this is to properly initialize the content provider.
         initializeAttachmentTempFileProvider()
+    }
+
+    @After
+    fun tearDown() {
+        stopKoin()
     }
 
     @Test

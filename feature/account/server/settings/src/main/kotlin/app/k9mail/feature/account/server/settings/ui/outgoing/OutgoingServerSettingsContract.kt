@@ -1,6 +1,5 @@
 package app.k9mail.feature.account.server.settings.ui.outgoing
 
-import app.k9mail.core.common.domain.usecase.validation.ValidationResult
 import app.k9mail.core.ui.compose.common.mvi.UnidirectionalViewModel
 import app.k9mail.feature.account.common.domain.entity.AuthenticationType
 import app.k9mail.feature.account.common.domain.entity.ConnectionSecurity
@@ -8,7 +7,7 @@ import app.k9mail.feature.account.common.domain.entity.toSmtpDefaultPort
 import app.k9mail.feature.account.common.domain.input.NumberInputField
 import app.k9mail.feature.account.common.domain.input.StringInputField
 import app.k9mail.feature.account.common.ui.WithInteractionMode
-import app.k9mail.feature.account.common.ui.loadingerror.LoadingErrorState
+import net.thunderbird.core.common.domain.usecase.validation.ValidationResult
 
 interface OutgoingServerSettingsContract {
 
@@ -22,10 +21,7 @@ interface OutgoingServerSettingsContract {
         val username: StringInputField = StringInputField(),
         val password: StringInputField = StringInputField(),
         val clientCertificateAlias: String? = null,
-
-        override val isLoading: Boolean = true,
-        override val error: Error? = null,
-    ) : LoadingErrorState<Error>
+    )
 
     sealed interface Event {
         data class ServerChanged(val server: String) : Event

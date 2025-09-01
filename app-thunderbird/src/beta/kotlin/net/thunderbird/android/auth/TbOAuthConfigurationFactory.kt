@@ -1,14 +1,15 @@
 package net.thunderbird.android.auth
 
-import app.k9mail.core.common.oauth.OAuthConfiguration
-import app.k9mail.core.common.oauth.OAuthConfigurationFactory
 import net.thunderbird.android.BuildConfig
+import net.thunderbird.core.common.oauth.OAuthConfiguration
+import net.thunderbird.core.common.oauth.OAuthConfigurationFactory
 
 @Suppress("ktlint:standard:max-line-length")
 class TbOAuthConfigurationFactory : OAuthConfigurationFactory {
     override fun createConfigurations(): Map<List<String>, OAuthConfiguration> {
         return mapOf(
             createAolConfiguration(),
+            createFastmailConfiguration(),
             createGmailConfiguration(),
             createMicrosoftConfiguration(),
             createYahooConfiguration(),
@@ -28,6 +29,20 @@ class TbOAuthConfigurationFactory : OAuthConfigurationFactory {
         )
     }
 
+    private fun createFastmailConfiguration(): Pair<List<String>, OAuthConfiguration> {
+        return listOf(
+            "imap.fastmail.com",
+            "smtp.fastmail.com",
+        ) to OAuthConfiguration(
+            clientId = "353e41ae",
+            scopes = listOf("https://www.fastmail.com/dev/protocol-imap", "https://www.fastmail.com/dev/protocol-smtp"),
+            authorizationEndpoint = "https://api.fastmail.com/oauth/authorize",
+            tokenEndpoint = "https://api.fastmail.com/oauth/refresh",
+            redirectUri = "${BuildConfig.APPLICATION_ID}://oauth2redirect",
+        )
+    }
+
+    // TODO: Update clientId and redirectUri once new client ID is available
     private fun createGmailConfiguration(): Pair<List<String>, OAuthConfiguration> {
         return listOf(
             "imap.gmail.com",
@@ -35,11 +50,11 @@ class TbOAuthConfigurationFactory : OAuthConfigurationFactory {
             "smtp.gmail.com",
             "smtp.googlemail.com",
         ) to OAuthConfiguration(
-            clientId = "406964657835-c88sdh5fpqjhavlje1bs9ac9tf8qv5c2.apps.googleusercontent.com",
+            clientId = "560629489500-rvmv3suifbrl1888pl6ppulog8krnlcp.apps.googleusercontent.com",
             scopes = listOf("https://mail.google.com/"),
             authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth",
             tokenEndpoint = "https://oauth2.googleapis.com/token",
-            redirectUri = "${BuildConfig.APPLICATION_ID}:/oauth2redirect",
+            redirectUri = "${BuildConfig.APPLICATION_ID}.mobile:/oauth2redirect",
         )
     }
 
@@ -47,9 +62,12 @@ class TbOAuthConfigurationFactory : OAuthConfigurationFactory {
         return listOf(
             "outlook.office365.com",
             "smtp.office365.com",
+            "smtp-mail.outlook.com",
         ) to OAuthConfiguration(
             clientId = "e6f8716e-299d-4ed9-bbf3-453f192f44e5",
             scopes = listOf(
+                "openid",
+                "email",
                 "https://outlook.office.com/IMAP.AccessAsUser.All",
                 "https://outlook.office.com/SMTP.Send",
                 "offline_access",
