@@ -52,7 +52,6 @@ internal class K9WebViewClient(
             else -> {
                 val smlOverloaded =  SMLWebViewClientExtensions(
                     clipboardManager = clipboardManager,
-                    attachmentResolver = attachmentResolver,
                     messageReference = messageReference,
                     webViewClient = this,
                 ).shouldOverrideUrlLoading(webView, uri)

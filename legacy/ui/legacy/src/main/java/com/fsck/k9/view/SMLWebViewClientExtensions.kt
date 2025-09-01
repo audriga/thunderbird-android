@@ -1,5 +1,6 @@
 package com.fsck.k9.view
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -13,7 +14,6 @@ import android.util.Base64
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.RenderProcessGoneDetail
-import android.webkit.ValueCallback
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -30,7 +30,6 @@ import app.k9mail.legacy.message.controller.MessageReference
 import com.audriga.h2lj.model.StructuredSyntax
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
 import com.fsck.k9.CoreResourceProvider
-import com.fsck.k9.K9
 import com.fsck.k9.K9.isHideTimeZone
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageCompose
@@ -47,7 +46,6 @@ import com.fsck.k9.mail.internet.MimeMessageHelper
 import com.fsck.k9.mail.internet.MimeMultipart
 import com.fsck.k9.mail.internet.MimeParameterEncoder
 import com.fsck.k9.mail.internet.TextBody
-import com.fsck.k9.mailstore.AttachmentResolver
 import com.fsck.k9.message.MessageBuilder.Callback
 import com.fsck.k9.message.SimpleMessageFormat
 import com.fsck.k9.message.SimpleSmlMessageBuilder
@@ -103,7 +101,6 @@ import org.json.JSONObject
 
 class SMLWebViewClientExtensions(
     private val clipboardManager: ClipboardManager,
-    private val attachmentResolver: AttachmentResolver?,
     private val messageReference: MessageReference?,
     private val webViewClient: WebViewClient,
 ) {
@@ -112,7 +109,7 @@ class SMLWebViewClientExtensions(
     fun shouldOverrideUrlLoading(webView: WebView, uri: Uri): Boolean {
         return when (uri.scheme) {
             XMAIL_SCHEME -> {
-                xmail(webView.context, uri)
+                xmail(uri)
                 true
             }
 
@@ -122,7 +119,7 @@ class SMLWebViewClientExtensions(
             }
 
             XJS_SCHEME -> {
-                xjs(webView, uri)
+                xjs(webView)
                 true
             }
 
@@ -136,10 +133,8 @@ class SMLWebViewClientExtensions(
                 true
             }
 
-
-
             XCLIPBOARD_SCHEME -> {
-                copyToClipboard(webView.context, uri)
+                copyToClipboard(uri)
                 true
             }
 
@@ -149,7 +144,7 @@ class SMLWebViewClientExtensions(
             }
 
             XREQUEST_SCHEME -> {
-                xrequest(webView.context, uri)
+                xrequest(uri)
                 true
             }
 
@@ -205,9 +200,9 @@ class SMLWebViewClientExtensions(
         }
     }
 
-    private fun copyToClipboard(context: Context, uri: Uri) {
-        val content = uri.schemeSpecificPart;
-        val label = "Copied $content";
+    private fun copyToClipboard(uri: Uri) {
+        val content = uri.schemeSpecificPart
+        val label = "Copied $content"
         clipboardManager.setText(label, content)
     }
 
@@ -224,9 +219,11 @@ class SMLWebViewClientExtensions(
                 query.equals("accept") -> {
                     imipIteract(cal, IMIPAction.Accept, account, context)
                 }
+
                 query.equals("decline") -> {
                     imipIteract(cal, IMIPAction.Decline, account, context)
                 }
+
                 query.equals("tentative") -> {
                     imipIteract(cal, IMIPAction.Tentative, account, context)
                 }
@@ -236,9 +233,9 @@ class SMLWebViewClientExtensions(
 
     private fun xShowSource(context: Context, uri: Uri) {
         val encodedJsons = uri.schemeSpecificPart.split(",")
-        val jsons = encodedJsons.map {  String(Base64.decode(it, Base64.NO_WRAP + Base64.URL_SAFE)) }
+        val jsons = encodedJsons.map { String(Base64.decode(it, Base64.NO_WRAP + Base64.URL_SAFE)) }
         val xwebView = WebView(context) // findViewById(R.id.webview)
-        xwebView.visibility = View.VISIBLE;
+        xwebView.visibility = View.VISIBLE
         xwebView.webViewClient = webViewClient
 
         xwebView.loadDataWithBaseURL("about:blank", jsons[0], "application/json", "utf-8", null)
@@ -270,16 +267,17 @@ class SMLWebViewClientExtensions(
         i.putExtra(SMLMessageComposeUtil.IS_SML, true)
         i.setAction(MessageCompose.ACTION_COMPOSE)
         i.putExtra(SMLMessageComposeUtil.SML_PAYLOAD, text)
-        context.startActivity(i);
+        context.startActivity(i)
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private fun showRenderedCardsPopup(
         context: Context,
         renderedDisplayHTMLs: List<String>,
     ) {
         val xwebView = WebView(context) // findViewById(R.id.webview)
 
-        xwebView.setVisibility(View.VISIBLE);
+        xwebView.visibility = View.VISIBLE
         xwebView.settings.javaScriptEnabled = true
         xwebView.settings.domStorageEnabled = true
         xwebView.webViewClient = webViewClient
@@ -291,7 +289,7 @@ class SMLWebViewClientExtensions(
             <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
             <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono">
             <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700">
-    </head>""";
+    </head>"""
         val htmlToDisplay = "<!DOCTYPE html>$css<html><body>$result</body></html>"
         xwebView.loadDataWithBaseURL("about:blank", htmlToDisplay, "text/html", "utf-8", null)
 
@@ -339,10 +337,8 @@ class SMLWebViewClientExtensions(
             val ld2hRenderResult =
                 ld2hRenderer.render(jsonObject, listOf(webUrlButtonDesc, shareAsFileButtonDesc, shareAsMailButtonDesc))
             if (ld2hRenderResult != null) {
-                renderedDisplayHTMLs.add(ld2hRenderResult);
+                renderedDisplayHTMLs.add(ld2hRenderResult)
             }
-
-
         }
         if (renderedDisplayHTMLs.isNotEmpty()) {
             showRenderedCardsPopup(context, renderedDisplayHTMLs)
@@ -350,9 +346,9 @@ class SMLWebViewClientExtensions(
     }
 
     private fun xloadcards(context: Context, uri: Uri) {
-        val  maxCards = 5;
+        val maxCards = 5
         val encodedUrls = uri.schemeSpecificPart.split(",")
-        val urls = encodedUrls.map {  String(Base64.decode(it, Base64.NO_WRAP + Base64.URL_SAFE)) }
+        val urls = encodedUrls.map { String(Base64.decode(it, Base64.NO_WRAP + Base64.URL_SAFE)) }
         val ld2hRenderer = MustacheRenderer()
         val renderedDisplayHTMLs = ArrayList<String>()
         val typesToSkip = arrayOf("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage")
@@ -360,11 +356,11 @@ class SMLWebViewClientExtensions(
             if (renderedDisplayHTMLs.size >= maxCards) {
                 break
             }
-            val (htmlSrc: String?, okErr: String?) = downloadPage(url.toUri())
+            val (htmlSrc: String?, _: String?) = downloadPage(url.toUri())
             if (htmlSrc != null) {
-                var data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
+                var data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD)
                 if (data.isEmpty()) {
-                    data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
+                    data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA)
                 }
                 if (data.isNotEmpty()) {
                     for (structuredData in data) {
@@ -380,9 +376,12 @@ class SMLWebViewClientExtensions(
                         val webUrlButtonDesc = SMLUtil.getWebUrlButtonDesc(jsonObject)
                         val shareAsFileButtonDesc = SMLUtil.getShareAsFileButtonDesc(jsonObject, type)
                         val shareAsMailButtonDesc = SMLUtil.getShareAsMailButtonDesc(jsonObject)
-                        val ld2hRenderResult = ld2hRenderer.render(jsonObject, listOf(webUrlButtonDesc, shareAsFileButtonDesc, shareAsMailButtonDesc))
+                        val ld2hRenderResult = ld2hRenderer.render(
+                            jsonObject,
+                            listOf(webUrlButtonDesc, shareAsFileButtonDesc, shareAsMailButtonDesc),
+                        )
                         if (ld2hRenderResult != null) {
-                            renderedDisplayHTMLs.add(ld2hRenderResult);
+                            renderedDisplayHTMLs.add(ld2hRenderResult)
                         }
                     }
                 } else {
@@ -415,7 +414,7 @@ class SMLWebViewClientExtensions(
 
         if (jsonSrc != null) {
             val jsonLds = JsonLdDeserializer.deserialize(jsonSrc)
-            val renderer: MustacheRenderer = MustacheRenderer()
+            val renderer = MustacheRenderer()
 
             val renderedHTMLs: ArrayList<String> = ArrayList(jsonLds.size)
             for (jsonObject in jsonLds) {
@@ -429,9 +428,9 @@ class SMLWebViewClientExtensions(
         } else {
             showToast(context, "Got no content ($okErr)")
         }
-
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private fun xstory(context: Context, uri: Uri) {
 
         // https://www.geeksforgeeks.org/android-webview-in-kotlin/
@@ -440,8 +439,7 @@ class SMLWebViewClientExtensions(
         // https://stackoverflow.com/questions/47872078/how-to-load-an-url-inside-a-webview-using-android-kotlin
         // https://stackoverflow.com/questions/20333047/checking-internet-connection-in-webview
 
-        var xwebView = WebView(context) // findViewById(R.id.webview)
-
+        val xwebView = WebView(context) // findViewById(R.id.webview)
 
 //        xwebView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 //        xwebView.forceLayout()
@@ -453,8 +451,8 @@ class SMLWebViewClientExtensions(
 //        xwebView.settings.setSupportMultipleWindows(true)
 //        xwebView.layout(0,0,-1,-1)
 //        xwebView.layoutMode = -1
-        xwebView.setBackgroundColor(Color.RED);
-        xwebView.setVisibility(View.VISIBLE);
+        xwebView.setBackgroundColor(Color.RED)
+        xwebView.visibility = View.VISIBLE
         xwebView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                 view?.loadUrl("" + url)
@@ -462,7 +460,7 @@ class SMLWebViewClientExtensions(
             }
 
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                showToast(context, "load: " + url)
+                showToast(context, "load: $url")
                 super.onPageStarted(view, url, favicon)
             }
 
@@ -474,11 +472,15 @@ class SMLWebViewClientExtensions(
                     context,
                     "done: " + view?.progress + " / " + view?.contentHeight
                         + " / " + view?.title + " / " + url,
-                );
+                )
                 super.onPageFinished(view, url)
             }
 
-            override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) {
+            override fun onReceivedHttpError(
+                view: WebView,
+                request: WebResourceRequest,
+                response: WebResourceResponse,
+            ) {
                 val errorMessage = "got HTTP Error!"
                 showToast(context, errorMessage)
                 super.onReceivedHttpError(view, request, response)
@@ -490,7 +492,7 @@ class SMLWebViewClientExtensions(
                 super.onReceivedError(view, request, error)
             }
 
-            override fun onRenderProcessGone(view: WebView, detail:     RenderProcessGoneDetail): Boolean {
+            override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
 
                 val errorMessage = "onRenderProcessGone"
                 showToast(context, errorMessage)
@@ -505,7 +507,6 @@ class SMLWebViewClientExtensions(
                 return shouldOverrideUrlLoading(webView, request.url)
             }
 
-
             // https://stackoverflow.com/questions/8200945/how-to-get-html-content-from-a-webview
 
         }
@@ -515,7 +516,7 @@ class SMLWebViewClientExtensions(
 
         // R.style.FullscreenDialogStyle
         // android.R.style.Theme_Black_NoTitleBar_Fullscreen
-        var dialogAlert = MaterialAlertDialogBuilder(context)
+        val dialogAlert = MaterialAlertDialogBuilder(context)
             .setView(xwebView)
             //.setTitle("title")
             //.setMessage("msg: " + s)
@@ -530,19 +531,17 @@ class SMLWebViewClientExtensions(
         // Make Fullscreen
         // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
         dialogAlert.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-
-
     }
 
     private fun mailTo(context: Context, uri: Uri) {
 //                val actionQuery = uri.getQueryParameters("action") //for some reason this throws an exception
-        val query = uri.query;
+        val query = uri.query
         if (query != null && query.contains("action")) {
             val schemaSpecific = uri.schemeSpecificPart
             val end = schemaSpecific.indexOf('?')
             val recipient = Uri.decode(schemaSpecific.substring(0, end))
             val requestAction = query.substring(query.indexOf('=') + 1, query.length)
-            val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction);
+            val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction)
             if (smlPayload != null) {
                 val mc = DI.get(MessagingController::class.java)
                 val account: Account? = account(messageReference)
@@ -601,7 +600,7 @@ class SMLWebViewClientExtensions(
         }
     }
 
-    private fun xmail(context: Context, uri: Uri) {
+    private fun xmail(uri: Uri) {
 
         val address = Address("max2@oldhoster.net")
 
@@ -639,16 +638,16 @@ class SMLWebViewClientExtensions(
 
         val nowDate = Date()
 
-        message.subject = "subjectText " + uri
+        message.subject = "subjectText $uri"
         message.internalDate = nowDate
-        message.addSentDate(nowDate, K9.isHideTimeZone)
+        message.addSentDate(nowDate, isHideTimeZone)
         message.setFrom(address)
         message.setHeader("To", address.toEncodedString())
 
         val messagingController = DI.get(MessagingController::class.java)
         val account = account(messageReference)
         if (account != null) {
-            messagingController.sendMessageBlocking(account, message);
+            messagingController.sendMessageBlocking(account, message)
         }
     }
 
@@ -675,31 +674,18 @@ class SMLWebViewClientExtensions(
         private const val XIMIP = "ximip"
         private const val XPLAY_MEDIA = "xplaymedia"
 
-        private fun xrequest(context: Context, uri: Uri) {
+        private fun xrequest(uri: Uri) {
             val httpUri = uri.buildUpon().scheme("https").build()
             downloadPage(httpUri)
-            return;
+            return
         }
 
-
-
-
-
-
-
-        private fun xjs(webView: WebView, uri: Uri) {
+        private fun xjs(webView: WebView) {
 
             webView.evaluateJavascript(
                 "(function() { return 'this'; })();",
-                object : ValueCallback<String?> {
-                    override fun onReceiveValue(value: String?) {
-                        xalert(webView.context, "" + value);
-                    }
-                },
-            )
-
+            ) { value -> xalert(webView.context, "" + value) }
         }
-
 
         /*
         import android.view.LayoutInflater
@@ -724,10 +710,10 @@ class SMLWebViewClientExtensions(
 
             // R.style.FullscreenDialogStyle
             // android.R.style.Theme_Black_NoTitleBar_Fullscreen
-            var dialogAlert = MaterialAlertDialogBuilder(context)
+            MaterialAlertDialogBuilder(context)
                 // .setView(xwebView)
                 .setTitle("title")
-                .setMessage("msg: " + s)
+                .setMessage("msg: $s")
                 .setPositiveButton("Close", null)
                 .setCancelable(false)
                 .create()
@@ -746,13 +732,7 @@ class SMLWebViewClientExtensions(
                 .setNegativeButton(BaseR.string.cancel_action, null)
                 .create()
             */
-
         }
-
-
-
-
-
 
         private fun xshareAsFile(context: Context, uri: Uri) {
             val base64 = uri.authority
@@ -768,11 +748,16 @@ class SMLWebViewClientExtensions(
                 }
             }
             // todo: deduplicate temp file writing code
-            val jsonFile = File(directory, fileName ?:"sml.json")
+            val jsonFile = File(directory, fileName ?: "sml.json")
             jsonFile.writeBytes(data)
 
 //        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
-            val sharableUri = AttachmentTempFileProvider.getUriForFile(context, "${context.packageName}.tempfileprovider", jsonFile, "sml1.json")
+            val sharableUri = AttachmentTempFileProvider.getUriForFile(
+                context,
+                "${context.packageName}.tempfileprovider",
+                jsonFile,
+                "sml1.json",
+            )
 //        val sharableUri = AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(jsonFile), "sml1.json")
 
             val sendIntent: Intent = Intent().apply {
@@ -787,6 +772,7 @@ class SMLWebViewClientExtensions(
             startActivity(context, shareIntent, null)
             // todo the above contains some duplicate code from AttachmentTempFileProvider. It does not contain the cleanup code.
         }
+
         private fun xshareAsCal(context: Context, uri: Uri) {
             val base64 = uri.authority
             val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
@@ -798,12 +784,17 @@ class SMLWebViewClientExtensions(
             viewTextAsFile(context, calText, "ical", "text/calendar")
         }
 
-
-
         private fun openBarcode(context: Context, uri: Uri) {
-            val bcbp = "M1TEST/HIDDEN E8OQ6FU FRARLGLH 4010 012C004D0001 35C>2180WM6012BLH 2922023642241060 LH *30600000K09"
-            val bm = generateQRCodeImage(bcbp)
-            val v : ImageView = ImageView(context)
+            // todo needs to actually use data from uri for qr code
+            var data: String? = null
+            try {
+                uri.getQueryParameter("format")
+                data = uri.getQueryParameter("data")
+            } catch (_: NullPointerException) {}
+            val bcbp =
+                "M1TEST/HIDDEN E8OQ6FU FRARLGLH 4010 012C004D0001 35C>2180WM6012BLH 2922023642241060 LH *30600000K09"
+            val bm = generateQRCodeImage(data ?: bcbp)
+            val v = ImageView(context)
             v.setImageBitmap(bm)
             val dialogAlert = MaterialAlertDialogBuilder(context)
                 .setView(v)
@@ -838,7 +829,7 @@ class SMLWebViewClientExtensions(
             val pixels = setBitmapPixels(bitMatrix)
             val bitmap = encodeBitmap(pixels, bitMatrix.width, bitMatrix.height)
 
-            return bitmap;
+            return bitmap
         }
 
         private fun setBitmapPixels(bitMatrix: BitMatrix): IntArray {
@@ -847,18 +838,16 @@ class SMLWebViewClientExtensions(
             for (y in 0 until bitMatrix.height) {
                 val offset = y * bitMatrix.width
                 for (x in 0 until bitMatrix.width)
-                    pixels[offset + x] = if (bitMatrix.get(x , y)) Color.BLACK else Color.WHITE
+                    pixels[offset + x] = if (bitMatrix.get(x, y)) Color.BLACK else Color.WHITE
             }
             return pixels
         }
 
-        private fun encodeBitmap(pixels: IntArray, width: Int, height: Int) : Bitmap {
+        private fun encodeBitmap(pixels: IntArray, width: Int, height: Int): Bitmap {
             val bitmap = createBitmap(width, height)
             bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
             return bitmap
         }
-
-
 
         private fun xPlayMedia(context: Context, uri: Uri) {
             val base64 = uri.authority
@@ -875,7 +864,6 @@ class SMLWebViewClientExtensions(
             //        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
             startActivity(context, sendIntent, null)
         }
-
 
         /**
          * @param partStat is set for the PARTSTAT of the attendee.
@@ -979,7 +967,6 @@ class SMLWebViewClientExtensions(
             }
         }
 
-
         private fun calendarFromJsonLd(json: JSONObject): Calendar? {
             val originalICalText = json.optString("originalICal")
             if (originalICalText.isNotEmpty()) {
@@ -987,7 +974,7 @@ class SMLWebViewClientExtensions(
                 try {
                     val originalIcal = cbuilder.build(originalICalText.reader())
                     if (originalIcal != null) {
-                        return originalIcal;
+                        return originalIcal
                     } else {
                         Timber.e("Json had originalVEvent property, but parsing failed")
                     }
@@ -1035,7 +1022,7 @@ class SMLWebViewClientExtensions(
                             val dt = ZonedDateTime.parse(startDate)
                             event.add<PropertyContainer>(DtStart(dt))
                         } else {
-                            event.add<PropertyContainer>(DtStart<LocalDateTime>(startDate))
+                            event.add(DtStart<LocalDateTime>(startDate))
                         }
                     } catch (
                         e: DateTimeParseException,
@@ -1051,7 +1038,7 @@ class SMLWebViewClientExtensions(
                     try {
                         if (endDate.contains("+")) {
                             val dt = ZonedDateTime.parse(endDate)
-                            event.add<PropertyContainer>(DtEnd(dt))
+                            event.add(DtEnd(dt))
                         } else {
                             event.add<PropertyContainer>(DtEnd<LocalDateTime>(endDate))
                         }
@@ -1071,7 +1058,7 @@ class SMLWebViewClientExtensions(
                 val locationName = location.optString("name")
                 val locationAddress = location.opt("address")
                 if (locationName.isNotEmpty()) {
-                    event.add<PropertyContainer>(Location(locationName))
+                    event.add(Location(locationName))
                 } else if (locationAddress is String && locationAddress.isNotEmpty()) {
                     event.add<PropertyContainer>(Location(locationAddress))
                 } else if (locationAddress is JSONObject) {
@@ -1088,6 +1075,7 @@ class SMLWebViewClientExtensions(
             }
             return event
         }
+
         private fun findAndUpdateAccountEmailInAttendees(event: VEvent, account: Account, partStat: String): Attendee? {
             // the user currently interacting with this mail as an attendee of the event
             var userAttendee: Attendee? = null
@@ -1118,7 +1106,11 @@ class SMLWebViewClientExtensions(
             //        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
             //        val sharableUri = AttachmentTempFileProvider.getUriForFile(context, "${context.packageName}.tempfileprovider", jsonFile, "sml1.json")
             val sharableUri =
-                AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(textFile), "event.$extension")
+                AttachmentTempFileProvider.createTempUriForContentUri(
+                    context,
+                    Uri.fromFile(textFile),
+                    "event.$extension",
+                )
             val sendIntent: Intent = Intent().apply {
                 action = Intent.ACTION_VIEW
                 setDataAndType(sharableUri, mimeType)
