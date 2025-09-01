@@ -90,7 +90,7 @@ public abstract class SMLMessageView {
         String htmlWithStringButtons = addLoadButtonsAfterUrls(htmlString);
         // todo this is not actually using the output of htmlProcessor.processForDisplay.
         //    also: the function that adds the buttons should proably work on the html tree instead of what it is currently doing
-        return SMLUtil.CSS + button + htmlWithStringButtons;
+        return SMLUtil.css() + button + htmlWithStringButtons;
     }
 
     @NonNull
@@ -151,7 +151,7 @@ public abstract class SMLMessageView {
 //
 //
 //                    sanitizedHtml = css  + "<br><br>SML:<br>" + result + "<br>XSML<br>" + linx + "<br>" + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + htmlProcessor.processForDisplay(htmlString);
-        return SMLUtil.CSS + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + sanitizedHtml;
+        return SMLUtil.css() + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + sanitizedHtml;
     }
 
     private static void renderWithButtons(JSONObject jsonObject, MustacheRenderer renderer, ArrayList<String> renderedHTMLs)
@@ -564,7 +564,7 @@ public abstract class SMLMessageView {
                 // Should not render all jsonLds at the top of the message, if we are in our "newsletter with a dozen recipes" case
                 String inlineModifiedHtml = addInlineButtonsToHtmlForEmbeddedStructuredData(rawHtml, data);
                 if (inlineModifiedHtml != null) {
-                    displayHtml = SMLUtil.CSS + inlineModifiedHtml;
+                    displayHtml = SMLUtil.css() + inlineModifiedHtml;
                 } else {
                     displayHtml = renderDataOrExtractedAndAddToHTML(data, extracted, sanitizedHtml);
                 }

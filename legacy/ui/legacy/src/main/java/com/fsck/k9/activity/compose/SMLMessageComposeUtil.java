@@ -235,7 +235,7 @@ public class SMLMessageComposeUtil {
 
     @NonNull
     private static String addHeadToLd2hResult(String ld2hRenderResult) {
-        return SMLUtil.CSS + ld2hRenderResult;
+        return SMLUtil.css() + ld2hRenderResult;
     }
 
     public void displayLd2hResult(String ld2hRenderResult) {
