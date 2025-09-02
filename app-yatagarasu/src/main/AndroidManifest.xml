@@ -6,7 +6,7 @@
     >
 
     <application
-        android:name="com.audriga.yatagarasu.ThunderbirdApp"
+        android:name="com.audriga.yatagarasu.android.ThunderbirdApp"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.Yatagarasu.Startup"
@@ -43,9 +43,9 @@
         </provider>
 
         <!-- This component is disabled by default (if possible). It will be enabled programmatically if necessary. -->
-        <!-- IMPORTANT: The component name must be `com.audriga.yatagarasu.widget.provider.MessageListWidgetProvider` and can't be changed. -->
+        <!-- IMPORTANT: The component name must be `com.audriga.yatagarasu.android.widget.provider.MessageListWidgetProvider` and can't be changed. -->
         <receiver
-            android:name="com.audriga.yatagarasu.widget.provider.MessageListWidgetProvider"
+            android:name="com.audriga.yatagarasu.android.widget.provider.MessageListWidgetProvider"
             android:icon="@drawable/message_list_widget_preview"
             android:label="@string/message_list_widget_label"
             android:enabled="@bool/home_screen_widgets_enabled"
@@ -62,10 +62,10 @@
 
         <!-- This component is disabled by default (if possible). It will be enabled programmatically if necessary. -->
         <!-- IMPORTANT: The component name and can't be changed and always must be:
-                        `com.audriga.yatagarasu.widget.provider.UnreadWidgetProvider`
+                        `com.audriga.yatagarasu.android.widget.provider.UnreadWidgetProvider`
         -->
         <receiver
-            android:name="com.audriga.yatagarasu.widget.provider.UnreadWidgetProvider"
+            android:name="com.audriga.yatagarasu.android.widget.provider.UnreadWidgetProvider"
             android:label="@string/unread_widget_label"
             android:enabled="@bool/home_screen_widgets_enabled"
             android:exported="false"

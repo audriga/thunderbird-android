@@ -80,10 +80,11 @@ android {
     }
 
     signingConfigs {
-//        createSigningConfig(project, SigningType.TB_RELEASE)
-//        createSigningConfig(project, SigningType.TB_BETA)
-//        createSigningConfig(project, SigningType.TB_DAILY)
-        createSigningConfig(project, SigningType.YG_RELEASE)
+        val useUploadKey = properties.getOrDefault("tb.useUploadKey", "true") == "true"
+
+        createSigningConfig(project, SigningType.TB_RELEASE, isUpload = useUploadKey)
+        createSigningConfig(project, SigningType.TB_BETA, isUpload = useUploadKey)
+        createSigningConfig(project, SigningType.TB_DAILY, isUpload = useUploadKey)
     }
 
     buildTypes {
@@ -96,14 +97,13 @@ android {
             isDebuggable = true
 
             buildConfigField("String", "GLEAN_RELEASE_CHANNEL", "null")
-            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
         }
 
         release {
-            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
+            signingConfig = signingConfigs.getByType(SigningType.TB_RELEASE)
 
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             isDebuggable = false
 
             proguardFiles(
@@ -135,7 +135,7 @@ android {
         }
 
         create("daily") {
-            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
+            signingConfig = signingConfigs.getByType(SigningType.TB_DAILY)
 
             applicationIdSuffix = ".daily"
             versionNameSuffix = "a1"
