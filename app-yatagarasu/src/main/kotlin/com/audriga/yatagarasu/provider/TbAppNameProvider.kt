@@ -1,13 +1,21 @@
 package com.audriga.yatagarasu.provider
 
 import android.content.Context
-import app.k9mail.core.common.provider.AppNameProvider
-import com.audriga.yatagarasu.android.R
+import com.fsck.k9.preferences.FilePrefixProvider
+import net.thunderbird.android.R
+import net.thunderbird.core.common.provider.AppNameProvider
+import net.thunderbird.core.common.provider.BrandNameProvider
 
-class TbAppNameProvider(
+internal class TbAppNameProvider(
     context: Context,
-) : AppNameProvider {
+) : AppNameProvider, BrandNameProvider, FilePrefixProvider {
     override val appName: String by lazy {
         context.getString(R.string.app_name)
     }
+
+    override val brandName: String by lazy {
+        context.getString(R.string.brand_name)
+    }
+
+    override val filePrefix: String = "yatagarasu"
 }

@@ -186,6 +186,8 @@ android {
             excludes += listOf(
                 "META-INF/*.kotlin_module",
                 "kotlin/**",
+                "META-INF/*.version",
+                "META-INF/*.md", // TODO
                 "DebugProbesKt.bin",
             )
         }

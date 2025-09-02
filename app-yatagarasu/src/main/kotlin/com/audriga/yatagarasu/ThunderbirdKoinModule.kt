@@ -1,45 +1,42 @@
 package com.audriga.yatagarasu
 
-import app.k9mail.core.common.oauth.OAuthConfigurationFactory
-import app.k9mail.core.common.provider.AppNameProvider
-import app.k9mail.core.featureflag.FeatureFlagFactory
-import app.k9mail.core.ui.theme.api.FeatureThemeProvider
-import app.k9mail.core.ui.theme.api.ThemeProvider
-import app.k9mail.feature.telemetry.telemetryModule
+
 import app.k9mail.feature.widget.shortcut.LauncherShortcutActivity
 import com.audriga.yatagarasu.android.BuildConfig
 import com.fsck.k9.AppConfig
+import com.fsck.k9.DefaultAppConfig
 import com.fsck.k9.activity.MessageCompose
 import com.audriga.yatagarasu.auth.TbOAuthConfigurationFactory
 import com.audriga.yatagarasu.dev.developmentModuleAdditions
+import com.audriga.yatagarasu.feature.featureModule
 import com.audriga.yatagarasu.featureflag.TbFeatureFlagFactory
-import com.audriga.yatagarasu.provider.TbAppNameProvider
-import com.audriga.yatagarasu.provider.TbFeatureThemeProvider
-import com.audriga.yatagarasu.provider.TbThemeProvider
-import com.audriga.yatagarasu.widget.appWidgetModule
+import com.audriga.yatagarasu.provider.providerModule
 import com.audriga.yatagarasu.widget.provider.MessageListWidgetProvider
 import com.audriga.yatagarasu.widget.provider.UnreadWidgetProvider
-import org.koin.android.ext.koin.androidContext
+import com.audriga.yatagarasu.widget.widgetModule
+import net.thunderbird.app.common.appCommonModule
+import net.thunderbird.core.common.oauth.OAuthConfigurationFactory
+import net.thunderbird.core.featureflag.FeatureFlagFactory
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val appModule = module {
-    includes(appWidgetModule)
-    includes(telemetryModule)
+    includes(appCommonModule)
+
+    includes(widgetModule)
+    includes(featureModule)
+    includes(providerModule)
 
     single(named("ClientInfoAppName")) { BuildConfig.CLIENT_INFO_APP_NAME }
     single(named("ClientInfoAppVersion")) { BuildConfig.VERSION_NAME }
     single<AppConfig> { appConfig }
     single<OAuthConfigurationFactory> { TbOAuthConfigurationFactory() }
-    single<AppNameProvider> { TbAppNameProvider(androidContext()) }
-    single<ThemeProvider> { TbThemeProvider() }
-    single<FeatureThemeProvider> { TbFeatureThemeProvider() }
     single<FeatureFlagFactory> { TbFeatureFlagFactory() }
 
     developmentModuleAdditions()
 }
 
-val appConfig = AppConfig(
+val appConfig = DefaultAppConfig(
     componentsToDisable = listOf(
         MessageCompose::class.java,
         LauncherShortcutActivity::class.java,

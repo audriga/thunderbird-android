@@ -1,7 +1,7 @@
 package com.audriga.yatagarasu.provider
 
-import app.k9mail.core.ui.theme.api.ThemeProvider
-import com.audriga.yatagarasu.android.R
+import net.thunderbird.android.R
+import net.thunderbird.core.ui.theme.api.ThemeProvider
 
 class TbThemeProvider : ThemeProvider {
     override val appThemeResourceId = R.style.Theme_Yatagarasu_DayNight
