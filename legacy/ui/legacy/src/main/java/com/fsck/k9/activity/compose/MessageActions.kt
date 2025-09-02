@@ -17,7 +17,7 @@ object MessageActions {
      * activity.
      */
     @JvmStatic
-    fun actionCompose(context: Context, account: LegacyAccount?) {
+    fun actionCompose(context: Context, account: LegacyAccount?, sml: Boolean) {
         val defaultAccount = Preferences.getPreferences().defaultAccount
         if (account == null && defaultAccount == null) {
             FeatureLauncherActivity.launch(context, AccountSetup)
@@ -28,6 +28,7 @@ object MessageActions {
             }
             val intent = Intent(context, MessageCompose::class.java).apply {
                 putExtra(MessageCompose.EXTRA_ACCOUNT, accountUuid)
+                putExtra(SMLMessageComposeUtil.IS_SML, sml)
                 action = MessageCompose.ACTION_COMPOSE
             }
             context.startActivity(intent)

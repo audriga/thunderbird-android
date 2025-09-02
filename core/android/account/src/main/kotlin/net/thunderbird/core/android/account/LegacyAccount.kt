@@ -638,10 +638,6 @@ open class LegacyAccount(
         return uuid.hashCode()
     }
 
-    enum class SmlVariant {
-        SML_IN_HTML,
-        DEDICATED_MULTIPART,
-    }
 
     companion object {
         /**

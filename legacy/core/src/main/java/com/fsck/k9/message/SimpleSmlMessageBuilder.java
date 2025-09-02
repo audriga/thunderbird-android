@@ -7,9 +7,10 @@ import androidx.annotation.VisibleForTesting;
 import com.fsck.k9.CoreResourceProvider;
 import app.k9mail.legacy.di.DI;
 import com.fsck.k9.mail.BoundaryGenerator;
-import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeMessage;
+import net.thunderbird.core.common.exception.MessagingException;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 
 
 public class SimpleSmlMessageBuilder extends SmlMessageBuilder {
@@ -18,13 +19,17 @@ public class SimpleSmlMessageBuilder extends SmlMessageBuilder {
         MessageIdGenerator messageIdGenerator = MessageIdGenerator.getInstance();
         BoundaryGenerator boundaryGenerator = BoundaryGenerator.getInstance();
         CoreResourceProvider resourceProvider = DI.get(CoreResourceProvider.class);
-        return new SimpleSmlMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider);
+        GeneralSettingsManager settingsManager = DI.get(GeneralSettingsManager.class);
+        return new SimpleSmlMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider, settingsManager);
     }
 
     @VisibleForTesting
-    SimpleSmlMessageBuilder(MessageIdGenerator messageIdGenerator, BoundaryGenerator boundaryGenerator,
-            CoreResourceProvider resourceProvider) {
-        super(messageIdGenerator, boundaryGenerator, resourceProvider);
+    SimpleSmlMessageBuilder(MessageIdGenerator messageIdGenerator,
+        BoundaryGenerator boundaryGenerator,
+        CoreResourceProvider resourceProvider,
+        GeneralSettingsManager settingsManager
+    ) {
+        super(messageIdGenerator, boundaryGenerator, resourceProvider, settingsManager);
     }
 
     @Override

@@ -21,7 +21,6 @@ import android.util.Patterns;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import app.k9mail.legacy.account.Account;
 import app.k9mail.legacy.di.DI;
 import app.k9mail.legacy.message.controller.SimpleMessagingListener;
 import com.audriga.h2lj.model.StructuredData;
@@ -34,7 +33,6 @@ import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.Message;
-import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeMultipart;
@@ -46,6 +44,8 @@ import net.fortuna.ical4j.data.ParserException;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
+import net.thunderbird.core.android.account.LegacyAccount;
+import net.thunderbird.core.common.exception.MessagingException;
 import org.audriga.ld2h.ButtonDescription;
 import org.audriga.ld2h.MustacheRenderer;
 import org.json.JSONException;
@@ -79,7 +79,7 @@ public abstract class SMLMessageView {
 
 
         // todo this is a per account setting but we only request the setting for the default account
-        Account account = Preferences.getPreferences().getDefaultAccount();
+        LegacyAccount account = Preferences.getPreferences().getDefaultAccount();
         String button;
         if (account != null && account.getDemoView()) {
             button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
@@ -158,7 +158,7 @@ public abstract class SMLMessageView {
         throws IOException {
         String showSourceButton = null;
         // todo this is a per account setting but we only request the setting for the default account
-        Account account = Preferences.getPreferences().getDefaultAccount();
+        LegacyAccount account = Preferences.getPreferences().getDefaultAccount();
         if (account!= null && account.getDebugView()) {
             try {
                 String prettyJson = jsonObject.toString(2);
@@ -200,7 +200,7 @@ public abstract class SMLMessageView {
             // Part must have been lazy loaded. Downloading full part.
            if (part instanceof LocalBodyPart) {
                LocalMessage message = ((LocalBodyPart) part).getMessage();
-               Account account = message.getAccount();
+               LegacyAccount account = message.getAccount();
                MessagingController mc = DI.get(MessagingController.class);
 
                // It would probably be a bit cleaner to use a CompletableFuture but that is only available at API level 24
@@ -209,14 +209,14 @@ public abstract class SMLMessageView {
                //mc.loadMessageRemote(); this could potentially be used instead to download the entire message...
                mc.loadAttachment(account, message, part, new SimpleMessagingListener() {
                    @Override
-                   public void loadAttachmentFinished(Account account, Message message, Part part) {
+                   public void loadAttachmentFinished(LegacyAccount account, Message message, Part part) {
                        resultRef.set(part);
                        latch.countDown();
                        super.loadAttachmentFinished(account, message, part);
                    }
 
                    @Override
-                   public void loadAttachmentFailed(Account account, Message message, Part part, String reason) {
+                   public void loadAttachmentFailed(LegacyAccount account, Message message, Part part, String reason) {
                        Timber.e("Loading Part failed: %s", reason);
                        resultRef.set(part);
                        latch.countDown();
@@ -639,17 +639,17 @@ public abstract class SMLMessageView {
                     if (!attachmentViewInfo.isContentAvailable()) {
                         LocalPart localPart = (LocalPart) attachmentViewInfo.part;
                         String accountUuid = localPart.getAccountUuid();
-                        Account account = Preferences.getPreferences().getAccount(accountUuid);
+                        LegacyAccount account = Preferences.getPreferences().getAccount(accountUuid);
                         LocalMessage message = localPart.getMessage();
                         // this copies parts of downloadAttachment, from AttachmentController
                         mc.loadAttachment(account, message, attachmentViewInfo.part, new SimpleMessagingListener() {
                             @Override
-                            public void loadAttachmentFinished(Account account, Message message, Part part) {
+                            public void loadAttachmentFinished(LegacyAccount account, Message message, Part part) {
                                 attachmentViewInfo.setContentAvailable();
                             }
 
                             @Override
-                            public void loadAttachmentFailed(Account account, Message message, Part part, String reason) {
+                            public void loadAttachmentFailed(LegacyAccount account, Message message, Part part, String reason) {
                                 super.loadAttachmentFailed(account, message, part, reason);
                             }
                         });

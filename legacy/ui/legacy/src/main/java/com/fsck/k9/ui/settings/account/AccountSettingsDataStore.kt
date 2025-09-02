@@ -13,6 +13,7 @@ import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.android.account.MessageFormat
 import net.thunderbird.core.android.account.QuoteStyle
 import net.thunderbird.core.android.account.ShowPictures
+import net.thunderbird.core.android.account.SmlVariant
 import net.thunderbird.feature.mail.folder.api.SpecialFolderSelection
 import net.thunderbird.feature.notification.NotificationLight
 import net.thunderbird.feature.notification.NotificationVibration
@@ -179,7 +180,7 @@ class AccountSettingsDataStore(
             "account_remote_search_num_results" -> account.remoteSearchNumResults = value.toInt()
             "account_ringtone" -> setNotificationSound(value)
             "notification_light" -> setNotificationLight(value)
-            "sml_variant_enum" -> account.smlVariant = Account.SmlVariant.valueOf(value)
+            "sml_variant_enum" -> account.smlVariant = SmlVariant.valueOf(value)
             else -> return
         }
 

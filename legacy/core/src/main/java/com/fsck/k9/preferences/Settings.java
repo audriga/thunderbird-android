@@ -10,7 +10,8 @@ import java.util.TreeMap;
 
 import com.fsck.k9.FontSizes;
 import com.fsck.k9.K9;
-import timber.log.Timber;
+import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.core.preference.storage.StorageEditor;
 
 /*
  * TODO:
@@ -36,7 +37,7 @@ class Settings {
     public static final int VERSION = 105;
 
     static Map<String, Object> validate(int version, Map<String, TreeMap<Integer, SettingsDescription<?>>> settings,
-            Map<String, String> importedSettings, boolean useDefaultValues) {
+        Map<String, String> importedSettings, boolean useDefaultValues) {
 
         Map<String, Object> validatedSettings = new HashMap<>();
         for (Map.Entry<String, TreeMap<Integer, SettingsDescription<?>>> versionedSetting : settings.entrySet()) {
@@ -64,8 +65,8 @@ class Settings {
             boolean useDefaultValue;
             if (!importedSettings.containsKey(key)) {
                 Log.v("Key \"%s\" wasn't found in the imported file.%s",
-                        key,
-                        (useDefaultValues) ? " Using default value." : "");
+                    key,
+                    (useDefaultValues) ? " Using default value." : "");
 
                 useDefaultValue = useDefaultValues;
             } else {
@@ -76,9 +77,9 @@ class Settings {
                     useDefaultValue = false;
                 } catch (InvalidSettingValueException e) {
                     Log.v("Key \"%s\" has invalid value \"%s\" in imported file. %s",
-                            key,
-                            prettyValue,
-                            (useDefaultValues) ? "Using default value." : "Skipping.");
+                        key,
+                        prettyValue,
+                        (useDefaultValues) ? "Using default value." : "Skipping.");
 
                     useDefaultValue = useDefaultValues;
                 }
@@ -106,7 +107,7 @@ class Settings {
      * @return The settings converted to the string representation used in the preference storage.
      */
     public static Map<String, String> convert(Map<String, Object> settings,
-            Map<String, TreeMap<Integer, SettingsDescription<?>>> settingDescriptions) {
+        Map<String, TreeMap<Integer, SettingsDescription<?>>> settingDescriptions) {
         Map<String, String> serializedSettings = new HashMap<>();
 
         for (Entry<String, Object> setting : settings.entrySet()) {
@@ -195,7 +196,7 @@ class Settings {
      * negligible.
      * </p>
      */
-    abstract static class SettingsDescription<T> {
+     abstract static class SettingsDescription<T> {
         /**
          * The setting's default value (internal representation).
          */

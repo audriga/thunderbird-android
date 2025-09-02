@@ -30,10 +30,10 @@ import com.audriga.h2lj.parser.StructuredDataExtractionUtils;
 import com.fsck.k9.activity.misc.Attachment;
 //import com.fsck.k9.helper.MailTo;
 import com.fsck.k9.helper.MimeTypeUtil;
-import com.fsck.k9.logging.Timber;
 import com.fsck.k9.sml.SMLUtil;
 import com.fsck.k9.view.MessageWebView;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import net.thunderbird.core.logging.legacy.Log;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -190,7 +190,7 @@ public class SMLMessageComposeUtil {
 
         } catch (Exception e){
 //            okErr = e.getMessage();
-            Timber.e(e, "Error while downloading html");
+            Log.e(e, "Error while downloading html");
         }
         return htmlSrc;
     }

@@ -7,7 +7,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import app.k9mail.core.ui.compose.designsystem.atom.Surface
-import app.k9mail.core.ui.compose.theme2.thunderbird.ThunderbirdTheme2
+import app.k9mail.core.ui.compose.theme2.yatagarasu.ThunderbirdTheme2
+//import app.k9mail.core.ui.compose.theme2.thunderbird.ThunderbirdTheme2 //todo revert this to tb
 import net.thunderbird.feature.mail.folder.api.FolderType
 import net.thunderbird.feature.mail.folder.api.RemoteFolder
 import net.thunderbird.feature.mail.message.list.ui.dialog.SetupArchiveFolderDialogContract.State

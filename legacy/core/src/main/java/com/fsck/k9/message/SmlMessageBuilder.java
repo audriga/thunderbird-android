@@ -5,22 +5,17 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import android.app.Activity;
-import android.app.PendingIntent;
-import android.content.Intent;
-import android.os.AsyncTask;
-
 import com.fsck.k9.CoreResourceProvider;
 import com.fsck.k9.mail.BodyPart;
 
-import app.k9mail.legacy.account.Account.QuoteStyle;
-import app.k9mail.legacy.account.Identity;
+import net.thunderbird.core.android.account.Identity;
+import net.thunderbird.core.android.account.QuoteStyle;
 import com.fsck.k9.K9;
 import app.k9mail.legacy.message.controller.MessageReference;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BoundaryGenerator;
-import com.fsck.k9.mail.MessagingException;
+import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mail.internet.MimeMessage;
@@ -28,10 +23,12 @@ import com.fsck.k9.mail.internet.MimeMessageHelper;
 import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.message.quote.InsertableHtmlContent;
+import net.thunderbird.core.preference.GeneralSettingsManager;
 
 
 public abstract class SmlMessageBuilder extends MessageBuilder {
 
+    final private GeneralSettingsManager settingsManager;
     private String plainText;
     private String htmlText;
     // For the multipart variant, should we have a jsonld parameter and create the part here
@@ -40,8 +37,12 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
 
 
     protected SmlMessageBuilder(MessageIdGenerator messageIdGenerator,
-            BoundaryGenerator boundaryGenerator, CoreResourceProvider resourceProvider) {
-        super(messageIdGenerator, boundaryGenerator, resourceProvider);
+            BoundaryGenerator boundaryGenerator,
+        CoreResourceProvider resourceProvider,
+        GeneralSettingsManager settingsManager
+    ) {
+        super(messageIdGenerator, boundaryGenerator, resourceProvider, settingsManager);
+        this.settingsManager = settingsManager;
     }
 
     /**
@@ -184,7 +185,7 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
     private TextBody buildText(boolean isDraft, SimpleMessageFormat simpleMessageFormat) {
         TextBodyBuilder textBodyBuilder;
         if (simpleMessageFormat == SimpleMessageFormat.TEXT) {
-            textBodyBuilder = new TextBodyBuilder(plainText);
+            textBodyBuilder = new TextBodyBuilder(plainText, settingsManager);
         } else {
             // don't care about quoted/ signature etc right now, and would need to edit TextBodyBuilder, to not break HTML,
             // if we wanted to use it as it has been.

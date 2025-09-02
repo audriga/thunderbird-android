@@ -3,8 +3,8 @@ package com.fsck.k9.mailstore;
 
 import androidx.annotation.Nullable;
 import app.k9mail.core.android.common.contact.ContactRepository;
-import app.k9mail.core.common.mail.EmailAddress;
-import app.k9mail.core.common.mail.EmailAddressKt;
+import net.thunderbird.core.common.mail.EmailAddress;
+import net.thunderbird.core.common.mail.EmailAddressKt;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.Part;

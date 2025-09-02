@@ -24,21 +24,19 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
-import app.k9mail.legacy.account.Account
 import app.k9mail.legacy.di.DI
 import app.k9mail.legacy.message.controller.MessageReference
 import com.audriga.h2lj.model.StructuredSyntax
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
 import com.fsck.k9.CoreResourceProvider
-import com.fsck.k9.K9.isHideTimeZone
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageCompose
 import com.fsck.k9.activity.compose.SMLMessageComposeUtil
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
-import com.fsck.k9.logging.Timber
 import com.fsck.k9.mail.Address
-import com.fsck.k9.mail.MessagingException
+import net.thunderbird.core.logging.Logger
+import net.thunderbird.core.logging.legacy.Log
 import com.fsck.k9.mail.internet.Headers.contentType
 import com.fsck.k9.mail.internet.MimeBodyPart
 import com.fsck.k9.mail.internet.MimeMessage
@@ -63,6 +61,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.Date
 import java.util.Locale
+import kotlin.getValue
 import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.model.Calendar
 import net.fortuna.ical4j.model.ComponentContainer
@@ -88,6 +87,10 @@ import net.fortuna.ical4j.model.property.Summary
 import net.fortuna.ical4j.model.property.Uid
 import net.fortuna.ical4j.model.property.Url
 import net.fortuna.ical4j.util.Uris
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.preference.GeneralSettings
+import net.thunderbird.core.preference.PreferenceManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Request.Builder
@@ -96,12 +99,16 @@ import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONException
 import org.json.JSONObject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class SMLWebViewClientExtensions(
     private val clipboardManager: ClipboardManager,
     private val messageReference: MessageReference?,
     private val webViewClient: WebViewClient,
-) {
+) : KoinComponent {
+    private val logger: Logger by inject()
+    private val preferenceManager: PreferenceManager<GeneralSettings> by inject()
 
     fun shouldOverrideUrlLoading(webView: WebView, uri: Uri): Boolean {
         return when (uri.scheme) {
@@ -194,7 +201,7 @@ class SMLWebViewClientExtensions(
         val text = String(data, charset("UTF-8"))
         val json = JSONObject(text)
         val cal = calendarFromJsonLd(json)
-        val account: Account? = account(messageReference)
+        val account: LegacyAccount? = account(messageReference)
         val query = uri.query
         if (account != null && arrayOf("accept", "decline", "tentative").contains(query)) {
             when {
@@ -250,6 +257,97 @@ class SMLWebViewClientExtensions(
         i.setAction(MessageCompose.ACTION_COMPOSE)
         i.putExtra(SMLMessageComposeUtil.SML_PAYLOAD, text)
         context.startActivity(i)
+    }
+
+    /**
+     * If accept saves modified (to reflect accept) cal to calendar (via open ics file).
+     * In all cases send reply imip email (with further modified cal).
+     */
+    private fun imipIteract(
+        cal: Calendar?,
+        action: IMIPAction,
+        account: LegacyAccount,
+        context: Context,
+    ) {
+        // TODO: Add to calendar via intent, and on return send email.
+        //                val attendees = cal?.componentList?.get<VEvent>()?.map { it.attendees }?.flatten()
+        val event = cal?.componentList?.all?.filterIsInstance<VEvent>()?.firstOrNull()
+        if (event != null) {
+            val summary = event.propertyList.get<Summary>(Property.SUMMARY).firstOrNull()?.value
+            val organizer = event.propertyList.get<Organizer>(Property.ORGANIZER).firstOrNull()
+            val organizerName = organizer?.parameterList?.get<Cn>(Parameter.CN)?.firstOrNull()?.value
+            val organizerEmail = organizer?.calAddress?.schemeSpecificPart
+            if (!organizerEmail.isNullOrEmpty()) {
+                // todo: can't send email if organizer email is null or empty. Show some sort of error?
+                val userAttendee = findAndUpdateAccountEmailInAttendees(event, account, action.partStat)
+                if (action != IMIPAction.Decline) {
+                    val calTextToSave = cal.toString()
+                    viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
+                }
+                if (userAttendee == null) {
+                    showToast(context, "You are not part of the attendees. Not sending an email")
+                    return
+                }
+                // this replaces all attendees with userAttendee
+                event.replace<VEvent>(userAttendee)
+                cal.replace<Calendar>(Method("REPLY"))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val current = Instant.now()
+                    event.replace<VEvent>(LastModified(current))
+                    event.replace<VEvent>(DtStamp(current))
+                }
+                val resourceProvider = DI.get(CoreResourceProvider::class.java)
+                val ua = resourceProvider.userAgent()
+                cal.replace<Calendar>(ProdId("-//$ua//EN")) //todo: should probably be something like -//comapy//appname/langcode
+                val calTextToReply = cal.toString()
+                val messageBuilder = SimpleSmlMessageBuilder.newInstance()
+                val contentType = contentType("text/calendar", "utf-8", null)
+                MimeParameterEncoder.encode("text/calendar", mapOf("charset" to "utf-8", "method" to "REPLY"))
+                val body = TextBody(calTextToReply.replace("\r\n", "\n").replace("\n", "\r\n"))
+                val dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
+                dedicatedJsonMultipart.setEncoding("8bit")
+                val subject = action.verb + ": " + (summary ?: "")
+                messageBuilder
+                    .setPlainText("${account.displayName} has ${action.verb.lowercase(Locale.getDefault())} your invitation")
+                    .setSubject(subject)
+                    .setSentDate(Date())
+                    .setHideTimeZone(preferenceManager.getConfig().privacy.isHideTimeZone)
+                    .setIdentity(account.identities.first()) // todo if the account has multiple identities
+                    .setMessageFormat(SimpleMessageFormat.TEXT)
+                    .setTo(listOf(Address(organizerEmail, organizerName)))
+                messageBuilder.setAdditionalAlternatePart(dedicatedJsonMultipart)
+                messageBuilder.buildAsync(
+                    object : Callback {
+                        override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
+                            val messagingController = DI.get(MessagingController::class.java)
+                            messagingController.sendMessage(account, message, subject, null)
+                            showToast(context, action.verb)
+                        }
+
+                        override fun onMessageBuildCancel() {
+                            Log.e("Cancelled sending message")
+                        }
+
+                        override fun onMessageBuildException(me: MessagingException?) {
+                            Log.e(me, "Error sending message")
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.send_failed_reason, me?.localizedMessage ?: ""),
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+
+                        override fun onMessageBuildReturnPendingIntent(
+                            pendingIntent: PendingIntent?,
+                            requestCode: Int,
+                        ) {
+                            //todo MessageCompose uses  OpenPgpIntentStarter.startIntentSenderForResult here,
+                            //   which requires an activity, so cannot copy that here.
+                        }
+                    },
+                )
+            }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -308,7 +406,7 @@ class SMLWebViewClientExtensions(
             try {
                 jsonObject = JSONObject(decodedJsonText)
             } catch (e: JSONException) {
-                Timber.e(e, "Error parsing decoded json")
+                logger.error(throwable = e, message = { "Error parsing decoded json" })
                 continue
             }
 
@@ -527,7 +625,7 @@ class SMLWebViewClientExtensions(
             val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction)
             if (smlPayload != null) {
                 val mc = DI.get(MessagingController::class.java)
-                val account: Account? = account(messageReference)
+                val account: LegacyAccount? = account(messageReference)
                 if (account != null) {
                     val builder = SmlMessageUtil.createSMLMessageBuilder(
                         listOf(smlPayload),
@@ -615,7 +713,7 @@ class SMLWebViewClientExtensions(
             val directory = File(applicationContext.cacheDir, "temp")
             if (!directory.exists()) {
                 if (!directory.mkdir()) {
-                    Timber.e("Error creating directory: %s", directory.absolutePath)
+                    Log.e("Error creating directory: %s", directory.absolutePath)
                     return
                 }
             }
@@ -748,96 +846,6 @@ class SMLWebViewClientExtensions(
             Tentative(partStat = "TENTATIVE", verb = "Tentative");
         }
 
-        /**
-         * If accept saves modified (to reflect accept) cal to calendar (via open ics file).
-         * In all cases send reply imip email (with further modified cal).
-         */
-        private fun imipIteract(
-            cal: Calendar?,
-            action: IMIPAction,
-            account: Account,
-            context: Context,
-        ) {
-            // TODO: Add to calendar via intent, and on return send email.
-            //                val attendees = cal?.componentList?.get<VEvent>()?.map { it.attendees }?.flatten()
-            val event = cal?.componentList?.all?.filterIsInstance<VEvent>()?.firstOrNull()
-            if (event != null) {
-                val summary = event.propertyList.get<Summary>(Property.SUMMARY).firstOrNull()?.value
-                val organizer = event.propertyList.get<Organizer>(Property.ORGANIZER).firstOrNull()
-                val organizerName = organizer?.parameterList?.get<Cn>(Parameter.CN)?.firstOrNull()?.value
-                val organizerEmail = organizer?.calAddress?.schemeSpecificPart
-                if (!organizerEmail.isNullOrEmpty()) {
-                    // todo: can't send email if organizer email is null or empty. Show some sort of error?
-                    val userAttendee = findAndUpdateAccountEmailInAttendees(event, account, action.partStat)
-                    if (action != IMIPAction.Decline) {
-                        val calTextToSave = cal.toString()
-                        viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
-                    }
-                    if (userAttendee == null) {
-                        showToast(context, "You are not part of the attendees. Not sending an email")
-                        return
-                    }
-                    // this replaces all attendees with userAttendee
-                    event.replace<VEvent>(userAttendee)
-                    cal.replace<Calendar>(Method("REPLY"))
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val current = Instant.now()
-                        event.replace<VEvent>(LastModified(current))
-                        event.replace<VEvent>(DtStamp(current))
-                    }
-                    val resourceProvider = DI.get(CoreResourceProvider::class.java)
-                    val ua = resourceProvider.userAgent()
-                    cal.replace<Calendar>(ProdId("-//$ua//EN")) //todo: should probably be something like -//comapy//appname/langcode
-                    val calTextToReply = cal.toString()
-                    val messageBuilder = SimpleSmlMessageBuilder.newInstance()
-                    val contentType = contentType("text/calendar", "utf-8", null)
-                    MimeParameterEncoder.encode("text/calendar", mapOf("charset" to "utf-8", "method" to "REPLY"))
-                    val body = TextBody(calTextToReply.replace("\r\n", "\n").replace("\n", "\r\n"))
-                    val dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
-                    dedicatedJsonMultipart.setEncoding("8bit")
-                    val subject = action.verb + ": " + (summary ?: "")
-                    messageBuilder
-                        .setSubject(subject)
-                        .setSentDate(Date())
-                        .setHideTimeZone(isHideTimeZone)
-                        .setIdentity(account.identities.first()) // todo if the account has multiple identities
-                        .setPlainText("${account.displayName} has ${action.verb.lowercase(Locale.getDefault())} your invitation")
-                        .setMessageFormat(SimpleMessageFormat.TEXT)
-                        .setTo(listOf(Address(organizerEmail, organizerName)))
-                    messageBuilder.setAdditionalAlternatePart(dedicatedJsonMultipart)
-                    messageBuilder.buildAsync(
-                        object : Callback {
-                            override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
-                                val messagingController = DI.get(MessagingController::class.java)
-                                messagingController.sendMessage(account, message, subject, null)
-                                showToast(context, action.verb)
-                            }
-
-                            override fun onMessageBuildCancel() {
-                                Timber.e("Cancelled sending message")
-                            }
-
-                            override fun onMessageBuildException(me: MessagingException?) {
-                                Timber.e(me, "Error sending message")
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.send_failed_reason, me?.localizedMessage ?: ""),
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            }
-
-                            override fun onMessageBuildReturnPendingIntent(
-                                pendingIntent: PendingIntent?,
-                                requestCode: Int,
-                            ) {
-                                //todo MessageCompose uses  OpenPgpIntentStarter.startIntentSenderForResult here,
-                                //   which requires an activity, so cannot copy that here.
-                            }
-                        },
-                    )
-                }
-            }
-        }
 
         private fun calendarFromJsonLd(json: JSONObject): Calendar? {
             val originalICalText = json.optString("originalICal")
@@ -848,10 +856,10 @@ class SMLWebViewClientExtensions(
                     if (originalIcal != null) {
                         return originalIcal
                     } else {
-                        Timber.e("Json had originalVEvent property, but parsing failed")
+                        Log.e("Json had originalVEvent property, but parsing failed")
                     }
                 } catch (e: Exception) {
-                    Timber.e(e, "Could not parse original VEvent")
+                    Log.e(e, "Could not parse original VEvent")
                 }
             }
             val event = vEventFromJsonLd(json)
@@ -899,7 +907,7 @@ class SMLWebViewClientExtensions(
                     } catch (
                         e: DateTimeParseException,
                     ) {
-                        Timber.e("Error parsing start date: %s", e)
+                        Log.e("Error parsing start date: %s", e)
                     }
                 }
             }
@@ -917,7 +925,7 @@ class SMLWebViewClientExtensions(
                     } catch (
                         e: DateTimeParseException,
                     ) {
-                        Timber.e("Error parsing end date: %s", e)
+                        Log.e("Error parsing end date: %s", e)
                     }
                 }
             }
@@ -948,7 +956,7 @@ class SMLWebViewClientExtensions(
             return event
         }
 
-        private fun findAndUpdateAccountEmailInAttendees(event: VEvent, account: Account, partStat: String): Attendee? {
+        private fun findAndUpdateAccountEmailInAttendees(event: VEvent, account: LegacyAccount, partStat: String): Attendee? {
             // the user currently interacting with this mail as an attendee of the event
             var userAttendee: Attendee? = null
             for (attendee in event.attendees) {
@@ -967,7 +975,7 @@ class SMLWebViewClientExtensions(
             val directory = File(applicationContext.cacheDir, "temp")
             if (!directory.exists()) {
                 if (!directory.mkdir()) {
-                    Timber.e("Error creating directory: %s", directory.absolutePath)
+                    Log.e("Error creating directory: %s", directory.absolutePath)
                     return
                 }
             }
@@ -1000,9 +1008,9 @@ class SMLWebViewClientExtensions(
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
 
-        private fun account(messageReference: MessageReference?): Account? {
+        private fun account(messageReference: MessageReference?): LegacyAccount? {
             val accountUuid = messageReference?.accountUuid
-            val account: Account?
+            val account: LegacyAccount?
             if (accountUuid != null) {
                 val preferences = Preferences.getPreferences()
                 account = preferences.getAccount(accountUuid)
@@ -1022,12 +1030,12 @@ class SMLWebViewClientExtensions(
                 client.newCall(request).execute().use { response ->
                     if (response.body != null) {
                         pageSrc = response.body!!.string()
-                        Timber.d("Got response from %s:\n%s", httpUri, pageSrc)
+                        Log.d("Got response from %s:\n%s", httpUri, pageSrc)
                     }
                 }
             } catch (e: java.lang.Exception) {
                 okErr = e.message
-                Timber.d(e, "Couldn't get: %s", httpUri)
+                Log.d(e, "Couldn't get: %s", httpUri)
             }
             return Pair(pageSrc, okErr)
         }
@@ -1045,7 +1053,7 @@ class SMLWebViewClientExtensions(
             try {
                 context.startActivity(intent)
             } catch (e: ActivityNotFoundException) {
-                Timber.d(e, "Couldn't open URL: %s", uri)
+                Log.d(e, "Couldn't open URL: %s", uri)
                 Toast.makeText(context, R.string.error_activity_not_found, Toast.LENGTH_LONG).show()
             }
         }

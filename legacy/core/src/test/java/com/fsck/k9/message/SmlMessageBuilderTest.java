@@ -7,21 +7,27 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import app.k9mail.core.android.testing.RobolectricTest;
+import androidx.annotation.NonNull;
+import net.thunderbird.core.android.account.Identity;
+import net.thunderbird.core.android.testing.RobolectricTest;
+import app.k9mail.legacy.di.DI;
 import com.fsck.k9.CoreResourceProvider;
-import app.k9mail.legacy.account.Identity;
 import com.fsck.k9.TestCoreResourceProvider;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.BoundaryGenerator;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.Message.RecipientType;
-import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.message.MessageBuilder.Callback;
+import kotlinx.coroutines.flow.Flow;
+import net.thunderbird.core.common.exception.MessagingException;
+import net.thunderbird.core.preference.GeneralSettings;
+import net.thunderbird.core.preference.GeneralSettingsManager;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -473,6 +479,35 @@ public class SmlMessageBuilderTest extends RobolectricTest {
     private MessageIdGenerator messageIdGenerator;
     private BoundaryGenerator boundaryGenerator;
     private CoreResourceProvider resourceProvider = new TestCoreResourceProvider();
+    private final GeneralSettingsManager fakeSettingsManager = new GeneralSettingsManager() {
+        @NonNull
+        @Override
+        public GeneralSettings getSettings() {
+            return new GeneralSettings();
+        }
+
+        @NonNull
+        @Override
+        public Flow<GeneralSettings> getSettingsFlow() {
+            throw new UnsupportedOperationException("not implemented");
+        }
+
+        @Override
+        public @NotNull GeneralSettings getConfig() {
+            return getSettings();
+        }
+
+        @Override
+        public @NotNull Flow<@NotNull GeneralSettings> getConfigFlow() {
+            throw new UnsupportedOperationException("not implemented");
+        }
+
+        @Override
+        public void save(@NotNull GeneralSettings config) {
+            throw new UnsupportedOperationException("not implemented");
+        }
+    };
+
     private Callback callback;
 
 
@@ -562,7 +597,7 @@ public class SmlMessageBuilderTest extends RobolectricTest {
 
     private MessageBuilder createSmlMessageBuilder(SmlStandardVariant variant) {
         List<JSONObject> payload = createSMLPayload();
-        SmlMessageBuilder builder = new SimpleSmlMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider);
+        SmlMessageBuilder builder = new SimpleSmlMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider, fakeSettingsManager);
         builder = SmlMessageUtil.createSMLMessageBuilder(
             payload,
             variant,

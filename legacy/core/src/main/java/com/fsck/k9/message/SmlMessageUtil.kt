@@ -1,9 +1,7 @@
 package com.fsck.k9.message
 
 //import com.fsck.k9.mail.internet.MimeMessage
-import android.R.attr.mimeType
-import app.k9mail.legacy.account.Account
-import com.fsck.k9.K9.isHideTimeZone
+//import com.fsck.k9.K9.isHideTimeZone
 import com.fsck.k9.helper.toCrLf
 import com.fsck.k9.mail.BodyPart
 import com.fsck.k9.mail.internet.Headers.contentType
@@ -13,6 +11,8 @@ import com.fsck.k9.message.TextBodyBuilder.HTML_AND_BODY_END
 import com.fsck.k9.message.TextBodyBuilder.HTML_AND_BODY_START
 import java.io.IOException
 import java.util.Date
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.account.SmlVariant
 import org.apache.james.mime4j.util.MimeUtil
 import org.audriga.hetc.MustacheRenderer
 import org.json.JSONException
@@ -112,9 +112,10 @@ abstract class SmlMessageUtil {
             builderToUse
 //                .setSubject(Utility.stripNewLines(subjectView.getText().toString()))
                 .setSentDate(Date())
-                .setHideTimeZone(isHideTimeZone)
-//                .setRequestReadReceipt(requestReadReceipt) // todo?
-//                .setIdentity(identity) // todo
+                // These will need to be set on the builder by the caller
+//                .setHideTimeZone(generalSettingsManager.getConfig().getPrivacy().isHideTimeZone())
+//                .setRequestReadReceipt(requestReadReceipt)
+//                .setIdentity(identity)
                 .setMessageFormat(SimpleMessageFormat.HTML)
                 .setPlainText(plainTextToUse.toCrLf())
                 .setHtmlText(htmlFallbackToUse.toCrLf())
@@ -128,9 +129,9 @@ abstract class SmlMessageUtil {
         // However I am not sure if we actually will keep the variant setting in the account settings and this way
         // it will be easier to change.
         @JvmStatic
-        fun getSmlVariantFromAccount(account: Account) : SmlStandardVariant = when (account.smlVariant) {
-            Account.SmlVariant.SML_IN_HTML -> SmlStandardVariant.SML_IN_HTML
-            Account.SmlVariant.DEDICATED_MULTIPART -> SmlStandardVariant.DEDICATED_MULTIPART
+        fun getSmlVariantFromAccount(account: LegacyAccount) : SmlStandardVariant = when (account.smlVariant) {
+            SmlVariant.SML_IN_HTML -> SmlStandardVariant.SML_IN_HTML
+            SmlVariant.DEDICATED_MULTIPART -> SmlStandardVariant.DEDICATED_MULTIPART
         }
 
         @JvmStatic
