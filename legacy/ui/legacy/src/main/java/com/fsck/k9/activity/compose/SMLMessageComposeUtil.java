@@ -211,7 +211,6 @@ public class SMLMessageComposeUtil {
     }
 
     public boolean handleJsonLdAttachment(Attachment attachment) {
-        // todo attachent loading is finished here
         if (MimeTypeUtil.isSameMimeType(attachment.contentType, "application/json") || MimeTypeUtil.isSameMimeType(
             attachment.contentType, "application/json+ld")) {
             String filename = attachment.filename;
@@ -240,10 +239,12 @@ public class SMLMessageComposeUtil {
                     }
                     smlPayload.addAll(jsonLds);
                     Ld2hResult ld2hResult = ld2hRenderSmlPayload(smlPayload);
-                    // todo replace with updateSubjectAndDisplayLd2hResult
                     boolean hadResult = displayLd2hResultAndUpdateSubject(ld2hResult);
                     if (hadResult) {
                         attachmentPresenter.onClickRemoveAttachment(attachment.uri);
+                        // todo: This function is called in updateAttachmentView, and after that function returns, the
+                        //       attachment gets added in the attachments list in AttachmentPresenter.
+                        //       so either need to change where this function is called, or add attachements on send
                         return true;
                     }
                 }
