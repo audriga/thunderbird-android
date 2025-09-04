@@ -11,7 +11,6 @@ import com.fsck.k9.message.TextBodyBuilder.HTML_AND_BODY_END
 import com.fsck.k9.message.TextBodyBuilder.HTML_AND_BODY_START
 import java.io.IOException
 import java.util.Date
-import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.android.account.SmlVariant
 import org.apache.james.mime4j.util.MimeUtil
 import org.audriga.hetc.MustacheRenderer
@@ -21,14 +20,14 @@ import org.json.JSONObject
 abstract class SmlMessageUtil {
     companion object {
         @JvmStatic
-        fun createSMLMessageBuilder(payload: List<JSONObject>, variant: SmlStandardVariant): SmlMessageBuilder {
+        fun createSMLMessageBuilder(payload: List<JSONObject>, variant: SmlVariant): SmlMessageBuilder {
             return createSMLMessageBuilder(payload, variant, null, null, null)
         }
 
         @JvmStatic
         fun createSMLMessageBuilder(
             payload: List<JSONObject>,
-            variant: SmlStandardVariant,
+            variant: SmlVariant,
             htmlBody: String?,
             plainText: String?,
         ): SmlMessageBuilder {
@@ -51,7 +50,7 @@ abstract class SmlMessageUtil {
         @JvmStatic
         fun createSMLMessageBuilder(
             payload: List<JSONObject>,
-            variant: SmlStandardVariant,
+            variant: SmlVariant,
             htmlBody: String?,
             plainText: String?,
             builder: SmlMessageBuilder?,
@@ -84,7 +83,7 @@ abstract class SmlMessageUtil {
                     }
                 }
                 val joinedEmailHTMLRenderResults = renderedEmailHTMLs.joinToString("\n")
-                if (variant == SmlStandardVariant.SML_IN_HTML) {
+                if (variant == SmlVariant.SML_IN_HTML) {
                     val smlScript = "<script type=\"application/ld+json\">$encodedJson</script>"
                     htmlFallbackToUse =
                         "<!DOCTYPE html><html>$smlScript</head><body>$joinedEmailHTMLRenderResults$HTML_AND_BODY_END"
@@ -96,7 +95,7 @@ abstract class SmlMessageUtil {
             val plainTextToUse = plainText ?: "This email contains SML content"
 
             val dedicatedJsonMultipart: BodyPart?
-            if (variant == SmlStandardVariant.DEDICATED_MULTIPART) {
+            if (variant == SmlVariant.DEDICATED_MULTIPART) {
                 val body = TextBody(encodedJson.replace("\r\n", "\n").replace("\n", "\r\n"))
 //                body.composedMessageLength = encodedJson.length
 //                body.composedMessageOffset = 0
@@ -119,20 +118,12 @@ abstract class SmlMessageUtil {
                 .setMessageFormat(SimpleMessageFormat.HTML)
                 .setPlainText(plainTextToUse.toCrLf())
                 .setHtmlText(htmlFallbackToUse.toCrLf())
-            if (variant == SmlStandardVariant.DEDICATED_MULTIPART) {
+            if (variant == SmlVariant.DEDICATED_MULTIPART) {
                 builderToUse.setAdditionalAlternatePart(dedicatedJsonMultipart)
             }
             return builderToUse
         }
 
-        // todo converting between two enum classes that have the same values isn't super nice...
-        // However I am not sure if we actually will keep the variant setting in the account settings and this way
-        // it will be easier to change.
-        @JvmStatic
-        fun getSmlVariantFromAccount(account: LegacyAccount) : SmlStandardVariant = when (account.smlVariant) {
-            SmlVariant.SML_IN_HTML -> SmlStandardVariant.SML_IN_HTML
-            SmlVariant.DEDICATED_MULTIPART -> SmlStandardVariant.DEDICATED_MULTIPART
-        }
 
         @JvmStatic
         fun getApproveDenyPayload(requestAction: String): JSONObject? = when (requestAction) {
@@ -149,7 +140,3 @@ abstract class SmlMessageUtil {
     }
 }
 
-enum class SmlStandardVariant {
-    SML_IN_HTML,
-    DEDICATED_MULTIPART,
-}

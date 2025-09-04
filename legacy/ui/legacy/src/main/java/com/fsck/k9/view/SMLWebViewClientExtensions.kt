@@ -629,7 +629,7 @@ class SMLWebViewClientExtensions(
                 if (account != null) {
                     val builder = SmlMessageUtil.createSMLMessageBuilder(
                         listOf(smlPayload),
-                        SmlMessageUtil.getSmlVariantFromAccount(account),
+                        account.smlVariant,
                     )
                     val to = Address.parse(recipient) // todo error handling for this
                     builder.setTo(to.toList())

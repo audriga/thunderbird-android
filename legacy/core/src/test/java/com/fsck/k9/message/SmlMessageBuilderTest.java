@@ -9,6 +9,7 @@ import java.util.List;
 
 import androidx.annotation.NonNull;
 import net.thunderbird.core.android.account.Identity;
+import net.thunderbird.core.android.account.SmlVariant;
 import net.thunderbird.core.android.testing.RobolectricTest;
 import app.k9mail.legacy.di.DI;
 import com.fsck.k9.CoreResourceProvider;
@@ -524,7 +525,7 @@ public class SmlMessageBuilderTest extends RobolectricTest {
 
     @Test
     public void build_sml_in_html_shouldSucceed() throws Exception {
-        MessageBuilder messageBuilder = createSmlMessageBuilder(SmlStandardVariant.SML_IN_HTML);
+        MessageBuilder messageBuilder = createSmlMessageBuilder(SmlVariant.SML_IN_HTML);
 
         messageBuilder.buildAsync(callback);
 
@@ -549,7 +550,7 @@ public class SmlMessageBuilderTest extends RobolectricTest {
 
     @Test
     public void build_dedicated_multipart_shouldSucceed() throws Exception {
-        MessageBuilder messageBuilder = createSmlMessageBuilder(SmlStandardVariant.DEDICATED_MULTIPART);
+        MessageBuilder messageBuilder = createSmlMessageBuilder(SmlVariant.DEDICATED_MULTIPART);
 
         messageBuilder.buildAsync(callback);
 
@@ -595,14 +596,14 @@ public class SmlMessageBuilderTest extends RobolectricTest {
         return outputStream.toString();
     }
 
-    private MessageBuilder createSmlMessageBuilder(SmlStandardVariant variant) {
+    private MessageBuilder createSmlMessageBuilder(SmlVariant variant) {
         List<JSONObject> payload = createSMLPayload();
         SmlMessageBuilder builder = new SimpleSmlMessageBuilder(messageIdGenerator, boundaryGenerator, resourceProvider, fakeSettingsManager);
         builder = SmlMessageUtil.createSMLMessageBuilder(
             payload,
             variant,
             // Only sety html text for dedicated-multipart variant. For sml-in-html we want to test the html generation
-            (variant == SmlStandardVariant.DEDICATED_MULTIPART) ? TEST_HTML_TEXT : null,
+            (variant == SmlVariant.DEDICATED_MULTIPART) ? TEST_HTML_TEXT : null,
             TEST_MESSAGE_TEXT,
             builder
         );
