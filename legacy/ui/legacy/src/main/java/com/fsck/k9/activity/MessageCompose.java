@@ -432,9 +432,15 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             }
         }
 
+        if (intentData.getSubject() != null && subjectView.getText().length() == 0) {
+            subjectView.setText(intentData.getSubject());
+        }
+
         if (intentData.getExtraText() != null && messageContentView.getText().length() == 0) {
             messageContentView.setText(CrLfConverter.toLf(intentData.getExtraText()));
-            smlMessageComposeUtil.enrichTextToSmlIfUrl(intentData.getExtraText());
+            // Set text will trigger messageContentView textChanged trigger in SMLMessageComposeUtil.
+            // This calls enrichTextToSmlIfUrl which also sets the subject, if no subject is set yet.
+
         }
 
         List<Uri> uriList = intentData.getExtraStream();
@@ -447,9 +453,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
 
-        if (intentData.getSubject() != null && subjectView.getText().length() == 0) {
-            subjectView.setText(intentData.getSubject());
-        }
 
         if (intentData.getShouldInitFromSendOrViewIntent()) {
             recipientPresenter.initFromSendOrViewIntent(intent);
@@ -1569,8 +1572,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         String body = mailTo.getBody();
         if (body != null && !body.isEmpty()) {
             messageContentView.setText(CrLfConverter.toLf(body));
-            smlMessageComposeUtil.enrichTextToSmlIfUrl(body);
-
+            // Set text will trigger messageContentView textChanged trigger in SMLMessageComposeUtil.
+            // This calls enrichTextToSmlIfUrl which also sets the subject, if no subject is set yet.
         }
     }
 

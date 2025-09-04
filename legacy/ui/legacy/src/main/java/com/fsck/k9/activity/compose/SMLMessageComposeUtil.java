@@ -7,25 +7,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.net.Uri;
 //import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Base64;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import com.audriga.h2lj.model.StructuredData;
-import com.audriga.h2lj.model.StructuredSyntax;
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils;
 import com.fsck.k9.activity.misc.Attachment;
 //import com.fsck.k9.helper.MailTo;
@@ -33,15 +27,7 @@ import com.fsck.k9.helper.MimeTypeUtil;
 import com.fsck.k9.sml.SMLUtil;
 import com.fsck.k9.view.MessageWebView;
 import com.google.android.material.materialswitch.MaterialSwitch;
-import net.thunderbird.core.logging.legacy.Log;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Request.Builder;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import org.audriga.ld2h.ButtonDescription;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -113,7 +99,7 @@ public class SMLMessageComposeUtil {
             if (payload != null) {
                 smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize(payload);
                 Ld2hResult ld2hResult = ld2hRenderSmlPayload(smlPayload);
-                updateSubjectAndDisplayLd2hResult(ld2hResult);
+                displayLd2hResultAndUpdateSubject(ld2hResult);
             } else {
                 messageContentView.setVisibility(View.GONE);
                 if (subjectView.getText().length() == 0) {
@@ -176,25 +162,6 @@ public class SMLMessageComposeUtil {
 //
 //    }
 
-    @Nullable
-    public static String downloadHTML(String url) {
-        OkHttpClient client = new OkHttpClient();
-        String htmlSrc = null;
-//        String okErr = null;
-        Request request = new Builder()
-            .url(url).build();
-        try (Response response = client. newCall(request).execute()) {
-            if (response.body() != null) {
-                htmlSrc = response.body().string();
-            }
-
-        } catch (Exception e){
-//            okErr = e.getMessage();
-            Log.e(e, "Error while downloading html");
-        }
-        return htmlSrc;
-    }
-
     public void enrichTextToSmlIfUrl(CharSequence text) {
         if (Patterns.WEB_URL.matcher(text).matches()) {
             // Input is exactl one url
@@ -202,23 +169,19 @@ public class SMLMessageComposeUtil {
         }
     }
 
-    public void enrichSharedUrlToSml(String text) {
-        String htmlSrc = SMLMessageComposeUtil.downloadHTML(text);
-        if (htmlSrc != null) {
-            List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.JSON_LD);
-            if (data.isEmpty()) {
-                data = StructuredDataExtractionUtils.parseStructuredDataPart(htmlSrc, StructuredSyntax.MICRODATA);
-            }
+    public void enrichSharedUrlToSml(String url) {
+            List<JSONObject> data = StructuredDataExtractionUtils.downloadParseAndRefineStructuredData(url, true, true);
             if (!data.isEmpty()) {
-                ArrayList<String> renderedDisplayHTMLs = ld2hRenderStructuredData(data);
-                if (!renderedDisplayHTMLs.isEmpty()) {
-                    String joinedDisplayHTMLRenderResults = String.join("\n", renderedDisplayHTMLs);
-                    displayLd2hResult(joinedDisplayHTMLRenderResults);
+                if (smlPayload == null) {
+                    smlPayload = data;
+                } else {
+                    smlPayload.addAll(data);
                 }
+                Ld2hResult ld2hResult = ld2hRenderSmlPayload(smlPayload);
+                displayLd2hResultAndUpdateSubject(ld2hResult);
             }
             // else: No structured data found, todo: treat link as normal?
 
-        }
     }
     public static boolean isJsonLd(JSONObject jsonObject) {
         try {
@@ -277,17 +240,9 @@ public class SMLMessageComposeUtil {
                     }
                     smlPayload.addAll(jsonLds);
                     Ld2hResult ld2hResult = ld2hRenderSmlPayload(smlPayload);
-                    if (!ld2hResult.renderedDisplayHTMLs.isEmpty()) {
-                        String joinedDisplayHTMLRenderResults = String.join("\n", ld2hResult.renderedDisplayHTMLs);
-                        displayLd2hResult(joinedDisplayHTMLRenderResults);
-                        if (subjectView.getText().length() == 0) {
-                            String subject = "Check out this " + String.join(", ", ld2hResult.types);
-                            subjectView.setText(subject);
-                        } else if (subjectView.getText().toString().startsWith("Check out this ")) {
-                            String subjectAppend = ", " + String.join(", ", ld2hResult.types);
-                            subjectView.append(subjectAppend);
-                        }
-                        // todo this only seems to revome the attachment from view, not from the actual mail. Maybe race condition?
+                    // todo replace with updateSubjectAndDisplayLd2hResult
+                    boolean hadResult = displayLd2hResultAndUpdateSubject(ld2hResult);
+                    if (hadResult) {
                         attachmentPresenter.onClickRemoveAttachment(attachment.uri);
                         return true;
                     }
@@ -299,18 +254,25 @@ public class SMLMessageComposeUtil {
         return false;
     }
 
-    private void updateSubjectAndDisplayLd2hResult(Ld2hResult ld2hResult) {
-        if (subjectView.getText().length() == 0) {
-            String subject = "Check out this " + String.join(", ", ld2hResult.types);
-            subjectView.setText(subject);
-        }
+    private boolean displayLd2hResultAndUpdateSubject(Ld2hResult ld2hResult) {
         if (!ld2hResult.renderedDisplayHTMLs.isEmpty()) {
             String joinedDisplayHTMLRenderResults = String.join("\n", ld2hResult.renderedDisplayHTMLs);
             displayLd2hResult(joinedDisplayHTMLRenderResults);
+            if (subjectView.getText().length() == 0 || subjectView.getText().toString().startsWith("Check out this ")) {
+                String subject = "Check out this " + String.join(", ", ld2hResult.types);
+                subjectView.setText(subject);
+            }
+            return true;
         }
+        return false;
     }
 
 
+    /**
+     * Inlines images (if not already inlined) via H2LD, and then renders the given payload using LD2H.
+     * @param smlPayload schema to render. This is modified if inline is necessary and possible.
+     * @return the resulting HTMLs of the LD2H render, together with the schema types.
+     */
     @NonNull
     private static Ld2hResult ld2hRenderSmlPayload(List<JSONObject> smlPayload) {
         org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
@@ -322,7 +284,12 @@ public class SMLMessageComposeUtil {
         ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(smlPayload.size());
         ArrayList<String> types = new ArrayList<>(smlPayload.size());
         for (JSONObject jsonObject: smlPayload) {
-            inlineImages(jsonObject);// todo: Since this modifies the actual jsonObject, and we iterate over smlPayload here, this might also modify smlPlayload (which is what we want). But need to test this.
+            // For freshly downloaded schema, the image has already been inlined.
+            // But inlineImages is smart enough to detect the already inlined image.
+            //
+            // Since this modifies the actual jsonObject, and we iterate over call-by-reference smlPayload here,
+            // this also modifies the smlPayload this function was called wit (which is what we want).
+            StructuredDataExtractionUtils.inlineImages(jsonObject);
             String type = jsonObject.optString("@type");
             types.add(type);
             String ld2hRenderResult = null;
@@ -339,166 +306,6 @@ public class SMLMessageComposeUtil {
         return new Ld2hResult(renderedDisplayHTMLs, types);
     }
 
-    /**
-     * This also calls inlineImages for all markups
-     */
-    @NonNull
-    private ArrayList<String> ld2hRenderStructuredData(List<StructuredData> data) {
-        org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
-        try {
-            ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
-        } catch (IOException e) {
-            //throw new RuntimeException(e);
-        }
-
-//                            ArrayList<String> renderedEmailHTMLs = new ArrayList<>(data.size());
-        ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(data.size());
-//                            ArrayList<String> encodedJsonLds = new ArrayList<>(data.size());
-        List<String> typesToSkip = (data.size() > 1) ?
-            Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
-            null;
-        smlPayload = new ArrayList<>(data.size());
-        for (StructuredData structuredData: data) {
-            JSONObject jsonObject = structuredData.getJson();
-            String type = jsonObject.optString("@type");
-            if (typesToSkip != null && typesToSkip.contains(type)) {
-                continue;
-            }
-            smlPayload.add(inlineImages(jsonObject));
-            String ld2hRenderResult = null;
-            try {
-                List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
-                ld2hRenderResult = (ld2hRenderer != null) ? ld2hRenderer.render(jsonObject, buttons) : null;
-            } catch (IOException e) {
-                // todo handle
-            }
-            if (ld2hRenderResult != null) {
-                renderedDisplayHTMLs.add(ld2hRenderResult);
-            }
-        }
-        return renderedDisplayHTMLs;
-    }
-
-    private static JSONObject inlineImages(JSONObject jsonLd) {
-        // First find all images in the order thumbnail, thumbnailUrl, image
-        Object thumbnail = jsonLd.opt("thumbnail");
-        List<String> thumbnails = Collections.emptyList();
-        if (thumbnail != null){
-            try {
-                thumbnails = imagesFromNestedJson(thumbnail);
-            } catch (JSONException e) {
-                // todo log
-            }
-        }
-
-        Object thumbnailUrl = jsonLd.opt("thumbnailUrl");
-        List<String> thumbnailUrls = Collections.emptyList();
-        if (thumbnailUrl != null){
-            try {
-                thumbnailUrls = imagesFromNestedJson(thumbnailUrl);
-            } catch (JSONException e) {
-                // todo log
-            }
-        }
-        Object image = jsonLd.opt("image");
-
-        List<String> images = Collections.emptyList();
-        if (image != null){
-            try {
-                images = imagesFromNestedJson(image);
-            } catch (JSONException e) {
-                // todo log
-            }
-        }
-        List<String> allImages = new ArrayList<>(thumbnails.size()+thumbnailUrls.size()+images.size());
-        allImages.addAll(thumbnails);
-        allImages.addAll(thumbnailUrls);
-        allImages.addAll(images);
-        for (String imageUriText : allImages) {
-            Uri imageUri = Uri.parse(imageUriText);
-            if (imageUri != null) {
-                String scheme = imageUri.getScheme();
-                if (scheme != null && scheme.equals("data")) {
-                    // already have an inline image, set it as image.contentUrl
-                    try {
-                        jsonLd.put("image", new JSONObject().put("contentUrl", imageUriText));
-                        return jsonLd;
-                    } catch (JSONException e) {
-                        // todo log
-                    }
-                }
-            }
-        }
-        for (String imageUriText : allImages) {
-            try {
-                String imageDataUri = downloadImage(imageUriText);
-                if (imageDataUri != null) {
-                    try {
-                        jsonLd.put("image", new JSONObject().put("contentUrl", imageDataUri));
-                        return  jsonLd;
-                    } catch (JSONException e) {
-                        // todo log
-                    }
-                }
-            } catch (Exception ignored){}
-        }
-        return jsonLd;
-    }
-
-    private static String downloadImage(String imageUriText) throws IOException {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Builder()
-            .url(imageUriText).build();
-        try (Response response = client. newCall(request).execute()) {
-            ResponseBody body = response.body();
-            if (body != null) {
-                MediaType mediaType = body.contentType();
-                if (mediaType != null && mediaType.type().equals("image")) {
-                    return "data:" + mediaType.type() + "/" + mediaType.subtype() +";base64," + Base64.encodeToString(body.bytes(), Base64.NO_WRAP);
-                }
-            }
-
-        }
-        return null;
-    }
-
-    @NonNull
-    static List<String> imagesFromNestedJson(Object image) throws JSONException {
-        if (image instanceof JSONObject) {
-            Object imageContentUrl = ((JSONObject) image).opt("contentUrl");
-            if (imageContentUrl instanceof  String) {
-                return Collections.singletonList((String) imageContentUrl);
-            } else {
-                Object url = ((JSONObject) image).opt("url");
-                if (url instanceof  String) {
-                    return Collections.singletonList((String)url);
-                }
-            }
-        } else if (image instanceof JSONArray) {
-            int length = ((JSONArray) image).length();
-            List<String> images = new ArrayList<>(length);
-            for (int i = 0; i < length; i++) {
-                Object imageEntry = ((JSONArray) image).get(i);
-                if (imageEntry instanceof JSONObject) {
-                    Object imageContentUrl = ((JSONObject) imageEntry).opt("contentUrl");
-                    if (imageContentUrl instanceof String) {
-                        images.add((String) imageContentUrl);
-                    } else {
-                        Object url = ((JSONObject) imageEntry).opt("url");
-                        if (url instanceof String) {
-                            images.add((String) url);
-                        }
-                    }
-                } else if (imageEntry instanceof String) {
-                    images.add((String) imageEntry);
-                }
-            }
-            return images;
-        } else if (image instanceof  String) {
-            return Collections.singletonList((String) image);
-        }
-        return Collections.emptyList();
-    }
 
     static class Ld2hResult {
         public final ArrayList<String> renderedDisplayHTMLs;
