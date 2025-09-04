@@ -80,11 +80,12 @@ android {
     }
 
     signingConfigs {
-        val useUploadKey = properties.getOrDefault("tb.useUploadKey", "true") == "true"
+//        val useUploadKey = properties.getOrDefault("tb.useUploadKey", "true") == "true"
 
-        createSigningConfig(project, SigningType.TB_RELEASE, isUpload = useUploadKey)
-        createSigningConfig(project, SigningType.TB_BETA, isUpload = useUploadKey)
-        createSigningConfig(project, SigningType.TB_DAILY, isUpload = useUploadKey)
+//        createSigningConfig(project, SigningType.TB_RELEASE, isUpload = useUploadKey)
+//        createSigningConfig(project, SigningType.TB_BETA, isUpload = useUploadKey)
+//        createSigningConfig(project, SigningType.TB_DAILY, isUpload = useUploadKey)
+       createSigningConfig(project, SigningType.YG_RELEASE)
     }
 
     buildTypes {
@@ -94,16 +95,17 @@ android {
 
             isMinifyEnabled = false
             isShrinkResources = false
-            isDebuggable = true
+            isDebuggable = true //todo needs to be false in order to allow sign
 
             buildConfigField("String", "GLEAN_RELEASE_CHANNEL", "null")
+            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
         }
 
         release {
-            signingConfig = signingConfigs.getByType(SigningType.TB_RELEASE)
+            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
 
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             isDebuggable = false
 
             proguardFiles(
@@ -115,7 +117,7 @@ android {
         }
 
         create("beta") {
-            signingConfig = signingConfigs.getByType(SigningType.TB_BETA)
+            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
 
             applicationIdSuffix = ".beta"
             versionNameSuffix = "b1"
@@ -135,7 +137,7 @@ android {
         }
 
         create("daily") {
-            signingConfig = signingConfigs.getByType(SigningType.TB_DAILY)
+            signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
 
             applicationIdSuffix = ".daily"
             versionNameSuffix = "a1"
