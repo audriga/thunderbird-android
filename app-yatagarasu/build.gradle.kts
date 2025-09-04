@@ -95,7 +95,7 @@ android {
 
             isMinifyEnabled = false
             isShrinkResources = false
-            isDebuggable = true //todo needs to be false in order to allow sign
+            isDebuggable = false //todo needs to be false in order to allow sign
 
             buildConfigField("String", "GLEAN_RELEASE_CHANNEL", "null")
             signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
