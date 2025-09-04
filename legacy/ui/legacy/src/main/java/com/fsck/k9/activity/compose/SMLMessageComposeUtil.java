@@ -22,7 +22,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils;
 import com.fsck.k9.activity.misc.Attachment;
-//import com.fsck.k9.helper.MailTo;
 import com.fsck.k9.helper.MimeTypeUtil;
 import com.fsck.k9.sml.SMLUtil;
 import com.fsck.k9.view.MessageWebView;
@@ -35,7 +34,6 @@ import org.json.JSONObject;
 public class SMLMessageComposeUtil {
     public static final String IS_SML = "isSML";
     public static final String SML_PAYLOAD = "sml_payload";
-//    public static final String ACTION_COMPOSE_APPROVE = "com.fsck.k9.intent.action.COMPOSE_APPROVE";
 
 
     private final EditText subjectView;
@@ -111,56 +109,6 @@ public class SMLMessageComposeUtil {
         }
     }
 
-// Not used right now since we send the approve/ deny email directly.
-//    /**
-//     * For Approve/ Deny reply mails
-//     * @return if the initFromIntent function that calls this should return (true) or continue as normal (false)
-//     */
-//    public boolean initializeApproveDeny(Intent intent) {
-//        final String action = intent.getAction();
-//        if (ACTION_COMPOSE_APPROVE.equals(action)) {
-//            if (intent.getExtras() != null) {
-//                Uri uri = intent.getData();
-//                if (MailTo.isMailTo(uri)) {
-//                    // todo: This is the mailto entrypoint
-//                    MailTo mailTo = MailTo.parse(uri);
-//                    initializeFromMailto(mailTo);
-//                }
-//            }
-//            if (intent.getData() != null) {
-//                Bundle extras = intent.getExtras();
-//                String requestAction = extras.getString("requestAction");
-//                if ("ConfirmAction".equals(requestAction)) {
-//                    smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}");
-//                    subjectView.setText("Approve");
-//                } else if ("CancelAction".equals(requestAction)) {
-//                    smlPayload = org.audriga.hetc.JsonLdDeserializer.deserialize("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n})");
-//                    subjectView.setText("Deny");
-//                } else {
-//                    return true;
-//                }
-//                org.audriga.ld2h.MustacheRenderer ld2hRenderer = null;
-//                try {
-//                    ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
-//                } catch (IOException e) {
-//                    //throw new RuntimeException(e);
-//                }
-//                JSONObject smlJSONObject = smlPayload.get(0);
-//                String ld2hRenderResult = null;
-//                try {
-//                    ld2hRenderResult =  (ld2hRenderer != null) ? ld2hRenderer.render(smlJSONObject): null;
-//                } catch (IOException e) {
-//                    //throw new RuntimeException(e);
-//                }
-//                if (ld2hRenderResult != null) {
-//                    displayLd2hResult(ld2hRenderResult);
-//                }
-//                return true;
-//            }
-//        }
-//        return false;
-//
-//    }
 
     public void enrichTextToSmlIfUrl(CharSequence text) {
         if (Patterns.WEB_URL.matcher(text).matches()) {
