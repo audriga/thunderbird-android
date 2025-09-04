@@ -114,6 +114,9 @@ data class LegacyAccountWrapper(
     val signatureUse: Boolean = identities[0].signatureUse,
     val signature: String? = identities[0].signature,
     val shouldMigrateToOAuth: Boolean = false,
+    val smlVariant: SmlVariant = SmlVariant.SML_IN_HTML,
+    val debugView: Boolean = false,
+    val demoView: Boolean = false,
 ) : Account, BaseAccount {
 
     override val uuid: String = id.asRaw()

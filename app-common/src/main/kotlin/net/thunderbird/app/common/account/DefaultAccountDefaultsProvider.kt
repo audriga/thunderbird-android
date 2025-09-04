@@ -24,6 +24,7 @@ import net.thunderbird.core.android.account.FolderMode
 import net.thunderbird.core.android.account.Identity
 import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.android.account.ShowPictures
+import net.thunderbird.core.android.account.SmlVariant
 import net.thunderbird.core.featureflag.FeatureFlagProvider
 import net.thunderbird.core.featureflag.toFeatureFlagKey
 import net.thunderbird.core.preference.storage.Storage
@@ -108,6 +109,9 @@ internal class DefaultAccountDefaultsProvider(
         isAlwaysShowCcBcc = false
         lastSyncTime = 0L
         lastFolderListRefreshTime = 0L
+        smlVariant = SmlVariant.SML_IN_HTML
+        debugView = false
+        demoView = false
 
         setArchiveFolderId(null, SpecialFolderSelection.AUTOMATIC)
         setDraftsFolderId(null, SpecialFolderSelection.AUTOMATIC)

@@ -9,6 +9,7 @@ import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.android.account.MessageFormat
 import net.thunderbird.core.android.account.QuoteStyle
 import net.thunderbird.core.android.account.ShowPictures
+import net.thunderbird.core.android.account.SmlVariant
 import net.thunderbird.core.android.account.SortType
 import net.thunderbird.core.logging.Logger
 import net.thunderbird.core.preference.storage.Storage
@@ -247,6 +248,11 @@ class LegacyAccountStorageHandler(
 
             shouldMigrateToOAuth = storage.getBoolean(keyGen.create("migrateToOAuth"), false)
 
+            smlVariant =
+                getEnumStringPref<SmlVariant>(storage, keyGen.create("smlVariantEnum"), SmlVariant.SML_IN_HTML)
+            debugView = storage.getBoolean(keyGen.create("debugView"), false)
+            demoView = storage.getBoolean(keyGen.create("demoView"), false)
+
             val isFinishedSetup = storage.getBoolean(keyGen.create("isFinishedSetup"), true)
             if (isFinishedSetup) markSetupFinished()
 
@@ -412,6 +418,10 @@ class LegacyAccountStorageHandler(
             editor.putBoolean(keyGen.create("useCompression"), useCompression)
             editor.putBoolean(keyGen.create("sendClientInfo"), isSendClientInfoEnabled)
             editor.putBoolean(keyGen.create("migrateToOAuth"), shouldMigrateToOAuth)
+
+            editor.putString(keyGen.create("smlVariantEnum"), smlVariant.name)
+            editor.putBoolean(keyGen.create("debugView"), debugView)
+            editor.putBoolean(keyGen.create("demoView"), demoView)
         }
 
         saveIdentities(data, storage, editor)
@@ -534,6 +544,9 @@ class LegacyAccountStorageHandler(
         editor.remove(keyGen.create("useCompression"))
         editor.remove(keyGen.create("sendClientInfo"))
         editor.remove(keyGen.create("migrateToOAuth"))
+        editor.remove(keyGen.create("smlVariantEnum"))
+        editor.remove(keyGen.create("debugView"))
+        editor.remove(keyGen.create("demoView"))
 
         deleteIdentities(data, storage, editor)
         // TODO: Remove preference settings that may exist for individual folders in the account.

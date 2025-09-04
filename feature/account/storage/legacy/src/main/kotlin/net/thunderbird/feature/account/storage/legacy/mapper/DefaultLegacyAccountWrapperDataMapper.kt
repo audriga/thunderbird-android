@@ -105,6 +105,9 @@ class DefaultLegacyAccountWrapperDataMapper : DataMapper<LegacyAccountWrapper, L
             signatureUse = dto.signatureUse,
             signature = dto.signature,
             shouldMigrateToOAuth = dto.shouldMigrateToOAuth,
+            smlVariant = dto.smlVariant,
+            debugView = dto.debugView,
+            demoView = dto.demoView,
         )
     }
 
@@ -211,6 +214,9 @@ class DefaultLegacyAccountWrapperDataMapper : DataMapper<LegacyAccountWrapper, L
             signatureUse = domain.signatureUse
             signature = domain.signature
             shouldMigrateToOAuth = domain.shouldMigrateToOAuth
+            smlVariant = domain.smlVariant
+            debugView = domain.debugView
+            demoView = domain.demoView
         }
     }
 
