@@ -70,23 +70,14 @@ public abstract class SMLMessageView {
     }
 
     @NonNull
-    public static String addUrlButtons(List<String> urls, String htmlString) {
+    public static String addExtractedUrlButtons(List<String> urls, String htmlString) {
         List<String> encodedUrls = new ArrayList<>(urls.size());
         for (String url: urls) {
             // Substring to remove https:// prefix
             encodedUrls.add(Base64.encodeToString(url.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE));
         }
 
-
-        // todo this is a per account setting but we only request the setting for the default account
-        LegacyAccount account = Preferences.getPreferences().getDefaultAccount();
-        String button;
-        if (account != null && account.getDemoView()) {
-            button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
-        } else {
-            button = "";
-        }
-//                    sanitizedHtml = button + sanitizedHtml;
+        String button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
         String htmlWithStringButtons = addLoadButtonsAfterUrls(htmlString);
         // todo this is not actually using the output of htmlProcessor.processForDisplay.
         //    also: the function that adds the buttons should proably work on the html tree instead of what it is currently doing
@@ -553,9 +544,15 @@ public abstract class SMLMessageView {
 
             extractFromParseableParts(parseableParts, data);
             if (data.isEmpty() && extracted == null) {
-                List<String> urls = tryExtractAllWhitelistedUrls(text, sanitizedHtml);
-                if (!urls.isEmpty()) {
-                    displayHtml = addUrlButtons(urls, sanitizedHtml);
+                // todo this is a per account setting but we only request the setting for the default account
+                LegacyAccount account = Preferences.getPreferences().getDefaultAccount();
+                if (account != null && account.getDemoView()) {
+                    List<String> urls = tryExtractAllWhitelistedUrls(text, sanitizedHtml);
+                    if (!urls.isEmpty()) {
+                        displayHtml = addExtractedUrlButtons(urls, sanitizedHtml);
+                    } else {
+                        displayHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
+                    }
                 } else {
                     displayHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
                 }
