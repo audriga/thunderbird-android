@@ -48,6 +48,7 @@ import net.thunderbird.core.android.account.LegacyAccount;
 import net.thunderbird.core.common.exception.MessagingException;
 import org.audriga.ld2h.ButtonDescription;
 import org.audriga.ld2h.MustacheRenderer;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -61,6 +62,7 @@ import static com.fsck.k9.mail.internet.MimeUtility.isSameMimeType;
 
 
 public abstract class SMLMessageView {
+    // todo document when we try to derive
     public static TryToDerive shouldTryToDerive(Message message) {
         String subject = message.getSubject();
         if (subject.toLowerCase().contains("code")) {
@@ -89,21 +91,15 @@ public abstract class SMLMessageView {
         String sanitizedHtml)
         throws IOException {
         MustacheRenderer renderer = new MustacheRenderer();
-
-        // We know these types will most likely not render well, so don't render them (unless they are the only markup)
-        // todo find a good place for this
-        List<String> typesToSkip = (data.size() > 1) ?
-            Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
-            null;
-
-        ArrayList<String> renderedHTMLs = new ArrayList<>(data.size());
-        for (StructuredData structuredData: data) {
-            JSONObject jsonObject = structuredData.getJson();
-            String type = jsonObject.optString("@type");
-            if (typesToSkip != null && typesToSkip.contains(type)) {
-                continue;
-            }
+        ArrayList<String> renderedHTMLs = new ArrayList<>();
+        List<JSONObject> unwrappedStructuredData = unwrapStructuredData(data);
+        List<JSONObject> filteredJsonLds = filterByType(unwrappedStructuredData);
+        if (filteredJsonLds.size() == 1) {
+            JSONObject jsonObject = data.get(0).getJson();
             renderWithButtons(jsonObject, renderer, renderedHTMLs);
+        } else  if (filteredJsonLds.size() > 1) {
+            String tabbedCardHTML = renderTabbedWithButtons(filteredJsonLds, renderer);
+            renderedHTMLs.add(tabbedCardHTML);
         }
         if (extracted != null) {
             renderWithButtons(extracted, renderer, renderedHTMLs);
@@ -145,28 +141,104 @@ public abstract class SMLMessageView {
         return SMLUtil.css() + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + sanitizedHtml;
     }
 
+    private static List<JSONObject> unwrapStructuredData(List<StructuredData> data) {
+        List<JSONObject> jsonObjects = new ArrayList<>();
+        for (StructuredData structuredData: data) {
+            JSONObject jsonObject = structuredData.getJson();
+            jsonObjects.add(jsonObject);
+        }
+        return jsonObjects;
+    }
+
+    private static List<JSONObject> filterByType(List<JSONObject> jsonObjects) {
+        // We know these types will most likely not render well, so don't render them (unless they are the only markup)
+        // todo find a good place for this
+        List<String> typesToSkip = (jsonObjects.size() > 1) ?
+            Arrays.asList("Organization", "NewsMediaOrganization", "WebSite", "BreadcrumbList", "WebPage") :
+            null;
+
+        List<JSONObject> filteredJsonLds = new ArrayList<>();
+        for (JSONObject jsonObject : jsonObjects) {
+            String type = jsonObject.optString("@type");
+            if (typesToSkip != null && typesToSkip.contains(type)) {
+                continue;
+            }
+            filteredJsonLds.add(jsonObject);
+        }
+        if (filteredJsonLds.isEmpty()) {
+            // If filter would remove everything, return unfiltered list instead
+            return jsonObjects;
+        }
+        return filteredJsonLds;
+    }
+    private static String renderTabbedWithButtons(List<JSONObject> filteredJsonLds, MustacheRenderer renderer)
+        throws IOException {
+        if (filteredJsonLds.isEmpty()) {
+            // this shouldn't happen since this method should only be called if data has at least one element. But
+            // just to be sure we add this check
+            return null;
+        }
+        JSONArray jsonLds = new JSONArray();
+        List<List<ButtonDescription>> buttonLists = new ArrayList<>(filteredJsonLds.size());
+        for (JSONObject jsonObject : filteredJsonLds) {
+            List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
+            buttonLists.add(buttons);
+            jsonLds.put(jsonObject);
+        }
+        String showSourceButton = getShowSourceButton(jsonLds);
+        String result = renderer.renderTabbed(jsonLds, buttonLists);
+        if (showSourceButton != null) {
+            result += showSourceButton;
+        }
+        return result;
+    }
+
     private static void renderWithButtons(JSONObject jsonObject, MustacheRenderer renderer, ArrayList<String> renderedHTMLs)
         throws IOException {
-        String showSourceButton = null;
-        // todo this is a per account setting but we only request the setting for the default account
-        LegacyAccount account = Preferences.getPreferences().getDefaultAccount();
-        if (account!= null && account.getDebugView()) {
-            try {
-                String prettyJson = jsonObject.toString(2);
-                String encodedFullUrl = Base64.encodeToString(prettyJson.getBytes(StandardCharsets.UTF_8),
-                    Base64.NO_WRAP + Base64.URL_SAFE);
-                String jsonSourceUrl = "xshowsource://"+encodedFullUrl;
-                showSourceButton =
-                    "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" + jsonSourceUrl + "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">data_object</i>Show source</span></button>";
-            } catch (JSONException ignored) {
-            }
-        }
+        String showSourceButton = getShowSourceButton(jsonObject);
         List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
         String result = renderer.render(jsonObject, buttons);
         if (showSourceButton != null) {
             result += showSourceButton;
         }
         renderedHTMLs.add(result);
+    }
+
+    private static String getShowSourceButton(JSONArray jsonArray) {
+        // todo this is a per account setting but we only request the setting for the default account
+        LegacyAccount account = Preferences.getPreferences().getDefaultAccount();
+        if (account != null && account.getDebugView()) {
+            try {
+                String prettyJson = jsonArray.toString(2);
+                return getShowSourceButton(prettyJson);
+            } catch (JSONException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static String getShowSourceButton(JSONObject jsonObject) {
+        // todo this is a per account setting but we only request the setting for the default account
+        LegacyAccount account = Preferences.getPreferences().getDefaultAccount();
+        if (account != null && account.getDebugView()) {
+            try {
+                String prettyJson = jsonObject.toString(2);
+                return getShowSourceButton(prettyJson);
+            } catch (JSONException ignored) {
+            }
+        }
+        return null;
+    }
+
+    @NonNull
+    private static String getShowSourceButton(String prettyJson) {
+        String encodedFullUrl = Base64.encodeToString(prettyJson.getBytes(StandardCharsets.UTF_8),
+            Base64.NO_WRAP + Base64.URL_SAFE);
+        String jsonSourceUrl = "xshowsource://" + encodedFullUrl;
+        return
+            "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" +
+                jsonSourceUrl +
+                "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">data_object</i>Show source</span></button>";
     }
 
     public static void extractFromParseableParts(@Nullable ArrayList<Part> parseableParts, List<StructuredData> data)
