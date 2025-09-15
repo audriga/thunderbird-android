@@ -27,6 +27,8 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -1896,7 +1898,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             View progressBar = view.findViewById(R.id.progressBar);
             boolean isLoadingComplete = (attachment.state == Attachment.LoadingState.COMPLETE);
             if (isLoadingComplete) {
-                if (smlMessageComposeUtil.handleJsonLdAttachment(attachment)) {
+                if (VERSION.SDK_INT >= VERSION_CODES.P) {
+                    getMainExecutor().execute(() -> smlMessageComposeUtil.handleJsonLdAttachment(attachment));
+                } else if (smlMessageComposeUtil.handleJsonLdAttachment(attachment)) {
                     return;
                 }
                 if (attachment.isSupportedImage()) {
