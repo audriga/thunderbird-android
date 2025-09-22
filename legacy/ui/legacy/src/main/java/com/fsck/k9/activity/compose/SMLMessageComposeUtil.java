@@ -119,6 +119,11 @@ public class SMLMessageComposeUtil {
 
     public void enrichSharedUrlToSml(String url) {
             List<JSONObject> data = StructuredDataExtractionUtils.downloadParseAndRefineStructuredData(url, true, true);
+        try {
+            org.audriga.ld2h.MustacheRenderer ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
+            data = ld2hRenderer.filterRenderable(data);
+        } catch (IOException ignored) {
+        }
             if (!data.isEmpty()) {
                 if (smlPayload == null) {
                     smlPayload = data;
