@@ -124,15 +124,16 @@ abstract class SmlMessageUtil {
             return builderToUse
         }
 
-
         @JvmStatic
         fun getApproveDenyPayload(requestAction: String): JSONObject? = when (requestAction) {
             "ConfirmAction" -> {
                 JSONObject("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"ConfirmAction\",\r\n  \"name\": \"Approved\"\r\n}");
             }
+
             "CancelAction" -> {
                 JSONObject("{\r\n  \"@context\": \"http://schema.org\",\r\n  \"@type\": \"CancelAction\",\r\n  \"name\": \"Denied\"\r\n})");
             }
+
             else -> {
                 null;
             }

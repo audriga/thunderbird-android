@@ -42,7 +42,7 @@ public class SMLMessageComposeUtil {
     // SML
 //    private String smlJsonLd = null;
     private List<JSONObject> smlPayload = null;
-//    private String smlHTMLEmail = null;
+    //    private String smlHTMLEmail = null;
     private final MessageWebView messageContentViewSML;
     private final MaterialSwitch smlModeSwitch;
 
@@ -58,6 +58,7 @@ public class SMLMessageComposeUtil {
         this.messageContentView.addTextChangedListener(new TextWatcher() {
             private int insertedStartIndex = -1;
             private int insertedEndIndex = -1;
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -118,24 +119,24 @@ public class SMLMessageComposeUtil {
     }
 
     public void enrichSharedUrlToSml(String url) {
-            List<JSONObject> data = StructuredDataExtractionUtils.downloadParseAndRefineStructuredData(url, true, true);
+        List<JSONObject> data = StructuredDataExtractionUtils.downloadParseAndRefineStructuredData(url, true, true);
         try {
             org.audriga.ld2h.MustacheRenderer ld2hRenderer = new org.audriga.ld2h.MustacheRenderer();
             data = ld2hRenderer.filterRenderable(data);
         } catch (IOException ignored) {
         }
-            if (!data.isEmpty()) {
-                if (smlPayload == null) {
-                    smlPayload = data;
-                } else {
-                    smlPayload.addAll(data);
-                }
-                Ld2hResult ld2hResult = ld2hRenderSmlPayload(smlPayload);
-                displayLd2hResultAndUpdateSubject(ld2hResult);
+        if (!data.isEmpty()) {
+            if (smlPayload == null) {
+                smlPayload = data;
+            } else {
+                smlPayload.addAll(data);
             }
-            // else: No structured data found, todo: treat link as normal?
-
+            Ld2hResult ld2hResult = ld2hRenderSmlPayload(smlPayload);
+            displayLd2hResultAndUpdateSubject(ld2hResult);
+        }
+        // else: No structured data found, todo: treat link as normal?
     }
+
     public static boolean isJsonLd(JSONObject jsonObject) {
         try {
             String context = jsonObject.getString("@context");
@@ -177,11 +178,11 @@ public class SMLMessageComposeUtil {
                 while ((line = reader.readLine()) != null) {
                     sb.append(line).append("\n");
                 }
-                String ret =  sb.toString();
+                String ret = sb.toString();
                 // todo: popup to ask if they want to share as schema, or as attachment
                 List<JSONObject> deserialized = org.audriga.hetc.JsonLdDeserializer.deserialize(ret);
                 List<JSONObject> jsonLds = new ArrayList<>(deserialized.size());
-                for (JSONObject jsonObject: deserialized) {
+                for (JSONObject jsonObject : deserialized) {
                     if (SMLMessageComposeUtil.isJsonLd(jsonObject)) {
                         jsonLds.add(jsonObject);
                     }
@@ -224,6 +225,7 @@ public class SMLMessageComposeUtil {
 
     /**
      * Inlines images (if not already inlined) via H2LD, and then renders the given payload using LD2H.
+     *
      * @param smlPayload schema to render. This is modified if inline is necessary and possible.
      * @return the resulting HTMLs of the LD2H render, together with the schema types.
      */
@@ -237,7 +239,7 @@ public class SMLMessageComposeUtil {
         }
         ArrayList<String> renderedDisplayHTMLs = new ArrayList<>(smlPayload.size());
         ArrayList<String> types = new ArrayList<>(smlPayload.size());
-        for (JSONObject jsonObject: smlPayload) {
+        for (JSONObject jsonObject : smlPayload) {
             // For freshly downloaded schema, the image has already been inlined.
             // But inlineImages is smart enough to detect the already inlined image.
             //

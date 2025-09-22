@@ -37,7 +37,7 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
 
 
     protected SmlMessageBuilder(MessageIdGenerator messageIdGenerator,
-            BoundaryGenerator boundaryGenerator,
+        BoundaryGenerator boundaryGenerator,
         CoreResourceProvider resourceProvider,
         GeneralSettingsManager settingsManager
     ) {
@@ -46,8 +46,8 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
     }
 
     /**
-     * Build the message to be sent (or saved). If there is another message quoted in this one, it will be baked
-     * into the message here.
+     * Build the message to be sent (or saved). If there is another message quoted in this one, it will be baked into
+     * the message here.
      */
     @Override
     protected MimeMessage build() throws MessagingException {
@@ -140,25 +140,26 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
 
     private String buildIdentityHeader(TextBody body, TextBody bodyPlain) {
         return new IdentityHeaderBuilder()
-                .setCursorPosition(cursorPosition)
-                .setIdentity(identity)
-                .setIdentityChanged(identityChanged)
-                .setMessageFormat(messageFormat)
-                .setMessageReference(messageReference)
-                .setQuotedHtmlContent(quotedHtmlContent)
-                .setQuoteStyle(quoteStyle)
-                .setQuoteTextMode(quotedTextMode)
-                .setSignature(signature)
-                .setSignatureChanged(signatureChanged)
-                .setBody(body)
-                .setBodyPlain(bodyPlain)
-                .build();
+            .setCursorPosition(cursorPosition)
+            .setIdentity(identity)
+            .setIdentityChanged(identityChanged)
+            .setMessageFormat(messageFormat)
+            .setMessageReference(messageReference)
+            .setQuotedHtmlContent(quotedHtmlContent)
+            .setQuoteStyle(quoteStyle)
+            .setQuoteTextMode(quotedTextMode)
+            .setSignature(signature)
+            .setSignatureChanged(signatureChanged)
+            .setBody(body)
+            .setBodyPlain(bodyPlain)
+            .build();
     }
 
     /**
-     * Build the Body that will contain the text of the message. We'll decide where to
-     * include it later. Draft messages are treated somewhat differently in that signatures are not
-     * appended and HTML separators between composed text and quoted text are not added.
+     * Build the Body that will contain the text of the message. We'll decide where to include it later. Draft messages
+     * are treated somewhat differently in that signatures are not appended and HTML separators between composed text
+     * and quoted text are not added.
+     *
      * @param isDraft If we should build a message that will be saved as a draft (as opposed to sent).
      */
     private TextBody buildText(boolean isDraft) {
@@ -169,18 +170,14 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
      * Build the {@link Body} that will contain the text of the message.
      *
      * <p>
-     * Draft messages are treated somewhat differently in that signatures are not appended and HTML
-     * separators between composed text and quoted text are not added.
+     * Draft messages are treated somewhat differently in that signatures are not appended and HTML separators between
+     * composed text and quoted text are not added.
      * </p>
      *
-     * @param isDraft
-     *         If {@code true} we build a message that will be saved as a draft (as opposed to
-     *         sent).
-     * @param simpleMessageFormat
-     *         Specifies what type of message to build ({@code text/plain} vs. {@code text/html}).
-     *
-     * @return {@link TextBody} instance that contains the entered text and possibly the quoted
-     *         original message.
+     * @param isDraft             If {@code true} we build a message that will be saved as a draft (as opposed to
+     *                            sent).
+     * @param simpleMessageFormat Specifies what type of message to build ({@code text/plain} vs. {@code text/html}).
+     * @return {@link TextBody} instance that contains the entered text and possibly the quoted original message.
      */
     private TextBody buildText(boolean isDraft, SimpleMessageFormat simpleMessageFormat) {
         TextBodyBuilder textBodyBuilder;
@@ -315,6 +312,7 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
         this.plainText = text;
         return this;
     }
+
     public SmlMessageBuilder setPlainText(String plainText) {
         this.plainText = plainText;
         return this;

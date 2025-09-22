@@ -74,12 +74,13 @@ public abstract class SMLMessageView {
     @NonNull
     public static String addExtractedUrlButtons(List<String> urls, String htmlString) {
         List<String> encodedUrls = new ArrayList<>(urls.size());
-        for (String url: urls) {
+        for (String url : urls) {
             // Substring to remove https:// prefix
-            encodedUrls.add(Base64.encodeToString(url.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE));
+            encodedUrls.add(
+                Base64.encodeToString(url.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE));
         }
 
-        String button = "<a href=\"xloadcards://"+ String.join(",", encodedUrls) +"\">Load Cards</a><br><hr><br><br>";
+        String button = "<a href=\"xloadcards://" + String.join(",", encodedUrls) + "\">Load Cards</a><br><hr><br><br>";
         String htmlWithStringButtons = addLoadButtonsAfterUrls(htmlString);
         // todo this is not actually using the output of htmlProcessor.processForDisplay.
         //    also: the function that adds the buttons should proably work on the html tree instead of what it is currently doing
@@ -97,7 +98,7 @@ public abstract class SMLMessageView {
         if (filteredJsonLds.size() == 1) {
             JSONObject jsonObject = data.get(0).getJson();
             renderWithButtons(jsonObject, renderer, renderedHTMLs);
-        } else  if (filteredJsonLds.size() > 1) {
+        } else if (filteredJsonLds.size() > 1) {
             String tabbedCardHTML = renderTabbedWithButtons(filteredJsonLds, renderer);
             renderedHTMLs.add(tabbedCardHTML);
         }
@@ -143,7 +144,7 @@ public abstract class SMLMessageView {
 
     private static List<JSONObject> unwrapStructuredData(List<StructuredData> data) {
         List<JSONObject> jsonObjects = new ArrayList<>();
-        for (StructuredData structuredData: data) {
+        for (StructuredData structuredData : data) {
             JSONObject jsonObject = structuredData.getJson();
             jsonObjects.add(jsonObject);
         }
@@ -171,6 +172,7 @@ public abstract class SMLMessageView {
         }
         return filteredJsonLds;
     }
+
     private static String renderTabbedWithButtons(List<JSONObject> filteredJsonLds, MustacheRenderer renderer)
         throws IOException {
         if (filteredJsonLds.isEmpty()) {
@@ -193,7 +195,8 @@ public abstract class SMLMessageView {
         return result;
     }
 
-    private static void renderWithButtons(JSONObject jsonObject, MustacheRenderer renderer, ArrayList<String> renderedHTMLs)
+    private static void renderWithButtons(JSONObject jsonObject, MustacheRenderer renderer,
+        ArrayList<String> renderedHTMLs)
         throws IOException {
         String showSourceButton = getShowSourceButton(jsonObject);
         List<ButtonDescription> buttons = SMLUtil.getButtons(jsonObject);
@@ -261,67 +264,69 @@ public abstract class SMLMessageView {
         Body body = part.getBody();
         if (body == null) {
             // Part must have been lazy loaded. Downloading full part.
-           if (part instanceof LocalBodyPart) {
-               LocalMessage message = ((LocalBodyPart) part).getMessage();
-               LegacyAccount account = message.getAccount();
-               MessagingController mc = DI.get(MessagingController.class);
+            if (part instanceof LocalBodyPart) {
+                LocalMessage message = ((LocalBodyPart) part).getMessage();
+                LegacyAccount account = message.getAccount();
+                MessagingController mc = DI.get(MessagingController.class);
 
-               // It would probably be a bit cleaner to use a CompletableFuture but that is only available at API level 24
-               CountDownLatch latch = new CountDownLatch(1);
-               AtomicReference<Part> resultRef = new AtomicReference<>();
-               //mc.loadMessageRemote(); this could potentially be used instead to download the entire message...
-               mc.loadAttachment(account, message, part, new SimpleMessagingListener() {
-                   @Override
-                   public void loadAttachmentFinished(LegacyAccount account, Message message, Part part) {
-                       resultRef.set(part);
-                       latch.countDown();
-                       super.loadAttachmentFinished(account, message, part);
-                   }
+                // It would probably be a bit cleaner to use a CompletableFuture but that is only available at API level 24
+                CountDownLatch latch = new CountDownLatch(1);
+                AtomicReference<Part> resultRef = new AtomicReference<>();
+                //mc.loadMessageRemote(); this could potentially be used instead to download the entire message...
+                mc.loadAttachment(account, message, part, new SimpleMessagingListener() {
+                    @Override
+                    public void loadAttachmentFinished(LegacyAccount account, Message message, Part part) {
+                        resultRef.set(part);
+                        latch.countDown();
+                        super.loadAttachmentFinished(account, message, part);
+                    }
 
-                   @Override
-                   public void loadAttachmentFailed(LegacyAccount account, Message message, Part part, String reason) {
-                       Timber.e("Loading Part failed: %s", reason);
-                       resultRef.set(part);
-                       latch.countDown();
-                       super.loadAttachmentFailed(account, message, part, reason);
-                   }
-               });
-               try {
-                   latch.await();
-               } catch (InterruptedException e) {
-                   Timber.e(e, "Interrupted while trying to load part");
-               }
-               // Trying to use part after this (either via `part = resultRef.get();` or directly using the existing
-               // reference) causes issues, because the body is a BinaryTempFileBody and the temp file is already gone.
-               // Loading message from local storage instead works, but need to re-find sml part.
-               LocalMessage loadedMessage = mc.loadMessage(account, message.getFolder().getDatabaseId(), message.getUid());
-               Body messageBody = loadedMessage.getBody();
-               if (messageBody instanceof MimeMultipart) {
-                   part = null;
-                   List<BodyPart> parts = ((MimeMultipart) messageBody).getBodyParts();
-                   ArrayList<Viewable> viewableParts = new ArrayList<>();
-                   ArrayList<Part> attachments = new ArrayList<>();
-                   ArrayList<Part> parseableParts = new ArrayList<>();
+                    @Override
+                    public void loadAttachmentFailed(LegacyAccount account, Message message, Part part, String reason) {
+                        Timber.e("Loading Part failed: %s", reason);
+                        resultRef.set(part);
+                        latch.countDown();
+                        super.loadAttachmentFailed(account, message, part, reason);
+                    }
+                });
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    Timber.e(e, "Interrupted while trying to load part");
+                }
+                // Trying to use part after this (either via `part = resultRef.get();` or directly using the existing
+                // reference) causes issues, because the body is a BinaryTempFileBody and the temp file is already gone.
+                // Loading message from local storage instead works, but need to re-find sml part.
+                LocalMessage loadedMessage =
+                    mc.loadMessage(account, message.getFolder().getDatabaseId(), message.getUid());
+                Body messageBody = loadedMessage.getBody();
+                if (messageBody instanceof MimeMultipart) {
+                    part = null;
+                    List<BodyPart> parts = ((MimeMultipart) messageBody).getBodyParts();
+                    ArrayList<Viewable> viewableParts = new ArrayList<>();
+                    ArrayList<Part> attachments = new ArrayList<>();
+                    ArrayList<Part> parseableParts = new ArrayList<>();
 
-                   for (Part bp : parts) {
-                       MessageExtractor.findViewablesAndAttachments(bp, viewableParts, attachments, parseableParts);
-                   }
-                   for (Part bp : parseableParts) {
-                           if (isSameMimeType(bp.getMimeType(), "application/ld+json")) {
-                           part = bp;
-                           break;
-                       }
-                   }
-                   if (part == null) {
-                       Timber.e("Did not find application/ld+json part in message");
-                       return null;
-                   }
-               } else {
-                   Timber.e("Expected to get multipart after loading part, but got %s instead", messageBody.getClass());
-                   return null;
-               }
-               body = part.getBody();
-           }
+                    for (Part bp : parts) {
+                        MessageExtractor.findViewablesAndAttachments(bp, viewableParts, attachments, parseableParts);
+                    }
+                    for (Part bp : parseableParts) {
+                        if (isSameMimeType(bp.getMimeType(), "application/ld+json")) {
+                            part = bp;
+                            break;
+                        }
+                    }
+                    if (part == null) {
+                        Timber.e("Did not find application/ld+json part in message");
+                        return null;
+                    }
+                } else {
+                    Timber.e("Expected to get multipart after loading part, but got %s instead",
+                        messageBody.getClass());
+                    return null;
+                }
+                body = part.getBody();
+            }
         }
         if (body == null) {
             return null;
@@ -334,7 +339,7 @@ public abstract class SMLMessageView {
         List<StructuredData> data) throws MessagingException, IOException, ParserException {
         if (parseableAttachments != null) {
 
-            for (Entry<AttachmentViewInfo, String> parseableAttachment: parseableAttachments.entrySet()) {
+            for (Entry<AttachmentViewInfo, String> parseableAttachment : parseableAttachments.entrySet()) {
                 String ext = parseableAttachment.getValue();
                 AttachmentViewInfo attachment = parseableAttachment.getKey();
                 switch (ext) {
@@ -360,7 +365,7 @@ public abstract class SMLMessageView {
                         String icalText = cal.toString();
 //                        System.out.println(cal.getUid());
                         List<StructuredData> eventJsons = new ArrayList<>();
-                        for (CalendarComponent c : cal.getComponents()){
+                        for (CalendarComponent c : cal.getComponents()) {
                             if (c instanceof VEvent) {
                                 VEvent event = (VEvent) c;
 //                                List<Attendee> attendees = event.getAttendees();
@@ -426,8 +431,10 @@ public abstract class SMLMessageView {
                         }
                         data.addAll(eventJsons);
                     }
-                    case "vcard": {}
-                    case "pkpass": {}
+                    case "vcard": {
+                    }
+                    case "pkpass": {
+                    }
                 }
             }
 
@@ -459,7 +466,7 @@ public abstract class SMLMessageView {
                 while (htmlMatcher.find()) {
 //            String textMatch = textMatcher.group();
                     String htmlMatch = htmlMatcher.group();
-                    String code = htmlMatch.substring(3, htmlMatch.length() -4);
+                    String code = htmlMatch.substring(3, htmlMatch.length() - 4);
                     if (text.contains(code)) {
                         return new JSONObject()
                             .put("@context", "https://schema.org")
@@ -468,7 +475,7 @@ public abstract class SMLMessageView {
                             .put("potentialAction", new JSONObject()
                                 .put("@type", "CopyToClipboardAction")
                                 // 📋
-                                .put( "name", code)
+                                .put("name", code)
                                 .put("description", code));
                     }
                 }
@@ -504,7 +511,8 @@ public abstract class SMLMessageView {
 //    }
 
     public static List<String> tryExtractAllWhitelistedUrls(String text, String html) {
-        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/cooking");
+        List<String> whiteListedUrls =
+            Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/cooking");
         Matcher urlPlaintextMatcher = Patterns.WEB_URL.matcher(text);
         List<String> urls = new ArrayList<>();
         while (urlPlaintextMatcher.find()) {
@@ -518,7 +526,7 @@ public abstract class SMLMessageView {
                         fullUrl = url + afterUrl;
                     }
                     if (!urls.contains(fullUrl)) {
-                       urls.add(fullUrl);
+                        urls.add(fullUrl);
                     }
                 }
             }
@@ -545,7 +553,8 @@ public abstract class SMLMessageView {
     }
 
     static String addLoadButtonsAfterUrls(String html) {
-        List<String> whiteListedUrls = Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/cooking");
+        List<String> whiteListedUrls =
+            Arrays.asList("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/cooking");
         StringBuilder builder = new StringBuilder();
         Matcher urlHtmlMatcher = Patterns.WEB_URL.matcher(html);
         int originaHTMLIndex = 0;
@@ -561,7 +570,7 @@ public abstract class SMLMessageView {
                         String fullUrl = url + afterUrl;
                         String encodedFullUrl = Base64.encodeToString(fullUrl.getBytes(StandardCharsets.UTF_8),
                             Base64.NO_WRAP + Base64.URL_SAFE);
-                        String loadCardUrl = "xloadcards://"+encodedFullUrl;
+                        String loadCardUrl = "xloadcards://" + encodedFullUrl;
                         if (originaHTMLIndex >= end) {
                             //todo something went wrong with the matching
                             return html;
@@ -577,7 +586,8 @@ public abstract class SMLMessageView {
                             return html;
                         }
                         builder.append(html.substring(end, insertPosition));
-                      String button = "<a href=\"" + loadCardUrl + "\"><span class=\"material-icons\">web_asset</span></a>";
+                        String button =
+                            "<a href=\"" + loadCardUrl + "\"><span class=\"material-icons\">web_asset</span></a>";
 //                      button += "<a href=\"" + loadCardUrl + "\"><span class=\"material-symbols-outlined\">web_asset</span></a>";
                         builder.append(button);
                         originaHTMLIndex = insertPosition;
@@ -607,7 +617,8 @@ public abstract class SMLMessageView {
         try {
             JSONObject extracted = maybeTryExtract(shouldTryToDerive, text, rawHtml);
 
-            List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.JSON_LD);
+            List<StructuredData> data =
+                StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.JSON_LD);
             if (data.isEmpty()) {
                 data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.MICRODATA);
             }
@@ -643,7 +654,7 @@ public abstract class SMLMessageView {
         } catch (Exception e) {
             Timber.e(e, "Encountered exception while trying to extract/ display markup from viewable");
         }
-        return  displayHtml;
+        return displayHtml;
     }
 
     /**
@@ -718,7 +729,8 @@ public abstract class SMLMessageView {
                             }
 
                             @Override
-                            public void loadAttachmentFailed(LegacyAccount account, Message message, Part part, String reason) {
+                            public void loadAttachmentFailed(LegacyAccount account, Message message, Part part,
+                                String reason) {
                                 super.loadAttachmentFailed(account, message, part, reason);
                             }
                         });
