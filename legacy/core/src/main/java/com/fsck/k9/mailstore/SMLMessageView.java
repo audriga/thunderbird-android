@@ -94,12 +94,17 @@ public abstract class SMLMessageView {
         MustacheRenderer renderer = new MustacheRenderer();
         ArrayList<String> renderedHTMLs = new ArrayList<>();
         List<JSONObject> unwrappedStructuredData = unwrapStructuredData(data);
-        List<JSONObject> filteredJsonLds = filterByType(unwrappedStructuredData);
-        if (filteredJsonLds.size() == 1) {
-            JSONObject jsonObject = data.get(0).getJson();
+        List<JSONObject> typeFilteredJsonLds = filterByType(unwrappedStructuredData);
+        List<JSONObject> renderFilteredJsonLds = renderer.filterRenderable(typeFilteredJsonLds);
+        if (renderFilteredJsonLds.isEmpty()) {
+           if (extracted == null) {
+              return  "<b>NO RENDERABLE STRUCTURED DATA FOUND</b><br>" + sanitizedHtml;
+           }
+        } else if (renderFilteredJsonLds.size() == 1) {
+            JSONObject jsonObject = renderFilteredJsonLds.get(0);
             renderWithButtons(jsonObject, renderer, renderedHTMLs);
-        } else if (filteredJsonLds.size() > 1) {
-            String tabbedCardHTML = renderTabbedWithButtons(filteredJsonLds, renderer);
+        } else {
+            String tabbedCardHTML = renderTabbedWithButtons(renderFilteredJsonLds, renderer);
             renderedHTMLs.add(tabbedCardHTML);
         }
         if (extracted != null) {
