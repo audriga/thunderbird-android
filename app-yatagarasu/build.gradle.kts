@@ -1,3 +1,5 @@
+import java.util.Date
+
 plugins {
     id(ThunderbirdPlugins.App.androidCompose)
     alias(libs.plugins.dependency.guard)
@@ -91,7 +93,8 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
-            versionNameSuffix = "-SNAPSHOT"
+            val buildTime = Date()
+            versionNameSuffix = "-SNAPSHOT $buildTime"
 
             isMinifyEnabled = false
             isShrinkResources = false
