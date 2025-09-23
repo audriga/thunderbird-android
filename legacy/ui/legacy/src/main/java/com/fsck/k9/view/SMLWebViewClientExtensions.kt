@@ -89,8 +89,9 @@ import net.fortuna.ical4j.model.property.Url
 import net.fortuna.ical4j.util.Uris
 import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.common.exception.MessagingException
-import net.thunderbird.core.preference.GeneralSettings
-import net.thunderbird.core.preference.PreferenceManager
+//import net.thunderbird.core.preference.GeneralSettings
+import net.thunderbird.core.preference.GeneralSettingsManager
+//import net.thunderbird.core.preference.PreferenceManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Request.Builder
@@ -108,7 +109,8 @@ class SMLWebViewClientExtensions(
     private val webViewClient: WebViewClient,
 ) : KoinComponent {
     private val logger: Logger by inject()
-    private val preferenceManager: PreferenceManager<GeneralSettings> by inject()
+//    private val preferenceManager: PreferenceManager<GeneralSettings> by inject()
+    private val generalSettingsManager: GeneralSettingsManager by inject()
 
     fun shouldOverrideUrlLoading(webView: WebView, uri: Uri): Boolean {
         return when (uri.scheme) {
@@ -311,7 +313,8 @@ class SMLWebViewClientExtensions(
                     .setPlainText("${account.displayName} has ${action.verb.lowercase(Locale.getDefault())} your invitation")
                     .setSubject(subject)
                     .setSentDate(Date())
-                    .setHideTimeZone(preferenceManager.getConfig().privacy.isHideTimeZone)
+                    .setHideTimeZone(generalSettingsManager.getConfig().privacy.isHideTimeZone)
+//                    .setHideTimeZone(preferenceManager.getConfig().privacy.isHideTimeZone)
                     .setIdentity(account.identities.first()) // todo if the account has multiple identities
                     .setMessageFormat(SimpleMessageFormat.TEXT)
                     .setTo(listOf(Address(organizerEmail, organizerName)))
