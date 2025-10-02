@@ -5,8 +5,9 @@
     android:installLocation="auto"
     >
 
+    <uses-sdk tools:overrideLibrary="androidx.javascriptengine"/>
     <application
-        android:name="com.audriga.yatagarasu.android.ThunderbirdApp"
+        android:name="com.audriga.yatagarasu.android.YatagarasuApp"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.Yatagarasu.Startup"

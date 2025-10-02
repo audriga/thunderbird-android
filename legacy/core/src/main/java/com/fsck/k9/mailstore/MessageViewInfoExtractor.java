@@ -13,6 +13,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
+import androidx.javascriptengine.JavaScriptIsolate;
+import app.k9mail.core.android.common.contact.ContactRepository;
 import app.k9mail.legacy.di.DI;
 import com.fsck.k9.mailstore.SMLMessageView.TryToDerive;
 import com.fsck.k9.CoreResourceProvider;
@@ -23,6 +25,7 @@ import com.fsck.k9.helper.UnsubscribeUri;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Message;
+import kotlin.Lazy;
 import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
@@ -41,8 +44,11 @@ import static com.fsck.k9.mail.internet.Viewable.Html;
 import static com.fsck.k9.mail.internet.Viewable.MessageHeader;
 import static com.fsck.k9.mail.internet.Viewable.Text;
 import static com.fsck.k9.mail.internet.Viewable.Textual;
+import static org.koin.java.KoinJavaComponent.inject;
+
 
 public class MessageViewInfoExtractor {
+    Lazy<JavaScriptIsolate> javaScriptIsolateLazy = inject(JavaScriptIsolate.class);
     private static final String TEXT_DIVIDER =
             "------------------------------------------------------------------------";
     private static final int TEXT_DIVIDER_LENGTH = TEXT_DIVIDER.length();
@@ -264,7 +270,7 @@ public class MessageViewInfoExtractor {
             String textString = text.toString();
             String sanitizedHtml = htmlProcessor.processForDisplay(rawHTML);
             String smlHtml = SMLMessageView.extractMarkupForView(textString, rawHTML, sanitizedHtml,
-                parseableParts, parseableAttachments, shouldTryToDerive);
+                parseableParts, parseableAttachments, shouldTryToDerive, javaScriptIsolateLazy);
             return new ViewableExtractedText(textString, smlHtml);
         } catch (Exception e) {
             throw new MessagingException("Couldn't extract viewable parts", e);

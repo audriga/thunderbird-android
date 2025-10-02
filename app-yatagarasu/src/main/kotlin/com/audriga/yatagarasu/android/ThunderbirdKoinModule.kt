@@ -1,5 +1,7 @@
 package com.audriga.yatagarasu.android
 
+import androidx.javascriptengine.JavaScriptIsolate
+import androidx.javascriptengine.JavaScriptSandbox
 import app.k9mail.feature.widget.shortcut.LauncherShortcutActivity
 import com.fsck.k9.AppConfig
 import com.fsck.k9.DefaultAppConfig
@@ -30,6 +32,18 @@ val appModule = module {
     single<AppConfig> { appConfig }
     single<OAuthConfigurationFactory> { TbOAuthConfigurationFactory() }
     single<FeatureFlagFactory> { TbFeatureFlagFactory() }
+    single<JavaScriptSandbox?> {
+        if (JavaScriptSandbox.isSupported()) {
+            val future = JavaScriptSandbox.createConnectedInstanceAsync(get())
+            future.get()
+        } else {
+            null
+        }
+    }
+    single<JavaScriptIsolate?> {
+        val sandbox: JavaScriptSandbox? = get()
+        sandbox?.createIsolate()
+    }
 
     developmentModuleAdditions()
 }

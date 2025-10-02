@@ -263,6 +263,9 @@ dependencies {
     implementation(projects.feature.onboarding.migration.thunderbird)
     implementation(projects.feature.migration.launcher.thunderbird)
 
+
+    implementation(libs.androidx.javascript.engine)
+
     // TODO remove once OAuth ids have been moved from TBD to TBA
     "betaImplementation"(libs.appauth)
     releaseImplementation(libs.appauth)
