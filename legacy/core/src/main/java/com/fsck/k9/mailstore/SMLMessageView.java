@@ -623,7 +623,7 @@ public abstract class SMLMessageView {
 //
 //            String video = "<video controls height=\"150\" poster=\"https://is1-ssl.mzstatic.com/image/thumb/Video124/v4/5c/d0/fc/5cd0fc4a-714c-e24f-e287-1361bf9c69d6/GB1108700010.sca1.jpg/640x480mv.jpg\" src=\"https://video-ssl.itunes.apple.com/itunes-assets/Video124/v4/25/c0/a7/25c0a7ef-34a6-c36d-c921-ad3d90cec9d6/mzvf_18388793884790474945.640x480.h264lc.U.p.m4v\"></video>\r\n<br/><br/>\r\n<audio controls style=\"width: 200px; height: 20px;\" src=\"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/b0/d8/aa/b0d8aa8e-1a38-6287-508d-27693174249e/mzaf_13677213744690699536.plus.aac.ep.m4a\">boo</audio>";
 
-        JavaScriptIsolate jsIsolate = javaScriptIsolateLazy.getValue();
+//        JavaScriptIsolate jsIsolate = javaScriptIsolateLazy.getValue();
 //        String code = "function sum(a, b) { let r = a + b; return r.toString(); }; sum(3, 4)";
 //        String result = null;
 //        try {
