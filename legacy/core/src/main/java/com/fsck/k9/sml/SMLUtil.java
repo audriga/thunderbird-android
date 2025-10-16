@@ -37,15 +37,16 @@ public abstract class SMLUtil {
      */
     public static List<ButtonDescription> getButtons(JSONObject jsonObject) {
         List<ButtonDescription> buttons = new ArrayList<>();
+        String type = jsonObject.optString("@type");
         Object potentialActions = jsonObject.opt("potentialAction");
         if (potentialActions != null) {
             if (potentialActions instanceof  JSONObject) {
-                handleExistingPotentialAction((JSONObject) potentialActions, buttons);
+                handleExistingPotentialAction((JSONObject) potentialActions, buttons, type);
             } else if (potentialActions instanceof JSONArray) {
                 for (int i = 0; i < ((JSONArray) potentialActions).length(); i++) {
                     Object potentialAction = ((JSONArray) potentialActions).opt(i);
                     if (potentialAction instanceof JSONObject) {
-                        handleExistingPotentialAction((JSONObject) potentialAction, buttons);
+                        handleExistingPotentialAction((JSONObject) potentialAction, buttons, type);
                     }
                 }
             }
@@ -62,7 +63,6 @@ public abstract class SMLUtil {
         if (webUrlButtonDesc != null) {
             buttons.add(webUrlButtonDesc);
         }
-        String type = jsonObject.optString("@type");
         if (shouldMakeSharableAsFile(type)) {
             ButtonDescription shareAsFileButtonDesc = getShareAsFileButtonDesc(jsonObject, type);
             buttons.add(shareAsFileButtonDesc);
@@ -312,9 +312,9 @@ public abstract class SMLUtil {
         return new ButtonDescription(null, "share", uri.toString());
     }
 
-    private static void handleExistingPotentialAction(JSONObject potentialAction, List<ButtonDescription> buttons) {
-        String type = potentialAction.optString("@type");
-        switch (type) {
+    private static void handleExistingPotentialAction(JSONObject potentialAction, List<ButtonDescription> buttons, String mainSchemaType) {
+        String actionType = potentialAction.optString("@type");
+        switch (actionType) {
             case "CopyToClipboardAction": {
                 String name = potentialAction.optString("name", "Copy to clipboard ");
                 String description = potentialAction.optString("description");
@@ -339,6 +339,33 @@ public abstract class SMLUtil {
                 }
                 break;
             }
+            case "ChooseAction": {
+                if (isPoll(mainSchemaType)) {
+                    Object target = potentialAction.opt("target");
+                    if (target instanceof JSONArray) {
+                        JSONArray targetArray = (JSONArray) target;
+                        for (int i = 0; i < targetArray.length(); i++) {
+                            Object targetMember = null;
+                            try {
+                                targetMember = targetArray.get(i);
+                            } catch (JSONException ignored) {}
+                            if (targetMember instanceof String && ((String) targetMember).startsWith("http")) {
+                                String encodedTarget = Uri.encode((String) targetMember);
+                                // todo not tested yet
+                                ButtonDescription submitButton = new ButtonDescription("Submit",null, "xsubmit:"+encodedTarget+"?vote={{user_vote}}");
+                            }
+                            else {
+                                // todo: Ignoring mailto in target for now
+                                continue;
+                            }
+                        }
+                    } else {
+
+                    }
+                    // todo target with single string
+                }
+
+            }
         }
     }
 
@@ -350,6 +377,10 @@ public abstract class SMLUtil {
         // todo: long term wise should do some type based filtering
     }
 
+
+    private static boolean isPoll(String type) {
+        return type != null && type.equals("SimplePoll");
+    }
     private static boolean isEvent(String type) {
         return type.endsWith("Event");
     }

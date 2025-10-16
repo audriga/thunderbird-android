@@ -491,7 +491,7 @@ class SMLWebViewClientExtensions(
     }
 
     private fun xreload(context: Context, uri: Uri) {
-        val httpUri = uri.buildUpon().scheme("https").build()
+        val httpUri = uri.buildUpon().scheme("http").build() //todo revert to https
         val (jsonSrc: String?, okErr: String?) = downloadPage(httpUri)
 
 
