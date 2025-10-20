@@ -76,37 +76,40 @@ public abstract class SMLUtil {
             buttons.addAll(eventButtonDesc);
 
         }
-        // try to get phone number
-        try {
-            List<Object> telephone = findAllRecursive(jsonObject, "telephone");
-            for (Object phone : telephone) {
-                // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
-                if (phone instanceof String) {
-                    buttons.add(new ButtonDescription(null, "call", "tel:" +  phone));
+        if (!isPoll(type)) {
+            // try to get phone number
+            try {
+                List<Object> telephone = findAllRecursive(jsonObject, "telephone");
+                for (Object phone : telephone) {
+                    // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
+                    if (phone instanceof String) {
+                        buttons.add(new ButtonDescription(null, "call", "tel:" +  phone));
+                    }
                 }
-            }
-            List<Object> phones = findAllRecursive(jsonObject, "phone");
-            for (Object phone : phones) {
-                // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
-                if (phone instanceof String) {
-                    buttons.add(new ButtonDescription(null, "call", "tel:" +  phone));
+                List<Object> phones = findAllRecursive(jsonObject, "phone");
+                for (Object phone : phones) {
+                    // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
+                    if (phone instanceof String) {
+                        buttons.add(new ButtonDescription(null, "call", "tel:" +  phone));
+                    }
                 }
+            } catch (JSONException e) {
+                Timber.e(e, "Error trying to add phone button descriptions");
             }
-        } catch (JSONException e) {
-            Timber.e(e, "Error trying to add phone button descriptions");
+            // try to get mail
+            try {
+                List<Object> mails = findAllRecursive(jsonObject, "email");
+                for (Object email : mails) {
+                    // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
+                    if (email instanceof String) {
+                        buttons.add(new ButtonDescription(null, "mail", "mailto:" +  email));
+                    }
+                }
+            } catch (JSONException e) {
+                Timber.e(e, "Error trying to add phone button descriptions");
+            }
         }
-        // try to get mail
-        try {
-            List<Object> mails = findAllRecursive(jsonObject, "email");
-            for (Object email : mails) {
-                // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
-                if (email instanceof String) {
-                    buttons.add(new ButtonDescription(null, "mail", "mailto:" +  email));
-                }
-            }
-        } catch (JSONException e) {
-            Timber.e(e, "Error trying to add phone button descriptions");
-        }
+
         // try to get Place/ Map
         try {
             List<Object> geos = findAllRecursive(jsonObject, "geo");
@@ -339,7 +342,8 @@ public abstract class SMLUtil {
                 }
                 break;
             }
-            case "ChooseAction": {
+            case "ChooseAction": // fallthrough
+            case "UpdateAction": {
                 if (isPoll(mainSchemaType)) {
                     Object target = potentialAction.opt("target");
                     if (target instanceof JSONArray) {
@@ -349,24 +353,41 @@ public abstract class SMLUtil {
                             try {
                                 targetMember = targetArray.get(i);
                             } catch (JSONException ignored) {}
-                            if (targetMember instanceof String && ((String) targetMember).startsWith("http")) {
-                                String encodedTarget = Uri.encode((String) targetMember);
-                                // todo not tested yet
-                                ButtonDescription submitButton = new ButtonDescription("Submit",null, "xsubmit:"+encodedTarget+"?vote={{user_vote}}");
-                            }
-                            else {
-                                // todo: Ignoring mailto in target for now
-                                continue;
-                            }
+                            addPollButtonFromSingleTarget(potentialAction, actionType, targetMember, buttons);
                         }
                     } else {
-
+                        addPollButtonFromSingleTarget(potentialAction, actionType, target, buttons);
                     }
-                    // todo target with single string
                 }
-
+                break;
             }
         }
+    }
+
+    private static void addPollButtonFromSingleTarget(JSONObject potentialAction, String actionType, Object targetMember, List<ButtonDescription> buttons) {
+        if (targetMember instanceof String && ((String) targetMember).startsWith("http")) {
+            String encodedTarget = Uri.encode((String) targetMember);
+            // todo not tested yet
+            if (actionType.equals("ChooseAction")) {
+                ButtonDescription submitButton =  new ButtonDescription("Submit",null, "xsubmit:"+encodedTarget+"?action=submit&vote={{user_vote}}");
+                buttons.add(submitButton);
+            } else if (actionType.equals("UpdateAction")) {
+                String actionName = potentialAction.optString("name");
+                switch(actionName) {
+                    case "close": {
+                        ButtonDescription closeButton =  new ButtonDescription("Close",null, "xsubmit:"+encodedTarget+"?action=close");
+                        buttons.add(closeButton);
+                    }
+                    case "retract": {
+                        ButtonDescription retractButton =  new ButtonDescription("Retract",null, "xsubmit:"+encodedTarget+"?action=retract");
+                        buttons.add(retractButton);
+                    }
+                }
+            }
+        }
+//        else {
+            // todo: Ignoring mailto in target for now
+//        }
     }
 
     private static boolean shouldMakeSharableAsFile(String type) {

@@ -48,6 +48,7 @@ import com.fsck.k9.message.SimpleSmlMessageBuilder
 import com.fsck.k9.message.SmlMessageUtil
 import com.fsck.k9.provider.AttachmentTempFileProvider
 import com.fsck.k9.sml.SMLUtil
+import com.fsck.k9.sml.SMLUtil.getButtons
 import com.fsck.k9.ui.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.zxing.BarcodeFormat
@@ -91,13 +92,16 @@ import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.common.exception.MessagingException
 //import net.thunderbird.core.preference.GeneralSettings
 import net.thunderbird.core.preference.GeneralSettingsManager
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 //import net.thunderbird.core.preference.PreferenceManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Request.Builder
+import okhttp3.RequestBody.Companion.toRequestBody
 import okio.ByteString.Companion.encodeUtf8
 import org.audriga.ld2h.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.koin.core.component.KoinComponent
@@ -181,6 +185,11 @@ class SMLWebViewClientExtensions(
 
             XPLAY_MEDIA -> {
                 xPlayMedia(webView.context, uri)
+                true
+            }
+
+            XSUBMIT -> {
+                xSubmit(webView.context, uri)
                 true
             }
 
@@ -491,19 +500,25 @@ class SMLWebViewClientExtensions(
     }
 
     private fun xreload(context: Context, uri: Uri) {
-        val httpUri = uri.buildUpon().scheme("http").build() //todo revert to https
+        val httpUri = uri.buildUpon().scheme("https").build()
         val (jsonSrc: String?, okErr: String?) = downloadPage(httpUri)
 
 
-
+        val jsonLds: List<JSONObject>
         if (jsonSrc != null) {
-            val jsonLds = JsonLdDeserializer.deserialize(jsonSrc)
+            try {
+                jsonLds = JsonLdDeserializer.deserialize(jsonSrc)
+            } catch (e: JSONException) {
+                logger.error(throwable = e, message = { "Error parsing reload response"})
+                showToast(context, "Could not parse response")
+                return
+            }
             val renderer = MustacheRenderer()
 
             val renderedHTMLs: ArrayList<String> = ArrayList(jsonLds.size)
             for (jsonObject in jsonLds) {
-//                val buttons: List<ButtonDescription> = getButtons(jsonObject)
-                val result: String = renderer.render(jsonObject)
+                val buttons = getButtons(jsonObject)
+                val result: String = renderer.render(jsonObject, buttons)
                 renderedHTMLs.add(result)
             }
 
@@ -513,6 +528,66 @@ class SMLWebViewClientExtensions(
             showToast(context, "Got no content ($okErr)")
         }
     }
+    private fun xSubmit(context: Context, uri: Uri) {
+
+        // todo what to do when the user selects no votes?
+        val uriParts = uri.schemeSpecificPart.split("?action=")
+        val encodedTarget = uriParts.first()
+        val queryParams = uriParts.last().split("&vote=")
+        val action = queryParams.first()
+        val votes = if (queryParams.size > 1) queryParams.last() else null
+        val target = Uri.decode(encodedTarget)
+        val actionOption = if (votes?.startsWith('[') ?: false) JSONArray(votes) else votes
+        val account: LegacyAccount? = account(messageReference)
+        if (account == null) {
+            showToast(context, "Cannot get account information (needed to vote)")
+            return
+        }
+
+        val name = account.identities.firstOrNull()?.name ?: account.displayName
+        val actionData = JSONObject().apply {
+            put("@context", "https://schema.org")
+            put("@type", if (action == "submit") "ChooseAction" else "UpdateAction")
+            if (action != "submit") put("name", action)
+            put("agent", JSONObject().apply {
+                put("@type", "Person")
+                put("name", name)
+                put("email", account.email)
+            })
+            if (action == "submit") put("actionOption", actionOption)
+        }
+        val (jsonSrc: String?, okErr: String?) = sendDataRequest(
+            actionData,
+            target,
+            if (action == "close") "PUT" else "PATCH"
+        )
+
+        val jsonLds: List<JSONObject>
+        if (jsonSrc != null) {
+            try {
+                jsonLds = JsonLdDeserializer.deserialize(jsonSrc)
+            } catch (e: JSONException) {
+                logger.error(throwable = e, message = { "Error parsing patch response"})
+                showToast(context, "Could not parse response")
+                return
+            }
+            val renderer = MustacheRenderer()
+
+            val renderedHTMLs: ArrayList<String> = ArrayList(jsonLds.size)
+            for (jsonObject in jsonLds) {
+                val buttons = getButtons(jsonObject)
+                val result: String = renderer.render(jsonObject, buttons)
+                renderedHTMLs.add(result)
+            }
+
+
+            showRenderedCardsPopup(context, renderedHTMLs)
+        } else {
+            showToast(context, "Got no content ($okErr)")
+        }
+    }
+
+
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun xstory(context: Context, uri: Uri) {
@@ -700,6 +775,7 @@ class SMLWebViewClientExtensions(
         private const val XSHOW_SOURCE = "xshowsource"
         private const val XIMIP = "ximip"
         private const val XPLAY_MEDIA = "xplaymedia"
+        private const val XSUBMIT = "xsubmit"
 
         private fun xrequest(uri: Uri) {
             val httpUri = uri.buildUpon().scheme("https").build()
@@ -1041,6 +1117,39 @@ class SMLWebViewClientExtensions(
                 Log.d(e, "Couldn't get: %s", httpUri)
             }
             return Pair(pageSrc, okErr)
+        }
+
+        private fun sendDataRequest(data: JSONObject, target: String, method: String = "PATCH"): Pair<String?, String?> {
+            val jsonMediaType = "application/json".toMediaTypeOrNull()
+            val patchBody = data.toString()
+                .toRequestBody(jsonMediaType)
+
+            val client = OkHttpClient()
+            var pageSrc: String? = null
+            var jsonSrc: String? = null
+            var okErr: String? = null
+            try {
+                val request: Request = Builder()
+                    .url(target)
+                    .method(method, patchBody)
+                    .build()
+                client.newCall(request).execute().use { response ->
+                    if (response.body != null) {
+                        pageSrc = response.body!!.string()
+                        Log.d("Got response from %s:\n%s", target, pageSrc)
+//                        if (response.body!!.contentType()?.equals(jsonMediaType) == true) {
+                            jsonSrc = pageSrc
+//                        } else {
+//                            okErr = "Response is not json"
+//                            Log.d("Response is not json (%s)\n%s", target, pageSrc)
+//                        }
+                    }
+                }
+            } catch (e: java.lang.Exception) {
+                okErr = e.message
+                Log.d(e, "Couldn't get: %s", target)
+            }
+            return Pair(jsonSrc, okErr)
         }
 
         // Copied over from K9WebViewClient
