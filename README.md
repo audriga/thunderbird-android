@@ -9,6 +9,9 @@ Thunderbird for Android is a powerful, privacy-focused email app. Effortlessly m
 
 Thunderbird for Android is based on K-9 Mail, which comes with a rich history of success and functionality in open source email.
 
+## Changes in this Fork
+See [FORK](FORK.md)
+
 ## Download
 
 Thunderbird for Android can be downloaded from a couple of sources:
