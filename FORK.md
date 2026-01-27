@@ -14,6 +14,7 @@ Further **structured data generation based on contents** (should be or already i
 ### Extract Deliberately Placed Structured Data
 
 This is for the case, where the sender of the mail included some structured data with the mail.
+
 * Extract multipart/alternative MIME part with the content type `application/ld+json` (this corresponds to the current draft of the SML spec)
 * Extracts json-ld (or microdata) from the message's HTML (legacy; this is how some proprietary (e.g. Airline to Gmail) solutions function)
 * We also support the case, where a sender wants to include multiple pieces of structured data, and have them appear/ linked in specific locations of the html. This works with `data-id` tags, similar to how images can be embedded using `mid` tags in regular emails. 
@@ -36,6 +37,7 @@ and for demonstration purposes, generate the corresponding structured data as if
 
 Extracting (and later rendering) structured data might be something a user would want to restrict to trusted senders only.
 We have some ideas as to when this trust should be granted, but it is **still a work in progress**.
+
 * Currently in `SMLTrustHelper` we bundle information on
   * If the message has a "good" signature
   * If the user has a contact for the sender
@@ -51,12 +53,13 @@ This is a stopgap, to allow rendering schema that has originally been extracted 
 ## Rendering
 
 For rendering the structured data, we have a rather **"hacky" solution**, which works for demonstration purposes, but should be replaced with something more robust:
+
 * For a given piece of structured data, we render a HTML representation, and tack that html to the start of the email html.
 * To allow for buttons (that are rendered in html, but whose behaviour is defined in java), we use custom uri schemes, which we overwrite in our extended webview client (`SMLWebViewClientExtensions)
 * For poll cards we actually need to invoke some JavaScript, which we temporarily enabled in the WebView(!)
 * When refreshing a card's content (for example for a live location) we show the resulting refreshed card in a popup webview.
 
-Instead of all of these woraround a better solution for actual incooperation would be to use native components instead.
+Instead of all of these workaround a better solution for actual incorporation would be to use native components instead.
 
 ### Inline Popup Cards
 
@@ -67,6 +70,7 @@ We consider/ demonstrate one special case of a (cooking) newsletter:
     * As long as the mail is fully loaded, this works completely offline
   * Case 2: The mail does not contain markup data (but links match our allow-list). In this case we want to demonstrate how case 1 could look like, if the sender included schema, and after each allowed url show a button.
     * Tapping on said button fetches the json-ld from the corresponding website, and renders the fetched markup.
+    * We only go into this case if the corresponding (demoView) user setting is enabled 
 
 ### Actions
 
@@ -82,8 +86,8 @@ We support a variety of actions on the markup. The table below shows which butto
 | Map                       | Show                | Yes                             | Each `geo` property in a given schema, that has a jsonObject as a value with the keys `latitude` and `longitude` **recursive search!**)                                                                  | Opens coordinates in a map app                                                                                                                                                                          | `geo`                                                                                                 | Not overridden, standard scheme                                                                                                                    | [map](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:map:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=map)                                                                                                                                                                                                               |
 | Map                       | Navigate            | Yes                             | see above                                                                                                                                                                                                | Opens navigation to coordinates in google maps                                                                                                                                                          | `google.navigation`                                                                                   | Not overridden, standard scheme                                                                                                                    | [assistant_direction](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:assistant_direction:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=assistant_direction)                                                                                                                                                               |
 | Media                     | Play (audio, video) | Yes                             | A single audio/ video property if it contains a `contentUrl` (no recursive/ deep search)                                                                                                                 | Opens an external media player (google photos, youtube music, vlc, ...) that plays the audio/ video<br>                                                                                                 | `xplaymedia`                                                                                          | Overridden, custom scheme                                                                                                                          | [music_note](https://fonts.google.com/icons?icon.query=music+no&icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:music_note:FILL@0;wght@400;GRAD@0;opsz@24)<br>[play_circle](https://fonts.google.com/icons?icon.query=video+play&icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:play_circle:FILL@0;wght@400;GRAD@0;opsz@24)<br> |
-| View                      | Refresh via HTTP    | Yes                             | Schema markup that has a `liveUri` (at the top level/ no recursive search)                                                                                                                               | Dowloads the schema contained at the liveUri<br>renders that schema in a popup<br><br>This is intended for update such as liveLocation                                                                  | `xreload`                                                                                             | Overridden, custom scheme                                                                                                                          | [replay](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:replay:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=replay)                                                                                                                                                                                                      |
-| **Respond with HTTP/SML** | Respond with SML    | Yes                             | Schema markup with potentialActions with a `ConfirmAction` or a `CancelAction`                                                                                                                           |                                                                                                                                                                                                         | `mailto` with a custom `action` query parameter.<br>E.g. `mailto:foo@example.com?action=CancelAction` | Overridden (custom handling is only executed when uri has `action` query parameter), standard schema+nonstandard (for this scheme) query parameter | Confirm/ "Deny" (based on `name` property of `ConfirmAction` or `CancelAction`)                                                                                                                                                                                                                                                                                            |
+| View                      | Refresh via HTTP    | Yes                             | Schema markup that has a `liveUri` (at the top level/ no recursive search)                                                                                                                               | Downloads the schema contained at the liveUri<br>renders that schema in a popup<br><br>This is intended for update such as liveLocation                                                                 | `xreload`                                                                                             | Overridden, custom scheme                                                                                                                          | [replay](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:replay:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=replay)                                                                                                                                                                                                      |
+| **Respond with HTTP/SML** | Respond with SML    | Yes                             | Schema markup with potentialActions with a `ConfirmAction` or a `CancelAction`                                                                                                                           | Sends an reply email with the corresponding markup (Confirm/ Deny)                                                                                                                                      | `mailto` with a custom `action` query parameter.<br>E.g. `mailto:foo@example.com?action=CancelAction` | Overridden (custom handling is only executed when uri has `action` query parameter), standard schema+nonstandard (for this scheme) query parameter | Confirm/ "Deny" (based on `name` property of `ConfirmAction` or `CancelAction`)                                                                                                                                                                                                                                                                                            |
 | **Respond with HTTP/SML** | Respond with HTTP   | Partial (button is never shown) | Never                                                                                                                                                                                                    | Makes a HTTP call to the given uri                                                                                                                                                                      | `xrequest`                                                                                            | Overridden, custom scheme                                                                                                                          |                                                                                                                                                                                                                                                                                                                                                                            |
 | Share                     | Share-out as file   | Yes                             | SchemaOrg/Recepie and SchemaOrg/\*Reservation                                                                                                                                                            | Creates a temporary file containing the jsonld, and shares it                                                                                                                                           | `xshareasfile`                                                                                        | Overridden, custom scheme                                                                                                                          | [share](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:share:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=share)                                                                                                                                                                                                         |
 | Share                     | Share as Email      | Yes                             | Always                                                                                                                                                                                                   | Sends user to compose screen in K9 with includes the schema                                                                                                                                             | `xshareasmail`                                                                                        | Overridden, custom scheme                                                                                                                          | [forward_to_inbox](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:forward_to_inbox:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=forward_to_inbox)                                                                                                                                                                        |
@@ -98,14 +102,34 @@ We support a variety of actions on the markup. The table below shows which butto
 
 
 There are a number of main ways to send a mail with structured data:
+
+* By interacting with another SML-enabled mail (see [actions](#actions); e.g. "share as email")
 * Via urls
   * This could be via a mailto, a received android "share", or a pasted url
   * Most websites contain structured data, in such cases, the structured data is extracted and attached to the mail, as some kind of "advanced link preview"
-  * There is a bug with share-in in a multi-account setup if the account gets switched TODO elaborate
+  * (There is a bug still with share-in in a multi-account setup if the account gets switched before send, the structured data is not included)
 * Via attachments (this is more of a debug feature)
-TODO
+  * When sharing json files, or attaching a json file, and the file contains json-ld, it gets added to the message as structured data
+* The automatic conversion of an url or an attachment to structured data can be reverted in the send dialog via a toggle (However we have not yet implemented "remembering" the position of the "SML toggle", so pasting a new link or adding a new json attachment could turn it back on).
+* We have not yet added support saving a mail with structured data to drafts.
+
+To build the actual structured mail:
 
 * We implemented a special `SmlMessageBuilder` which also allows setting text and html separately from each other, as well as setting an additional alternative part.
+* This mail builder is already relatively robust, and could be a general improvement over the existing builder, since it allows for more flexibility when creating emails (could be used as a starting point to compose html mails).
+  * We have however not yet added support for PGP with the SmlMessageBuilder.
+* With this messageBuilder we support both
+  * sending mails with a multipart/alternative MIME part, carrying the structured data (current draft of the SML spec).
+  * As well as mails with json-ld in the mail's HTML.
 
 ## User settings
 
+We have also added a number of user settings for the purposes of hiding (by default) some additional features
+* SML debug view mode: Shows additional ui elements, that allow for analysis of a piece of structured data in a given mail
+* SML demo view mode: Enables adding buttons for inline popup cards in a selected few newsletters.
+* SML variant selection: Can switch between sending the newer "dedicated multipart" variant of sml mails, or the legacy "sml in html" variant
+
+## Yatagarasu Theme
+
+We also added a custom theme that we build our for of the app in, to differentiate our forked builds from the official builds.
+This theme of course would not need to be merged.
