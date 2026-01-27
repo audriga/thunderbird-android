@@ -1,3 +1,8 @@
+# Important Note
+
+You are looking at a fork of the project [thunderbird-android](https://github.com/thunderbird/thunderbird-android).
+See [FORK.md](FORK.md) for more details on things added by this fork.
+
 # Thunderbird for Android
 
 <a href="https://play.google.com/store/apps/details?id=net.thunderbird.android&referrer=utm_campaign%3Dandroid_metadata%26utm_medium%3Dweb%26utm_source%3Dgithub.com%26utm_content%3Dbadge" target="_blank"><img src="./docs/assets/get-it-on-play.png" alt="Get it on Google Play" height="28"></a>
@@ -8,9 +13,6 @@
 Thunderbird for Android is a powerful, privacy-focused email app. Effortlessly manage multiple email accounts from one app, with a Unified Inbox option for maximum productivity. Built on open-source technology and supported by a dedicated team of developers alongside a global community of volunteers, Thunderbird never treats your private data as a product.
 
 Thunderbird for Android is based on K-9 Mail, which comes with a rich history of success and functionality in open source email.
-
-## Changes in this Fork
-See [FORK](FORK.md)
 
 ## Download
 
