@@ -125,8 +125,10 @@ To build the actual structured mail:
 ## User settings
 
 We have also added a number of user settings for the purposes of hiding (by default) some additional features
+
 * SML debug view mode: Shows additional ui elements, that allow for analysis of a piece of structured data in a given mail
 * SML demo view mode: Enables adding buttons for inline popup cards in a selected few newsletters.
+  * The two "view mode" settings currently have the issue that while they are per account settings, we only query the default account's value for these settings.
 * SML variant selection: Can switch between sending the newer "dedicated multipart" variant of sml mails, or the legacy "sml in html" variant
 
 ## Yatagarasu Theme
