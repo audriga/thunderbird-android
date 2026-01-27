@@ -1,4 +1,15 @@
 This fork contains patches to demonstrate [structured email (SML)](https://datatracker.ietf.org/doc/draft-ietf-sml-structured-email/) features in thunderbird mobile.
+The modified app can both render structured data of mails in the inbox, as well as send mails with structured data.
+
+## Should this be Merged?
+
+We encapsulated our additions as well as possible in their own classes, to make inspecting and potentially merging them straightforward.
+That being said, we are aware that there are some aspects of our implementation, specifically the way we render the structured data via html on top of the email, would need to be replaced with a more elegant solution.
+However other aspects, like the extraction of structured data, or the extended message-builder could be used as is or with little changes.
+In the corresponding sections below we discuss the individual aspects in greater detail.
+So the answer the question posed in the header: Not as-is, specific classes could be pulled into upstream, while others serve the purpose of a working proof-of-concept, but would need to be reworked.
+
+We do aim to keep up-to-date with the main project, but given that we don't expect our changes to be directly merged, we don't frequently sync with upstream.
 
 ## Inbound
 
