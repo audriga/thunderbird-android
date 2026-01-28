@@ -55,6 +55,13 @@ In some cases structured data is also derived (generated) from the mail contents
 
 ### Extraction and Generation of Structured Data
 
+In most cases we envision, structured data is contained in the mail.
+As a first step when a given mail is opened, we "extract" that structured data from the mail.
+In a later step the extracted structured data is then rendered for the user.
+
+
+Implementation details:
+
 We have placed the code for this in custom `SML*` classes (Mainly `SMLMessageView`), which we then call upon from the existing `MessageViewInfoExtractor`.
 We believe that the base **extraction should already be relatively solid as it stands**.
 Further **structured data generation based on contents** (should be or already is) **hidden behind advanced user preferences**.
@@ -62,6 +69,7 @@ Further **structured data generation based on contents** (should be or already i
 ### Extract Deliberately Placed Structured Data
 
 This is for the case, where the sender of the mail included some structured data with the mail.
+We support multiple ways that a sender could include structured data in the mail:
 
 * Extract multipart/alternative MIME part with the content type `application/ld+json` (this corresponds to the current draft of the SML spec)
 * Extracts json-ld (or microdata) from the message's HTML (legacy; this is how some proprietary (e.g. Airline to Gmail) solutions function)
@@ -91,7 +99,8 @@ We have some ideas as to when this trust should be granted, but it is **still a 
   * If the user has a contact for the sender
   * If the message headers contain dkim=pass.
 * These properties should be combined to a trust decision "should show sml".
-* Neither the decision-algorithm, nor the actual prevention of showing sml have been implemented yet.
+* Currently, structured data is extracted and shown for every mail.
+  * The decision-algorithm (based on the bundled information), and the actual prevention of showing sml (in cases where trust is not determined) still needs to be implemented.
 
 ### Refinement
 
@@ -152,14 +161,16 @@ We support a variety of actions on the markup. The table below shows which butto
 There are a number of main ways to send a mail with structured data:
 
 * By interacting with another SML-enabled mail (see [actions](#actions); e.g. "share as email")
-* Via urls
-  * This could be via a mailto, a received android "share", or a pasted url
-  * Most websites contain structured data, in such cases, the structured data is extracted and attached to the mail, as some kind of "advanced link preview"
-  * (There is a bug still with share-in in a multi-account setup if the account gets switched before send, the structured data is not included)
+* By sharing some website (for example a recipe)
+  * As mentioned in the introduction, most websites contain structured data. When sharing a link to a given website, we now also share the corresponding structured data in the mail.
+  * This structured data could be a recipe, a song, an article, etc. For which the recipient would then see a richer preview.
+  * We support a variety of ways a user could share a url: Via a tap on a mailto, using androids "share" feature to share a website to the mail app, or simply a pasted url.
+    * (There is a bug still in a multi-account setup if the account gets switched before send, the structured data is not included)
 * Via attachments (this is more of a debug feature)
-  * When sharing json files, or attaching a json file, and the file contains json-ld, it gets added to the message as structured data
+    * When sharing json files, or attaching a json file, and the file contains json-ld, it gets added to the message as structured data
 * The automatic conversion of an url or an attachment to structured data can be reverted in the send dialog via a toggle (However we have not yet implemented "remembering" the position of the "SML toggle", so pasting a new link or adding a new json attachment could turn it back on).
 * We have not yet added support saving a mail with structured data to drafts.
+[//]: # (  * On a more technical note: The structured data is extracted from the shared website and attached to the mail, as some kind of "advanced link preview".)
 
 To build the actual structured mail:
 
