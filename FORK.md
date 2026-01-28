@@ -1,6 +1,40 @@
 This fork contains patches to demonstrate [structured email (SML)](https://datatracker.ietf.org/doc/draft-ietf-sml-structured-email/) features in thunderbird mobile.
 The modified app can both render structured data of mails in the inbox, as well as send mails with structured data.
 
+# What is SML
+
+Structured Email are emails, that contain machine readable (structured) data.
+
+The general idea is that emails, in addition to human readable data, may additionally contain machine readable data, that the email client then can show and allow special interactions with.
+
+For example:
+* An email concerning a flight reservation might contain data, that a user can directly import into their travel planning app
+* An employee might send a request (for example for a vacation) to their higher ups, which they can confirm or decline by clicking a button in their mail client, and the employee gets automatically informed.
+* Someone might send you a song, but instead of a link to a streaming platform you might not be a subscriber of, the mail contains structured data describing the song (title, artist, album cover, ...), and a snippet to listen to the song.
+
+Most websites already contain structured data.
+For example a link to a song on a big music streaming platform contains structured data describing the song, a recipe blog post will most likely containing structured data describing the ingredients and steps.
+A news article contains structured data for the headline and a short description of the article.
+
+These websites contain structured data for search-engine-optimization purposes, however this data can also be used, when sharing a link for example.
+
+Similarly, there are already a few proprietary solutions for machine readable data in emails/ interactive emails:
+* Some big airlines include structured data on flight reservation, when communicating with gmail users
+* In the outlook ecosystem you can send "actionable messages" that allow the recipient to take quick actions directly from their mail client
+
+The idea of SML is to standardize and democratize emails with structured data, to allow richer interaction with emails for everyone.
+
+Below we exemplify this by showing some cards that we render for given structured data.
+
+
+
+|                                                                                                                                                                       |                                                                                                                                                           |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ![Screenshot of a mail with structured data for an approval request](https://www.audriga.eu/test/thunderbird-mobile/Approval.png "Approval Request")                  | ![Screenshot of a mail with structured data for an event](https://www.audriga.eu/test/thunderbird-mobile/Event.png "Event")                               |
+| ![Screenshot of a mail with structured data for location](https://www.audriga.eu/test/thunderbird-mobile/Place.png "Place")                                           | ![Screenshot of a mail with multiple pieces of structured data shown tabbed](https://www.audriga.eu/test/thunderbird-mobile/Tabbed.png "Tabbed Card")     |
+| ![Screenshot of a mail with structured data for a poll without any votes yet](https://www.audriga.eu/test/thunderbird-mobile/Poll_1.png "Poll without any votes yet") | ![Screenshot of a mail with structured data for a poll with some votes](https://www.audriga.eu/test/thunderbird-mobile/Poll_2.png "Poll with some votes") |
+
+
 # Should this be Merged?
 
 We encapsulated our additions as well as possible in their own classes, to make inspecting and potentially merging them straightforward.
@@ -9,7 +43,8 @@ However other aspects, like the extraction of structured data, or the extended m
 In the corresponding sections below we discuss the individual aspects in greater detail.
 So the answer the question posed in the header: Not as-is, specific classes could be pulled into upstream, while others serve the purpose of a working proof-of-concept, but would need to be reworked.
 
-We do aim to keep up-to-date with the main project, but given that we don't expect our changes to be directly merged, we don't frequently sync with upstream.
+We do aim to keep up-to-date with the main project, and we last synced in September 2025. 
+But given the relatively fast pace the upstream project is moving, and since we assume only selected parts our changes would pulled in as patchsets, we only sporadically perform syncs with upstream.
 
 # Features
 
@@ -148,3 +183,16 @@ We have also added a number of user settings for the purposes of hiding (by defa
 
 We also added a custom theme that we build our for of the app in, to differentiate our forked builds from the official builds.
 This theme of course would not need to be merged.
+
+# JAR Dependencies
+
+Some of our Java components for structured mail currently reside in jars we placed in the `libs` folder.
+We plan on eventually also releasing the source code for these libraries as well (but did not get around to prepare the corresponding project pages yet).
+* `h2ld.jar` this contains code to take in a given piece of **h**tml that contains structured data (in the form of json-ld or microdata), extracts said structured data, and outputs it in json-**ld** format.
+    * This is used for legacy SML mails, that contain their structured data in the html part.
+    * Additionally this is used for link previews, when composing a mail: The html of a given link is downloaded, and the structured data extracted
+* `ld2h.jar` this library's responsibility is to render a given piece of structured data (given in json-**ld** format) to a **h**tml representation
+    * This is used whenever we render structured data (in the inbox, but also as previews when composing a mail with structured data).
+* `hetc.jar` stands for "html email template cards".
+    * The idea behind this library is that when sending emails with structured data, the receivers mail client might not yet support rendering that structured data, and thus this library creates html to be used as the mails html, rendering the structured data.
+    * The rendered html representing the structured data shows it as a "card". And the library uses mustache templates to achieve its goal, hence the name.
