@@ -9,7 +9,7 @@ The general idea is that emails, in addition to human readable data, may additio
 
 For example:
 * An email concerning a flight reservation might contain data, that a user can directly import into their travel planning app
-* An employee might send a request (for example for a vacation) to their higher ups, which they can confirm or decline by clicking a button in their mail client, and the employee gets automatically informed.
+* An employee might send a request (for example for a vacation) to their higher ups, which they can confirm or decline by clicking a button in their mail client, and the employee gets automatically informed about the decision.
 * Someone might send you a song, but instead of a link to a streaming platform you might not be a subscriber of, the mail contains structured data describing the song (title, artist, album cover, ...), and a snippet to listen to the song.
 
 Most websites already contain structured data.
@@ -19,8 +19,8 @@ A news article contains structured data for the headline and a short description
 These websites contain structured data for search-engine-optimization purposes, however this data can also be used, when sharing a link for example.
 
 Similarly, there are already a few proprietary solutions for machine readable data in emails/ interactive emails:
-* Some big airlines include structured data on flight reservation, when communicating with gmail users
-* In the outlook ecosystem you can send "actionable messages" that allow the recipient to take quick actions directly from their mail client
+* Some big airlines include structured data on flight reservation, when communicating with gmail users.
+* In the outlook ecosystem you can send "actionable messages" that allow the recipient to take quick actions directly from their mail client.
 
 The idea of SML is to standardize and democratize emails with structured data, to allow richer interaction with emails for everyone.
 
@@ -38,9 +38,10 @@ Below we exemplify this by showing some cards that we render for given structure
 # Should this be Merged?
 
 We encapsulated our additions as well as possible in their own classes, to make inspecting and potentially merging them straightforward.
-That being said, we are aware that there are some aspects of our implementation, specifically the way we render the structured data via html on top of the email, would need to be replaced with a more elegant solution.
-However other aspects, like the extraction of structured data, or the extended message-builder could be used as is or with little changes.
+That being said, we are aware that some aspects of our implementation (specifically the way we render the structured data via html on top of the email) would need to be replaced with a more elegant solution.
+However other aspects, like the extraction of structured data, or the extended message-builder, could be used as is or with little changes.
 In the corresponding sections below we discuss the individual aspects in greater detail.
+
 So the answer the question posed in the header: Not as-is, specific classes could be pulled into upstream, while others serve the purpose of a working proof-of-concept, but would need to be reworked.
 
 We do aim to keep up-to-date with the main project, and we last synced in September 2025. 
@@ -64,7 +65,7 @@ Implementation details:
 
 We have placed the code for this in custom `SML*` classes (Mainly `SMLMessageView`), which we then call upon from the existing `MessageViewInfoExtractor`.
 We believe that the base **extraction should already be relatively solid as it stands**.
-Further **structured data generation based on contents** (should be or already is) **hidden behind advanced user preferences**.
+Further **structured data generation based on contents should be hidden behind advanced user preferences**.
 
 ### Extract Deliberately Placed Structured Data
 
@@ -86,7 +87,7 @@ and for demonstration purposes, generate the corresponding structured data as if
   * We plan on also generating schema from attached contacts (`vcard` type attachments), and passes (`pkpass`). But have not implemented this generation yet.
 * From text:
   * _Experimental_: Verification codes. For messages that contain "code" in the subject line, we try parsing the code from the text, and generate schema representing that code, allowing to copy that code to clipboard with a single click.
-  * (_Demo Only_: For selected newsletters, we detect a list of whitelisted urls, for which we show a button, to load-in (and then render) the json-ld of the corresponding web-page.)
+  * (_Demo Only_: For selected newsletters, we detect a list of allow-listed urls, for which we show a button, to load-in (and then render) the json-ld of the corresponding web-page.)
 
     
 
@@ -117,7 +118,7 @@ For rendering the structured data, we have a rather **"hacky" solution**, which 
 * For poll cards we actually need to invoke some JavaScript, which we temporarily enabled in the WebView(!)
 * When refreshing a card's content (for example for a live location) we show the resulting refreshed card in a popup webview.
 
-Instead of all of these workaround a better solution for actual incorporation would be to use native components instead.
+Instead of all of these workarounds a better solution for actual incorporation would be to use native components instead.
 
 ### Inline Popup Cards
 
@@ -126,7 +127,7 @@ We consider/ demonstrate one special case of a (cooking) newsletter:
   * Case 1: The mail contains markup data: Then we match up the pieces of structured data with corresponding tags in the html, and show a button at each of those tags
     * Tapping on said button then shows the corresponding rendered markup in a popup (e.g the corresponding recipe card)
     * As long as the mail is fully loaded, this works completely offline
-  * Case 2: The mail does not contain markup data (but links match our allow-list). In this case we want to demonstrate how case 1 could look like, if the sender included schema, and after each allowed url show a button.
+  * Case 2: The mail does not contain markup data (but links match our allow-list). This is a temporary addition, to demonstrate how case 1 could look like, if the sender included schema. After each allowed url we show a button.
     * Tapping on said button fetches the json-ld from the corresponding website, and renders the fetched markup.
     * We only go into this case if the corresponding (demoView) user setting is enabled 
 
@@ -147,7 +148,7 @@ Most of these actions simply open some specific content in a corresponding app, 
 | Contact (verb)            | Email (verb)        | Yes                             | Each `email` property in a given schema (**recursive search!**)                                                                                                                                          | Not to be confused with "share as email" action.<br><br>Acts like a normal mailto. I.e. android will present a list of email clients, the chosen client opens with a compose view to the given address. | `mailto` (compare to row "Respond with SML)                                                           | Overridden (but falls through to normal handler), standard scheme                                                                                  | [mail](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:mail:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=mail)                                                                                                                                                                                                            |
 | Media                     | Play (audio, video) | Yes                             | A single audio/ video property if it contains a `contentUrl` (no recursive/ deep search)                                                                                                                 | Opens an external media player (google photos, youtube music, vlc, ...) that plays the audio/ video<br>                                                                                                 | `xplaymedia`                                                                                          | Overridden, custom scheme                                                                                                                          | [music_note](https://fonts.google.com/icons?icon.query=music+no&icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:music_note:FILL@0;wght@400;GRAD@0;opsz@24)<br>[play_circle](https://fonts.google.com/icons?icon.query=video+play&icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:play_circle:FILL@0;wght@400;GRAD@0;opsz@24)<br> |
 | Share                     | Share-out as file   | Yes                             | SchemaOrg/Recepie and SchemaOrg/\*Reservation                                                                                                                                                            | Creates a temporary file containing the jsonld, and shares it                                                                                                                                           | `xshareasfile`                                                                                        | Overridden, custom scheme                                                                                                                          | [share](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:share:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=share)                                                                                                                                                                                                         |
-| Share                     | Share as Email      | Yes                             | Always                                                                                                                                                                                                   | Sends user to compose screen in K9 with includes the schema                                                                                                                                             | `xshareasmail`                                                                                        | Overridden, custom scheme                                                                                                                          | [forward_to_inbox](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:forward_to_inbox:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=forward_to_inbox)                                                                                                                                                                        |
+| Share                     | Share as Email      | Yes                             | Always                                                                                                                                                                                                   | Sends user to compose screen in this mail app with includes the schema                                                                                                                                  | `xshareasmail`                                                                                        | Overridden, custom scheme                                                                                                                          | [forward_to_inbox](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:forward_to_inbox:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=forward_to_inbox)                                                                                                                                                                        |
 | Media                     | Show Web story      | Partial/ Broken                 | Never                                                                                                                                                                                                    | Opens WebView showing that story in a popup.<br>Bug: That WebView has an Invisible Size.                                                                                                                | `xstory`                                                                                              | Overridden, custom scheme                                                                                                                          | Not implemented yet, but suggestion: [web_stories](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:web_stories:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=story)                                                                                                                                                        |
 | Clipboard                 | Copy to Clipboard   | Yes                             | Schema markup with `potentialAction` of type `CopyToClipboardAction`                                                                                                                                     | Copies the given text to the clipboard                                                                                                                                                                  | `xclipboard`                                                                                          | Overridden, custom scheme                                                                                                                          | [content_paste](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:content_paste:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=content_paste)                                                                                                                                                                                 |
 | Debug                     | Show Source         | Yes                             | For every card, if "SML debug view mode" user setting is enabled for default account                                                                                                                     | Shows the jsonld source used to render a given card in a popup                                                                                                                                          | `xshowsource`                                                                                         | Overridden, custom scheme                                                                                                                          | [data_object](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:data_object:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=data_object) "Show Source"                                                                                                                                                                         |
@@ -156,12 +157,12 @@ Additionally, we support a number of more "dynamic" actions, which work online.
 These allow the viewer to pull in refreshed data from a server (to update a package tracking, or a live location), to send specialized messages, or interact with web services (by sending a request defined in the markup, such as a POST request to check in with a flight).
 
 
-| Category                  | Action            | Implemented                     | Button Shown for                                                               | Description                                                                                                                             | URI-Scheme                                                                                            | URI-Override                                                                                                                                       | Button<br>Rendered<br>As                                                                                                                                              |
-|---------------------------|-------------------|---------------------------------|--------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| View                      | Refresh via HTTP  | Yes                             | Schema markup that has a `liveUri` (at the top level/ no recursive search)     | Downloads the schema contained at the liveUri<br>renders that schema in a popup<br><br>This is intended for update such as liveLocation | `xreload`                                                                                             | Overridden, custom scheme                                                                                                                          | [replay](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:replay:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=replay) |
-| **Respond with HTTP/SML** | Respond with SML  | Yes                             | Schema markup with potentialActions with a `ConfirmAction` or a `CancelAction` | Sends an reply email with the corresponding markup (Confirm/ Deny)                                                                      | `mailto` with a custom `action` query parameter.<br>E.g. `mailto:foo@example.com?action=CancelAction` | Overridden (custom handling is only executed when uri has `action` query parameter), standard schema+nonstandard (for this scheme) query parameter | Confirm/ "Deny" (based on `name` property of `ConfirmAction` or `CancelAction`)                                                                                       |
-| **Respond with HTTP/SML** | Respond with HTTP | Partial (button is never shown) | Never                                                                          | Makes a HTTP `POST` call to the given uri. Could for example be used to check in to a flight with a single tap.                         | `xrequest`                                                                                            | Overridden, custom scheme                                                                                                                          |                                                                                                                                                                       |
-| Calendar                  | IMIP              | Yes                             | IMIP mime parts (see [note on IMIP](#a-note-on-imip)                           | Accept/ Decline/ Tentative Buttons send IMIP answer email                                                                               | `ximip`                                                                                               | Overridden, custom scheme                                                                                                                          | Accept/ "Decline"/ "Tentative"                                                                                                                                        |
+| Category                  | Action            | Implemented                     | Button Shown for                                                               | Description                                                                                                                                                          | URI-Scheme                                                                                            | URI-Override                                                                                                                                       | Button<br>Rendered<br>As                                                                                                                                              |
+|---------------------------|-------------------|---------------------------------|--------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| View                      | Refresh via HTTP  | Yes                             | Schema markup that has a `liveUri` (at the top level/ no recursive search)     | Downloads the schema contained at the liveUri<br>renders that schema in a popup<br><br>This is intended for update such as liveLocation.                             | `xreload`                                                                                             | Overridden, custom scheme                                                                                                                          | [replay](https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&selected=Material+Symbols+Outlined:replay:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=replay) |
+| **Respond with HTTP/SML** | Respond with SML  | Yes                             | Schema markup with potentialActions with a `ConfirmAction` or a `CancelAction` | Sends an reply email with the corresponding markup (Confirm/ Deny). Appears in the vacation request/ office supplies request use-case described in the introduction. | `mailto` with a custom `action` query parameter.<br>E.g. `mailto:foo@example.com?action=CancelAction` | Overridden (custom handling is only executed when uri has `action` query parameter), standard schema+nonstandard (for this scheme) query parameter | Confirm/ "Deny" (based on `name` property of `ConfirmAction` or `CancelAction`)                                                                                       |
+| **Respond with HTTP/SML** | Respond with HTTP | Partial (button is never shown) | Never                                                                          | Makes a HTTP `POST` call to the given uri. Could for example be used to check in to a flight with a single tap.                                                      | `xrequest`                                                                                            | Overridden, custom scheme                                                                                                                          |                                                                                                                                                                       |
+| Calendar                  | IMIP              | Yes                             | IMIP mime parts (see [note on IMIP](#a-note-on-imip)                           | Accept/ Decline/ Tentative Buttons send IMIP answer email.                                                                                                           | `ximip`                                                                                               | Overridden, custom scheme                                                                                                                          | Accept/ "Decline"/ "Tentative"                                                                                                                                        |
 
 ## Outbound
 
@@ -176,11 +177,13 @@ There are a number of main ways to send a mail with structured data:
     * (There is a bug still in a multi-account setup if the account gets switched before send, the structured data is not included)
 * Via attachments (this is more of a debug feature)
     * When sharing json files, or attaching a json file, and the file contains json-ld, it gets added to the message as structured data
-* The automatic conversion of an url or an attachment to structured data can be reverted in the send dialog via a toggle (However we have not yet implemented "remembering" the position of the "SML toggle", so pasting a new link or adding a new json attachment could turn it back on).
+* The automatic conversion of an url or an attachment to structured data can be reverted in the send dialog via a toggle.
+  * However we have not yet implemented "remembering" the position of the "SML toggle", so pasting a new link or adding a new json attachment could turn it back on.
 * We have not yet added support saving a mail with structured data to drafts.
+
 [//]: # (  * On a more technical note: The structured data is extracted from the shared website and attached to the mail, as some kind of "advanced link preview".)
 
-To build the actual structured mail:
+To build the actual structured mai1l (implementation details):
 
 * We implemented a special `SmlMessageBuilder` which also allows setting text and html separately from each other, as well as setting an additional alternative part.
 * This mail builder is already relatively robust, and could be a general improvement over the existing builder, since it allows for more flexibility when creating emails (could be used as a starting point to compose html mails).
@@ -193,30 +196,35 @@ To build the actual structured mail:
 
 We have also added a number of user settings for the purposes of hiding (by default) some additional features
 
-* SML debug view mode: Shows additional ui elements, that allow for analysis of a piece of structured data in a given mail
+* SML debug view mode: Shows additional ui elements, that allow for analysis of a piece of structured data in a given mail.
 * SML demo view mode: Enables adding buttons for inline popup cards in a selected few newsletters.
-  * The two "view mode" settings currently have the issue that while they are per account settings, we only query the default account's value for these settings.
+  * The two "view mode" settings currently have the issue that while they are per-account settings, we only query the default account's value for these settings.
 * SML variant selection: Can switch between sending the newer "dedicated multipart" variant of sml mails, or the legacy "sml in html" variant
 
 ## Yatagarasu Theme
 
-We also added a custom theme that we build our for of the app in, to differentiate our forked builds from the official builds.
-This theme of course would not need to be merged.
+We also added a custom theme.
+We use this so we can build our fork of the app in a way that cannot be confused with the official builds.
+This theme contains no functionally different code from the main project.
 
 ## A note on IMIP
 
-IMIP is technically not SML. However since we already generated structured data to display from ics (calendar) attachments, it was not too much of a leap to also implement parsing imip message parts, generating corresponding buttons and their behavior (sending answer emails, saving the event to the device calendar if tentative/ accepted).
-Just to reiterate: The mails sent for this specific case are also not SML, rather they are conventional IMIP messages. But we were able to leverage the SML infrastructure we already added to facilitate "wiring" transfer of imip data.
+**IMIP is** technically **not SML**.
+
+However since we already generated structured data to display from ics (calendar) attachments, it was not too much of a leap to also implement parsing imip message parts, generating corresponding buttons and their behavior (sending answer emails, saving the event to the device calendar if tentative/ accepted).
+The mails sent for this specific case are also not SML, rather they are conventional IMIP messages.
+
+So we were able to leverage the SML infrastructure we already added to facilitate "wiring" transfer of imip data.
 
 # JAR Dependencies
 
 Some of our Java components for structured mail currently reside in jars we placed in the `libs` folder.
-We plan on eventually also releasing the source code for these libraries as well (but did not get around to prepare the corresponding project pages yet).
+We plan on eventually releasing the source code for these libraries as well (but did not get around to prepare the corresponding project pages yet).
 * `h2ld.jar` this contains code to take in a given piece of **h**tml that contains structured data (in the form of json-ld or microdata), extracts said structured data, and outputs it in json-**ld** format.
     * This is used for legacy SML mails, that contain their structured data in the html part.
     * Additionally this is used for link previews, when composing a mail: The html of a given link is downloaded, and the structured data extracted
 * `ld2h.jar` this library's responsibility is to render a given piece of structured data (given in json-**ld** format) to a **h**tml representation
     * This is used whenever we render structured data (in the inbox, but also as previews when composing a mail with structured data).
 * `hetc.jar` stands for "html email template cards".
-    * The idea behind this library is that when sending emails with structured data, the receivers mail client might not yet support rendering that structured data, and thus this library creates html to be used as the mails html, rendering the structured data.
+    * The idea behind this library is that when sending emails with structured data, the receivers mail client might not yet support rendering that structured data, and thus this library creates html to be used as the mail's html, rendering the structured data.
     * The rendered html representing the structured data shows it as a "card". And the library uses mustache templates to achieve its goal, hence the name.
