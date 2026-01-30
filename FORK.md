@@ -1,5 +1,13 @@
+<a href="https://play.google.com/store/apps/details?id=com.audriga.yatagarasu.android.debug&referrer=utm_campaign%3Dandroid_metadata%26utm_medium%3Dweb%26utm_source%3Dgithub.com%26utm_content%3Dbadge" target="_blank"><img src="./docs/assets/get-it-on-play.png" alt="Get it on Google Play" height="28"></a>
+
 This fork contains patches to demonstrate [structured email (SML)](https://datatracker.ietf.org/doc/draft-ietf-sml-structured-email/) features in thunderbird mobile.
 The modified app can both render structured data of mails in the inbox, as well as send mails with structured data.
+
+You can download a build of this fork on [Google Play](https://play.google.com/store/apps/details?id=com.audriga.yatagarasu.android.debug).
+(Note however the google play build is currently somewhat out of date: Build from Jul 19, 2025)
+
+
+
 
 # What is SML
 
@@ -228,3 +236,14 @@ We plan on eventually releasing the source code for these libraries as well (but
 * `hetc.jar` stands for "html email template cards".
     * The idea behind this library is that when sending emails with structured data, the receivers mail client might not yet support rendering that structured data, and thus this library creates html to be used as the mail's html, rendering the structured data.
     * The rendered html representing the structured data shows it as a "card". And the library uses mustache templates to achieve its goal, hence the name.
+
+# How to generate Test Data
+
+Depending on how much control you wish for, there are several ways of generating test SML mails:
+
+* Compose a SML message with this app:
+  * If you want to try out the extraction from a website, you can simply share a link with this mail client. It will then fetch the structured data from the linked page and show you a preview. You can then send this mail to yourself and inspect it further in your inbox
+  * If you want to craft some structured data yourself, use https://schema.org as a reference, and create a `.json` file with some json-ld contents. Then compose a message with that file as an attachment (either by opening the compose screen and attaching from there, or by using androids "share file" feature). The app will detect the json-ld and convert the message to an sml message with the corresponding payload. As before you can then send this message to yourself.
+* Craft a custom `.eml` message file and manually upload it to your mailbox
+  * With [Jakarta Structured Mail](https://github.com/audriga/jakarta-structured-email) you can generate an sml message in `.eml` format with your desired parameters.
+  * You can then upload said eml message to your inbox, by opening it with thunderbird desktop and selecting "Message" -> "Copy To" -> (Select your inbox).
