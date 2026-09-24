@@ -1,6 +1,7 @@
 package com.fsck.k9.mailstore;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -14,7 +15,6 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import androidx.javascriptengine.JavaScriptIsolate;
-import app.k9mail.core.android.common.contact.ContactRepository;
 import app.k9mail.legacy.di.DI;
 import com.fsck.k9.mailstore.SMLMessageView.TryToDerive;
 import com.fsck.k9.CoreResourceProvider;
@@ -26,6 +26,7 @@ import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Message;
 import kotlin.Lazy;
+import net.fortuna.ical4j.data.ParserException;
 import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
@@ -35,6 +36,7 @@ import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.message.html.HtmlConverter;
 import app.k9mail.html.cleaner.HtmlProcessor;
+import org.json.JSONException;
 import org.openintents.openpgp.util.OpenPgpUtils;
 import net.thunderbird.core.logging.legacy.Log;
 
@@ -92,7 +94,7 @@ public class MessageViewInfoExtractor {
             CryptoResultAnnotation noProviderAnnotation = CryptoResultAnnotation.createErrorAnnotation(
                     CryptoError.OPENPGP_ENCRYPTED_NO_PROVIDER, null);
             return MessageViewInfo.createWithErrorState(message, false)
-                    .withCryptoData(noProviderAnnotation, null, null);
+                    .withCryptoData(noProviderAnnotation, null, null, null);
         }
 
         MessageViewInfo messageViewInfo = getMessageContent(message, cryptoAnnotations, extraParts, cryptoContentPart);
@@ -148,7 +150,7 @@ public class MessageViewInfoExtractor {
         ViewableExtractedText extraViewable = extractViewableAndAttachments(extraParts, extraAttachmentInfos, null);
 
         MessageViewInfo messageViewInfo = extractSimpleMessageForView(message, cryptoContentPart);
-        return messageViewInfo.withCryptoData(cryptoContentPartAnnotation, extraViewable.text, extraAttachmentInfos);
+        return messageViewInfo.withCryptoData(cryptoContentPartAnnotation, extraViewable.text, extraAttachmentInfos, extraViewable.messageData);
     }
 
     private MessageViewInfo extractSimpleMessageForView(Message message, Part contentPart) throws MessagingException {
@@ -164,7 +166,7 @@ public class MessageViewInfoExtractor {
 
         return MessageViewInfo.createWithExtractedContent(
                 message, contentPart, isMessageIncomplete, viewable.html, attachmentInfos, attachmentResolver,
-                preferredUnsubscribeUri);
+                preferredUnsubscribeUri, viewable.messageData);
     }
 
     private ViewableExtractedText extractViewableAndAttachments(List<Part> parts,
@@ -269,9 +271,18 @@ public class MessageViewInfoExtractor {
             String rawHTML = html.toString();
             String textString = text.toString();
             String sanitizedHtml = htmlProcessor.processForDisplay(rawHTML);
-            String smlHtml = SMLMessageView.extractMarkupForView(textString, rawHTML, sanitizedHtml,
-                parseableParts, parseableAttachments, shouldTryToDerive, javaScriptIsolateLazy);
-            return new ViewableExtractedText(textString, smlHtml);
+            MessageData messageData;
+            try {
+               messageData = SMLMessageView.getMessageData(textString, rawHTML, parseableParts, parseableAttachments,
+                        shouldTryToDerive);
+            } catch (JSONException | MessagingException | IOException | ParserException e) {
+                Log.e(e, "Error while trying to parse/ extract structured data");
+                messageData = null;
+            }
+            String smlHtml = SMLMessageView.renderMarkupInMessageHTML(textString, rawHTML, sanitizedHtml,
+                messageData, javaScriptIsolateLazy
+            );
+            return new ViewableExtractedText(textString, smlHtml, messageData);
         } catch (Exception e) {
             throw new MessagingException("Couldn't extract viewable parts", e);
         }
@@ -580,10 +591,12 @@ public class MessageViewInfoExtractor {
     static class ViewableExtractedText {
         public final String text;
         public final String html;
+        public final MessageData messageData;
 
-        ViewableExtractedText(String text, String html) {
+        ViewableExtractedText(String text, String html, MessageData messageData) {
             this.text = text;
             this.html = html;
+            this.messageData = messageData;
         }
     }
 }

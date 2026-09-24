@@ -26,6 +26,7 @@ public class MessageViewInfo {
     public final String extraText;
     public final List<AttachmentViewInfo> extraAttachments;
     public final UnsubscribeUri preferredUnsubscribeUri;
+    public final MessageData messageData;
 
 
     public MessageViewInfo(
@@ -48,14 +49,39 @@ public class MessageViewInfo {
         this.extraText = extraText;
         this.extraAttachments = extraAttachments;
         this.preferredUnsubscribeUri = preferredUnsubscribeUri;
+        this.messageData = null;
+    }
+
+    public MessageViewInfo(
+            Message message, boolean isMessageIncomplete, Part rootPart,
+            String subject, boolean isSubjectEncrypted,
+            String text, List<AttachmentViewInfo> attachments,
+            CryptoResultAnnotation cryptoResultAnnotation,
+            AttachmentResolver attachmentResolver,
+            String extraText, List<AttachmentViewInfo> extraAttachments,
+            UnsubscribeUri preferredUnsubscribeUri,
+            MessageData messageData) {
+        this.message = message;
+        this.isMessageIncomplete = isMessageIncomplete;
+        this.rootPart = rootPart;
+        this.subject = subject;
+        this.isSubjectEncrypted = isSubjectEncrypted;
+        this.text = text;
+        this.cryptoResultAnnotation = cryptoResultAnnotation;
+        this.attachmentResolver = attachmentResolver;
+        this.attachments = attachments;
+        this.extraText = extraText;
+        this.extraAttachments = extraAttachments;
+        this.preferredUnsubscribeUri = preferredUnsubscribeUri;
+        this.messageData = messageData;
     }
 
     static MessageViewInfo createWithExtractedContent(Message message, Part rootPart, boolean isMessageIncomplete,
             String text, List<AttachmentViewInfo> attachments, AttachmentResolver attachmentResolver,
-            UnsubscribeUri preferredUnsubscribeUri) {
+            UnsubscribeUri preferredUnsubscribeUri, MessageData messageData) {
         return new MessageViewInfo(
                 message, isMessageIncomplete, rootPart, null, false, text, attachments, null, attachmentResolver, null,
-                Collections.<AttachmentViewInfo>emptyList(), preferredUnsubscribeUri);
+                Collections.<AttachmentViewInfo>emptyList(), preferredUnsubscribeUri, messageData);
     }
 
     public static MessageViewInfo createWithErrorState(Message message, boolean isMessageIncomplete) {
@@ -76,20 +102,21 @@ public class MessageViewInfo {
     }
 
     MessageViewInfo withCryptoData(CryptoResultAnnotation rootPartAnnotation, String extraViewableText,
-            List<AttachmentViewInfo> extraAttachmentInfos) {
+            List<AttachmentViewInfo> extraAttachmentInfos, MessageData messageData) {
         return new MessageViewInfo(
                 message, isMessageIncomplete, rootPart, subject, isSubjectEncrypted, text, attachments,
                 rootPartAnnotation,
                 attachmentResolver,
                 extraViewableText, extraAttachmentInfos,
-                preferredUnsubscribeUri
+                preferredUnsubscribeUri,
+                messageData
         );
     }
 
     MessageViewInfo withSubject(String subject, boolean isSubjectEncrypted) {
         return new MessageViewInfo(
                 message, isMessageIncomplete, rootPart, subject, isSubjectEncrypted, text, attachments,
-                cryptoResultAnnotation, attachmentResolver, extraText, extraAttachments, preferredUnsubscribeUri
+                cryptoResultAnnotation, attachmentResolver, extraText, extraAttachments, preferredUnsubscribeUri, messageData
         );
     }
 }
