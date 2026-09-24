@@ -22,6 +22,9 @@ import android.webkit.WebView
 import android.webkit.WebView.HitTestResult
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ShareCompat.IntentBuilder
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -56,6 +59,7 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
     private lateinit var layoutInflater: LayoutInflater
 
     private lateinit var messageContentView: MessageWebView
+    private lateinit var customCardComposeView: ComposeView
     private lateinit var attachmentsContainer: ViewGroup
     private lateinit var unsignedTextContainer: View
     private lateinit var unsignedTextDivider: View
@@ -85,6 +89,16 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
             setOnCreateContextMenuListener(this@MessageContainerView)
             visibility = VISIBLE
         }
+
+        // Create and insert ComposeView programmatically at index 0 (before message content)
+        customCardComposeView = ComposeView(context).apply {
+            layoutParams = LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT,
+            )
+            visibility = GONE
+        }
+        addView(customCardComposeView, 0)
 
         attachmentsContainer = findViewById(R.id.attachments_container)
         unsignedTextContainer = findViewById(R.id.message_unsigned_container)
@@ -424,6 +438,20 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
         resetView()
         renderAttachments(messageViewInfo)
 
+        val structuredDataList = messageViewInfo.messageData?.structuredData.orEmpty()
+        if (structuredDataList.isNotEmpty()) {
+            setCustomCardContent {
+                Column {
+                    structuredDataList.forEach { jsonObject ->
+                        MessageCustomCard(jsonObject = jsonObject)
+                    }
+                }
+            }
+        } else if (messageViewInfo.messageData?.extracted != null) {
+            setCustomCardContent {
+                MessageCustomCard(jsonObject = messageViewInfo.messageData.extracted)
+            }
+        }
         val messageText = messageViewInfo.text
         if (messageText != null && !isShowingPictures) {
             if (Utility.hasExternalImages(messageText)) {
@@ -560,6 +588,17 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
 
         return message.data.getString("url")
     }
+
+    fun setCustomCardContent(content: @Composable () -> Unit) {
+        customCardComposeView.setContent(content)
+        customCardComposeView.visibility = VISIBLE
+    }
+
+    fun hideCustomCard() {
+        customCardComposeView.visibility = GONE
+    }
+
+    fun isCustomCardVisible(): Boolean = customCardComposeView.isVisible
 
     interface OnRenderingFinishedListener {
         fun onLoadFinished()
