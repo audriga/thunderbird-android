@@ -71,14 +71,14 @@ object SMLUtil {
                 for (phone in telephone) {
                     // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                     if (phone is String) {
-                        buttons.add(ButtonDescription(null, "call", "tel:" + phone))
+                        buttons.add(ButtonDescription(null, "call", "tel:$phone"))
                     }
                 }
                 val phones: MutableList<Any?> = findAllRecursive(jsonObject, "phone")
                 for (phone in phones) {
                     // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                     if (phone is String) {
-                        buttons.add(ButtonDescription(null, "call", "tel:" + phone))
+                        buttons.add(ButtonDescription(null, "call", "tel:$phone"))
                     }
                 }
             } catch (e: JSONException) {
@@ -90,7 +90,7 @@ object SMLUtil {
                 for (email in mails) {
                     // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                     if (email is String) {
-                        buttons.add(ButtonDescription(null, "mail", "mailto:" + email))
+                        buttons.add(ButtonDescription(null, "mail", "mailto:$email"))
                     }
                 }
             } catch (e: JSONException) {
@@ -113,10 +113,10 @@ object SMLUtil {
                             ButtonDescription(
                                 null,
                                 "assistant_direction",
-                                "google.navigation:q=" + latitude + "," + longitude
+                                "google.navigation:q=$latitude,$longitude"
                             )
                         )
-                        buttons.add(ButtonDescription(null, "map", "geo:" + latitude + "," + longitude))
+                        buttons.add(ButtonDescription(null, "map", "geo:$latitude,$longitude"))
                     }
                 }
             }
@@ -222,7 +222,7 @@ object SMLUtil {
     }
 
     fun getEventButtonDescs(jsonObject: JSONObject): MutableList<ButtonDescription?> {
-        val jsonBytes: ByteArray? = jsonObject.toString().toByteArray(StandardCharsets.UTF_8)
+        val jsonBytes: ByteArray = jsonObject.toString().toByteArray(StandardCharsets.UTF_8)
         val encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE)
         val uri = Uri.Builder()
             .scheme("xshareascalendar")
@@ -280,7 +280,7 @@ object SMLUtil {
     }
 
     fun getShareAsMailButtonDesc(jsonObject: JSONObject): ButtonDescription {
-        val jsonBytes: ByteArray? = jsonObject.toString().toByteArray(StandardCharsets.UTF_8)
+        val jsonBytes: ByteArray = jsonObject.toString().toByteArray(StandardCharsets.UTF_8)
         val encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE)
         val buttonUri = Uri.Builder()
             .scheme("xshareasmail")
@@ -290,7 +290,7 @@ object SMLUtil {
     }
 
     fun getShareAsFileButtonDesc(jsonObject: JSONObject, fallbackFileName: String): ButtonDescription {
-        val jsonBytes: ByteArray? = jsonObject.toString().toByteArray(StandardCharsets.UTF_8)
+        val jsonBytes: ByteArray = jsonObject.toString().toByteArray(StandardCharsets.UTF_8)
         val encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE)
         val fileName = jsonObject.optString("name", fallbackFileName) + ".json"
         val uri = Uri.Builder()
@@ -342,7 +342,7 @@ object SMLUtil {
                             var targetMember: Any? = null
                             try {
                                 targetMember = targetArray.get(i)
-                            } catch (ignored: JSONException) {
+                            } catch (_: JSONException) {
                             }
                             addPollButtonFromSingleTarget(potentialAction, actionType, targetMember, buttons)
                             i++
@@ -453,5 +453,9 @@ object SMLUtil {
             }
         }
         return collectedResults
+    }
+
+    class ActionButton(string: String, string1: String) {
+
     }
 }
