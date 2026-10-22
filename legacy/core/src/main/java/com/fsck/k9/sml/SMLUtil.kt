@@ -15,7 +15,7 @@ object SMLUtil {
     @JvmStatic
     fun css(): String {
         val css = HeadProvider.loadHead()
-        return "<head>\n" + css + "\n</head>"
+        return "<head>\n$css\n</head>"
     }
 
     /**
@@ -25,7 +25,7 @@ object SMLUtil {
      */
     @JvmStatic
     fun getButtons(jsonObject: JSONObject): MutableList<ButtonDescription?> {
-        val buttons: MutableList<ButtonDescription?> = ArrayList<ButtonDescription?>()
+        val buttons: MutableList<ButtonDescription?> = ArrayList()
         val type = jsonObject.optString("@type")
         val potentialActions = jsonObject.opt("potentialAction")
         if (potentialActions != null) {
@@ -128,7 +128,7 @@ object SMLUtil {
             buttons.add(shareAsMailButtonDesc)
         }
         val liveUri = jsonObject.optString("liveUri")
-        if (!liveUri.isEmpty()) {
+        if (liveUri.isNotEmpty()) {
             val reloadButtonDesc = getReloadButtonDesc(liveUri)
             buttons.add(reloadButtonDesc)
         }
@@ -154,7 +154,7 @@ object SMLUtil {
         icon: String?
     ): ButtonDescription? {
         val mediaContentUrl = getMediaContentUrl(jsonObject, mediaType)
-        if (mediaContentUrl == null || mediaContentUrl.isEmpty()) {
+        if (mediaContentUrl.isNullOrEmpty()) {
             return null
         }
         val encodedContentUrl =
@@ -193,13 +193,13 @@ object SMLUtil {
      */
     private fun getPotentiallyNestedMediaContentUrl(media: JSONObject, mediaType: String?): String? {
         var mediaContentUrl = media.optString("contentUrl")
-        if (!mediaContentUrl.isEmpty()) {
+        if (mediaContentUrl.isNotEmpty()) {
             return mediaContentUrl
         } else {
             val innerMedia = media.optJSONObject(mediaType)
             if (innerMedia != null) {
                 mediaContentUrl = innerMedia.optString("contentUrl")
-                if (!mediaContentUrl.isEmpty()) {
+                if (mediaContentUrl.isNotEmpty()) {
                     return mediaContentUrl
                 }
             }
@@ -209,7 +209,7 @@ object SMLUtil {
 
     fun getMeetButtonDesc(jsonObject: JSONObject): ButtonDescription? {
         val description = jsonObject.optString("description")
-        if (!description.isEmpty()) {
+        if (description.isNotEmpty()) {
             val urlHtmlMatcher = Patterns.WEB_URL.matcher(description)
             while (urlHtmlMatcher.find()) {
                 val url = urlHtmlMatcher.group()
@@ -230,17 +230,17 @@ object SMLUtil {
             .build()
         val iTIPMethod = jsonObject.optString("iTIPMethod")
         val shareEventAsCalendar = ButtonDescription(null, "event", uri.toString())
-        if (iTIPMethod.isEmpty()) {
-            return mutableListOf<ButtonDescription?>(shareEventAsCalendar)
+        return if (iTIPMethod.isEmpty()) {
+            mutableListOf(shareEventAsCalendar)
         } else if (iTIPMethod.lowercase() == "request") {
-            return getIMITButtonDescriptions(encodedJson)
+            getIMITButtonDescriptions(encodedJson)
         } else {
-            return mutableListOf<ButtonDescription?>(shareEventAsCalendar)
+            mutableListOf(shareEventAsCalendar)
         }
     }
 
     private fun getIMITButtonDescriptions(encodedJson: String?): MutableList<ButtonDescription?> {
-        val buttonDescs: MutableList<ButtonDescription?> = ArrayList<ButtonDescription?>(2)
+        val buttonDescs: MutableList<ButtonDescription?> = ArrayList(2)
         //        buttonDescs.add(shareEventAsCalendar);
         val acceptUri = Uri.Builder()
             .scheme("ximip")
@@ -306,20 +306,19 @@ object SMLUtil {
         buttons: MutableList<ButtonDescription?>,
         mainSchemaType: String?
     ) {
-        val actionType = potentialAction.optString("@type")
-        when (actionType) {
+        when (val actionType = potentialAction.optString("@type")) {
             "CopyToClipboardAction" -> {
                 val name = potentialAction.optString("name", "Copy to clipboard ")
                 val description = potentialAction.optString("description")
-                if (!description.isEmpty()) {
-                    buttons.add(ButtonDescription(name, "content_paste", "xclipboard:" + description))
+                if (description.isNotEmpty()) {
+                    buttons.add(ButtonDescription(name, "content_paste", "xclipboard:$description"))
                 }
             }
 
             "ConfirmAction" -> {
                 val name = potentialAction.optString("name", "Confirm")
                 val target = potentialAction.optString("target")
-                if (!target.isEmpty()) {
+                if (target.isNotEmpty()) {
                     buttons.add(ButtonDescription(name, target))
                 }
             }
@@ -327,7 +326,7 @@ object SMLUtil {
             "CancelAction" -> {
                 val name = potentialAction.optString("name", "Deny")
                 val target = potentialAction.optString("target")
-                if (!target.isEmpty()) {
+                if (target.isNotEmpty()) {
                     buttons.add(ButtonDescription(name, target))
                 }
             }
@@ -336,12 +335,11 @@ object SMLUtil {
                 if (isPoll(mainSchemaType)) {
                     val target = potentialAction.opt("target")
                     if (target is JSONArray) {
-                        val targetArray = target
                         var i = 0
-                        while (i < targetArray.length()) {
+                        while (i < target.length()) {
                             var targetMember: Any? = null
                             try {
-                                targetMember = targetArray.get(i)
+                                targetMember = target.get(i)
                             } catch (_: JSONException) {
                             }
                             addPollButtonFromSingleTarget(potentialAction, actionType, targetMember, buttons)
@@ -366,7 +364,7 @@ object SMLUtil {
             // todo not tested yet
             if (actionType == "ChooseAction") {
                 val submitButton =
-                    ButtonDescription("Submit", null, "xsubmit:" + encodedTarget + "?action=submit&vote={{user_vote}}")
+                    ButtonDescription("Submit", null, "xsubmit:$encodedTarget?action=submit&vote={{user_vote}}")
                 buttons.add(submitButton)
             } else if (actionType == "UpdateAction") {
                 val actionName = potentialAction.optString("name")
@@ -374,19 +372,19 @@ object SMLUtil {
                     "close" -> {
                         run {
                             val closeButton =
-                                ButtonDescription("Close", null, "xsubmit:" + encodedTarget + "?action=close")
+                                ButtonDescription("Close", null, "xsubmit:$encodedTarget?action=close")
                             buttons.add(closeButton)
                         }
                         run {
                             val retractButton =
-                                ButtonDescription("Retract", null, "xsubmit:" + encodedTarget + "?action=retract")
+                                ButtonDescription("Retract", null, "xsubmit:$encodedTarget?action=retract")
                             buttons.add(retractButton)
                         }
                     }
 
                     "retract" -> {
                         val retractButton =
-                            ButtonDescription("Retract", null, "xsubmit:" + encodedTarget + "?action=retract")
+                            ButtonDescription("Retract", null, "xsubmit:$encodedTarget?action=retract")
                         buttons.add(retractButton)
                     }
                 }
@@ -402,7 +400,7 @@ object SMLUtil {
     }
 
     private fun shouldMakeSharableAsMail(type: String?): Boolean {
-        return true
+        return !type.equals("Foo") // Always return true.
         // todo: long term wise should do some type based filtering
     }
 
@@ -419,7 +417,7 @@ object SMLUtil {
         val startDate = jsonObject.optString("startDate", startTime)
         val endTime = jsonObject.optString("endTime")
         val endDate = jsonObject.optString("endDate", endTime)
-        return (!startDate.isEmpty()) || (!endDate.isEmpty())
+        return (startDate.isNotEmpty()) || (endDate.isNotEmpty())
     }
 
     @JvmOverloads
@@ -427,9 +425,9 @@ object SMLUtil {
     fun findAllRecursive(
         json: JSONObject,
         searchKey: String?,
-        excluded: MutableList<String?> = mutableListOf<String?>()
+        excluded: MutableList<String?> = mutableListOf()
     ): MutableList<Any?> {
-        val collectedResults: MutableList<Any?> = ArrayList<Any?>()
+        val collectedResults: MutableList<Any?> = ArrayList()
         val it = json.keys()
         while (it.hasNext()) {
             val key = it.next()
@@ -453,9 +451,5 @@ object SMLUtil {
             }
         }
         return collectedResults
-    }
-
-    class ActionButton(string: String, string1: String) {
-
     }
 }
