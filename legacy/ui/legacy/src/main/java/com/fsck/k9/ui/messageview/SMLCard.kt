@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
-import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.Button
@@ -27,8 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.fsck.k9.sml.SMLUtil
 import com.skydoves.landscapist.coil3.CoilImage
 import com.skydoves.landscapist.ImageOptions
+import org.audriga.ld2h.ButtonDescription
 import org.json.JSONObject
 
 /**
@@ -44,7 +45,7 @@ import org.json.JSONObject
  * @param modifier The modifier to apply to the card
  */
 @Composable
-fun MessageCustomCard(
+fun SMLCard(
     jsonObject: JSONObject,
     modifier: Modifier = Modifier,
 ) {
@@ -52,7 +53,8 @@ fun MessageCustomCard(
     val title = getTitleFromMarkup(jsonObject, schemaType)
     val description = jsonObject.optString("description", "")
     val imageUrl = getImageUrlFromMarkup(jsonObject)
-    val potentialActions = getPotentialActions(jsonObject)
+    val buttonDescriptions = SMLUtil.getButtons(jsonObject)
+//    val potentialActions = getPotentialActions(jsonObject)
 
     Card(
         modifier = modifier
@@ -110,16 +112,15 @@ fun MessageCustomCard(
             }
 
             // Action buttons
-            if (potentialActions.isNotEmpty()) {
+            if (buttonDescriptions.isNotEmpty()) {
                 LazyRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
                 ) {
-                    items(potentialActions.size) { index ->
-                        val action = potentialActions[index]
+                    items(buttonDescriptions.size) { index ->
                         StructuredDataActionButton(
-                            name = action.optString("name", "Action"),
+                            buttonDescription = buttonDescriptions[index],
                             modifier = Modifier.padding(end = 8.dp),
                         )
                     }
@@ -131,14 +132,15 @@ fun MessageCustomCard(
 
 @Composable
 private fun StructuredDataActionButton(
-    name: String,
+    buttonDescription: ButtonDescription?,
     modifier: Modifier = Modifier,
 ) {
     Button(
         onClick = { /* TODO: Implement actual action */ },
         modifier = modifier,
     ) {
-        Text(name, style = MaterialTheme.typography.labelSmall)
+        // todo just icon if label is null
+        Text(buttonDescription?.label ?: "Action", style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -183,22 +185,6 @@ private fun getImageUrlFromMarkup(jsonObject: JSONObject): String? {
     }
 
     return null
-}
-
-/**
- * Extract potential actions from schema
- */
-private fun getPotentialActions(jsonObject: JSONObject): List<JSONObject> {
-    return try {
-        val potentialAction = jsonObject.opt("potentialAction") ?: return emptyList()
-
-        when (potentialAction) {
-            is JSONObject -> listOf(potentialAction)
-            else -> emptyList()
-        }
-    } catch (e: Exception) {
-        emptyList()
-    }
 }
 
 /**

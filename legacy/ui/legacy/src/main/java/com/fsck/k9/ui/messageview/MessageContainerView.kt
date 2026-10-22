@@ -443,13 +443,13 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
             setCustomCardContent {
                 Column {
                     structuredDataList.forEach { jsonObject ->
-                        MessageCustomCard(jsonObject = jsonObject)
+                        SMLCard(jsonObject = jsonObject)
                     }
                 }
             }
         } else if (messageViewInfo.messageData?.extracted != null) {
             setCustomCardContent {
-                MessageCustomCard(jsonObject = messageViewInfo.messageData.extracted)
+                SMLCard(jsonObject = messageViewInfo.messageData.extracted)
             }
         }
         val messageText = messageViewInfo.text
