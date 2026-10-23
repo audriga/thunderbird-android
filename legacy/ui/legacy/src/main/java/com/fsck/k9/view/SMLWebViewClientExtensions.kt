@@ -211,25 +211,27 @@ class SMLWebViewClientExtensions(
         val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
         val text = String(data, charset("UTF-8"))
         val json = JSONObject(text)
-        val cal = calendarFromJsonLd(json)
-        val account: LegacyAccount? = account(messageReference)
         val query = uri.query
-        if (account != null && arrayOf("accept", "decline", "tentative").contains(query)) {
-            when {
-                query.equals("accept") -> {
-                    imipIteract(cal, IMIPAction.Accept, account, context)
-                }
+        val action = when {
+            query.equals("accept") -> {
+                IMIPAction.Accept
+            }
 
-                query.equals("decline") -> {
-                    imipIteract(cal, IMIPAction.Decline, account, context)
-                }
+            query.equals("decline") -> {
+                IMIPAction.Decline
+            }
 
-                query.equals("tentative") -> {
-                    imipIteract(cal, IMIPAction.Tentative, account, context)
-                }
+            query.equals("tentative") -> {
+                IMIPAction.Tentative
+            }
+
+            else -> {
+                null
             }
         }
+        imipInteract(json, action, messageReference, generalSettingsManager, context)
     }
+
 
     private fun xShowSource(context: Context, uri: Uri) {
         val encodedJsons = uri.schemeSpecificPart.split(",")
@@ -262,105 +264,9 @@ class SMLWebViewClientExtensions(
         val base64 = uri.authority
         val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
         val text = String(data)
-        val i = Intent(context, MessageCompose::class.java)
-        i.putExtra(MessageCompose.EXTRA_ACCOUNT, messageReference?.accountUuid)
-        i.putExtra(SMLMessageComposeUtil.IS_SML, true)
-        i.setAction(MessageCompose.ACTION_COMPOSE)
-        i.putExtra(SMLMessageComposeUtil.SML_PAYLOAD, text)
-        context.startActivity(i)
+        shareAsSmlMail(context, messageReference, text)
     }
 
-    /**
-     * If accept saves modified (to reflect accept) cal to calendar (via open ics file).
-     * In all cases send reply imip email (with further modified cal).
-     */
-    private fun imipIteract(
-        cal: Calendar?,
-        action: IMIPAction,
-        account: LegacyAccount,
-        context: Context,
-    ) {
-        // TODO: Add to calendar via intent, and on return send email.
-        //                val attendees = cal?.componentList?.get<VEvent>()?.map { it.attendees }?.flatten()
-        val event = cal?.componentList?.all?.filterIsInstance<VEvent>()?.firstOrNull()
-        if (event != null) {
-            val summary = event.propertyList.get<Summary>(Property.SUMMARY).firstOrNull()?.value
-            val organizer = event.propertyList.get<Organizer>(Property.ORGANIZER).firstOrNull()
-            val organizerName = organizer?.parameterList?.get<Cn>(Parameter.CN)?.firstOrNull()?.value
-            val organizerEmail = organizer?.calAddress?.schemeSpecificPart
-            if (!organizerEmail.isNullOrEmpty()) {
-                // todo: can't send email if organizer email is null or empty. Show some sort of error?
-                val userAttendee = findAndUpdateAccountEmailInAttendees(event, account, action.partStat)
-                if (action != IMIPAction.Decline) {
-                    val calTextToSave = cal.toString()
-                    viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
-                }
-                if (userAttendee == null) {
-                    showToast(context, "You are not part of the attendees. Not sending an email")
-                    return
-                }
-                // this replaces all attendees with userAttendee
-                event.replace<VEvent>(userAttendee)
-                cal.replace<Calendar>(Method("REPLY"))
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val current = Instant.now()
-                    event.replace<VEvent>(LastModified(current))
-                    event.replace<VEvent>(DtStamp(current))
-                }
-                val resourceProvider = DI.get(CoreResourceProvider::class.java)
-                val ua = resourceProvider.userAgent()
-                cal.replace<Calendar>(ProdId("-//$ua//EN")) //todo: should probably be something like -//comapy//appname/langcode
-                val calTextToReply = cal.toString()
-                val messageBuilder = SimpleSmlMessageBuilder.newInstance()
-                val contentType = contentType("text/calendar", "utf-8", null)
-                MimeParameterEncoder.encode("text/calendar", mapOf("charset" to "utf-8", "method" to "REPLY"))
-                val body = TextBody(calTextToReply.replace("\r\n", "\n").replace("\n", "\r\n"))
-                val dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
-                dedicatedJsonMultipart.setEncoding("8bit")
-                val subject = action.verb + ": " + (summary ?: "")
-                messageBuilder
-                    .setPlainText("${account.displayName} has ${action.verb.lowercase(Locale.getDefault())} your invitation")
-                    .setSubject(subject)
-                    .setSentDate(Date())
-                    .setHideTimeZone(generalSettingsManager.getConfig().privacy.isHideTimeZone)
-//                    .setHideTimeZone(preferenceManager.getConfig().privacy.isHideTimeZone)
-                    .setIdentity(account.identities.first()) // todo if the account has multiple identities
-                    .setMessageFormat(SimpleMessageFormat.TEXT)
-                    .setTo(listOf(Address(organizerEmail, organizerName)))
-                messageBuilder.setAdditionalAlternatePart(dedicatedJsonMultipart)
-                messageBuilder.buildAsync(
-                    object : Callback {
-                        override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
-                            val messagingController = DI.get(MessagingController::class.java)
-                            messagingController.sendMessage(account, message, subject, null)
-                            showToast(context, action.verb)
-                        }
-
-                        override fun onMessageBuildCancel() {
-                            Log.e("Cancelled sending message")
-                        }
-
-                        override fun onMessageBuildException(me: MessagingException?) {
-                            Log.e(me, "Error sending message")
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.send_failed_reason, me?.localizedMessage ?: ""),
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        }
-
-                        override fun onMessageBuildReturnPendingIntent(
-                            pendingIntent: PendingIntent?,
-                            requestCode: Int,
-                        ) {
-                            //todo MessageCompose uses  OpenPgpIntentStarter.startIntentSenderForResult here,
-                            //   which requires an activity, so cannot copy that here.
-                        }
-                    },
-                )
-            }
-        }
-    }
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun showRenderedCardsPopup(
@@ -693,71 +599,9 @@ class SMLWebViewClientExtensions(
     }
 
     private fun mailTo(context: Context, uri: Uri) {
-//                val actionQuery = uri.getQueryParameters("action") //for some reason this throws an exception
-        val query = uri.query
-        if (query != null && query.contains("action")) {
-            val schemaSpecific = uri.schemeSpecificPart
-            val end = schemaSpecific.indexOf('?')
-            val recipient = Uri.decode(schemaSpecific.substring(0, end))
-            val requestAction = query.substring(query.indexOf('=') + 1, query.length)
-            val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction)
-            if (smlPayload != null) {
-                val mc = DI.get(MessagingController::class.java)
-                val account: LegacyAccount? = account(messageReference)
-                if (account != null) {
-                    val builder = SmlMessageUtil.createSMLMessageBuilder(
-                        listOf(smlPayload),
-                        account.smlVariant,
-                    )
-                    val to = Address.parse(recipient) // todo error handling for this
-                    builder.setTo(to.toList())
-                    builder.setSubject(requestAction)
-                    builder.setIdentity(account.identities.first()) // todo this also is not clean, but we want no interaction, so how would we pick the identity
-                    builder.buildAsync(
-                        object : Callback {
-                            override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
-                                mc.sendMessage(account, message, requestAction, null)
-                                Toast.makeText(context, "Sent $requestAction", Toast.LENGTH_SHORT)
-                                    .show()
-                                //todo show success when done
-                            }
-
-                            override fun onMessageBuildCancel() {
-                                //                                    TODO("Not yet implemented")
-                            }
-
-                            override fun onMessageBuildException(exception: MessagingException?) {
-                                //                                    TODO("Not yet implemented")
-                            }
-
-                            override fun onMessageBuildReturnPendingIntent(
-                                pendingIntent: PendingIntent?,
-                                requestCode: Int,
-                            ) {
-                                //                                    TODO("Not yet implemented")
-                            }
-                        },
-                    )
-                } else {
-                    // todo show non-success
-                }
-            } else {
-                // todo show non-success
-            }
-
-            ////                    val bundle = Bundle();
-            ////                    bundle.putString("recipient", recipient)
-            ////                    bundle.putString("action", requestAction)
-            //                    val intent = Intent(webView.context, MessageCompose::class.java).apply {
-            //                        action = MessageCompose.ACTION_COMPOSE_APPROVE
-            //                        data = uri
-            //                    }.putExtra("recipient", recipient).putExtra("requestAction", requestAction)
-            ////                        .putExtra(MessageCompose.IS_SML, true)
-            //                    webView.context.startActivity(intent)
-        } else {
-            openUrl(context, uri)
-        }
+        mailTo(context, uri, messageReference)
     }
+
 
 
     companion object {
@@ -783,11 +627,23 @@ class SMLWebViewClientExtensions(
             return
         }
 
+        fun shareAsSmlMail(context: Context, messageReference: MessageReference?, text: String) {
+            val i = Intent(context, MessageCompose::class.java)
+            i.putExtra(MessageCompose.EXTRA_ACCOUNT, messageReference?.accountUuid)
+            i.putExtra(SMLMessageComposeUtil.IS_SML, true)
+            i.setAction(MessageCompose.ACTION_COMPOSE)
+            i.putExtra(SMLMessageComposeUtil.SML_PAYLOAD, text)
+            context.startActivity(i)
+        }
         private fun xshareAsFile(context: Context, uri: Uri) {
             val base64 = uri.authority
             val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
 //        val text = String(data, charset("UTF-8"))
             val fileName = uri.getQueryParameter("fileName")
+            shareAsFile(context, fileName, data)
+        }
+
+        public fun shareAsFile(context: Context, fileName: String?, data: ByteArray) {
             val applicationContext = context.applicationContext
             val directory = File(applicationContext.cacheDir, "temp")
             if (!directory.exists()) {
@@ -800,14 +656,14 @@ class SMLWebViewClientExtensions(
             val jsonFile = File(directory, fileName ?: "sml.json")
             jsonFile.writeBytes(data)
 
-//        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
+            //        val internalFileUri = DecryptedFileProvider.getUriForProvidedFile(context, jsonFile, null, null)
             val sharableUri = AttachmentTempFileProvider.getUriForFile(
                 context,
                 "${context.packageName}.tempfileprovider",
                 jsonFile,
                 "sml1.json",
             )
-//        val sharableUri = AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(jsonFile), "sml1.json")
+            //        val sharableUri = AttachmentTempFileProvider.createTempUriForContentUri(context, Uri.fromFile(jsonFile), "sml1.json")
 
             val sendIntent: Intent = Intent().apply {
                 action = Intent.ACTION_SEND
@@ -827,6 +683,10 @@ class SMLWebViewClientExtensions(
             val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
             val text = String(data, charset("UTF-8"))
             val json = JSONObject(text)
+            shareAsCal(context, json)
+        }
+
+        fun shareAsCal(context: Context, json: JSONObject) {
             val cal = calendarFromJsonLd(json)
             val calText = cal.toString()
 
@@ -898,15 +758,126 @@ class SMLWebViewClientExtensions(
             return bitmap
         }
 
+        fun imipInteract(
+            json: JSONObject,
+            action: IMIPAction?,
+            messageReference: MessageReference?,
+            generalSettingsManager: GeneralSettingsManager,
+            context: Context,
+        ) {
+            val cal = calendarFromJsonLd(json)
+            val account: LegacyAccount? = account(messageReference)
+            if (account != null && action != null) {
+                imipInteract(cal, action, account, generalSettingsManager, context)
+            }
+        }
+
+        /**
+         * If accept saves modified (to reflect accept) cal to calendar (via open ics file).
+         * In all cases send reply imip email (with further modified cal).
+         */
+        private fun imipInteract(
+            cal: Calendar?,
+            action: IMIPAction,
+            account: LegacyAccount,
+            generalSettingsManager: GeneralSettingsManager,
+            context: Context,
+        ) {
+            // TODO: Add to calendar via intent, and on return send email.
+            //                val attendees = cal?.componentList?.get<VEvent>()?.map { it.attendees }?.flatten()
+            val event = cal?.componentList?.all?.filterIsInstance<VEvent>()?.firstOrNull()
+            if (event != null) {
+                val summary = event.propertyList.get<Summary>(Property.SUMMARY).firstOrNull()?.value
+                val organizer = event.propertyList.get<Organizer>(Property.ORGANIZER).firstOrNull()
+                val organizerName = organizer?.parameterList?.get<Cn>(Parameter.CN)?.firstOrNull()?.value
+                val organizerEmail = organizer?.calAddress?.schemeSpecificPart
+                if (!organizerEmail.isNullOrEmpty()) {
+                    // todo: can't send email if organizer email is null or empty. Show some sort of error?
+                    val userAttendee = findAndUpdateAccountEmailInAttendees(event, account, action.partStat)
+                    if (action != IMIPAction.Decline) {
+                        val calTextToSave = cal.toString()
+                        viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
+                    }
+                    if (userAttendee == null) {
+                        showToast(context, "You are not part of the attendees. Not sending an email")
+                        return
+                    }
+                    // this replaces all attendees with userAttendee
+                    event.replace<VEvent>(userAttendee)
+                    cal.replace<Calendar>(Method("REPLY"))
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val current = Instant.now()
+                        event.replace<VEvent>(LastModified(current))
+                        event.replace<VEvent>(DtStamp(current))
+                    }
+                    val resourceProvider = DI.get(CoreResourceProvider::class.java)
+                    val ua = resourceProvider.userAgent()
+                    cal.replace<Calendar>(ProdId("-//$ua//EN")) //todo: should probably be something like -//comapy//appname/langcode
+                    val calTextToReply = cal.toString()
+                    val messageBuilder = SimpleSmlMessageBuilder.newInstance()
+                    val contentType = contentType("text/calendar", "utf-8", null)
+                    MimeParameterEncoder.encode("text/calendar", mapOf("charset" to "utf-8", "method" to "REPLY"))
+                    val body = TextBody(calTextToReply.replace("\r\n", "\n").replace("\n", "\r\n"))
+                    val dedicatedJsonMultipart = MimeBodyPart.create(body, contentType)
+                    dedicatedJsonMultipart.setEncoding("8bit")
+                    val subject = action.verb + ": " + (summary ?: "")
+                    messageBuilder
+                        .setPlainText("${account.displayName} has ${action.verb.lowercase(Locale.getDefault())} your invitation")
+                        .setSubject(subject)
+                        .setSentDate(Date())
+                        .setHideTimeZone(generalSettingsManager.getConfig().privacy.isHideTimeZone)
+//                    .setHideTimeZone(preferenceManager.getConfig().privacy.isHideTimeZone)
+                        .setIdentity(account.identities.first()) // todo if the account has multiple identities
+                        .setMessageFormat(SimpleMessageFormat.TEXT)
+                        .setTo(listOf(Address(organizerEmail, organizerName)))
+                    messageBuilder.setAdditionalAlternatePart(dedicatedJsonMultipart)
+                    messageBuilder.buildAsync(
+                        object : Callback {
+                            override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
+                                val messagingController = DI.get(MessagingController::class.java)
+                                messagingController.sendMessage(account, message, subject, null)
+                                showToast(context, action.verb)
+                            }
+
+                            override fun onMessageBuildCancel() {
+                                Log.e("Cancelled sending message")
+                            }
+
+                            override fun onMessageBuildException(me: MessagingException?) {
+                                Log.e(me, "Error sending message")
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.send_failed_reason, me?.localizedMessage ?: ""),
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+
+                            override fun onMessageBuildReturnPendingIntent(
+                                pendingIntent: PendingIntent?,
+                                requestCode: Int,
+                            ) {
+                                //todo MessageCompose uses  OpenPgpIntentStarter.startIntentSenderForResult here,
+                                //   which requires an activity, so cannot copy that here.
+                            }
+                        },
+                    )
+                }
+            }
+        }
+
         private fun xPlayMedia(context: Context, uri: Uri) {
             val base64 = uri.authority
             val data: ByteArray = Base64.decode(base64, Base64.NO_WRAP + Base64.URL_SAFE)
             val contentUrl = String(data)
             val contentUrlAsUri = contentUrl.toUri()
             val mediaType = uri.getQueryParameter("mediaType") // i.e. "audio" or "video"
+            playMedia(context, mediaType, contentUrlAsUri)
+        }
+
+        fun playMedia(context: Context, mediaType: String?, contentUri: Uri) {
             val sendIntent: Intent = Intent().apply {
                 action = Intent.ACTION_VIEW
-                setDataAndType(contentUrlAsUri, "$mediaType/*")
+                setDataAndType(contentUri, "$mediaType/*")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP) // https://stackoverflow.com/a/18188955
             }
 
@@ -1099,7 +1070,7 @@ class SMLWebViewClientExtensions(
             return account
         }
 
-        private fun downloadPage(httpUri: Uri): Pair<String?, String?> {
+        fun downloadPage(httpUri: Uri): Pair<String?, String?> {
             val client = OkHttpClient()
             var pageSrc: String? = null
             var okErr: String? = null
@@ -1152,8 +1123,75 @@ class SMLWebViewClientExtensions(
             return Pair(jsonSrc, okErr)
         }
 
+        public fun mailTo(context: Context, uri: Uri, messageReference: MessageReference?) {
+//                val actionQuery = uri.getQueryParameters("action") //for some reason this throws an exception
+            val query = uri.query
+            if (query != null && query.contains("action")) {
+                val schemaSpecific = uri.schemeSpecificPart
+                val end = schemaSpecific.indexOf('?')
+                val recipient = Uri.decode(schemaSpecific.substring(0, end))
+                val requestAction = query.substring(query.indexOf('=') + 1, query.length)
+                val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction)
+                if (smlPayload != null) {
+                    val mc = DI.get(MessagingController::class.java)
+                    val account: LegacyAccount? = account(messageReference)
+                    if (account != null) {
+                        val builder = SmlMessageUtil.createSMLMessageBuilder(
+                            listOf(smlPayload),
+                            account.smlVariant,
+                        )
+                        val to = Address.parse(recipient) // todo error handling for this
+                        builder.setTo(to.toList())
+                        builder.setSubject(requestAction)
+                        builder.setIdentity(account.identities.first()) // todo this also is not clean, but we want no interaction, so how would we pick the identity
+                        builder.buildAsync(
+                            object : Callback {
+                                override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
+                                    mc.sendMessage(account, message, requestAction, null)
+                                    Toast.makeText(context, "Sent $requestAction", Toast.LENGTH_SHORT)
+                                        .show()
+                                    //todo show success when done
+                                }
+
+                                override fun onMessageBuildCancel() {
+                                    //                                    TODO("Not yet implemented")
+                                }
+
+                                override fun onMessageBuildException(exception: MessagingException?) {
+                                    //                                    TODO("Not yet implemented")
+                                }
+
+                                override fun onMessageBuildReturnPendingIntent(
+                                    pendingIntent: PendingIntent?,
+                                    requestCode: Int,
+                                ) {
+                                    //                                    TODO("Not yet implemented")
+                                }
+                            },
+                        )
+                    } else {
+                        // todo show non-success
+                    }
+                } else {
+                    // todo show non-success
+                }
+
+                ////                    val bundle = Bundle();
+                ////                    bundle.putString("recipient", recipient)
+                ////                    bundle.putString("action", requestAction)
+                //                    val intent = Intent(webView.context, MessageCompose::class.java).apply {
+                //                        action = MessageCompose.ACTION_COMPOSE_APPROVE
+                //                        data = uri
+                //                    }.putExtra("recipient", recipient).putExtra("requestAction", requestAction)
+                ////                        .putExtra(MessageCompose.IS_SML, true)
+                //                    webView.context.startActivity(intent)
+            } else {
+                openUrl(context, uri)
+            }
+        }
+
         // Copied over from K9WebViewClient
-        private fun openUrl(context: Context, uri: Uri) {
+        public fun openUrl(context: Context, uri: Uri) {
             val intent = Intent(Intent.ACTION_VIEW, uri).apply {
                 putExtra(Browser.EXTRA_APPLICATION_ID, context.packageName)
                 putExtra(Browser.EXTRA_CREATE_NEW_TAB, true)

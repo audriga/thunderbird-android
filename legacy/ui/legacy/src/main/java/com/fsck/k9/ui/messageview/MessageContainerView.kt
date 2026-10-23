@@ -37,6 +37,7 @@ import com.fsck.k9.mailstore.AttachmentViewInfo
 import com.fsck.k9.mailstore.MessageViewInfo
 import com.fsck.k9.message.html.DisplayHtml
 import com.fsck.k9.ui.R
+import com.fsck.k9.ui.sml.SMLCard
 import com.fsck.k9.view.MessageWebView
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.fsck.k9.view.WebViewConfigProvider
@@ -443,13 +444,23 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
             setCustomCardContent {
                 Column {
                     structuredDataList.forEach { jsonObject ->
-                        SMLCard(jsonObject = jsonObject)
+                        SMLCard(
+                            initialJsonObject = jsonObject,
+                            clipboardManager = clipboardManager,
+                            messageReference = messageReference,
+                            context = context,
+                            )
                     }
                 }
             }
         } else if (messageViewInfo.messageData?.extracted != null) {
             setCustomCardContent {
-                SMLCard(jsonObject = messageViewInfo.messageData.extracted)
+                SMLCard(
+                    initialJsonObject = messageViewInfo.messageData.extracted,
+                    context = context,
+                    clipboardManager = clipboardManager,
+                    messageReference = messageReference,
+                )
             }
         }
         val messageText = messageViewInfo.text

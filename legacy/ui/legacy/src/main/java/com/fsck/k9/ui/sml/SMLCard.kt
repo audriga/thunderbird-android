@@ -1,5 +1,6 @@
-package com.fsck.k9.ui.messageview
+package com.fsck.k9.ui.sml
 
+import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,15 +22,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import app.k9mail.legacy.message.controller.MessageReference
+import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.sml.SMLUtil
 import com.skydoves.landscapist.coil3.CoilImage
 import com.skydoves.landscapist.ImageOptions
-import org.audriga.ld2h.ButtonDescription
 import org.json.JSONObject
 
 /**
@@ -41,20 +45,35 @@ import org.json.JSONObject
  * - Subtitle (description)
  * - Action buttons from potentialAction
  *
- * @param jsonObject The schema.org JSON-LD object to display
+ * @param initialJsonObject The schema.org JSON-LD object to display
+ * @param onReload Callback when reload action is triggered, receives the new JSONObject
  * @param modifier The modifier to apply to the card
  */
 @Composable
 fun SMLCard(
-    jsonObject: JSONObject,
+    initialJsonObject: JSONObject,
+    clipboardManager: ClipboardManager,
+    messageReference: MessageReference?,
+    context: Context,
     modifier: Modifier = Modifier,
+    onReload: ((JSONObject) -> Unit)? = null,
 ) {
+    val jsonObjectState = remember { mutableStateOf(initialJsonObject) }
+    val jsonObject = jsonObjectState.value
+
     val schemaType = jsonObject.optString("@type", "")
     val title = getTitleFromMarkup(jsonObject, schemaType)
     val description = jsonObject.optString("description", "")
     val imageUrl = getImageUrlFromMarkup(jsonObject)
-    val buttonDescriptions = SMLUtil.getButtons(jsonObject)
-//    val potentialActions = getPotentialActions(jsonObject)
+    val actionButtons = ActionButtonUtil(
+        onReload = { newJsonObject ->
+                    jsonObjectState.value = newJsonObject
+                    onReload?.invoke(newJsonObject)
+                },
+        clipboardManager =  clipboardManager,
+        messageReference = messageReference,
+        context = context,
+        ).getButtons(jsonObject)
 
     Card(
         modifier = modifier
@@ -112,19 +131,34 @@ fun SMLCard(
             }
 
             // Action buttons
-            if (buttonDescriptions.isNotEmpty()) {
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                ) {
-                    items(buttonDescriptions.size) { index ->
-                        StructuredDataActionButton(
-                            buttonDescription = buttonDescriptions[index],
-                            modifier = Modifier.padding(end = 8.dp),
-                        )
-                    }
-                }
+            ActionButtons(
+                actionButtons = actionButtons,
+                onReload = { newJsonObject ->
+                    jsonObjectState.value = newJsonObject
+                    onReload?.invoke(newJsonObject)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionButtons(
+    actionButtons: MutableList<ActionButton?>,
+    onReload: (JSONObject) -> Unit = {},
+) {
+    if (actionButtons.isNotEmpty()) {
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        ) {
+            items(actionButtons.size) { index ->
+                StructuredDataActionButton(
+                    actionButton = actionButtons[index]!!,
+                    onReload = onReload,
+                    modifier = Modifier.padding(end = 8.dp),
+                )
             }
         }
     }
@@ -132,15 +166,36 @@ fun SMLCard(
 
 @Composable
 private fun StructuredDataActionButton(
-    buttonDescription: ButtonDescription?,
+    actionButton: ActionButton,
     modifier: Modifier = Modifier,
+    onReload: (JSONObject) -> Unit = {},
 ) {
     Button(
-        onClick = { /* TODO: Implement actual action */ },
+        onClick = actionButton.onClick,
+//        onClick = {
+//            val url = actionButt?.url ?: return@Button
+//            when {
+//                url.startsWith("xreload://") -> {
+//                    // Reload action: placeholder implementation
+//                    // In real usage, this would fetch new JSON from a URL
+//                    val newJson = JSONObject().apply {
+//                        put("name", "${actionButt.label} - reloaded at ${System.currentTimeMillis()}")
+//                        put("@type", "UpdatedContent")
+//                    }
+//                    onReload(newJson)
+//                }
+//                // Add more URL schemes here as needed
+//                else -> {
+//                    // Default action: could open URL, show dialog, etc.
+//                    // TODO: Implement actual action handling
+//                }
+//            }
+//        },
         modifier = modifier,
     ) {
         // todo just icon if label is null
-        Text(buttonDescription?.label ?: "Action", style = MaterialTheme.typography.labelSmall)
+        if (actionButton.icon != null) Icon(imageVector = actionButton.icon, contentDescription = null)
+        if (actionButton.label != null ) Text(actionButton.label, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -207,3 +262,5 @@ private fun getIconForType(schemaType: String): ImageVector {
         else -> Icons.AutoMirrored.Filled.Notes
     }
 }
+
+class ActionButtonData(label: String?, icon: ImageVector? )
