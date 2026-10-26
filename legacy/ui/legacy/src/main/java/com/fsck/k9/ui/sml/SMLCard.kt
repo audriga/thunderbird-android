@@ -9,12 +9,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
-import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -31,9 +32,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
-import com.fsck.k9.sml.SMLUtil
-import com.skydoves.landscapist.coil3.CoilImage
 import com.skydoves.landscapist.ImageOptions
+import com.skydoves.landscapist.coil3.CoilImage
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -64,7 +65,7 @@ fun SMLCard(
     val schemaType = jsonObject.optString("@type", "")
     val title = getTitleFromMarkup(jsonObject, schemaType)
     val description = jsonObject.optString("description", "")
-    val imageUrl = getImageUrlFromMarkup(jsonObject)
+    val imageUrl = extractImage(jsonObject)
     val actionButtons = ActionButtonUtil(
         onReload = { newJsonObject ->
                     jsonObjectState.value = newJsonObject
@@ -75,6 +76,20 @@ fun SMLCard(
         context = context,
         ).getButtons(jsonObject)
 
+    SimpleCard(schemaType, title, description, imageUrl, actionButtons, jsonObjectState, modifier, onReload)
+}
+
+@Composable
+private fun SimpleCard(
+    schemaType: String,
+    title: String,
+    description: String,
+    imageUrl: String?,
+    actionButtons: MutableList<ActionButton?>,
+    jsonObjectState: MutableState<JSONObject>,
+    modifier: Modifier,
+    onReload: ((JSONObject) -> Unit)?,
+) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -96,6 +111,7 @@ fun SMLCard(
                         imageOptions = ImageOptions(
                             contentScale = ContentScale.Crop,
                         ),
+                        // todo make image square, not rectangular
                         modifier = Modifier
                             .size(56.dp)
                             .padding(end = 12.dp),
@@ -212,34 +228,68 @@ private fun getTitleFromMarkup(jsonObject: JSONObject, schemaType: String): Stri
     }
 }
 
-/**
- * Extract image URL from various schema.org image properties
- */
-private fun getImageUrlFromMarkup(jsonObject: JSONObject): String? {
-    // Try image property first
-    val imageValue = jsonObject.opt("image")
-    if (imageValue != null) {
-        return when (imageValue) {
-            is String -> imageValue
-            is JSONObject -> {
-                // ImageObject with url property
-                imageValue.optString("url", null)
-                    ?: imageValue.optString("contentUrl", null)
+private fun extractImage(jsonLd: JSONObject): String? {
+    val thumbnailUrl = jsonLd.opt("thumbnailUrl")
+    val thumbnail = jsonLd.opt("thumbnail")
+    val image = jsonLd.opt("image")
+    if (thumbnailUrl == null && thumbnail == null && image != null) {
+        val imageUrl = imageFromNestedJson(image)
+        return imageUrl
+    } else {
+        if (thumbnail != null) {
+            val thumbnailExtracted = imageFromNestedJson(thumbnail)
+            return thumbnailExtracted
+        } else if (thumbnailUrl != null) {
+            val thumbnailExtracted = imageFromNestedJson(thumbnailUrl)
+            return thumbnailExtracted
+        } else {
+            return null
+        }
+    }
+}
+
+fun imageFromNestedJson(image: Any?): String? {
+    when (image) {
+        is JSONObject -> {
+            val imageContentUrl = image.opt("contentUrl")
+            if (imageContentUrl is String) {
+                return imageContentUrl
+            } else {
+                val url = image.opt("url")
+                return url as? String
             }
-            else -> null
+        }
+
+        is JSONArray -> {
+            when (val first = image.get(0)) {
+                is JSONObject -> {
+                    val imageContentUrl = first.opt("contentUrl")
+                    if (imageContentUrl is String) {
+                        return imageContentUrl
+                    } else {
+                        val url = first.opt("url")
+                        return url as? String
+                    }
+                }
+
+                is String -> {
+                    return first
+                }
+
+                else -> {
+                    return null
+                }
+            }
+        }
+
+        is String -> {
+            return image
+        }
+
+        else -> {
+            return null
         }
     }
-
-    // Try thumbnailUrl
-    val thumbnailUrl = jsonObject.opt("thumbnailUrl")
-    if (thumbnailUrl != null) {
-        return when (thumbnailUrl) {
-            is String -> thumbnailUrl
-            else -> null
-        }
-    }
-
-    return null
 }
 
 /**
