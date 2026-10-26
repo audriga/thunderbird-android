@@ -1,6 +1,7 @@
 package com.fsck.k9.ui.sml
 
 import android.content.Context
+import android.os.Build
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,13 +19,16 @@ import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -34,6 +38,7 @@ import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil3.CoilImage
+import okhttp3.internal.toImmutableMap
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -59,12 +64,13 @@ fun SMLCard(
     modifier: Modifier = Modifier,
     onReload: ((JSONObject) -> Unit)? = null,
 ) {
+    // todo simplify by using `by` instead of `=`, see https://stackoverflow.com/questions/69326413/whats-difference-between-remember-and-by-remember
     val jsonObjectState = remember { mutableStateOf(initialJsonObject) }
     val jsonObject = jsonObjectState.value
 
     val schemaType = jsonObject.optString("@type", "")
     val title = getTitleFromMarkup(jsonObject, schemaType)
-    val description = jsonObject.optString("description", "")
+    val description = getDescriptionFromMarkup(jsonObject, schemaType)
     val imageUrl = extractImage(jsonObject)
     val actionButtons = ActionButtonUtil(
         onReload = { newJsonObject ->
@@ -75,8 +81,175 @@ fun SMLCard(
         messageReference = messageReference,
         context = context,
         ).getButtons(jsonObject)
+    if (schemaType.equals("SimplePoll")) {
+        SimplePollCard(schemaType, title, imageUrl, jsonObject, jsonObjectState, actionButtons, modifier, onReload)
+    } else {
+        SimpleCard(schemaType, title, description, imageUrl, actionButtons, jsonObjectState, modifier, onReload)
+    }
+}
 
-    SimpleCard(schemaType, title, description, imageUrl, actionButtons, jsonObjectState, modifier, onReload)
+@Composable
+private fun SimplePollCard(
+    schemaType: String,
+    title: String,
+    imageUrl: String?,
+    jsonObject: JSONObject,
+    jsonObjectState: MutableState<JSONObject>,
+    actionButtons: MutableList<ActionButton?>,
+    modifier: Modifier,
+    onReload: ((JSONObject) -> Unit)?,
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            // Header with image/icon and text
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                // todo factor out to function
+                // Image or Icon
+                if (!imageUrl.isNullOrEmpty()) {
+                    CoilImage(
+                        imageModel = { imageUrl },
+                        imageOptions = ImageOptions(
+                            contentScale = ContentScale.Crop,
+                        ),
+                        // todo make image square, not rectangular
+                        modifier = Modifier
+                            .size(56.dp)
+                            .padding(end = 12.dp),
+                    )
+                } else {
+                    // Placeholder icon based on @type
+                    Icon(
+                        imageVector = getIconForType(schemaType),
+                        contentDescription = schemaType,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .padding(end = 12.dp),
+                    )
+                }
+
+                // Title
+                Column(modifier = Modifier.weight(1f)) {
+                    if (title.isNotEmpty()) {
+                        Text(
+                            text = title,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+                }
+            }
+            val votes = jsonObject.opt("votes")
+            var totalVotes: Int
+            var votesPerOption: Map<String, Int>
+            if (votes is JSONArray) {
+                totalVotes = votes.length()
+                votesPerOption = getVotesPerOption(votes, totalVotes)
+            } else {
+                totalVotes = 0
+                votesPerOption = mapOf()
+            }
+
+            val options = jsonObject.getJSONArray("options")// todo err checking
+            val checkedBoxes = remember { List(options.length()) { false }.toMutableStateList() }
+            for (i in 0..<options.length()) {
+                val optionName = options.getJSONObject(i).optString("name", "Option $i")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = checkedBoxes[i],
+                        onCheckedChange = {
+                            checkedBoxes[i] = it
+                        },
+                    )
+                    Text(optionName)
+                }
+                val votesForOption = votesPerOption[optionName] ?: 0
+                Column() {
+                    LinearProgressIndicator(
+                        progress = {
+                            (if (totalVotes != 0) {
+                                votesForOption.toFloat() / totalVotes
+                            } else {
+                                0.01f
+                            })
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text("$votesForOption Votes")
+                }
+            }
+
+            actionButtons.add(
+                0,
+                ActionButton(
+                    "Submit", null,
+                    {
+                        val foo = checkedBoxes
+
+                        // todo
+                    },
+                ),
+            )
+
+            // Action buttons
+            ActionButtons(
+                actionButtons = actionButtons,
+                onReload = { newJsonObject ->
+                    jsonObjectState.value = newJsonObject
+                    onReload?.invoke(newJsonObject)
+                },
+            )
+        }
+    }
+}
+
+private fun getVotesPerOption(votes: JSONArray, totalVotes: Int): Map<String, Int> {
+    val votesPerOption: MutableMap<String, Int> = HashMap()
+    for (i in 0..<totalVotes) {
+        val vote = votes.get(i)
+        if (vote is JSONObject
+            && "ChooseAction" == vote.optString("@type") // todo to conform with spec changes potentially remove check for `@type`.
+            ) {
+            countVote(vote, votesPerOption)
+        }
+    }
+    return votesPerOption.toImmutableMap()
+}
+
+private fun countVote(vote: JSONObject, votesPerOption: MutableMap<String, Int>) {
+    val actionOption = vote.opt("actionOption")
+    if (actionOption is JSONArray) {
+        for (i in 0..<actionOption.length()) {
+            val currentActionOption = actionOption.get(i)
+            if (currentActionOption is String) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    votesPerOption.merge(currentActionOption, 1) { a: Int, b: Int -> Integer.sum(a, b) }
+                } else {
+                    votesPerOption[currentActionOption] = (votesPerOption[currentActionOption] ?: 0) + 1
+                }
+            }
+        }
+    } else if (actionOption is String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            votesPerOption.merge(actionOption, 1) { a: Int, b: Int -> Integer.sum(a, b) }
+        } else {
+            votesPerOption[actionOption] = (votesPerOption[actionOption] ?: 0) + 1
+        }
+    }
 }
 
 @Composable
@@ -224,10 +397,28 @@ private fun getTitleFromMarkup(jsonObject: JSONObject, schemaType: String): Stri
         schemaType.contains("BlogPosting", ignoreCase = true) -> {
             jsonObject.optString("headline", jsonObject.optString("name", ""))
         }
+        schemaType.contains("ParcelDelivery") -> {
+            jsonObject.optJSONObject("itemShipped")?.optString("name") ?: "Parcel"
+        }
         else -> jsonObject.optString("name", "")
     }
 }
 
+private fun getDescriptionFromMarkup(jsonObject: JSONObject, schemaType: String): String {
+    val descriptionProp = jsonObject.optString("description", "")
+    if (descriptionProp.isNotEmpty()) {
+        return descriptionProp
+    }
+    return when {
+        schemaType.contains("ParcelDelivery") -> {
+            // todo full text. Also what about i18n
+            jsonObject.optString("expectedArrivalUntil") ?:""
+        }
+        else -> ""
+    }
+}
+
+// todo only load image from web url depending on setting
 private fun extractImage(jsonLd: JSONObject): String? {
     val thumbnailUrl = jsonLd.opt("thumbnailUrl")
     val thumbnail = jsonLd.opt("thumbnail")
