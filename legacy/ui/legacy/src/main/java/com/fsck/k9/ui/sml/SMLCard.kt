@@ -1,12 +1,15 @@
 package com.fsck.k9.ui.sml
 
 import android.content.Context
+import android.net.Uri
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -34,8 +37,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
+import com.fsck.k9.view.SMLWebViewClientExtensions
+import com.fsck.k9.view.SMLWebViewClientExtensions.Companion.sendDataRequest
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil3.CoilImage
 import okhttp3.internal.toImmutableMap
@@ -82,9 +88,9 @@ fun SMLCard(
         context = context,
         ).getButtons(jsonObject)
     if (schemaType.equals("SimplePoll")) {
-        SimplePollCard(schemaType, title, imageUrl, jsonObject, jsonObjectState, actionButtons, modifier, onReload)
+        SimplePollCard(schemaType, title, imageUrl, jsonObject, jsonObjectState, actionButtons, context, messageReference, modifier, onReload)
     } else {
-        SimpleCard(schemaType, title, description, imageUrl, actionButtons, jsonObjectState, modifier, onReload)
+        SimpleCard(schemaType, title, description, imageUrl, actionButtons, modifier)
     }
 }
 
@@ -96,6 +102,8 @@ private fun SimplePollCard(
     jsonObject: JSONObject,
     jsonObjectState: MutableState<JSONObject>,
     actionButtons: MutableList<ActionButton?>,
+    context: Context,
+    messageReference: MessageReference?,
     modifier: Modifier,
     onReload: ((JSONObject) -> Unit)?,
 ) {
@@ -160,9 +168,12 @@ private fun SimplePollCard(
             }
 
             val options = jsonObject.getJSONArray("options")// todo err checking
-            val checkedBoxes = remember { List(options.length()) { false }.toMutableStateList() }
-            for (i in 0..<options.length()) {
-                val optionName = options.getJSONObject(i).optString("name", "Option $i")
+            val optionsLenght = options.length()
+            val checkedBoxes = remember { List(optionsLenght) { false }.toMutableStateList() }
+            val optionNames = Array(optionsLenght) {i -> options.getJSONObject(i).optString("name", "Option $i")}
+            for (i in 0..<optionsLenght) {
+                val optionName = optionNames[i]
+                val votesForOption = votesPerOption[optionName] ?: 0
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -176,9 +187,10 @@ private fun SimplePollCard(
                         },
                     )
                     Text(optionName)
+//                    Spacer(modifier = Modifier.)
+                    Text("$votesForOption Votes", modifier = Modifier.padding(start = 16.dp))
                 }
-                val votesForOption = votesPerOption[optionName] ?: 0
-                Column() {
+                Row {
                     LinearProgressIndicator(
                         progress = {
                             (if (totalVotes != 0) {
@@ -189,30 +201,72 @@ private fun SimplePollCard(
                         },
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Text("$votesForOption Votes")
                 }
             }
 
-            actionButtons.add(
-                0,
-                ActionButton(
-                    "Submit", null,
-                    {
-                        val foo = checkedBoxes
+            val potentialActions = jsonObject.opt("potentialAction")
+            if (potentialActions is JSONArray) {
+                for (i in 0..<potentialActions.length()) {
+                    val action = potentialActions.get(i) as? JSONObject
+                    when {
+                        action?.optString("@type").equals("ChooseAction") -> {
+                            val target = action?.opt("target")
+                            var targetUri : Uri? = null
+                            if (target is JSONArray) {
+                                for (j in 0..<target.length()) {
+                                    val targetText = target.get(j) as? String
+                                    // for now only using url target (i.e. no mailto targets
+                                    if (targetText?.startsWith("http") == true) {
+                                        targetUri = targetText.toUri()
+                                    }
+                                }
+                            } else if (target is String && target.startsWith("http")) {
+                                targetUri = target.toUri()
+                            }
+                            actionButtons.add(
+                                0,
+                                ActionButton(
+                                    "Submit", null,
+                                ) {
+                                    val chosenOptions = JSONArray()
+                                    for (j in 0..<optionsLenght) {
+                                        if (checkedBoxes[j]) {
+                                            chosenOptions.put(optionNames[j])
+                                        }
+                                    }
 
-                        // todo
-                    },
-                ),
-            )
+                                    val actionData = SMLWebViewClientExtensions.createPollActionData(
+                                        context,
+                                        "submit",
+                                        chosenOptions,
+                                        messageReference,
+                                    ) ?: return@ActionButton
+                                    val (jsonSrc: String?, okErr: String?) = sendDataRequest(
+                                        actionData,
+                                        targetUri.toString(),
+                                        "POST"
+                                    )
+                                    if (okErr != null) {
+                                        Toast.makeText(context, "Http error ($okErr)", Toast.LENGTH_SHORT)
+                                            .show() // todo use string resources
+                                    } else if (jsonSrc == null) {
+                                        Toast.makeText(context, "Got no content", Toast.LENGTH_SHORT)
+                                            .show() // todo use string resources
+                                    } else {
+                                        // todo handle invalid json or json err response from server
+                                        val newJsonObject = JSONObject(jsonSrc)
+                                        jsonObjectState.value = newJsonObject
+                                        onReload?.invoke(newJsonObject)
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+            }
 
             // Action buttons
-            ActionButtons(
-                actionButtons = actionButtons,
-                onReload = { newJsonObject ->
-                    jsonObjectState.value = newJsonObject
-                    onReload?.invoke(newJsonObject)
-                },
-            )
+            ActionButtons(actionButtons = actionButtons)
         }
     }
 }
@@ -259,9 +313,7 @@ private fun SimpleCard(
     description: String,
     imageUrl: String?,
     actionButtons: MutableList<ActionButton?>,
-    jsonObjectState: MutableState<JSONObject>,
     modifier: Modifier,
-    onReload: ((JSONObject) -> Unit)?,
 ) {
     Card(
         modifier = modifier
@@ -322,10 +374,6 @@ private fun SimpleCard(
             // Action buttons
             ActionButtons(
                 actionButtons = actionButtons,
-                onReload = { newJsonObject ->
-                    jsonObjectState.value = newJsonObject
-                    onReload?.invoke(newJsonObject)
-                },
             )
         }
     }
@@ -334,7 +382,6 @@ private fun SimpleCard(
 @Composable
 private fun ActionButtons(
     actionButtons: MutableList<ActionButton?>,
-    onReload: (JSONObject) -> Unit = {},
 ) {
     if (actionButtons.isNotEmpty()) {
         LazyRow(
@@ -345,7 +392,6 @@ private fun ActionButtons(
             items(actionButtons.size) { index ->
                 StructuredDataActionButton(
                     actionButton = actionButtons[index]!!,
-                    onReload = onReload,
                     modifier = Modifier.padding(end = 8.dp),
                 )
             }
@@ -357,29 +403,9 @@ private fun ActionButtons(
 private fun StructuredDataActionButton(
     actionButton: ActionButton,
     modifier: Modifier = Modifier,
-    onReload: (JSONObject) -> Unit = {},
 ) {
     Button(
         onClick = actionButton.onClick,
-//        onClick = {
-//            val url = actionButt?.url ?: return@Button
-//            when {
-//                url.startsWith("xreload://") -> {
-//                    // Reload action: placeholder implementation
-//                    // In real usage, this would fetch new JSON from a URL
-//                    val newJson = JSONObject().apply {
-//                        put("name", "${actionButt.label} - reloaded at ${System.currentTimeMillis()}")
-//                        put("@type", "UpdatedContent")
-//                    }
-//                    onReload(newJson)
-//                }
-//                // Add more URL schemes here as needed
-//                else -> {
-//                    // Default action: could open URL, show dialog, etc.
-//                    // TODO: Implement actual action handling
-//                }
-//            }
-//        },
         modifier = modifier,
     ) {
         // todo just icon if label is null
@@ -503,5 +529,3 @@ private fun getIconForType(schemaType: String): ImageVector {
         else -> Icons.AutoMirrored.Filled.Notes
     }
 }
-
-class ActionButtonData(label: String?, icon: ImageVector? )

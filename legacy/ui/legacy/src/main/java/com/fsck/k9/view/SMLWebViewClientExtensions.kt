@@ -444,24 +444,7 @@ class SMLWebViewClientExtensions(
         val votes = if (queryParams.size > 1) queryParams.last() else null
         val target = Uri.decode(encodedTarget)
         val actionOption = if (votes?.startsWith('[') ?: false) JSONArray(votes) else votes
-        val account: LegacyAccount? = account(messageReference)
-        if (account == null) {
-            showToast(context, "Cannot get account information (needed to vote)")
-            return
-        }
-
-        val name = account.identities.firstOrNull()?.name ?: account.displayName
-        val actionData = JSONObject().apply {
-            put("@context", "https://schema.org")
-            put("@type", if (action == "submit") "ChooseAction" else "UpdateAction")
-            if (action != "submit") put("name", action)
-            put("agent", JSONObject().apply {
-                put("@type", "Person")
-                put("name", name)
-                put("email", account.email)
-            })
-            if (action == "submit") put("actionOption", actionOption)
-        }
+        val actionData = createPollActionData(context, action, actionOption, messageReference) ?: return
         val (jsonSrc: String?, okErr: String?) = sendDataRequest(
             actionData,
             target,
@@ -1090,7 +1073,7 @@ class SMLWebViewClientExtensions(
             return Pair(pageSrc, okErr)
         }
 
-        private fun sendDataRequest(data: JSONObject, target: String, method: String = "PATCH"): Pair<String?, String?> {
+        public fun sendDataRequest(data: JSONObject, target: String, method: String = "PATCH"): Pair<String?, String?> {
             val jsonMediaType = "application/json".toMediaTypeOrNull()
             val patchBody = data.toString()
                 .toRequestBody(jsonMediaType)
@@ -1206,6 +1189,35 @@ class SMLWebViewClientExtensions(
                 Log.d(e, "Couldn't open URL: %s", uri)
                 Toast.makeText(context, R.string.error_activity_not_found, Toast.LENGTH_LONG).show()
             }
+        }
+        public fun createPollActionData(
+            context: Context,
+            action: String,
+            actionOption: Any?,
+            messageReference: MessageReference?
+        ): JSONObject? {
+            val account: LegacyAccount? = account(messageReference)
+            if (account == null) {
+                showToast(context, "Cannot get account information (needed to vote)")
+                return null
+            }
+
+            val name = account.identities.firstOrNull()?.name ?: account.displayName
+            val actionData = JSONObject().apply {
+                put("@context", "https://schema.org")
+                put("@type", if (action == "submit") "ChooseAction" else "UpdateAction")
+                if (action != "submit") put("name", action)
+                put(
+                    "agent",
+                    JSONObject().apply {
+                        put("@type", "Person")
+                        put("name", name)
+                        put("email", account.email)
+                    },
+                )
+                if (action == "submit") put("actionOption", actionOption)
+            }
+            return actionData
         }
     }
 }
