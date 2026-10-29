@@ -1,15 +1,18 @@
 package com.fsck.k9.ui.sml
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -23,20 +26,26 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
@@ -73,7 +82,15 @@ fun SMLCard(
     // todo simplify by using `by` instead of `=`, see https://stackoverflow.com/questions/69326413/whats-difference-between-remember-and-by-remember
     val jsonObjectState = remember { mutableStateOf(initialJsonObject) }
     val jsonObject = jsonObjectState.value
+    var webstoryUrl: String? by remember { mutableStateOf(null)}
+//    var showDetailsSheet by remember { mutableStateOf(false) }
 
+    webstoryUrl?.let {
+        WebStoryBottomSheet(
+            url = it,
+            onDismiss = { webstoryUrl = null }
+        )
+    }
     val schemaType = jsonObject.optString("@type", "")
     val title = getTitleFromMarkup(jsonObject, schemaType)
     val description = getDescriptionFromMarkup(jsonObject, schemaType)
@@ -90,6 +107,7 @@ fun SMLCard(
     if (schemaType.equals("SimplePoll")) {
         SimplePollCard(schemaType, title, imageUrl, jsonObject, jsonObjectState, actionButtons, context, messageReference, modifier, onReload)
     } else {
+//        actionButtons.add(ActionButton("Story", null, {webstoryUrl = "https://www.spiegel.de/stories/66361/index.amp.html"}))
         SimpleCard(schemaType, title, description, imageUrl, actionButtons, modifier)
     }
 }
@@ -528,4 +546,67 @@ private fun getIconForType(schemaType: String): ImageVector {
             Icons.Filled.RestaurantMenu
         else -> Icons.AutoMirrored.Filled.Notes
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WebStoryBottomSheet(
+    url: String,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        SimpleWebView(url)
+    }
+}
+
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+fun SimpleWebView(
+    initialUrl: String,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        modifier = modifier.fillMaxSize(),
+        factory = { context ->
+            val customWebViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+//                    TimeUnit.SECONDS.sleep(5)
+//                    view!!.loadUrl(initialUrl)
+                }
+            }
+            WebView(context).apply {
+                webViewClient = customWebViewClient
+                settings.javaScriptEnabled = true
+                val html = """
+                            <html>
+                            <head>
+                                    @media (prefers-color-scheme: dark) {
+                                        body {
+                                            background-color: #212121;
+                                            color: #ffffff;
+                                        }
+                                        select {
+                                            border-color: #BB86FC;
+                                            background: #212121;
+                                            color: #ffffff;
+                                        }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                            <a href="$initialUrl"">click me</a>
+                            </html>
+                        """.trimIndent()
+                loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
+//                loadUrl(initialUrl)
+            }
+        }
+    )
 }
