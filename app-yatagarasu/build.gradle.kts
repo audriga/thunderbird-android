@@ -240,6 +240,7 @@ dependencies {
     implementation(files("../libs/h2lj.jar"))
     implementation(files("../libs/hetc.jar"))
     implementation(files("../libs/ld2h.jar"))
+    implementation(files("../libs/kitinerary-android.aar"))
 
 
     debugImplementation(projects.feature.telemetry.noop)

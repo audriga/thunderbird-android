@@ -50,6 +50,7 @@ import net.thunderbird.core.android.account.LegacyAccount;
 import net.thunderbird.core.common.exception.MessagingException;
 import org.audriga.ld2h.ButtonDescription;
 import org.audriga.ld2h.MustacheRenderer;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,6 +58,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.kde.kitinerary.Kitinerary;
 import org.mnode.ical4j.serializer.jsonld.EventJsonLdSerializer;
 import timber.log.Timber;
 
@@ -608,10 +610,27 @@ public abstract class SMLMessageView {
 
     @NonNull
     static MessageData getMessageData(String text, String rawHtml, ArrayList<Part> parseableParts,
-        HashMap<AttachmentViewInfo, String> parseableAttachments, TryToDerive shouldTryToDerive)
+        HashMap<AttachmentViewInfo, String> parseableAttachments, TryToDerive shouldTryToDerive,
+        @Nullable MailExtractorContext mailExtractorContext)
         throws JSONException, MessagingException, IOException, ParserException {
         JSONObject extracted = maybeTryExtract(shouldTryToDerive, text, rawHtml);
 
+
+        Map<@NotNull String, @NotNull String> headerMap;
+        String contextDate;
+        if (mailExtractorContext != null) {
+            headerMap = mailExtractorContext.getHeaderMap();
+            contextDate = mailExtractorContext.getContextDate();
+        } else {
+            headerMap = null;
+            contextDate = null;
+        }
+        JSONArray kitiExtract = new Kitinerary.Extractor()
+            .addText(text, "text/plain", headerMap)
+            .addText(rawHtml, "text/html", headerMap)
+            .setContextDate(contextDate)
+            .setPostprocessing(true)
+            .extract();
         List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.JSON_LD);
         if (data.isEmpty()) {
             data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.MICRODATA);
@@ -620,7 +639,7 @@ public abstract class SMLMessageView {
         getStructuredDataFromAttachments(parseableAttachments, data);
 
         getStructuredDataFromParseableParts(parseableParts, data);
-        return new MessageData(unwrapStructuredData(data),extracted);
+        return new MessageData(unwrapStructuredData(data),extracted, kitiExtract);
     }
 
     static String renderMarkupInMessageHTML(String text, String rawHtml, String sanitizedHtml,

@@ -85,6 +85,7 @@ dependencies {
     implementation(files("../../../libs/h2lj.jar"))
     implementation(files("../../../libs/hetc.jar"))
     implementation(files("../../../libs/ld2h.jar"))
+    implementation(files("../../../libs/kitinerary-android.aar"))
     //implementation(libs.http4k.core)
     //implementation(libs.http4k.client.okhttp)
 

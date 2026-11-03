@@ -440,6 +440,8 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
         renderAttachments(messageViewInfo)
 
         val structuredDataList = messageViewInfo.messageData?.structuredData.orEmpty()
+        val extracted = messageViewInfo.messageData?.extracted
+        val itiExtractedList = messageViewInfo.messageData?.itiExtracted.orEmpty()
         if (structuredDataList.isNotEmpty()) {
             setCustomCardContent {
                 Column {
@@ -453,7 +455,7 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
                     }
                 }
             }
-        } else if (messageViewInfo.messageData?.extracted != null) {
+        } else if (extracted != null) {
             setCustomCardContent {
                 SMLCard(
                     initialJsonObject = messageViewInfo.messageData.extracted,
@@ -461,6 +463,19 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
                     clipboardManager = clipboardManager,
                     messageReference = messageReference,
                 )
+            }
+        } else if (itiExtractedList.isNotEmpty()) {
+            setCustomCardContent {
+                Column {
+                    itiExtractedList.forEach { jsonObject ->
+                        SMLCard(
+                            initialJsonObject = jsonObject,
+                            clipboardManager = clipboardManager,
+                            messageReference = messageReference,
+                            context = context,
+                        )
+                    }
+                }
             }
         }
         val messageText = messageViewInfo.text

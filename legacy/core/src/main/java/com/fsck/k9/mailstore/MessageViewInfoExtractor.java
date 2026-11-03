@@ -147,7 +147,8 @@ public class MessageViewInfoExtractor {
         }
 
         List<AttachmentViewInfo> extraAttachmentInfos = new ArrayList<>();
-        ViewableExtractedText extraViewable = extractViewableAndAttachments(extraParts, extraAttachmentInfos, null);
+        MailExtractorContext mailExtractorContext = new MailExtractorContext(message);
+        ViewableExtractedText extraViewable = extractViewableAndAttachments(extraParts, extraAttachmentInfos, null, mailExtractorContext);
 
         MessageViewInfo messageViewInfo = extractSimpleMessageForView(message, cryptoContentPart);
         return messageViewInfo.withCryptoData(cryptoContentPartAnnotation, extraViewable.text, extraAttachmentInfos, extraViewable.messageData);
@@ -156,8 +157,9 @@ public class MessageViewInfoExtractor {
     private MessageViewInfo extractSimpleMessageForView(Message message, Part contentPart) throws MessagingException {
         List<AttachmentViewInfo> attachmentInfos = new ArrayList<>();
         TryToDerive shouldTryToDerive = SMLMessageView.shouldTryToDerive(message);
+        MailExtractorContext mailExtractorContext = new MailExtractorContext(message);
         ViewableExtractedText viewable = extractViewableAndAttachments(
-                Collections.singletonList(contentPart), attachmentInfos, shouldTryToDerive);
+                Collections.singletonList(contentPart), attachmentInfos, shouldTryToDerive, mailExtractorContext);
         AttachmentResolver attachmentResolver = AttachmentResolver.createFromPart(contentPart);
         boolean isMessageIncomplete =
                 !message.isSet(Flag.X_DOWNLOADED_FULL) || MessageExtractor.hasMissingParts(message);
@@ -170,7 +172,9 @@ public class MessageViewInfoExtractor {
     }
 
     private ViewableExtractedText extractViewableAndAttachments(List<Part> parts,
-            List<AttachmentViewInfo> attachmentInfos, @Nullable TryToDerive shouldTryToDerive) throws MessagingException {
+            List<AttachmentViewInfo> attachmentInfos,
+        @Nullable TryToDerive shouldTryToDerive,
+        @Nullable MailExtractorContext mailExtractorContext) throws MessagingException {
         MessagingController mc = DI.get(MessagingController.class);
         ArrayList<Viewable> viewableParts = new ArrayList<>();
         ArrayList<Part> attachments = new ArrayList<>();
@@ -183,13 +187,13 @@ public class MessageViewInfoExtractor {
         attachmentInfos.addAll(attachmentInfoExtractor.extractAttachmentInfoForView(attachments));
         HashMap<AttachmentViewInfo, String> parseableAttachments = SMLMessageView.getParseableAttachments(attachmentInfos, mc);
 
-        return extractTextFromViewables(viewableParts, parseableParts, parseableAttachments, shouldTryToDerive);
+        return extractTextFromViewables(viewableParts, parseableParts, parseableAttachments, shouldTryToDerive, mailExtractorContext);
     }
 
     @VisibleForTesting
     ViewableExtractedText extractTextFromViewables(List<Viewable> viewables)
         throws MessagingException {
-        return extractTextFromViewables(viewables, null, null, null);
+        return extractTextFromViewables(viewables, null, null, null, null);
     }
 
     /**
@@ -203,7 +207,7 @@ public class MessageViewInfoExtractor {
      */
     @VisibleForTesting
     ViewableExtractedText extractTextFromViewables(List<Viewable> viewables, @Nullable ArrayList<Part> parseableParts, @Nullable HashMap<AttachmentViewInfo, String> parseableAttachments,
-        @Nullable TryToDerive shouldTryToDerive)
+        @Nullable TryToDerive shouldTryToDerive, @Nullable MailExtractorContext mailExtractorContext)
             throws MessagingException {
         try {
             // Collect all viewable parts
@@ -274,7 +278,7 @@ public class MessageViewInfoExtractor {
             MessageData messageData;
             try {
                messageData = SMLMessageView.getMessageData(textString, rawHTML, parseableParts, parseableAttachments,
-                        shouldTryToDerive);
+                        shouldTryToDerive, mailExtractorContext);
             } catch (JSONException | MessagingException | IOException | ParserException e) {
                 Log.e(e, "Error while trying to parse/ extract structured data");
                 messageData = null;
