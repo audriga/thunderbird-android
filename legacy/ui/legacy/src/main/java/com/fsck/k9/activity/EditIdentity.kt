@@ -9,17 +9,23 @@ import androidx.core.content.IntentCompat
 import androidx.core.os.BundleCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.lifecycleScope
 import com.fsck.k9.EmailAddressValidator
-import com.fsck.k9.Preferences
+import com.fsck.k9.activity.account.identity.LegacyIdentitySignatureWebViewConfigurator
 import com.fsck.k9.ui.R
-import com.fsck.k9.ui.base.K9Activity
+import com.fsck.k9.ui.base.BaseActivity
 import com.google.android.material.checkbox.MaterialCheckBox
 import net.thunderbird.core.android.account.Identity
 import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.feature.account.AccountIdFactory
 import org.koin.android.ext.android.inject
 
-class EditIdentity : K9Activity() {
+class EditIdentity : BaseActivity() {
     private val emailAddressValidator: EmailAddressValidator by inject()
+    private val legacyIdentitySignatureWebViewConfigurator: LegacyIdentitySignatureWebViewConfigurator by inject()
+
+    private val accountManager: LegacyAccountManager by inject()
 
     private lateinit var account: LegacyAccount
     private lateinit var identity: Identity
@@ -30,6 +36,7 @@ class EditIdentity : K9Activity() {
     private lateinit var replyTo: EditText
     private lateinit var signatureUse: MaterialCheckBox
     private lateinit var signature: EditText
+    private lateinit var signatureIsHtml: MaterialCheckBox
     private lateinit var signatureLayout: View
 
     private var identityIndex: Int = 0
@@ -43,7 +50,8 @@ class EditIdentity : K9Activity() {
 
         identityIndex = intent.getIntExtra(EXTRA_IDENTITY_INDEX, -1)
         val accountUuid = intent.getStringExtra(EXTRA_ACCOUNT) ?: error("Missing account UUID")
-        account = Preferences.getPreferences().getAccount(accountUuid) ?: error("Couldn't find account")
+        account = accountManager.findById(AccountIdFactory.of(accountUuid))
+            ?: error("Couldn't find account")
 
         identity = when {
             savedInstanceState != null -> {
@@ -65,7 +73,14 @@ class EditIdentity : K9Activity() {
         replyTo = findViewById(R.id.reply_to)
         signatureUse = findViewById(R.id.signature_use)
         signature = findViewById(R.id.signature)
+        signatureIsHtml = findViewById(R.id.signature_is_html)
         signatureLayout = findViewById(R.id.signature_layout)
+        legacyIdentitySignatureWebViewConfigurator.configureWebView(
+            scope = lifecycleScope,
+            lifecycle = lifecycle,
+            webview = findViewById(R.id.signature_html_preview),
+            signatureEditText = signature,
+        )
 
         description.setText(identity.description)
         name.setText(identity.name)
@@ -87,6 +102,8 @@ class EditIdentity : K9Activity() {
         } else {
             signatureLayout.isVisible = false
         }
+
+        signatureIsHtml.isChecked = identity.signatureIsHtml
 
         setTextChangedListeners()
         validateFields()
@@ -119,18 +136,20 @@ class EditIdentity : K9Activity() {
             name = name.text.toString().takeUnless { it.isBlank() },
             signatureUse = signatureUse.isChecked,
             signature = signature.text.toString(),
+            signatureIsHtml = signatureIsHtml.isChecked,
             replyTo = replyTo.text.toString().trim().takeUnless { it.isBlank() },
         )
 
-        val identities = account.identities
-        if (identityIndex == -1) {
-            identities.add(identity)
-        } else {
-            identities.removeAt(identityIndex)
-            identities.add(identityIndex, identity)
+        val editedIdentity = identity
+        accountManager.updateSync(account.id) { latestAccount ->
+            val identities = latestAccount.identities.toMutableList()
+            if (identityIndex == -1) {
+                identities.add(editedIdentity)
+            } else {
+                identities[identityIndex] = editedIdentity
+            }
+            latestAccount.copy(identities = identities)
         }
-
-        Preferences.getPreferences().saveAccount(account)
 
         finish()
     }

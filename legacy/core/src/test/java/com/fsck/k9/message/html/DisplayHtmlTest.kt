@@ -2,15 +2,25 @@ package com.fsck.k9.message.html
 
 import assertk.Assert
 import assertk.assertThat
-import assertk.assertions.contains
+import assertk.assertions.atLeast
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
+import assertk.assertions.prop
+import net.thunderbird.core.common.mail.html.HtmlSettings
+import net.thunderbird.feature.mail.message.reader.api.css.CssClassNameProvider
+import net.thunderbird.feature.mail.message.reader.api.css.GlobalCssStyleProvider
+import net.thunderbird.feature.mail.message.reader.api.css.PlainTextMessagePreElementCssStyleProvider
+import net.thunderbird.feature.mail.message.reader.api.css.SignatureCssStyleProvider
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 import org.junit.Test
 
 class DisplayHtmlTest {
-    val htmlSettings = HtmlSettings(useDarkMode = false, useFixedWidthFont = false)
-    val displayHtml = DisplayHtml(htmlSettings)
+    val displayHtml = DisplayHtml(
+        htmlSettings = HtmlSettings(useDarkMode = false, useFixedWidthFont = false),
+        cssClassNameProvider = FakeCssClassNameProvider(),
+        cssStyleProviders = listOf(),
+    )
 
     @Test
     fun wrapMessageContent_addsViewportMetaElement() {
@@ -27,45 +37,32 @@ class DisplayHtmlTest {
     }
 
     @Test
-    fun wrapMessageContent_addsPreCSSStyles() {
+    fun wrapMessageContent_addsPreCSS() {
+        val expectedStyleCssRule = ".my-custom-pre-class { mock-property: mock-value }"
+        val displayHtml = DisplayHtml(
+            htmlSettings = HtmlSettings(useDarkMode = false, useFixedWidthFont = false),
+            cssClassNameProvider = FakeCssClassNameProvider(),
+            cssStyleProviders = listOf(
+                GlobalCssStyleProvider.Factory { FakeGlobalCssStyleProvider() },
+                PlainTextMessagePreElementCssStyleProvider.Factory {
+                    FakePlainTextMessagePreElementCssStyleProvider(
+                        style = "<style>$expectedStyleCssRule</style>",
+                    )
+                },
+                SignatureCssStyleProvider.Factory { FakeSignatureCssStyleProvider() },
+            ),
+        )
         val html = displayHtml.wrapMessageContent("Some text")
 
-        assertThat(html).containsHtmlElement("head > style", 3)
-    }
-
-    @Test
-    fun wrapMessageContent_addsGlobalStyleRules() {
-        val html = displayHtml.wrapMessageContent("test")
-
-        assertThat(html).containsStyleRulesFor(
-            selector = "*",
-            "word-break: break-word;",
-            "overflow-wrap: break-word;",
-        )
-    }
-
-    @Test
-    fun wrapMessageContent_addsPreCSS() {
-        val html = displayHtml.wrapMessageContent("test")
-        val expectedFont = if (htmlSettings.useFixedWidthFont) "monospace" else "sans-serif"
-
-        assertThat(html).containsStyleRulesFor(
-            selector = "pre.${EmailTextToHtml.K9MAIL_CSS_CLASS}",
-            "white-space: pre-wrap;",
-            "word-wrap: break-word;",
-            "font-family: $expectedFont;",
-            "margin-top: 0px;",
-        )
-    }
-
-    @Test
-    fun wrapMessageContent_addsSignatureStyleRules() {
-        val html = displayHtml.wrapMessageContent("test")
-
-        assertThat(html).containsStyleRulesFor(
-            selector = ".k9mail-signature",
-            "opacity: 0.5;",
-        )
+        assertThat(html).given { raw ->
+            val html = Jsoup.parse(raw)
+            assertThat(html.select("head > style"))
+                .atLeast(1) { element ->
+                    element
+                        .prop(Element::data)
+                        .isEqualTo(expectedStyleCssRule)
+                }
+        }
     }
 
     @Test
@@ -77,26 +74,8 @@ class DisplayHtmlTest {
         assertThat(html).bodyText().isEqualTo(content)
     }
 
-    private fun Assert<String>.containsStyleRulesFor(selector: String, vararg expectedRules: String) = given { html ->
-        val styleContent = Jsoup.parse(html)
-            .select("style")
-            .joinToString("\n") { it.data() }
-
-        val selectorPattern = Regex.escape(selector).replace("\\*", "\\\\*")
-        val selectorBlock = Regex("$selectorPattern\\s*\\{([^}]*)\\}", RegexOption.MULTILINE)
-            .find(styleContent)
-            ?.groupValues?.get(1)
-            ?.trim()
-
-        requireNotNull(selectorBlock) { "No style block found for selector: $selector" }
-
-        expectedRules.forEach { rule ->
-            assertThat(selectorBlock).contains(rule)
-        }
-    }
-
-    private fun Assert<String>.containsHtmlElement(cssQuery: String, expectedCount: Int = 1) = given { actual ->
-        assertThat(actual).htmlElements(cssQuery).hasSize(expectedCount)
+    private fun Assert<String>.containsHtmlElement(cssQuery: String) = given { actual ->
+        assertThat(actual).htmlElements(cssQuery).hasSize(1)
     }
 
     private fun Assert<String>.htmlElements(cssQuery: String) = transform { html ->
@@ -106,4 +85,24 @@ class DisplayHtmlTest {
     private fun Assert<String>.bodyText() = transform { html ->
         Jsoup.parse(html).body().text()
     }
+
+    private class FakeCssClassNameProvider(
+        override val defaultNamespaceClassName: String = "mock defaultNamespaceClassName",
+        override val rootClassName: String = "mock rootClassName",
+        override val mainContentClassName: String = "mock mainContentClassName",
+        override val plainTextMessagePreClassName: String = "mock plainTextMessagePreClassName",
+        override val signatureClassName: String = "mock signatureClassName",
+    ) : CssClassNameProvider
+
+    private class FakeGlobalCssStyleProvider(
+        override val style: String = "<style>.mock-style { mock-property: mock-value }</style>",
+    ) : GlobalCssStyleProvider
+
+    private class FakePlainTextMessagePreElementCssStyleProvider(
+        override val style: String = "<style>.mock-style { mock-property: mock-value }</style>",
+    ) : PlainTextMessagePreElementCssStyleProvider
+
+    private class FakeSignatureCssStyleProvider(
+        override val style: String = "<style>.mock-style { mock-property: mock-value }</style>",
+    ) : SignatureCssStyleProvider
 }

@@ -8,7 +8,7 @@ val messageDetailsUiModule = module {
         MessageDetailsViewModel(
             resources = get(),
             messageRepository = get(),
-            folderRepository = get(),
+            folderQueryRepository = get(),
             contactSettingsProvider = get(),
             contactRepository = get(),
             contactPermissionResolver = get(),
@@ -18,14 +18,14 @@ val messageDetailsUiModule = module {
             folderNameFormatter = get(),
         )
     }
-    factory { ContactSettingsProvider(generalSettingsManager = get()) }
+    factory { ContactSettingsProvider(messageListPreferencesManager = get()) }
     factory { AddToContactsLauncher() }
     factory { ShowContactLauncher() }
     factory {
         createMessageDetailsParticipantFormatter(
             contactNameProvider = get(),
             resources = get(),
-            generalSettingsManager = get(),
+            messageListPreferencesManager = get(),
         )
     }
 }

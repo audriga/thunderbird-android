@@ -3,7 +3,7 @@ package com.fsck.k9.backend.jmap
 import com.fsck.k9.mail.Message
 import com.squareup.moshi.Moshi
 import net.thunderbird.core.common.exception.MessagingException
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.legacy.logging.Log
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -16,6 +16,8 @@ import rs.ltt.jmap.common.entity.EmailImport
 import rs.ltt.jmap.common.method.call.email.ImportEmailMethodCall
 import rs.ltt.jmap.common.method.response.email.ImportEmailMethodResponse
 
+private const val TAG = "CommandUpload"
+
 class CommandUpload(
     private val jmapClient: JmapClient,
     private val okHttpClient: OkHttpClient,
@@ -25,7 +27,7 @@ class CommandUpload(
     private val moshi = Moshi.Builder().build()
 
     fun uploadMessage(folderServerId: String, message: Message): String? {
-        Log.d("Uploading message to $folderServerId")
+        Log.d(TAG, "Uploading message to $folderServerId")
 
         val uploadResponse = uploadMessageAsBlob(message)
         return importEmailBlob(uploadResponse, folderServerId)
@@ -48,7 +50,7 @@ class CommandUpload(
                 throw MessagingException("Uploading message as blob failed")
             }
 
-            response.body!!.source().use { source ->
+            response.body.source().use { source ->
                 val adapter = moshi.adapter(JmapUploadResponse::class.java)
                 val uploadResponse = adapter.fromJson(source)
                 uploadResponse ?: throw MessagingException("Error reading upload response")

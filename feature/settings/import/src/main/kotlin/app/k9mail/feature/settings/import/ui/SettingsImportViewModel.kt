@@ -28,10 +28,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.components.core.logging.Logger
+import net.thunderbird.feature.account.AccountIdFactory
 
 private typealias AccountUuid = String
 private typealias AccountNumber = Int
+
+private const val TAG = "SettingsImportViewModel"
 
 internal class SettingsImportViewModel(
     private val contentResolver: ContentResolver,
@@ -40,6 +43,7 @@ internal class SettingsImportViewModel(
     private val migrationManager: MigrationManager,
     private val importAppFetcher: ImportAppFetcher,
     private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val logger: Logger,
     viewModelScope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
 ) : ViewModel(viewModelScope) {
     private val uiModelLiveData = MutableLiveData<SettingsImportUiModel>()
@@ -153,7 +157,11 @@ internal class SettingsImportViewModel(
                 null
             }
 
-            val savedAccountList = savedInstanceState.getParcelableArrayList<SavedAccountState>(STATE_ACCOUNT_LIST)!!
+            val savedAccountList = BundleCompat.getParcelableArrayList(
+                savedInstanceState,
+                STATE_ACCOUNT_LIST,
+                SavedAccountState::class.java,
+            ) ?: error("Saved account list is missing")
 
             savedAccountList.forEach { saved ->
                 accountsMap[saved.accountIndex] = saved.accountUuid
@@ -326,7 +334,11 @@ internal class SettingsImportViewModel(
         viewModelScope.launch(backgroundDispatcher) {
             withContext(NonCancellable) {
                 with(result) {
-                    accountActivator.enableAccount(accountUuid, incomingServerPassword, outgoingServerPassword)
+                    accountActivator.enableAccount(
+                        AccountIdFactory.of(accountUuid),
+                        incomingServerPassword,
+                        outgoingServerPassword,
+                    )
                 }
             }
         }
@@ -343,7 +355,7 @@ internal class SettingsImportViewModel(
 
             viewModelScope.launch(backgroundDispatcher) {
                 withContext(NonCancellable) {
-                    accountActivator.enableAccount(accountUuid)
+                    accountActivator.enableAccount(AccountIdFactory.of(accountUuid))
                 }
             }
         }
@@ -387,7 +399,7 @@ internal class SettingsImportViewModel(
                     initializeSettingsList(items)
                 }
             } catch (e: Exception) {
-                Log.e(e, "Error reading settings file")
+                logger.error(TAG, e) { "Error reading settings file" }
 
                 updateUiModel {
                     showReadFailureText()
@@ -423,7 +435,7 @@ internal class SettingsImportViewModel(
                     updateCloseButtonAndImportStatusText()
                 }
             } catch (e: Exception) {
-                Log.e(e, "Error importing settings")
+                logger.error(TAG, e) { "Error importing settings" }
 
                 updateUiModel {
                     showImportErrorText()
@@ -490,7 +502,11 @@ internal class SettingsImportViewModel(
         }
     }
 
-    private fun importSettings(contentUri: Uri, generalSettings: Boolean, accounts: List<AccountUuid>): ImportResults {
+    private suspend fun importSettings(
+        contentUri: Uri,
+        generalSettings: Boolean,
+        accounts: List<AccountUuid>,
+    ): ImportResults {
         val inputStream = contentResolver.openInputStream(contentUri)
             ?: error("Failed to open settings file for reading: $contentUri")
 
@@ -501,7 +517,7 @@ internal class SettingsImportViewModel(
 
     private fun startAuthorization(settingsListItem: SettingsListItem.Account) {
         val accountIndex = settingsListItem.accountIndex
-        val accountUuid = accountsMap[accountIndex]!!
+        val accountUuid = accountsMap[accountIndex] ?: error("Unknown account index: $accountIndex")
         currentlyAuthorizingAccountUuid = accountUuid
 
         sendActionEvent(Action.StartAuthorization(accountUuid))
@@ -510,8 +526,8 @@ internal class SettingsImportViewModel(
     private fun showPasswordPromptDialog(settingsListItem: SettingsListItem.Account) {
         val accountIndex = settingsListItem.accountIndex
 
-        val accountUuid = accountsMap[accountIndex]!!
-        val accountState = accountStateMap[accountIndex]!!
+        val accountUuid = accountsMap[accountIndex] ?: error("Unknown account index: $accountIndex")
+        val accountState = accountStateMap[accountIndex] ?: error("Missing account state for index: $accountIndex")
 
         sendActionEvent(
             Action.PasswordPrompt(
@@ -544,7 +560,7 @@ internal class SettingsImportViewModel(
                 SavedAccountState(
                     accountIndex = accountIndex,
                     displayName = accountItem.displayName,
-                    accountUuid = accountsMap[accountIndex]!!,
+                    accountUuid = accountsMap[accountIndex] ?: error("Unknown account index: $accountIndex"),
                     selected = accountItem.selected,
                     importStatus = accountItem.importStatus,
                     incomingServerName = accountState?.incomingServerName,

@@ -22,17 +22,32 @@ import com.fsck.k9.mail.FolderType
 import com.fsck.k9.mail.folders.FolderFetcherException
 import com.fsck.k9.mail.folders.FolderServerId
 import com.fsck.k9.mail.folders.RemoteFolder
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import net.thunderbird.core.common.domain.usecase.validation.ValidationError
-import net.thunderbird.core.common.domain.usecase.validation.ValidationResult
-import net.thunderbird.core.testing.coroutines.MainDispatcherRule
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import net.thunderbird.components.core.outcome.Outcome
+import net.thunderbird.components.ui.testing.coroutines.MainDispatcherHelper
+import net.thunderbird.core.validation.ValidationError
+import net.thunderbird.core.validation.ValidationOutcome
+import net.thunderbird.core.validation.ValidationSuccess
 
 class SpecialFoldersViewModelTest {
 
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val mainDispatcher = MainDispatcherHelper(UnconfinedTestDispatcher())
+
+    @BeforeTest
+    fun setUp() {
+        mainDispatcher.setUp()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        mainDispatcher.tearDown()
+    }
 
     @Test
     fun `should load folders, validate and save successfully when LoadSpecialFolders event received and setup valid`() =
@@ -43,7 +58,7 @@ class SpecialFoldersViewModelTest {
             )
             val testSubject = createTestSubject(
                 formUiModel = FakeSpecialFoldersFormUiModel(),
-                validateSpecialFolderOptions = { ValidationResult.Success },
+                validateSpecialFolderOptions = { ValidationSuccess },
                 accountStateRepository = accountStateRepository,
                 initialState = initialState,
             )
@@ -98,7 +113,7 @@ class SpecialFoldersViewModelTest {
         )
         val testSubject = createTestSubject(
             formUiModel = FakeSpecialFoldersFormUiModel(),
-            validateSpecialFolderOptions = { ValidationResult.Failure(TestValidationError) },
+            validateSpecialFolderOptions = { Outcome.Failure(TestValidationError) },
             accountStateRepository = accountStateRepository,
             initialState = initialState,
         )
@@ -245,7 +260,7 @@ class SpecialFoldersViewModelTest {
 
         // Turbine misses the intermediate state because we're using UnconfinedTestDispatcher and StateFlow.
         // Here we need to make sure the coroutine used to load the special folder options has completed.
-        mainDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
+        mainDispatcher.testDispatcher.scheduler.advanceUntilIdle()
 
         assertThat(turbines.awaitStateItem()).isEqualTo(
             State(
@@ -278,7 +293,7 @@ class SpecialFoldersViewModelTest {
         fun createTestSubject(
             formUiModel: SpecialFoldersContract.FormUiModel = FakeSpecialFoldersFormUiModel(),
             getSpecialFolderOptions: () -> SpecialFolderOptions = { SPECIAL_FOLDER_OPTIONS },
-            validateSpecialFolderOptions: (SpecialFolderOptions) -> ValidationResult = { ValidationResult.Success },
+            validateSpecialFolderOptions: (SpecialFolderOptions) -> ValidationOutcome = { ValidationSuccess },
             accountStateRepository: AccountDomainContract.AccountStateRepository = InMemoryAccountStateRepository(),
             initialState: State = State(),
         ) = SpecialFoldersViewModel(

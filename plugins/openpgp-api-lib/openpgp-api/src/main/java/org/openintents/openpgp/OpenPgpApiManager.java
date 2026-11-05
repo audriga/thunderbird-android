@@ -2,18 +2,17 @@ package org.openintents.openpgp;
 
 
 import android.app.PendingIntent;
-
-import androidx.annotation.NonNull;
-import androidx.lifecycle.Lifecycle.Event;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.content.Intent;
-import androidx.annotation.Nullable;
 import android.text.TextUtils;
 
-import net.thunderbird.core.logging.legacy.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.IntentCompat;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+
+import net.thunderbird.legacy.logging.Log;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpApi.IOpenPgpCallback;
 import org.openintents.openpgp.util.OpenPgpProviderUtil;
@@ -21,7 +20,9 @@ import org.openintents.openpgp.util.OpenPgpServiceConnection;
 import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
 
 
-public class OpenPgpApiManager implements LifecycleObserver {
+public class OpenPgpApiManager implements DefaultLifecycleObserver {
+    private static final String TAG = "OpenPgpApiManager";
+
     private final Context context;
 
     @Nullable
@@ -34,24 +35,25 @@ public class OpenPgpApiManager implements LifecycleObserver {
     private PendingIntent userInteractionPendingIntent;
     private OpenPgpProviderState openPgpProviderState = OpenPgpProviderState.UNCONFIGURED;
 
+    @SuppressWarnings("this-escape")
     public OpenPgpApiManager(Context context, LifecycleOwner lifecycleOwner) {
         this.context = context;
 
         lifecycleOwner.getLifecycle().addObserver(this);
     }
 
-    @OnLifecycleEvent(Event.ON_CREATE)
-    void onLifecycleCreate() {
+    @Override
+    public void onCreate(@NonNull LifecycleOwner owner) {
         setupCryptoProvider();
     }
 
-    @OnLifecycleEvent(Event.ON_START)
-    void onLifecycleStart() {
+    @Override
+    public void onStart(@NonNull LifecycleOwner owner) {
         refreshConnection();
     }
 
-    @OnLifecycleEvent(Event.ON_DESTROY)
-    public void onLifecycleDestroy() {
+    @Override
+    public void onDestroy(@NonNull LifecycleOwner owner) {
         disconnect();
     }
 
@@ -94,7 +96,7 @@ public class OpenPgpApiManager implements LifecycleObserver {
 
             @Override
             public void onError(Exception e) {
-                Log.e(e, "error connecting to crypto provider!");
+                Log.e(TAG, e, "error connecting to crypto provider!");
                 setOpenPgpProviderState(OpenPgpProviderState.ERROR);
                 callbackOpenPgpProviderError(OpenPgpProviderError.ConnectionFailed);
             }
@@ -120,7 +122,7 @@ public class OpenPgpApiManager implements LifecycleObserver {
 
         if (!openPgpServiceConnection.isBound()) {
             userInteractionPendingIntent = null;
-            Log.d("attempting to bind to openpgp provider: %s (%s)", openPgpProvider, openPgpServiceConnection);
+            Log.d(TAG, "attempting to bind to openpgp provider: %s (%s)", openPgpProvider, openPgpServiceConnection);
             openPgpServiceConnection.bindToService();
             return;
         }
@@ -158,14 +160,14 @@ public class OpenPgpApiManager implements LifecycleObserver {
                 break;
 
             case OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED:
-                userInteractionPendingIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT);
+                userInteractionPendingIntent = IntentCompat.getParcelableExtra(result, OpenPgpApi.RESULT_INTENT, PendingIntent.class);
                 setOpenPgpProviderState(OpenPgpProviderState.UI_REQUIRED);
                 break;
 
             case OpenPgpApi.RESULT_CODE_ERROR:
             default:
                 if (result.hasExtra(OpenPgpApi.RESULT_ERROR)) {
-                    OpenPgpError error = result.getParcelableExtra(OpenPgpApi.RESULT_ERROR);
+                    OpenPgpError error = IntentCompat.getParcelableExtra(result, OpenPgpApi.RESULT_ERROR, OpenPgpError.class);
                     handleOpenPgpError(error);
                 } else {
                     setOpenPgpProviderState(OpenPgpProviderState.ERROR);
@@ -178,7 +180,7 @@ public class OpenPgpApiManager implements LifecycleObserver {
     private void setOpenPgpProviderState(OpenPgpProviderState state) {
         boolean statusChanged = openPgpProviderState != state;
         if (statusChanged) {
-            Log.d("callback provider status changed from %s to %s", openPgpProviderState, state);
+            Log.d(TAG, "callback provider status changed from %s to %s", openPgpProviderState, state);
             openPgpProviderState = state;
             if (callback != null) {
                 callback.onOpenPgpProviderStatusChanged();
@@ -187,7 +189,7 @@ public class OpenPgpApiManager implements LifecycleObserver {
     }
 
     private void handleOpenPgpError(@Nullable OpenPgpError error) {
-        Log.e("OpenPGP Api error: %s", error);
+        Log.e(TAG, "OpenPGP Api error: %s", error);
 
         if (error != null && error.getErrorId() == OpenPgpError.INCOMPATIBLE_API_VERSIONS) {
             callbackOpenPgpProviderError(OpenPgpProviderError.VersionIncompatible);
@@ -199,7 +201,7 @@ public class OpenPgpApiManager implements LifecycleObserver {
     }
 
     private void callbackOpenPgpProviderError(OpenPgpProviderError providerError) {
-        Log.d("callback provider connection error %s", providerError);
+        Log.d(TAG, "callback provider connection error %s", providerError);
         if (callback != null) {
             callback.onOpenPgpProviderError(providerError);
         }
@@ -215,7 +217,7 @@ public class OpenPgpApiManager implements LifecycleObserver {
 
     public OpenPgpApi getOpenPgpApi() {
         if (openPgpServiceConnection == null || !openPgpServiceConnection.isBound()) {
-            Log.e("Obtained OpenPgpApi object, but service is not bound! Inconsistent state?");
+            Log.e(TAG, "Obtained OpenPgpApi object, but service is not bound! Inconsistent state?");
         }
         return openPgpApi;
     }

@@ -2,9 +2,21 @@ plugins {
     id(ThunderbirdPlugins.Library.kmp)
 }
 
-android {
-    namespace = "net.thunderbird.core.preference"
-    buildFeatures {
-        buildConfig = true
+kotlin {
+    android {
+        namespace = "net.thunderbird.core.preference"
     }
+}
+
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation(projects.core.common)
+        }
+    }
+}
+
+codeCoverage {
+    branchCoverage = 0
+    lineCoverage = 0
 }

@@ -10,44 +10,46 @@ import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
+import com.fsck.k9.FakeLegacyAccount
 import com.fsck.k9.K9RobolectricTest
-import com.fsck.k9.Preferences
 import com.fsck.k9.backend.api.BackendFolder
 import com.fsck.k9.backend.api.FolderInfo
 import com.fsck.k9.backend.api.updateFolders
 import com.fsck.k9.mail.Address
-import com.fsck.k9.mail.AuthType
-import com.fsck.k9.mail.ConnectionSecurity
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.FolderType
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.MessageDownloadState
-import com.fsck.k9.mail.ServerSettings
 import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mail.internet.MimeMessageHelper
 import com.fsck.k9.mail.internet.TextBody
-import net.thunderbird.core.android.account.LegacyAccount
-import org.junit.After
+import kotlinx.coroutines.test.runTest
+import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.feature.account.AccountIdFactory
+import org.junit.Before
 import org.junit.Test
 import org.koin.core.component.inject
+import org.mockito.kotlin.whenever
 
 class K9BackendFolderTest : K9RobolectricTest() {
-    val preferences: Preferences by inject()
     val localStoreProvider: LocalStoreProvider by inject()
     val messageStoreManager: MessageStoreManager by inject()
     val saveMessageDataCreator: SaveMessageDataCreator by inject()
 
-    val account: LegacyAccount = createAccount()
-    val backendFolder = createBackendFolder()
-    val database: LockableDatabase = localStoreProvider.getInstance(account).database
+    val accountId = AccountIdFactory.create()
+    private lateinit var backendFolder: BackendFolder
+    private lateinit var database: LockableDatabase
 
-    @After
-    fun tearDown() {
-        preferences.deleteAccount(account)
+    @Before
+    fun setUp() {
+        val accountManager: LegacyAccountManager by inject()
+        whenever(accountManager.findById(accountId)).thenReturn(FakeLegacyAccount.create(id = accountId))
+        backendFolder = createBackendFolder()
+        database = localStoreProvider.getInstance(accountId).database
     }
 
     @Test
-    fun getMessageFlags() {
+    fun getMessageFlags() = runTest {
         val flags = setOf(Flag.SEEN, Flag.DRAFT, Flag.X_DOWNLOADED_FULL)
         createMessageInBackendFolder(MESSAGE_SERVER_ID, flags)
 
@@ -57,7 +59,7 @@ class K9BackendFolderTest : K9RobolectricTest() {
     }
 
     @Test
-    fun getMessageFlags_withFlagsColumnSetToNull_shouldBeTreatedAsEmpty() {
+    fun getMessageFlags_withFlagsColumnSetToNull_shouldBeTreatedAsEmpty() = runTest {
         createMessageInBackendFolder(MESSAGE_SERVER_ID)
         setFlagsColumnToNull()
 
@@ -67,7 +69,7 @@ class K9BackendFolderTest : K9RobolectricTest() {
     }
 
     @Test
-    fun getMessageFlags_withFlagsColumnSetToNull_shouldReadSpecialColumnFlags() {
+    fun getMessageFlags_withFlagsColumnSetToNull_shouldReadSpecialColumnFlags() = runTest {
         val flags = setOf(Flag.SEEN, Flag.FLAGGED, Flag.ANSWERED, Flag.FORWARDED)
         createMessageInBackendFolder(MESSAGE_SERVER_ID, flags)
         setFlagsColumnToNull()
@@ -78,7 +80,7 @@ class K9BackendFolderTest : K9RobolectricTest() {
     }
 
     @Test
-    fun saveCompleteMessage_withoutServerId_shouldThrow() {
+    fun saveCompleteMessage_withoutServerId_shouldThrow() = runTest {
         val message = createMessage(messageServerId = null)
 
         assertFailure {
@@ -88,7 +90,7 @@ class K9BackendFolderTest : K9RobolectricTest() {
     }
 
     @Test
-    fun savePartialMessage_withoutServerId_shouldThrow() {
+    fun savePartialMessage_withoutServerId_shouldThrow() = runTest {
         val message = createMessage(messageServerId = null)
 
         assertFailure {
@@ -97,17 +99,8 @@ class K9BackendFolderTest : K9RobolectricTest() {
             .hasMessage("Message requires a server ID to be set")
     }
 
-    fun createAccount(): LegacyAccount {
-        // FIXME: This is a hack to get Preferences into a state where it's safe to call newAccount()
-        preferences.clearAccounts()
-        return preferences.newAccount().apply {
-            incomingServerSettings = SERVER_SETTINGS
-            outgoingServerSettings = SERVER_SETTINGS
-        }
-    }
-
     fun createBackendFolder(): BackendFolder {
-        val messageStore = messageStoreManager.getMessageStore(account)
+        val messageStore = messageStoreManager.getMessageStore(accountId)
         val backendStorage = K9BackendStorage(
             messageStore,
             createFolderSettingsProvider(),
@@ -124,7 +117,7 @@ class K9BackendFolderTest : K9RobolectricTest() {
         return K9BackendFolder(messageStore, saveMessageDataCreator, FOLDER_SERVER_ID)
     }
 
-    fun createMessageInBackendFolder(messageServerId: String, flags: Set<Flag> = emptySet()) {
+    suspend fun createMessageInBackendFolder(messageServerId: String, flags: Set<Flag> = emptySet()) {
         val message = createMessage(messageServerId, flags)
         backendFolder.saveMessage(message, MessageDownloadState.FULL)
 
@@ -163,16 +156,5 @@ class K9BackendFolderTest : K9RobolectricTest() {
         const val FOLDER_NAME = "Test Folder"
         val FOLDER_TYPE = FolderType.INBOX
         const val MESSAGE_SERVER_ID = "msg001"
-
-        private val SERVER_SETTINGS = ServerSettings(
-            type = "irrelevant",
-            host = "irrelevant",
-            port = 993,
-            connectionSecurity = ConnectionSecurity.SSL_TLS_REQUIRED,
-            authenticationType = AuthType.PLAIN,
-            username = "username",
-            password = null,
-            clientCertificateAlias = null,
-        )
     }
 }

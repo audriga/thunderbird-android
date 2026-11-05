@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Thunderbird" parent="Theme.Material3.DayNight.NoActionBar" />
+
+    <style name="Theme.Thunderbird.Splashscreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_startup_logo</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.Thunderbird</item>
+    </style>
+</resources>

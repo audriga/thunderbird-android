@@ -10,7 +10,9 @@ internal val controllerPushModule = module {
         AccountPushControllerFactory(
             backendManager = get(),
             messagingController = get(),
-            folderRepository = get(),
+            pushFolderTrackingRepository = get(),
+            pushFoldersQueryRepository = get(),
+            logger = get(),
         )
     }
     single {
@@ -25,7 +27,7 @@ internal val controllerPushModule = module {
             pushNotificationManager = get(),
             connectivityManager = get(),
             accountPushControllerFactory = get(),
-            folderRepository = get(),
+            pushFolderTrackingRepository = get(),
         )
     }
 

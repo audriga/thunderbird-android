@@ -6,3 +6,11 @@ android {
     namespace = "net.thunderbird.feature.navigation.drawer.api"
     resourcePrefix = "navigation_drawer_"
 }
+
+codeCoverage {
+    lineCoverage = 0
+}
+
+dependencies {
+    api(projects.feature.account.api)
+}

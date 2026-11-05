@@ -5,11 +5,15 @@ import androidx.fragment.app.FragmentManager
 import androidx.loader.app.LoaderManager
 import com.fsck.k9.activity.MessageLoaderHelper.MessageLoaderCallbacks
 import com.fsck.k9.mailstore.MessageViewInfoExtractorFactory
-import com.fsck.k9.ui.helper.HtmlSettingsProvider
+import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.feature.mail.message.composer.html.MessageComposerHtmlSettingsProvider
+import net.thunderbird.feature.mail.message.reader.api.html.MessageReaderHtmlSettingsProvider
 
 class MessageLoaderHelperFactory(
     private val messageViewInfoExtractorFactory: MessageViewInfoExtractorFactory,
-    private val htmlSettingsProvider: HtmlSettingsProvider,
+    private val messageReaderHtmlSettingsProvider: MessageReaderHtmlSettingsProvider,
+    private val messageComposerHtmlSettingsProvider: MessageComposerHtmlSettingsProvider,
+    private val accountManager: LegacyAccountManager,
 ) {
     fun createForMessageView(
         context: Context,
@@ -17,9 +21,16 @@ class MessageLoaderHelperFactory(
         fragmentManager: FragmentManager,
         callback: MessageLoaderCallbacks,
     ): MessageLoaderHelper {
-        val htmlSettings = htmlSettingsProvider.createForMessageView()
+        val htmlSettings = messageReaderHtmlSettingsProvider.create()
         val messageViewInfoExtractor = messageViewInfoExtractorFactory.create(htmlSettings)
-        return MessageLoaderHelper(context, loaderManager, fragmentManager, callback, messageViewInfoExtractor)
+        return MessageLoaderHelper(
+            context,
+            loaderManager,
+            fragmentManager,
+            callback,
+            messageViewInfoExtractor,
+            accountManager,
+        )
     }
 
     fun createForMessageCompose(
@@ -28,8 +39,15 @@ class MessageLoaderHelperFactory(
         fragmentManager: FragmentManager,
         callback: MessageLoaderCallbacks,
     ): MessageLoaderHelper {
-        val htmlSettings = htmlSettingsProvider.createForMessageCompose()
+        val htmlSettings = messageComposerHtmlSettingsProvider.create()
         val messageViewInfoExtractor = messageViewInfoExtractorFactory.create(htmlSettings)
-        return MessageLoaderHelper(context, loaderManager, fragmentManager, callback, messageViewInfoExtractor)
+        return MessageLoaderHelper(
+            context,
+            loaderManager,
+            fragmentManager,
+            callback,
+            messageViewInfoExtractor,
+            accountManager,
+        )
     }
 }

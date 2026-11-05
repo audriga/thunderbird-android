@@ -1,10 +1,11 @@
 package app.k9mail.feature.account.setup.ui.specialfolders
 
 import androidx.compose.runtime.Composable
-import app.k9mail.core.ui.compose.common.annotation.PreviewDevices
-import app.k9mail.core.ui.compose.designsystem.PreviewWithTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
 import app.k9mail.feature.account.setup.ui.fake.FakeBrandNameProvider
 import app.k9mail.feature.account.setup.ui.specialfolders.fake.FakeSpecialFoldersViewModel
+import net.thunderbird.components.ui.bolt.PreviewWithTheme
+import net.thunderbird.components.ui.bolt.common.annotation.PreviewDevices
 
 @Composable
 @PreviewDevices
@@ -13,7 +14,7 @@ internal fun SpecialFoldersScreenPreview() {
         SpecialFoldersScreen(
             onNext = {},
             onBack = {},
-            viewModel = FakeSpecialFoldersViewModel(),
+            viewModel = viewModel { FakeSpecialFoldersViewModel() },
             brandNameProvider = FakeBrandNameProvider,
         )
     }

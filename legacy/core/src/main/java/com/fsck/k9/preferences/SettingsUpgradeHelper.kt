@@ -1,8 +1,10 @@
 package com.fsck.k9.preferences
 
 import com.fsck.k9.preferences.Settings.SettingsDescription
-import net.thunderbird.core.logging.legacy.Log
 import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.legacy.logging.Log
+
+private const val TAG = "SettingsUpgradeHelper"
 
 internal object SettingsUpgradeHelper {
     /**
@@ -82,7 +84,7 @@ internal object SettingsUpgradeHelper {
 
             if (isRemovedSetting) {
                 mutableSettings.remove(settingName)
-                Log.v("Removed setting '%s'", settingName)
+                Log.v(TAG, "Removed setting '%s'", settingName)
             }
         }
     }
@@ -98,7 +100,7 @@ internal object SettingsUpgradeHelper {
 
         if (generalSettingsManager.getConfig().debugging.isDebugLoggingEnabled) {
             val prettyValue = settingDescription.toPrettyString(defaultValue)
-            Log.v("Added new setting '%s' with default value '%s'", settingName, prettyValue)
+            Log.v(TAG, "Added new setting '%s' with default value '%s'", settingName, prettyValue)
         }
     }
 }

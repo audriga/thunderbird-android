@@ -11,7 +11,7 @@ import androidx.loader.content.AsyncTaskLoader;
 
 import com.fsck.k9.helper.MimeTypeUtil;
 import com.fsck.k9.message.Attachment.LoadingState;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.legacy.logging.Log;
 
 import com.fsck.k9.activity.misc.Attachment;
 import com.fsck.k9.mail.internet.MimeUtility;
@@ -20,13 +20,15 @@ import com.fsck.k9.mail.internet.MimeUtility;
  * Loader to fetch metadata of an attachment.
  */
 public class AttachmentInfoLoader  extends AsyncTaskLoader<Attachment> {
+    private static final String TAG = "AttachmentInfoLoader";
+
     private final Attachment sourceAttachment;
     private Attachment cachedResultAttachment;
 
 
     public AttachmentInfoLoader(Context context, Attachment attachment) {
         super(context);
-        if (attachment.state != LoadingState.URI_ONLY) {
+        if (attachment.getState() != LoadingState.URI_ONLY) {
             throw new IllegalArgumentException("Attachment provided to metadata loader must be in URI_ONLY state");
         }
 
@@ -48,7 +50,7 @@ public class AttachmentInfoLoader  extends AsyncTaskLoader<Attachment> {
     public Attachment loadInBackground() {
         try {
             Uri uri = sourceAttachment.uri;
-            String contentType = sourceAttachment.contentType;
+            String contentType = sourceAttachment.getContentType();
 
             long size = -1;
             String name = null;
@@ -96,17 +98,17 @@ public class AttachmentInfoLoader  extends AsyncTaskLoader<Attachment> {
                     File f = new File(uriString.substring("file://".length()));
                     size = f.length();
                 } else {
-                    Log.v("Not a file: %s", uriString);
+                    Log.v(TAG, "Not a file: %s", uriString);
                 }
             } else {
-                Log.v("old attachment.size: %d", size);
+                Log.v(TAG, "old attachment.size: %d", size);
             }
-            Log.v("new attachment.size: %d", size);
+            Log.v(TAG, "new attachment.size: %d", size);
 
             cachedResultAttachment = sourceAttachment.deriveWithMetadataLoaded(usableContentType, name, size);
             return cachedResultAttachment;
         } catch (Exception e) {
-            Log.e(e, "Error getting attachment meta data");
+            Log.e(TAG, e, "Error getting attachment meta data");
 
             cachedResultAttachment = sourceAttachment.deriveWithLoadCancelled();
             return cachedResultAttachment;

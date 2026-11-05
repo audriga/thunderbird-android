@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.Composable
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import assertk.Assert
@@ -18,24 +19,37 @@ import assertk.assertions.support.expected
 import com.fsck.k9.FontSizes
 import com.fsck.k9.FontSizes.Companion.FONT_DEFAULT
 import com.fsck.k9.FontSizes.Companion.LARGE
-import com.fsck.k9.UiDensity
 import com.fsck.k9.contacts.ContactPictureLoader
 import com.fsck.k9.mail.Address
+import com.fsck.k9.mail.AuthType
+import com.fsck.k9.mail.ConnectionSecurity
+import com.fsck.k9.mail.ServerSettings
 import com.fsck.k9.ui.R
-import com.fsck.k9.ui.helper.RelativeDateTimeFormatter
 import com.google.android.material.textview.MaterialTextView
 import kotlin.time.ExperimentalTime
+import net.thunderbird.core.android.account.Identity
 import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.android.testing.RobolectricTest
-import net.thunderbird.core.testing.TestClock
+import net.thunderbird.core.featureflag.FeatureFlagKey
+import net.thunderbird.core.featureflag.FeatureFlagProvider
+import net.thunderbird.core.featureflag.FeatureFlagResult
+import net.thunderbird.core.preference.display.visualSettings.message.list.MessageListDateTimeFormat
+import net.thunderbird.core.preference.display.visualSettings.message.list.UiDensity
+import net.thunderbird.core.ui.theme.api.FeatureThemeProvider
+import net.thunderbird.feature.account.AccountIdFactory
+import net.thunderbird.feature.account.storage.profile.AvatarDto
+import net.thunderbird.feature.account.storage.profile.AvatarTypeDto
+import net.thunderbird.feature.account.storage.profile.ProfileDto
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.robolectric.Robolectric
 
-private const val SOME_ACCOUNT_UUID = "6b84207b-25de-4dab-97c3-953bbf03fec6"
+private val SOME_ACCOUNT_ID = AccountIdFactory.of("6b84207b-25de-4dab-97c3-953bbf03fec6")
 private const val FIRST_LINE_DEFAULT_FONT_SIZE = 16f
 private const val SECOND_LINE_DEFAULT_FONT_SIZE = 14f
 private const val DATE_DEFAULT_FONT_SIZE = 14f
+
+private val DATE_TIME_FORMAT = MessageListDateTimeFormat.Contextual
 
 class MessageListAdapterTest : RobolectricTest() {
     val activity = Robolectric.buildActivity(AppCompatActivity::class.java).create().get()
@@ -45,21 +59,21 @@ class MessageListAdapterTest : RobolectricTest() {
     val listItemListener: MessageListItemActionListener = mock()
 
     @Test
-    fun withShowAccountChip_shouldShowAccountChip() {
-        val adapter = createAdapter(showAccountChip = true)
+    fun withShowAccountIndicator_shouldShowAccountIndicator() {
+        val adapter = createAdapter(showAccountIndicator = true)
 
         val view = adapter.createAndBindView()
 
-        assertThat(view.accountChipView).isVisible()
+        assertThat(view.accountIndicatorView).isVisible()
     }
 
     @Test
-    fun withoutShowAccountChip_shouldHideAccountChip() {
-        val adapter = createAdapter(showAccountChip = false)
+    fun withoutShowAccountIndicator_shouldHideAccountIndicator() {
+        val adapter = createAdapter(showAccountIndicator = false)
 
         val view = adapter.createAndBindView()
 
-        assertThat(view.accountChipView).isGone()
+        assertThat(view.accountIndicatorView).isGone()
     }
 
     @Test
@@ -399,8 +413,9 @@ class MessageListAdapterTest : RobolectricTest() {
         showContactPicture: Boolean = true,
         showingThreadedList: Boolean = true,
         backGroundAsReadIndicator: Boolean = false,
-        showAccountChip: Boolean = false,
+        showAccountIndicator: Boolean = false,
         density: UiDensity = UiDensity.Default,
+        dateTimeFormat: MessageListDateTimeFormat = DATE_TIME_FORMAT,
     ): MessageListAdapter {
         val appearance = MessageListAppearance(
             fontSizes,
@@ -410,8 +425,9 @@ class MessageListAdapterTest : RobolectricTest() {
             showContactPicture,
             showingThreadedList,
             backGroundAsReadIndicator,
-            showAccountChip,
+            showAccountIndicator,
             density,
+            dateTimeFormat = dateTimeFormat,
         )
 
         @OptIn(ExperimentalTime::class)
@@ -421,21 +437,24 @@ class MessageListAdapterTest : RobolectricTest() {
             layoutInflater = LayoutInflater.from(context),
             contactsPictureLoader = contactsPictureLoader,
             listItemListener = listItemListener,
-            appearance = appearance,
-            relativeDateTimeFormatter = RelativeDateTimeFormatter(context, TestClock()),
+            appearance = { appearance },
+            themeProvider = FakeThemeProvider(),
+            featureFlagProvider = FakeFeatureFlagProvider(),
+            avatarMonogramCreator = mock(),
+            contactRepository = mock(),
+            formatDate = { "12:34" },
         )
     }
 
     fun createMessageListItem(
-        account: LegacyAccount = LegacyAccount(
-            SOME_ACCOUNT_UUID,
-        ),
+        account: LegacyAccount = createLegacyAccount(),
         subject: String? = "irrelevant",
         threadCount: Int = 0,
         messageDate: Long = 0L,
         internalDate: Long = 0L,
         displayName: CharSequence = "irrelevant",
         displayAddress: Address? = Address.parse("irrelevant@domain.example").first(),
+        displayDateTime: String = "12:34",
         previewText: String = "irrelevant",
         isMessageEncrypted: Boolean = false,
         isRead: Boolean = false,
@@ -457,6 +476,7 @@ class MessageListAdapterTest : RobolectricTest() {
             internalDate,
             displayName,
             displayAddress,
+            displayDateTime,
             previewText,
             isMessageEncrypted,
             isRead,
@@ -469,11 +489,58 @@ class MessageListAdapterTest : RobolectricTest() {
             messageUid,
             databaseId,
             threadRoot,
+            contactColor = -1,
+        )
+    }
+
+    private fun createLegacyAccount(): LegacyAccount {
+        return LegacyAccount(
+            id = SOME_ACCOUNT_ID,
+            name = "irrelevant",
+            email = "irrelevant@example.com",
+            profile = createProfile(),
+            incomingServerSettings = createServerSettings(),
+            outgoingServerSettings = createServerSettings(),
+            identities = listOf(
+                Identity(
+                    description = null,
+                    name = "irrelevant",
+                    email = "irrelevant@example.com",
+                ),
+            ),
+        )
+    }
+
+    private fun createProfile(): ProfileDto {
+        return ProfileDto(
+            id = SOME_ACCOUNT_ID,
+            name = "irrelevant",
+            color = 0xFF00FF,
+            avatar = AvatarDto(
+                accountId = SOME_ACCOUNT_ID,
+                avatarType = AvatarTypeDto.MONOGRAM,
+                avatarMonogram = "ab",
+                avatarImageUri = null,
+                avatarIconName = null,
+            ),
+        )
+    }
+
+    private fun createServerSettings(): ServerSettings {
+        return ServerSettings(
+            type = "imap",
+            host = "irrelevant",
+            port = 993,
+            connectionSecurity = ConnectionSecurity.SSL_TLS_REQUIRED,
+            authenticationType = AuthType.PLAIN,
+            username = "irrelevant",
+            password = "irrelevant",
+            clientCertificateAlias = null,
         )
     }
 
     fun MessageListAdapter.createAndBindView(item: MessageListItem = createMessageListItem()): View {
-        messages = listOf(item)
+        viewItems = listOf(MessageListViewItem.Message(item))
         val holder = onCreateViewHolder(LinearLayout(context), 0)
         onBindViewHolder(holder, 0)
         return holder.itemView
@@ -481,7 +548,7 @@ class MessageListAdapterTest : RobolectricTest() {
 
     fun secondLine(senderOrSubject: String, preview: String) = "$senderOrSubject – $preview"
 
-    val View.accountChipView: View get() = findViewById(R.id.account_color_chip)
+    val View.accountIndicatorView: View get() = findViewById(R.id.account_color_chip)
     val View.starView: View get() = findViewById(R.id.star)
     val View.contactPictureContainerView: View get() = findViewById(R.id.contact_picture_click_area)
     val View.threadCountView: MaterialTextView get() = findViewById(R.id.thread_count)
@@ -525,4 +592,24 @@ class MessageListAdapterTest : RobolectricTest() {
 
     private val MaterialTextView.textString: String
         get() = text.toString()
+
+    private class FakeThemeProvider : FeatureThemeProvider {
+        @Composable
+        override fun WithTheme(content: @Composable (() -> Unit)) {
+            content()
+        }
+
+        @Composable
+        override fun WithTheme(
+            darkTheme: Boolean,
+            content: @Composable (() -> Unit),
+        ) {
+            content()
+        }
+    }
+
+    private class FakeFeatureFlagProvider : FeatureFlagProvider {
+        // Disabled as the test is primarily concerned with the XML based UI
+        override fun provide(key: FeatureFlagKey): FeatureFlagResult = FeatureFlagResult.Disabled
+    }
 }

@@ -1,15 +1,67 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+@file:Suppress("UnstableApiUsage")
+
+import com.android.build.api.withAndroid
+import net.thunderbird.gradle.plugin.featureflag.task.registerGenerateFeatureFlagRawResTask
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+
 plugins {
-    id(ThunderbirdPlugins.Library.kmp)
+    id(ThunderbirdPlugins.Library.kmpCompose)
+    alias(libs.plugins.tb.featureflag.library)
 }
 
-android {
-    namespace = "net.thunderbird.core.featureflag"
+featureFlag {
+    catalog.set(layout.settingsDirectory.file("config/featureflag/thunderbird_mobile_featureflag.catalog.json"))
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate {
+        common {
+            group("commonJvm") {
+                withAndroid()
+                withJvm()
+            }
+        }
+    }
+    android {
+        namespace = "net.thunderbird.core.featureflag"
+        // Required so the generated `res/raw` catalog is merged into the module's Android resources.
+        androidResources.enable = true
+    }
+
     sourceSets {
+        val commonJvmMain = getByName("commonJvmMain")
         commonMain.dependencies {
-            implementation(libs.androidx.annotation)
+            api(projects.core.configstore.api)
+            implementation(projects.core.ui.navigation)
+            implementation(projects.core.ui.contract)
+            implementation(projects.core.file)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.json)
+        }
+        commonJvmMain.dependencies {
+            implementation(libs.ktor.client.cio)
+        }
+        commonTest.dependencies {
+            implementation(libs.ktor.client.mock)
+            implementation(libs.tb.mobile.components.ui.testing)
+            implementation(projects.core.configstore.testing)
+        }
+        androidHostTest.dependencies {
+            implementation(libs.robolectric)
         }
     }
 }
+
+compose {
+    resources {
+        packageOfResClass = "net.thunderbird.core.featureflag.resources"
+    }
+}
+
+codeCoverage {
+    lineCoverage = 60
+}
+
+tasks.registerGenerateFeatureFlagRawResTask(project = project)

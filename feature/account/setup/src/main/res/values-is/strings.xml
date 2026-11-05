@@ -18,17 +18,15 @@
     <string name="account_setup_options_account_name_label">Heiti notandaaðgangs</string>
     <string name="account_setup_auto_discovery_status_header_title_configuration_found">Uppsetning fannst</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_required">Tölvupóstfang er nauðsynlegt.</string>
-    <string name="account_setup_options_display_name_label">Nafnið þitt</string>
     <string name="account_setup_auto_discovery_loading_error">Mistókst að hlaða inn tölvupóststillingum</string>
     <string name="account_setup_auto_discovery_result_approval_checkbox_label">Ég treysti þessari uppsetningu</string>
-    <string name="account_setup_options_display_name_error_required">Nafnið þitt er nauðsynlegt.</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_invalid">Þetta telst ekki vera gilt tölvupóstfang.</string>
     <string name="account_setup_options_email_check_frequency_never">Aldrei</string>
     <string name="account_setup_auto_discovery_loading_message">Skoða grunnstillingar…</string>
     <string name="account_setup_options_section_sync_options">Valkostir samstillinga</string>
     <string name="account_setup_options_show_notifications_label">Birta tilkynningar</string>
     <string name="account_setup_options_section_display_options">Valkostir birtingar</string>
-    <string name="account_setup_auto_discovery_result_disclaimer_untrusted_configuration">Við höfum tekið við uppsetningunni fyrir póstþjóninn um tengingu sem ekki er eins örugg og við myndum vilja. Þetta þýðir að það eru einhverjar líkur á að einhver hafi komist í upplýsingarnar og breytt þeim. Geturðu yfirfarið þessar upplýsingar og gengið úr skugga um að allt sé eins og það á að vera\?</string>
+    <string name="account_setup_auto_discovery_result_disclaimer_untrusted_configuration">Við höfum tekið við uppsetningunni fyrir póstþjóninn um tengingu sem ekki er eins örugg og við myndum vilja. Þetta þýðir að það eru einhverjar líkur á að einhver hafi komist í upplýsingarnar og breytt þeim. Geturðu yfirfarið þessar upplýsingar og gengið úr skugga um að allt sé eins og það á að vera?</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_not_allowed">Þetta tölvupóstfang er ekki leyfilegt.</string>
     <string name="account_setup_create_account_created">Tókst að útbúa aðganginn</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_not_supported">Þetta tölvupóstfang er ekki stutt.</string>
@@ -52,11 +50,13 @@
         <item quantity="other">Á %d mínútna fresti</item>
     </plurals>
     <plurals name="account_setup_options_email_check_frequency_hours">
-        <item quantity="one">Á klukkustundar fresti</item>
+        <item quantity="one">Á %d klukkustundar fresti</item>
         <item quantity="other">Á %d klukkustunda fresti</item>
     </plurals>
     <plurals name="account_setup_options_email_display_count_messages">
-        <item quantity="one">1 skilaboð</item>
+        <item quantity="one">%d skilaboð</item>
         <item quantity="other">%d skilaboð</item>
     </plurals>
+    <string name="account_setup_options_your_name_label">Nafnið þitt</string>
+    <string name="account_setup_options_your_name_error_required">Nafn þitt er nauðsynlegt.</string>
 </resources>

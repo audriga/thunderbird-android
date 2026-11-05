@@ -95,6 +95,12 @@
         <item>@string/setting_theme_follow_system</item>
     </string-array>
 
+    <string-array name="animation_entries">
+        <item>@string/animation_setting_on</item>
+        <item>@string/animation_setting_off</item>
+        <item>@string/animation_setting_follow_system</item>
+    </string-array>
+
     <string-array name="message_theme_entries">
         <item>@string/setting_theme_light</item>
         <item>@string/setting_theme_dark</item>
@@ -135,6 +141,7 @@
         <item>@string/global_settings_splitview_always</item>
         <item>@string/global_settings_splitview_never</item>
         <item>@string/global_settings_splitview_when_in_landscape</item>
+        <item>@string/global_settings_splitview_when_unfolded</item>
     </string-array>
 
     <string-array name="confirm_action_entries">
@@ -171,6 +178,12 @@
         <item>@string/general_settings_ui_density_relaxed</item>
     </string-array>
 
+    <string-array name="message_list_date_time_format_entries">
+        <item>@string/general_settings_message_list_date_time_format_contextual</item>
+        <item>@string/general_settings_message_list_date_time_format_full</item>
+        <item>@string/general_settings_message_list_date_time_format_iso</item>
+    </string-array>
+
     <string-array name="post_remove_navigation_entries">
         <item>@string/general_settings_post_remove_action_return_to_list</item>
         <item>@string/general_settings_post_remove_action_show_previous_message</item>
@@ -180,6 +193,11 @@
     <string-array name="post_mark_as_unread_navigation_entries">
         <item>@string/general_settings_post_mark_as_unread_action_stay</item>
         <item>@string/general_settings_post_mark_as_unread_action_return_to_list</item>
+    </string-array>
+
+    <string-array name="messageview_body_content_type_entries">
+        <item>@string/global_settings_messageview_body_content_type_text_html</item>
+        <item>@string/global_settings_messageview_body_content_type_text_plain</item>
     </string-array>
 
 </resources>

@@ -2,30 +2,41 @@ package app.k9mail.feature.widget.unread
 
 import android.content.Context
 import android.content.Intent
-import app.k9mail.legacy.mailstore.FolderRepository
 import app.k9mail.legacy.message.controller.MessageCountsProvider
 import app.k9mail.legacy.ui.folder.FolderNameFormatter
 import com.fsck.k9.CoreResourceProvider
-import com.fsck.k9.Preferences
-import com.fsck.k9.activity.MessageList
+import com.fsck.k9.activity.MessageHomeActivity
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import net.thunderbird.components.core.logging.Logger
+import net.thunderbird.components.core.outcome.fold
 import net.thunderbird.core.android.account.LegacyAccount
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.account.UnifiedAccountId
+import net.thunderbird.feature.mail.folder.api.data.repository.FolderQueryRepository
 import net.thunderbird.feature.search.legacy.LocalMessageSearch
 import net.thunderbird.feature.search.legacy.SearchAccount
 
+private const val TAG = "UnreadWidgetDataProvider"
+
+@Suppress("LongParameterList")
 class UnreadWidgetDataProvider(
     private val context: Context,
-    private val preferences: Preferences,
+    private val accountManager: LegacyAccountManager,
     private val messageCountsProvider: MessageCountsProvider,
     private val defaultFolderProvider: DefaultFolderProvider,
-    private val folderRepository: FolderRepository,
+    private val folderQueryRepository: FolderQueryRepository,
     private val folderNameFormatter: FolderNameFormatter,
     private val coreResourceProvider: CoreResourceProvider,
+    private val logger: Logger,
 ) {
-    fun loadUnreadWidgetData(configuration: UnreadWidgetConfiguration): UnreadWidgetData? = with(configuration) {
-        if (SearchAccount.UNIFIED_INBOX == accountUuid) {
-            loadSearchAccountData(configuration)
+    suspend fun loadUnreadWidgetData(
+        configuration: UnreadWidgetConfiguration,
+    ): UnreadWidgetData? = with(configuration) {
+        if (UnifiedAccountId == accountId) {
+            loadUnifiedFoldersData(configuration)
         } else if (folderId != null) {
             loadFolderData(configuration)
         } else {
@@ -33,70 +44,94 @@ class UnreadWidgetDataProvider(
         }
     }
 
-    private fun loadSearchAccountData(configuration: UnreadWidgetConfiguration): UnreadWidgetData {
-        val searchAccount = getSearchAccount(configuration.accountUuid)
+    private suspend fun loadUnifiedFoldersData(configuration: UnreadWidgetConfiguration): UnreadWidgetData {
+        val searchAccount = getUnifiedFoldersSearch(configuration.accountId)
         val title = searchAccount.name
-        val unreadCount = messageCountsProvider.getMessageCounts(searchAccount).unread
-        val clickIntent = MessageList.intentDisplaySearch(context, searchAccount.relatedSearch, false, true, true)
+        val unreadCount = withContext(Dispatchers.IO) {
+            messageCountsProvider.getMessageCounts(searchAccount).unread
+        }
+        val clickIntent = MessageHomeActivity.intentDisplaySearch(
+            context,
+            searchAccount.relatedSearch,
+            false,
+            true,
+            true,
+        )
 
         return UnreadWidgetData(configuration, title, unreadCount, clickIntent)
     }
 
-    private fun getSearchAccount(accountUuid: String): SearchAccount = when (accountUuid) {
-        SearchAccount.UNIFIED_INBOX -> SearchAccount.createUnifiedInboxAccount(
-            unifiedInboxTitle = coreResourceProvider.searchUnifiedInboxTitle(),
-            unifiedInboxDetail = coreResourceProvider.searchUnifiedInboxDetail(),
+    private fun getUnifiedFoldersSearch(accountId: AccountId): SearchAccount = when (accountId) {
+        UnifiedAccountId -> SearchAccount.createUnifiedInboxSearch(
+            title = coreResourceProvider.searchUnifiedFoldersTitle(),
+            detail = coreResourceProvider.searchUnifiedFoldersDetail(),
         )
+
         else -> throw AssertionError("SearchAccount expected")
     }
 
-    private fun loadAccountData(configuration: UnreadWidgetConfiguration): UnreadWidgetData? {
-        val account = preferences.getAccount(configuration.accountUuid) ?: return null
-        val title = account.displayName
-        val unreadCount = messageCountsProvider.getMessageCounts(account).unread
-        val clickIntent = getClickIntentForAccount(account)
+    @Suppress("ReturnCount")
+    private suspend fun loadAccountData(configuration: UnreadWidgetConfiguration): UnreadWidgetData? {
+        val accountId = configuration.accountId
+        val account = accountManager.findById(configuration.accountId) ?: return null
+        val title = account.profile.name
+        val unreadCount = withContext(Dispatchers.IO) {
+            messageCountsProvider.getMessageCounts(accountId).unread
+        }
+        val clickIntent = getClickIntentForAccount(accountId)
 
         return UnreadWidgetData(configuration, title, unreadCount, clickIntent)
     }
 
-    private fun getClickIntentForAccount(account: LegacyAccount): Intent {
-        val folderId = defaultFolderProvider.getDefaultFolder(account)
-        return getClickIntentForFolder(account, folderId)
+    private fun getClickIntentForAccount(accountId: AccountId): Intent {
+        val folderId = defaultFolderProvider.getDefaultFolder(accountId)
+        return getClickIntentForFolder(accountId, folderId)
     }
 
     @Suppress("ReturnCount")
-    private fun loadFolderData(configuration: UnreadWidgetConfiguration): UnreadWidgetData? {
-        val accountUuid = configuration.accountUuid
-        val account = preferences.getAccount(accountUuid) ?: return null
+    private suspend fun loadFolderData(configuration: UnreadWidgetConfiguration): UnreadWidgetData? {
+        val accountId = configuration.accountId
+        val account = accountManager.findById(accountId) ?: return null
         val folderId = configuration.folderId ?: return null
 
-        val accountName = account.displayName
+        val accountName = account.profile.name
         val folderDisplayName = getFolderDisplayName(account, folderId)
         val title = context.getString(R.string.unread_widget_title, accountName, folderDisplayName)
 
-        val unreadCount = messageCountsProvider.getUnreadMessageCount(account, folderId)
+        val unreadCount = withContext(Dispatchers.IO) {
+            messageCountsProvider.getUnreadMessageCount(accountId, folderId)
+        }
 
-        val clickIntent = getClickIntentForFolder(account, folderId)
+        val clickIntent = getClickIntentForFolder(accountId, folderId)
 
         return UnreadWidgetData(configuration, title, unreadCount, clickIntent)
     }
 
-    private fun getFolderDisplayName(account: LegacyAccount, folderId: Long): String {
-        val folder = folderRepository.getFolder(account, folderId)
+    private suspend fun getFolderDisplayName(account: LegacyAccount, folderId: Long): String {
+        val folder = folderQueryRepository.findById(account.id, folderId)
+            .fold(
+                onSuccess = { it },
+                onFailure = { error ->
+                    when (val throwable = error.throwable) {
+                        null -> null
+                        else -> throw throwable
+                    }
+                },
+            )
         return if (folder != null) {
             folderNameFormatter.displayName(folder)
         } else {
-            Log.e("Error loading folder for account %s, folder ID: %d", account, folderId)
+            logger.error(TAG) { "Error loading type for account ${account.id}, type ID: $folderId" }
             ""
         }
     }
 
-    private fun getClickIntentForFolder(account: LegacyAccount, folderId: Long): Intent {
+    private fun getClickIntentForFolder(accountId: AccountId, folderId: Long): Intent {
         val search = LocalMessageSearch()
         search.addAllowedFolder(folderId)
-        search.addAccountUuid(account.uuid)
+        search.addAccountId(accountId)
 
-        val clickIntent = MessageList.intentDisplaySearch(context, search, false, true, true)
+        val clickIntent = MessageHomeActivity.intentDisplaySearch(context, search, false, true, true)
         clickIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         return clickIntent
     }

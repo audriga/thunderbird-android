@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.MenuHost
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -28,9 +29,10 @@ class MessageViewContainerFragment : Fragment() {
         set(value) {
             field = value
             setMenuVisibility(value)
+            (requireActivity() as MenuHost).invalidateMenu()
         }
 
-    private var showAccountChip: Boolean = true
+    private var showAccountIndicator: Boolean = true
 
     lateinit var messageReference: MessageReference
         private set
@@ -58,8 +60,6 @@ class MessageViewContainerFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setHasOptionsMenu(true)
-
         messageReference = if (savedInstanceState == null) {
             MessageReference.parse(arguments?.getString(ARG_REFERENCE))
                 ?: error("Missing argument $ARG_REFERENCE")
@@ -68,9 +68,9 @@ class MessageViewContainerFragment : Fragment() {
                 ?: error("Missing state $STATE_MESSAGE_REFERENCE")
         }
 
-        showAccountChip = arguments?.getBoolean(ARG_SHOW_ACCOUNT_CHIP) ?: showAccountChip
+        showAccountIndicator = arguments?.getBoolean(ARG_SHOW_ACCOUNT_INDICATOR) ?: showAccountIndicator
 
-        adapter = MessageViewContainerAdapter(this, showAccountChip)
+        adapter = MessageViewContainerAdapter(this, showAccountIndicator)
     }
 
     override fun onAttach(context: Context) {
@@ -78,7 +78,7 @@ class MessageViewContainerFragment : Fragment() {
 
         fragmentListener = try {
             context as MessageViewContainerListener
-        } catch (e: ClassCastException) {
+        } catch (_: ClassCastException) {
             throw ClassCastException("This fragment must be attached to a MessageViewContainerListener")
         }
     }
@@ -230,7 +230,7 @@ class MessageViewContainerFragment : Fragment() {
 
     private class MessageViewContainerAdapter(
         fragment: Fragment,
-        private val showAccountChip: Boolean,
+        private val showAccountIndicator: Boolean,
     ) : FragmentStateAdapter(fragment) {
 
         var messageList: List<MessageListItem> = emptyList()
@@ -260,7 +260,7 @@ class MessageViewContainerFragment : Fragment() {
             check(position in messageList.indices)
 
             val messageReference = messageList[position].messageReference
-            return MessageViewFragment.newInstance(messageReference, showAccountChip)
+            return MessageViewFragment.newInstance(messageReference, showAccountIndicator)
         }
 
         fun getMessageReference(position: Int): MessageReference? {
@@ -301,21 +301,21 @@ class MessageViewContainerFragment : Fragment() {
 
     companion object {
         private const val VIEW_PAGER_SWIPE_THRESHOLD = 0.4f
-        private const val VIEW_PAGER_SWIPE_VELOCITY_THRESHOLD = 0.8f
+        private const val VIEW_PAGER_SWIPE_VELOCITY_THRESHOLD = 3.0f
 
         private const val ARG_REFERENCE = "reference"
-        private const val ARG_SHOW_ACCOUNT_CHIP = "showAccountChip"
+        private const val ARG_SHOW_ACCOUNT_INDICATOR = "showAccountIndicator"
 
         private const val STATE_MESSAGE_REFERENCE = "messageReference"
 
         fun newInstance(
             reference: MessageReference,
-            showAccountChip: Boolean,
+            isShowAccountIndicator: Boolean,
         ): MessageViewContainerFragment {
-            return MessageViewContainerFragment().withArguments(
-                ARG_REFERENCE to reference.toIdentityString(),
-                ARG_SHOW_ACCOUNT_CHIP to showAccountChip,
-            )
+            return MessageViewContainerFragment().withArguments {
+                putString(ARG_REFERENCE, reference.toIdentityString())
+                putBoolean(ARG_SHOW_ACCOUNT_INDICATOR, isShowAccountIndicator)
+            }
         }
     }
 }
@@ -349,8 +349,8 @@ private fun RecyclerView.reduceHorizontalDragSensitivity(
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 when (direction) {
-                    ItemTouchHelper.LEFT -> viewPager.currentItem = viewPager.currentItem + 1
-                    ItemTouchHelper.RIGHT -> viewPager.currentItem = viewPager.currentItem - 1
+                    ItemTouchHelper.LEFT -> viewPager.currentItem += 1
+                    ItemTouchHelper.RIGHT -> viewPager.currentItem -= 1
                 }
             }
 

@@ -5,11 +5,12 @@ import com.fsck.k9.backend.api.BackendStorage
 import com.fsck.k9.backend.api.SyncConfig
 import com.fsck.k9.backend.api.SyncListener
 import com.fsck.k9.mail.AuthenticationFailedException
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.MessageDownloadState
 import com.fsck.k9.mail.internet.MimeMessage
 import java.util.Date
-import net.thunderbird.core.logging.legacy.Log
+import kotlinx.coroutines.runBlocking
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.legacy.logging.Log
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -27,6 +28,8 @@ import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall
 import rs.ltt.jmap.common.method.response.email.GetEmailMethodResponse
 import rs.ltt.jmap.common.method.response.email.QueryChangesEmailMethodResponse
 import rs.ltt.jmap.common.method.response.email.QueryEmailMethodResponse
+
+private const val TAG = "CommandSync"
 
 class CommandSync(
     private val backendStorage: BackendStorage,
@@ -52,12 +55,12 @@ class CommandSync(
 
             listener.syncFinished(folderServerId)
         } catch (e: UnauthorizedException) {
-            Log.e(e, "Authentication failure during sync")
+            Log.e(TAG, e, "Authentication failure during sync")
 
             val exception = AuthenticationFailedException(e.message ?: "Authentication failed", e)
             listener.syncFailed(folderServerId, "Authentication failed", exception)
         } catch (e: Exception) {
-            Log.e(e, "Unexpected failure during sync")
+            Log.e(TAG, e, "Unexpected failure during sync")
 
             listener.syncFailed(folderServerId, "Unexpected failure", e)
         }
@@ -73,9 +76,9 @@ class CommandSync(
         val cachedServerIds: Set<String> = backendFolder.getMessageServerIds()
 
         if (limit != null) {
-            Log.d("Fetching %d latest messages in %s (%s)", limit, backendFolder.name, folderServerId)
+            Log.d(TAG, "Fetching %d latest messages in %s (%s)", limit, backendFolder.name, folderServerId)
         } else {
-            Log.d("Fetching all messages in %s (%s)", backendFolder.name, folderServerId)
+            Log.d(TAG, "Fetching all messages in %s (%s)", backendFolder.name, folderServerId)
         }
 
         val queryEmailCall = jmapClient.call(
@@ -92,7 +95,14 @@ class CommandSync(
         val destroyServerIds = (cachedServerIds - remoteServerIds).toList()
         val newServerIds = remoteServerIds - cachedServerIds
 
-        handleFolderUpdates(backendFolder, folderServerId, destroyServerIds, newServerIds, queryState, listener)
+        handleFolderUpdates(
+            backendFolder = backendFolder,
+            folderServerId = folderServerId,
+            destroyServerIds = destroyServerIds,
+            newServerIds = newServerIds,
+            newQueryState = queryState,
+            listener = listener
+        )
 
         val refreshServerIds = cachedServerIds.intersect(remoteServerIds)
         refreshMessageFlags(backendFolder, syncConfig, refreshServerIds)
@@ -115,7 +125,7 @@ class CommandSync(
         queryState: String,
         listener: SyncListener,
     ) {
-        Log.d("Updating messages in %s (%s)", backendFolder.name, folderServerId)
+        Log.d(TAG, "Updating messages in %s (%s)", backendFolder.name, folderServerId)
 
         val emailQuery = createEmailQuery(folderServerId)
         val queryChangesEmailCall = jmapClient.call(
@@ -130,7 +140,7 @@ class CommandSync(
             queryChangesEmailCall.getMainResponseBlocking<QueryChangesEmailMethodResponse>()
         } catch (e: MethodErrorResponseException) {
             if (e.methodErrorResponse.type == ERROR_CANNOT_CALCULATE_CHANGES) {
-                Log.d("Server responded with '$ERROR_CANNOT_CALCULATE_CHANGES'; switching to full sync")
+                Log.d(TAG, "Server responded with '$ERROR_CANNOT_CALCULATE_CHANGES'; switching to full sync")
 
                 backendFolder.saveQueryState(null)
                 fullSync(backendFolder, folderServerId, syncConfig, limit, listener)
@@ -167,24 +177,24 @@ class CommandSync(
         listener: SyncListener,
     ) {
         if (destroyServerIds.isNotEmpty()) {
-            Log.d("Removing messages no longer on server: %s", destroyServerIds)
+            Log.d(TAG, "Removing messages no longer on server: %s", destroyServerIds)
             backendFolder.destroyMessages(destroyServerIds)
         }
 
         if (newServerIds.isEmpty()) {
-            Log.d("No new messages on server")
+            Log.d(TAG, "No new messages on server")
             backendFolder.saveQueryState(newQueryState)
             return
         }
 
-        Log.d("New messages on server: %s", newServerIds)
+        Log.d(TAG, "New messages on server: %s", newServerIds)
         val session = jmapClient.session.get()
         val maxObjectsInGet = session.maxObjectsInGet
         val messageInfoList = fetchMessageInfo(session, maxObjectsInGet, newServerIds)
 
         val total = messageInfoList.size
         messageInfoList.forEachIndexed { index, messageInfo ->
-            Log.v("Downloading message %s (%s)", messageInfo.serverId, messageInfo.downloadUrl)
+            Log.v(TAG, "Downloading message %s (%s)", messageInfo.serverId, messageInfo.downloadUrl)
             val message = downloadMessage(messageInfo.downloadUrl)
             if (message != null) {
                 message.apply {
@@ -193,9 +203,9 @@ class CommandSync(
                     setFlags(messageInfo.flags, true)
                 }
 
-                backendFolder.saveMessage(message, MessageDownloadState.FULL)
+                runBlocking { backendFolder.saveMessage(message, MessageDownloadState.FULL) }
             } else {
-                Log.d("Failed to download message: %s", messageInfo.serverId)
+                Log.d(TAG, "Failed to download message: %s", messageInfo.serverId)
             }
 
             listener.syncProgress(folderServerId, index + 1, total)
@@ -230,7 +240,12 @@ class CommandSync(
 
     private fun Email.toMessageInfo(session: Session): MessageInfo {
         val downloadUrl = session.getDownloadUrl(accountId, blobId, blobId, "application/octet-stream")
-        return MessageInfo(id, downloadUrl, receivedAt, keywords.toFlags())
+        return MessageInfo(
+            serverId = id,
+            downloadUrl = downloadUrl,
+            receivedAt = receivedAt,
+            flags = keywords.toFlags(),
+        )
     }
 
     private fun downloadMessage(downloadUrl: HttpUrl): MimeMessage? {
@@ -243,7 +258,7 @@ class CommandSync(
 
         return okHttpClient.newCall(request).execute().use { response ->
             if (response.isSuccessful) {
-                val inputStream = response.body!!.byteStream()
+                val inputStream = response.body.byteStream()
                 MimeMessage.parseMimeMessage(inputStream, false)
             } else {
                 null
@@ -254,7 +269,7 @@ class CommandSync(
     private fun refreshMessageFlags(backendFolder: BackendFolder, syncConfig: SyncConfig, emailIds: Set<String>) {
         if (emailIds.isEmpty()) return
 
-        Log.v("Fetching flags for messages: %s", emailIds)
+        Log.v(TAG, "Fetching flags for messages: %s", emailIds)
 
         val session = jmapClient.session.get()
         val maxObjectsInGet = session.maxObjectsInGet
@@ -303,7 +318,7 @@ class CommandSync(
     }
 
     private fun BackendFolder.saveQueryState(queryState: String?) {
-        setFolderExtraString(EXTRA_QUERY_STATE, queryState)
+        setFolderExtraString(name = EXTRA_QUERY_STATE, value = queryState)
     }
 
     companion object {

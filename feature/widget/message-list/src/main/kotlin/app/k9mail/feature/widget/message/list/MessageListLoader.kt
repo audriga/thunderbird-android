@@ -1,21 +1,25 @@
 package app.k9mail.feature.widget.message.list
 
 import app.k9mail.legacy.mailstore.MessageListRepository
-import com.fsck.k9.Preferences
 import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.mailstore.MessageColumns
-import com.fsck.k9.search.getAccounts
+import com.fsck.k9.search.getLegacyAccounts
 import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.account.LegacyAccountManager
 import net.thunderbird.core.android.account.SortType
-import net.thunderbird.core.logging.legacy.Log
-import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.preference.display.visualSettings.message.list.MessageListPreferencesManager
+import net.thunderbird.feature.mail.folder.api.OutboxFolderManager
 import net.thunderbird.feature.search.legacy.sql.SqlWhereClause
+import net.thunderbird.legacy.logging.Log
+
+private const val TAG = "MessageListLoader"
 
 internal class MessageListLoader(
-    private val preferences: Preferences,
+    private val accountManager: LegacyAccountManager,
     private val messageListRepository: MessageListRepository,
     private val messageHelper: MessageHelper,
-    private val generalSettingsManager: GeneralSettingsManager,
+    private val messageListPreferencesManager: MessageListPreferencesManager,
+    private val outboxFolderManager: OutboxFolderManager,
 ) {
 
     @Suppress("TooGenericExceptionCaught")
@@ -23,7 +27,7 @@ internal class MessageListLoader(
         return try {
             getMessageListInfo(config)
         } catch (e: Exception) {
-            Log.e(e, "Error while fetching message list")
+            Log.e(TAG, e, "Error while fetching message list")
 
             // TODO: Return an error object instead of an empty list
             emptyList()
@@ -31,7 +35,7 @@ internal class MessageListLoader(
     }
 
     private fun getMessageListInfo(config: MessageListConfig): List<MessageListItem> {
-        val accounts = config.search.getAccounts(preferences)
+        val accounts = config.search.getLegacyAccounts(accountManager)
         val messageListItems = accounts
             .flatMap { account ->
                 loadMessageListForAccount(account, config)
@@ -42,16 +46,16 @@ internal class MessageListLoader(
     }
 
     private fun loadMessageListForAccount(account: LegacyAccount, config: MessageListConfig): List<MessageListItem> {
-        val accountUuid = account.uuid
+        val accountId = account.id
         val sortOrder = buildSortOrder(config)
-        val mapper = MessageListItemMapper(messageHelper, account, generalSettingsManager)
+        val mapper = MessageListItemMapper(messageHelper, account, messageListPreferencesManager, outboxFolderManager)
 
         return if (config.showingThreadedList) {
             val (selection, selectionArgs) = buildSelection(config)
-            messageListRepository.getThreadedMessages(accountUuid, selection, selectionArgs, sortOrder, mapper)
+            messageListRepository.getThreadedMessages(accountId, selection, selectionArgs, sortOrder, mapper)
         } else {
             val (selection, selectionArgs) = buildSelection(config)
-            messageListRepository.getMessages(accountUuid, selection, selectionArgs, sortOrder, mapper)
+            messageListRepository.getMessages(accountId, selection, selectionArgs, sortOrder, mapper)
         }
     }
 
@@ -66,13 +70,19 @@ internal class MessageListLoader(
     private fun buildSortOrder(config: MessageListConfig): String {
         val sortColumn = when (config.sortType) {
             SortType.SORT_ARRIVAL -> MessageColumns.INTERNAL_DATE
+
             SortType.SORT_ATTACHMENT -> "(${MessageColumns.ATTACHMENT_COUNT} < 1)"
+
             SortType.SORT_FLAGGED -> "(${MessageColumns.FLAGGED} != 1)"
-            SortType.SORT_SENDER -> MessageColumns.SENDER_LIST // FIXME
+
+            // FIXME
+            SortType.SORT_SENDER -> MessageColumns.SENDER_LIST
+
             SortType.SORT_SUBJECT -> "${MessageColumns.SUBJECT} COLLATE NOCASE"
+
             SortType.SORT_UNREAD -> MessageColumns.READ
+
             SortType.SORT_DATE -> MessageColumns.DATE
-            else -> MessageColumns.DATE
         }
 
         val sortDirection = if (config.sortAscending) " ASC" else " DESC"

@@ -8,12 +8,14 @@ import com.fsck.k9.ui.helper.DisplayAddressHelper
 import java.util.Calendar
 import java.util.Locale
 import net.thunderbird.core.android.account.LegacyAccount
-import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.preference.display.visualSettings.message.list.MessageListPreferencesManager
+import net.thunderbird.feature.mail.folder.api.OutboxFolderManager
 
 internal class MessageListItemMapper(
     private val messageHelper: MessageHelper,
     private val account: LegacyAccount,
-    private val generalSettingsManager: GeneralSettingsManager,
+    private val messageListPreferencesManager: MessageListPreferencesManager,
+    private val outboxFolderManager: OutboxFolderManager,
 ) : MessageMapper<MessageListItem> {
     private val calendar: Calendar = Calendar.getInstance()
 
@@ -23,13 +25,15 @@ internal class MessageListItemMapper(
         val previewResult = message.preview
         val previewText = if (previewResult.isPreviewTextAvailable) previewResult.previewText else ""
         val uniqueId = createUniqueId(account, message.id)
-        val showRecipients = DisplayAddressHelper.shouldShowRecipients(account, message.folderId)
+        val showRecipients = DisplayAddressHelper.shouldShowRecipients(outboxFolderManager, account, message.folderId)
         val displayAddress = if (showRecipients) toAddresses.firstOrNull() else fromAddresses.firstOrNull()
         val displayName = if (showRecipients) {
+            val messageListSettings = messageListPreferencesManager.getConfig()
             messageHelper.getRecipientDisplayNames(
                 addresses = toAddresses.toTypedArray(),
-                isShowCorrespondentNames = generalSettingsManager.getConfig().display.isShowCorrespondentNames,
-                isChangeContactNameColor = generalSettingsManager.getConfig().display.isChangeContactNameColor,
+                isShowCorrespondentNames = messageListSettings.isShowCorrespondentNames,
+                isChangeContactNameColor = messageListSettings.isChangeContactNameColor,
+                contactNameColor = messageListSettings.contactNameColor,
             ).toString()
         } else {
             messageHelper.getSenderDisplayName(displayAddress).toString()
@@ -43,8 +47,8 @@ internal class MessageListItemMapper(
             isRead = message.isRead,
             hasAttachments = message.hasAttachments,
             threadCount = message.threadCount,
-            accountColor = account.chipColor,
-            messageReference = MessageReference(account.uuid, message.folderId, message.messageServerId),
+            accountColor = account.profile.color,
+            messageReference = MessageReference(account.id, message.folderId, message.messageServerId),
             uniqueId = uniqueId,
             sortSubject = message.subject,
             sortMessageDate = message.messageDate,

@@ -3,7 +3,7 @@ package net.thunderbird.core.common.inject
 import org.koin.core.definition.Definition
 import org.koin.core.module.KoinDslMarker
 import org.koin.core.module.Module
-import org.koin.core.parameter.parametersOf
+import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
 import org.koin.core.scope.Scope
@@ -22,10 +22,27 @@ import org.koin.core.scope.Scope
  * @param qualifier Optional [Qualifier] to distinguish this list from others of the same type.
  *                  If null, a default qualifier based on the type [T] will be used.
  */
-@KoinDslMarker
 inline fun <reified T> Module.singleListOf(vararg items: Definition<T>, qualifier: Qualifier? = null) {
-    single(qualifier ?: defaultListQualifier<T>(), createdAtStart = true) {
-        items.map { definition -> definition(this, parametersOf()) }
+    single(qualifier ?: defaultListQualifier<T>(), createdAtStart = true) { parameters ->
+        items.map { definition -> definition(this, parameters) }
+    }
+}
+
+/**
+ * Defines a factory for a list of elements of type [T].
+ *
+ * This function creates a factory definition for a list of elements. Each time this list is
+ * requested, a new list is created, and each element in the list is resolved anew from the
+ * provided [items] definitions.
+ *
+ * @param T The type of elements in the list.
+ * @param items Vararg of [Definition]s that will be resolved and added to the list.
+ * @param qualifier Optional [Qualifier] to distinguish this list from others of the same type.
+ *                  If null, a default qualifier based on the type [T] will be used.
+ */
+inline fun <reified T> Module.factoryListOf(vararg items: Definition<T>, qualifier: Qualifier? = null) {
+    factory(qualifier ?: defaultListQualifier<T>()) { parametersHolder ->
+        items.map { definition -> definition(this, parametersHolder) }
     }
 }
 
@@ -39,8 +56,10 @@ inline fun <reified T> Module.singleListOf(vararg items: Definition<T>, qualifie
  * @param qualifier An optional [Qualifier] to distinguish between different lists of the same type.
  * @return The resolved [MutableList] of instances of type [T].
  */
-inline fun <reified T> Scope.getList(qualifier: Qualifier? = null) =
-    get<List<T>>(qualifier ?: defaultListQualifier<T>())
+inline fun <reified T> Scope.getList(
+    qualifier: Qualifier? = null,
+    noinline parameters: ParametersDefinition? = null,
+) = get<List<T>>(qualifier ?: defaultListQualifier<T>(), parameters = parameters)
 
 /**
  * Creates a qualifier for a set of a specific type.

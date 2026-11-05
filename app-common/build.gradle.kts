@@ -1,5 +1,6 @@
 plugins {
-    id(ThunderbirdPlugins.Library.android)
+    id(ThunderbirdPlugins.Library.androidCompose)
+    alias(libs.plugins.tb.piisafe)
 }
 
 android {
@@ -11,38 +12,74 @@ android {
 }
 
 dependencies {
+    implementation(projects.appComposition)
+
     api(projects.legacy.common)
     api(projects.legacy.ui.legacy)
 
     api(projects.feature.account.core)
+    api(projects.feature.account.internal)
     api(projects.feature.launcher)
     api(projects.feature.navigation.drawer.api)
 
     implementation(projects.legacy.core)
+    implementation(projects.legacy.ui.base)
     implementation(projects.core.android.account)
+    implementation(projects.core.android.common)
 
-    implementation(projects.core.logging.api)
-    implementation(projects.core.logging.implComposite)
-    implementation(projects.core.logging.implConsole)
-    implementation(projects.core.logging.implLegacy)
-    implementation(projects.core.logging.implFile)
+    implementation(libs.tb.mobile.components.core.logging.file)
+    implementation(libs.filekit.core)
+    implementation(projects.core.logging.internal)
+    implementation(projects.legacy.logging)
+    implementation(projects.core.configstore.api)
+    implementation(projects.core.configstore.implBackend)
 
     implementation(projects.core.featureflag)
+    implementation(projects.core.file)
+
+    implementation(projects.core.ui.setting.api)
+    implementation(projects.core.ui.setting.implDialog)
     implementation(projects.core.ui.legacy.theme2.common)
 
     implementation(projects.feature.account.avatar.api)
     implementation(projects.feature.account.avatar.impl)
+    implementation(projects.feature.account.settings.api)
     implementation(projects.feature.account.setup)
+    implementation(projects.feature.funding.api)
     implementation(projects.feature.mail.account.api)
+    implementation(projects.feature.mail.message.composer.internal)
     implementation(projects.feature.migration.provider)
     implementation(projects.feature.notification.api)
-    implementation(projects.feature.notification.impl)
     implementation(projects.feature.widget.messageList)
 
-    implementation(projects.mail.protocols.imap)
+    implementation(projects.feature.mail.message.api)
+    implementation(projects.feature.mail.message.export.api)
+    implementation(projects.feature.mail.message.export.implEml)
+    implementation(projects.feature.mail.message.list.api)
+    implementation(projects.feature.mail.message.reader.api)
 
+    implementation(projects.mail.protocols.imap)
+    implementation(projects.backend.imap)
+
+    implementation(projects.feature.thundermail.internal.common)
+
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.lifecycle.process)
 
+    implementation(libs.okio)
+
+    testImplementation(projects.core.android.account.fake)
     testImplementation(projects.feature.account.fake)
+    testImplementation(projects.core.testing)
+    testImplementation(projects.core.android.testing)
+    testImplementation(projects.core.configstore.testing)
+    testImplementation(projects.legacy.storage)
+
+    testImplementation(libs.mockito.kotlin)
+}
+
+codeCoverage {
+    branchCoverage = 0
+    lineCoverage = 0
 }

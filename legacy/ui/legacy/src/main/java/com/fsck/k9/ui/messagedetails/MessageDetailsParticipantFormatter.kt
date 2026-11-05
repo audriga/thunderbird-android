@@ -4,31 +4,31 @@ import android.content.res.Resources
 import android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
-import com.fsck.k9.K9
 import com.fsck.k9.helper.ContactNameProvider
 import com.fsck.k9.mail.Address
 import com.fsck.k9.ui.R
 import net.thunderbird.core.android.account.Identity
 import net.thunderbird.core.android.account.LegacyAccount
-import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.preference.display.visualSettings.message.list.MessageListPreferencesManager
 
 /**
  * Get the display name for a participant to be shown in the message details screen.
  */
 internal interface MessageDetailsParticipantFormatter {
-    fun getDisplayName(address: Address, account: LegacyAccount): CharSequence?
+    fun getDisplayName(address: Address, account: LegacyAccount, isSender: Boolean): CharSequence?
 }
 
 internal class RealMessageDetailsParticipantFormatter(
     private val contactNameProvider: ContactNameProvider,
     private val showContactNames: Boolean,
     private val contactNameColor: Int?,
-    private val meText: String,
+    private val toMeText: String,
+    private val fromMeText: String,
 ) : MessageDetailsParticipantFormatter {
-    override fun getDisplayName(address: Address, account: LegacyAccount): CharSequence? {
+    override fun getDisplayName(address: Address, account: LegacyAccount, isSender: Boolean): CharSequence? {
         val identity = account.findIdentity(address)
         if (identity != null) {
-            return getIdentityName(identity, account)
+            return getIdentityName(identity, account, isSender)
         }
 
         return if (showContactNames) {
@@ -38,7 +38,8 @@ internal class RealMessageDetailsParticipantFormatter(
         }
     }
 
-    private fun getIdentityName(identity: Identity, account: LegacyAccount): String {
+    private fun getIdentityName(identity: Identity, account: LegacyAccount, isSender: Boolean): String {
+        val meText = if (isSender) fromMeText else toMeText
         return if (account.identities.size == 1) {
             meText
         } else {
@@ -62,18 +63,20 @@ internal class RealMessageDetailsParticipantFormatter(
 internal fun createMessageDetailsParticipantFormatter(
     contactNameProvider: ContactNameProvider,
     resources: Resources,
-    generalSettingsManager: GeneralSettingsManager,
+    messageListPreferencesManager: MessageListPreferencesManager,
 ): MessageDetailsParticipantFormatter {
+    val messageListPreferences = messageListPreferencesManager.getConfig()
     return RealMessageDetailsParticipantFormatter(
         contactNameProvider = contactNameProvider,
-        showContactNames = generalSettingsManager.getConfig().display.isShowContactName,
+        showContactNames = messageListPreferences.isShowContactName,
         contactNameColor = if (
-            generalSettingsManager.getConfig().display.isChangeContactNameColor
+            messageListPreferences.isChangeContactNameColor
         ) {
-            K9.contactNameColor
+            messageListPreferences.contactNameColor
         } else {
             null
         },
-        meText = resources.getString(R.string.message_view_me_text),
+        toMeText = resources.getString(R.string.message_view_to_me_text),
+        fromMeText = resources.getString(R.string.message_view_from_me_text),
     )
 }

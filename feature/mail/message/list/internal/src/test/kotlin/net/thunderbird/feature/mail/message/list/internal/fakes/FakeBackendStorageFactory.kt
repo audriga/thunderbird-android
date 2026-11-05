@@ -1,0 +1,27 @@
+package net.thunderbird.feature.mail.message.list.internal.fakes
+
+import com.fsck.k9.backend.api.BackendFolder
+import com.fsck.k9.backend.api.BackendFolderUpdater
+import com.fsck.k9.backend.api.BackendStorage
+import net.thunderbird.backend.api.BackendStorageFactory
+import net.thunderbird.feature.account.AccountId
+
+internal open class FakeBackendStorageFactory(
+    val backendFolderUpdater: FakeBackendFolderUpdater = FakeBackendFolderUpdater(),
+) : BackendStorageFactory {
+    override fun createBackendStorage(accountId: AccountId): BackendStorage = object : BackendStorage {
+        override fun getFolder(folderServerId: String): BackendFolder = error("not implemented.")
+
+        override fun getFolderServerIds(): List<String> = error("not implemented.")
+
+        override fun createFolderUpdater(): BackendFolderUpdater = backendFolderUpdater
+
+        override fun getExtraString(name: String): String? = error("not implemented.")
+
+        override fun setExtraString(name: String, value: String) = error("not implemented.")
+
+        override fun getExtraNumber(name: String): Long? = error("not implemented.")
+
+        override fun setExtraNumber(name: String, value: Long) = error("not implemented.")
+    }
+}

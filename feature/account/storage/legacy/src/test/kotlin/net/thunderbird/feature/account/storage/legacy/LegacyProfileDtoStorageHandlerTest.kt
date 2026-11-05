@@ -7,12 +7,12 @@ import kotlin.test.Test
 import net.thunderbird.account.fake.FakeAccountAvatarData
 import net.thunderbird.account.fake.FakeAccountData
 import net.thunderbird.account.fake.FakeAccountProfileData
-import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.feature.account.AccountId
 import net.thunderbird.feature.account.storage.legacy.fake.FakeStorage
 import net.thunderbird.feature.account.storage.legacy.fake.FakeStorageEditor
 import net.thunderbird.feature.account.storage.profile.AvatarDto
 import net.thunderbird.feature.account.storage.profile.AvatarTypeDto
+import net.thunderbird.feature.account.storage.profile.ProfileDto
 
 class LegacyProfileDtoStorageHandlerTest {
     private val avatarDtoStorageHandler = LegacyAvatarDtoStorageHandler()
@@ -21,80 +21,80 @@ class LegacyProfileDtoStorageHandlerTest {
     @Test
     fun `load should populate profile data from storage`() {
         // Arrange
-        val account = createAccount(accountId)
         val storage = createStorage(accountId)
 
         // Act
-        testSubject.load(account, storage)
+        val result = testSubject.load(accountId, storage)
 
         // Assert
-        assertThat(account.name).isEqualTo(NAME)
-        assertThat(account.chipColor).isEqualTo(COLOR)
-        assertThat(account.avatar.avatarType).isEqualTo(AvatarTypeDto.IMAGE)
-        assertThat(account.avatar.avatarMonogram).isEqualTo(null)
-        assertThat(account.avatar.avatarImageUri).isEqualTo(AVATAR_IMAGE_URI)
-        assertThat(account.avatar.avatarIconName).isEqualTo(null)
+        assertThat(result.id).isEqualTo(accountId)
+        assertThat(result.name).isEqualTo(NAME)
+        assertThat(result.color).isEqualTo(COLOR)
+        assertThat(result.avatar.avatarType).isEqualTo(AvatarTypeDto.IMAGE)
+        assertThat(result.avatar.avatarMonogram).isEqualTo(null)
+        assertThat(result.avatar.avatarImageUri).isEqualTo(AVATAR_IMAGE_URI)
+        assertThat(result.avatar.avatarIconName).isEqualTo(null)
     }
 
     @Test
     fun `save should store profile data to storage`() {
         // Arrange
-        val account = createAccount(accountId)
+        val profileDto = createProfileDto(accountId)
         val storage = FakeStorage()
         val editor = FakeStorageEditor()
 
         // Act
-        testSubject.save(account, storage, editor)
+        testSubject.save(profileDto, storage, editor)
 
         // Assert
-        assertThat(editor.values["${accountId.asRaw()}.description"]).isEqualTo(NAME)
-        assertThat(editor.values["${accountId.asRaw()}.chipColor"]).isEqualTo(COLOR.toString())
-        assertThat(editor.values["${accountId.asRaw()}.avatarType"]).isEqualTo("IMAGE")
-        assertThat(editor.values["${accountId.asRaw()}.avatarMonogram"]).isEqualTo(null)
-        assertThat(editor.values["${accountId.asRaw()}.avatarImageUri"]).isEqualTo(AVATAR_IMAGE_URI)
-        assertThat(editor.values["${accountId.asRaw()}.avatarIconName"]).isEqualTo(null)
+        assertThat(editor.values["$accountId.description"]).isEqualTo(NAME)
+        assertThat(editor.values["$accountId.chipColor"]).isEqualTo(COLOR.toString())
+        assertThat(editor.values["$accountId.avatarType"]).isEqualTo("IMAGE")
+        assertThat(editor.values["$accountId.avatarMonogram"]).isEqualTo(null)
+        assertThat(editor.values["$accountId.avatarImageUri"]).isEqualTo(AVATAR_IMAGE_URI)
+        assertThat(editor.values["$accountId.avatarIconName"]).isEqualTo(null)
     }
 
     @Test
     fun `delete should remove profile data from storage`() {
         // Arrange
-        val account = createAccount(accountId)
         val storage = FakeStorage()
         val editor = FakeStorageEditor()
 
         // Act
-        testSubject.delete(account, storage, editor)
+        testSubject.delete(accountId, storage, editor)
 
         // Assert
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.description")
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.chipColor")
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.avatarType")
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.avatarMonogram")
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.avatarImageUri")
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.avatarIconName")
+        assertThat(editor.removedKeys).contains("$accountId.description")
+        assertThat(editor.removedKeys).contains("$accountId.chipColor")
+        assertThat(editor.removedKeys).contains("$accountId.avatarType")
+        assertThat(editor.removedKeys).contains("$accountId.avatarMonogram")
+        assertThat(editor.removedKeys).contains("$accountId.avatarImageUri")
+        assertThat(editor.removedKeys).contains("$accountId.avatarIconName")
     }
 
-    // Arrange methods
-    private fun createAccount(accountId: AccountId): LegacyAccount {
-        return LegacyAccount(accountId.asRaw()).apply {
-            name = NAME
-            chipColor = COLOR
+    private fun createProfileDto(accountId: AccountId): ProfileDto {
+        return ProfileDto(
+            id = accountId,
+            name = NAME,
+            color = COLOR,
             avatar = AvatarDto(
+                accountId = accountId,
                 avatarType = AvatarTypeDto.IMAGE,
                 avatarMonogram = null,
                 avatarImageUri = AVATAR_IMAGE_URI,
                 avatarIconName = null,
-            )
-        }
+            ),
+        )
     }
 
     private fun createStorage(accountId: AccountId): FakeStorage {
         return FakeStorage(
             mapOf(
-                "${accountId.asRaw()}.description" to NAME,
-                "${accountId.asRaw()}.chipColor" to COLOR.toString(),
-                "${accountId.asRaw()}.avatarType" to AVATAR_TYPE.name,
-                "${accountId.asRaw()}.avatarImageUri" to AVATAR_IMAGE_URI,
+                "$accountId.description" to NAME,
+                "$accountId.chipColor" to COLOR.toString(),
+                "$accountId.avatarType" to AVATAR_TYPE.name,
+                "$accountId.avatarImageUri" to AVATAR_IMAGE_URI,
             ),
         )
     }

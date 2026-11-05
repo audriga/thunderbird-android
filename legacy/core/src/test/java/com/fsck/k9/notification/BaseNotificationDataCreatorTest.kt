@@ -4,12 +4,16 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
-import assertk.assertions.isSameInstanceAs
-import com.fsck.k9.K9
-import com.fsck.k9.K9.LockScreenNotificationVisibility
-import net.thunderbird.core.android.account.Identity
+import com.fsck.k9.FakeLegacyAccount
+import com.fsck.k9.mail.Address
 import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.preference.LockScreenNotificationVisibility
+import net.thunderbird.feature.account.AccountIdFactory
+import net.thunderbird.feature.account.storage.profile.AvatarDto
+import net.thunderbird.feature.account.storage.profile.AvatarTypeDto
+import net.thunderbird.feature.account.storage.profile.ProfileDto
 import net.thunderbird.feature.notification.NotificationLight
+import net.thunderbird.feature.notification.NotificationSettings
 import net.thunderbird.feature.notification.NotificationVibration
 import net.thunderbird.feature.notification.VibratePattern
 import org.junit.Test
@@ -20,19 +24,23 @@ class BaseNotificationDataCreatorTest {
     private val notificationDataCreator = BaseNotificationDataCreator()
 
     @Test
-    fun `account instance`() {
-        val notificationData = createNotificationData()
+    fun `account id`() {
+        val notificationData = createNotificationData(
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
-        assertThat(result.account).isSameInstanceAs(account)
+        assertThat(result.accountId).isEqualTo(account.id)
     }
 
     @Test
     fun `account name from name property`() {
-        account.name = "name"
-        account.email = "irrelevant@k9mail.example"
-        val notificationData = createNotificationData()
+        val account = createAccount(name = "name", email = "irrelevant@k9mail.example")
+        val notificationData = createNotificationData(
+            account = account,
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -41,9 +49,11 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `account name is blank`() {
-        account.name = ""
-        account.email = "test@k9mail.example"
-        val notificationData = createNotificationData()
+        val account = createAccount(name = "", email = "test@k9mail.example")
+        val notificationData = createNotificationData(
+            account = account,
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -52,9 +62,11 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `account name is null`() {
-        account.name = null
-        account.email = "test@k9mail.example"
-        val notificationData = createNotificationData()
+        val account = createAccount(name = null, email = "test@k9mail.example")
+        val notificationData = createNotificationData(
+            account = account,
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -63,8 +75,11 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `group key`() {
-        account.accountNumber = 42
-        val notificationData = createNotificationData()
+        val account = createAccount(accountNumber = 42)
+        val notificationData = createNotificationData(
+            account = account,
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -73,8 +88,11 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `notification color`() {
-        account.chipColor = 0xFF0000
-        val notificationData = createNotificationData()
+        val account = createAccount(color = 0xFF0000)
+        val notificationData = createNotificationData(
+            account = account,
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -83,7 +101,10 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `new messages count`() {
-        val notificationData = createNotificationData(senders = listOf("irrelevant", "irrelevant"))
+        val notificationData = createNotificationData(
+            senders = listOf("irrelevant", "irrelevant"),
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -92,8 +113,9 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `do not display notification on lock screen`() {
-        setLockScreenMode(LockScreenNotificationVisibility.NOTHING)
-        val notificationData = createNotificationData()
+        val notificationData = createNotificationData(
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.NOTHING,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -102,8 +124,9 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `display application name on lock screen`() {
-        setLockScreenMode(LockScreenNotificationVisibility.APP_NAME)
-        val notificationData = createNotificationData()
+        val notificationData = createNotificationData(
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.APP_NAME,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -112,8 +135,9 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `display new message count on lock screen`() {
-        setLockScreenMode(LockScreenNotificationVisibility.MESSAGE_COUNT)
-        val notificationData = createNotificationData()
+        val notificationData = createNotificationData(
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -122,20 +146,24 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `display message sender names on lock screen`() {
-        setLockScreenMode(LockScreenNotificationVisibility.SENDERS)
-        val notificationData = createNotificationData(senders = listOf("Sender One", "Sender Two", "Sender Three"))
+        val notificationData = createNotificationData(
+            senders = listOf("Sender One", "Sender Two", "Sender Three"),
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.SENDERS,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
         assertThat(result.lockScreenNotificationData).isInstanceOf<LockScreenNotificationData.SenderNames>()
         val senderNamesData = result.lockScreenNotificationData as LockScreenNotificationData.SenderNames
-        assertThat(senderNamesData.senderNames).isEqualTo("Sender One, Sender Two, Sender Three")
+        assertThat(senderNamesData.senderNames)
+            .isEqualTo("Sender One <irrelevant>, Sender Two <irrelevant>, Sender Three <irrelevant>")
     }
 
     @Test
     fun `display notification on lock screen`() {
-        setLockScreenMode(LockScreenNotificationVisibility.EVERYTHING)
-        val notificationData = createNotificationData()
+        val notificationData = createNotificationData(
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.EVERYTHING,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -144,8 +172,13 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun ringtone() {
-        account.updateNotificationSettings { it.copy(ringtone = "content://ringtone/1") }
-        val notificationData = createNotificationData()
+        val account = this.account.copy(
+            notificationSettings = this.account.notificationSettings.copy(ringtone = "content://ringtone/1"),
+        )
+        val notificationData = createNotificationData(
+            account = account,
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -154,16 +187,19 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `vibration pattern`() {
-        account.updateNotificationSettings {
-            it.copy(
+        val account = this.account.copy(
+            notificationSettings = this.account.notificationSettings.copy(
                 vibration = NotificationVibration(
                     isEnabled = true,
                     pattern = VibratePattern.Pattern3,
                     repeatCount = 2,
                 ),
-            )
-        }
-        val notificationData = createNotificationData()
+            ),
+        )
+        val notificationData = createNotificationData(
+            account = account,
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
@@ -178,43 +214,73 @@ class BaseNotificationDataCreatorTest {
 
     @Test
     fun `led color`() {
-        account.updateNotificationSettings {
-            it.copy(
+        val account = this.account.copy(
+            notificationSettings = this.account.notificationSettings.copy(
                 light = NotificationLight.Green,
-            )
-        }
-        val notificationData = createNotificationData()
+            ),
+        )
+        val notificationData = createNotificationData(
+            account = account,
+            lockScreenNotificationVisibility = LockScreenNotificationVisibility.MESSAGE_COUNT,
+        )
 
         val result = notificationDataCreator.createBaseNotificationData(notificationData)
 
         assertThat(result.appearance.ledColor).isEqualTo(0xFF00FF00L.toInt())
     }
 
-    private fun setLockScreenMode(mode: LockScreenNotificationVisibility) {
-        K9.lockScreenNotificationVisibility = mode
-    }
-
-    private fun createNotificationData(senders: List<String> = emptyList()): NotificationData {
+    private fun createNotificationData(
+        account: LegacyAccount = this.account,
+        senders: List<String> = emptyList(),
+        lockScreenNotificationVisibility: LockScreenNotificationVisibility,
+    ): NotificationData {
         val activeNotifications = senders.mapIndexed { index, sender ->
             NotificationHolder(
                 notificationId = index,
                 timestamp = 0L,
                 content = NotificationContent(
                     messageReference = mock(),
-                    sender = sender,
+                    sender = Address("irrelevant", sender),
                     preview = "irrelevant",
                     summary = "irrelevant",
                     subject = "irrelevant",
                 ),
             )
         }
-        return NotificationData(account, activeNotifications, inactiveNotifications = emptyList())
+        return NotificationData(
+            account = account,
+            activeNotifications = activeNotifications,
+            inactiveNotifications = emptyList(),
+            lockScreenNotificationVisibility = lockScreenNotificationVisibility,
+        )
     }
 
-    private fun createAccount(): LegacyAccount {
-        return LegacyAccount("00000000-0000-4000-0000-000000000000").apply {
-            name = "account name"
-            replaceIdentities(listOf(Identity()))
-        }
+    private fun createAccount(
+        name: String? = "account name",
+        email: String = "test@k9mail.example",
+        accountNumber: Int = 1,
+        color: Int = -1,
+        notificationSettings: NotificationSettings = NotificationSettings(),
+    ): LegacyAccount {
+        val id = AccountIdFactory.create()
+        return FakeLegacyAccount.ACCOUNT.copy(
+            id = id,
+            name = name,
+            email = email,
+            accountNumber = accountNumber,
+            profile = ProfileDto(
+                id = id,
+                name = name ?: "",
+                color = color,
+                avatar = AvatarDto(
+                    accountId = id,
+                    avatarType = AvatarTypeDto.MONOGRAM,
+                    avatarMonogram = "AN",
+                    avatarImageUri = null,
+                    avatarIconName = null,
+                ),
+            ),
+            notificationSettings = notificationSettings,
+        )
     }
 }

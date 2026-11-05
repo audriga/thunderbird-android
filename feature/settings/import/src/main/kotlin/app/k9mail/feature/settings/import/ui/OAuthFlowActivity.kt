@@ -11,19 +11,20 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import app.k9mail.feature.settings.importing.R
-import com.fsck.k9.ui.base.K9Activity
+import com.fsck.k9.ui.base.BaseActivity
 import com.google.android.material.textview.MaterialTextView
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.launch
-import net.thunderbird.core.android.account.AccountManager
+import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.feature.account.AccountIdFactory
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 @Deprecated("Remove once import used the new oauth flow")
-class OAuthFlowActivity : K9Activity() {
+class OAuthFlowActivity : BaseActivity() {
     private val authViewModel: AuthViewModel by viewModel()
-    private val accountManager: AccountManager by inject()
+    private val accountManager: LegacyAccountManager by inject()
 
     private lateinit var errorText: MaterialTextView
     private lateinit var signInButton: Button
@@ -35,7 +36,7 @@ class OAuthFlowActivity : K9Activity() {
         setTitle(R.string.settings_import_oauth_sign_in)
 
         val accountUUid = intent.getStringExtra(EXTRA_ACCOUNT_UUID) ?: error("Missing account UUID")
-        val account = accountManager.getAccount(accountUUid) ?: error("Account not found")
+        val account = accountManager.findById(AccountIdFactory.of(accountUUid)) ?: error("Account not found")
 
         errorText = findViewById(R.id.error_text)
         signInProgress = findViewById(R.id.sign_in_progress)

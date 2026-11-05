@@ -4,16 +4,17 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import kotlin.test.Test
-import net.thunderbird.feature.account.profile.AccountAvatar
+import net.thunderbird.account.fake.FakeAccountData.ACCOUNT_ID
+import net.thunderbird.feature.account.avatar.Avatar
 import net.thunderbird.feature.account.storage.profile.AvatarDto
 import net.thunderbird.feature.account.storage.profile.AvatarTypeDto
 
 class DefaultAccountAvatarDataMapperTest {
 
-    private val testSubject = DefaultAccountAvatarDataMapper()
+    private val testSubject = DefaultAvatarDataMapper()
 
     @Test
-    fun `toDomain should map valid AvatarDto to correct AccountAvatar type`() {
+    fun `toDomain should map valid AvatarDto to correct Avatar type`() {
         require(testCases.isNotEmpty()) { "Test cases should not be empty" }
 
         testCases.forEach { case ->
@@ -26,9 +27,9 @@ class DefaultAccountAvatarDataMapperTest {
 
             // Assert
             when (result) {
-                is AccountAvatar.Monogram -> assertDomainMonogram(result, expected)
-                is AccountAvatar.Image -> assertDomainImage(result, expected)
-                is AccountAvatar.Icon -> assertDomainIcon(result, expected)
+                is Avatar.Monogram -> assertDomainMonogram(result, expected)
+                is Avatar.Image -> assertDomainImage(result, expected)
+                is Avatar.Icon -> assertDomainIcon(result, expected)
             }
         }
     }
@@ -40,6 +41,7 @@ class DefaultAccountAvatarDataMapperTest {
         avatarTypeDtos.forEach { type ->
             // Arrange
             val dto = AvatarDto(
+                accountId = ACCOUNT_ID,
                 avatarType = type,
                 avatarMonogram = null,
                 avatarImageUri = null,
@@ -50,12 +52,12 @@ class DefaultAccountAvatarDataMapperTest {
             val result = testSubject.toDomain(dto)
 
             // Assert
-            assertDomainMonogram(result, AccountAvatar.Monogram("XX"))
+            assertDomainMonogram(result, Avatar.Monogram(accountId = ACCOUNT_ID, value = "XX"))
         }
     }
 
     @Test
-    fun `toDto should map valid AccountAvatar to correct AvatarDto type`() {
+    fun `toDto should map valid Avatar to correct AvatarDto type`() {
         require(testCases.isNotEmpty()) { "Test cases should not be empty" }
 
         testCases.forEach { case ->
@@ -75,18 +77,18 @@ class DefaultAccountAvatarDataMapperTest {
         }
     }
 
-    private fun assertDomainMonogram(actual: AccountAvatar, expected: AccountAvatar) {
-        require(expected is AccountAvatar.Monogram) { "Expected AccountAvatar to be of type Monogram" }
+    private fun assertDomainMonogram(actual: Avatar, expected: Avatar) {
+        require(expected is Avatar.Monogram) { "Expected Avatar to be of type Monogram" }
         assertThat(actual).isEqualTo(expected)
     }
 
-    private fun assertDomainImage(actual: AccountAvatar, expected: AccountAvatar) {
-        require(expected is AccountAvatar.Image) { "Expected AccountAvatar to be of type Image" }
+    private fun assertDomainImage(actual: Avatar, expected: Avatar) {
+        require(expected is Avatar.Image) { "Expected Avatar to be of type Image" }
         assertThat(actual).isEqualTo(expected)
     }
 
-    private fun assertDomainIcon(actual: AccountAvatar, expected: AccountAvatar) {
-        require(expected is AccountAvatar.Icon) { "Expected AccountAvatar to be of type Icon" }
+    private fun assertDomainIcon(actual: Avatar, expected: Avatar) {
+        require(expected is Avatar.Icon) { "Expected Avatar to be of type Icon" }
         assertThat(actual).isEqualTo(expected)
     }
 
@@ -114,21 +116,39 @@ class DefaultAccountAvatarDataMapperTest {
     private companion object {
         data class TestCase(
             val dto: AvatarDto,
-            val domain: AccountAvatar,
+            val domain: Avatar,
         )
 
         val testCases = listOf(
             TestCase(
-                AvatarDto(AvatarTypeDto.MONOGRAM, "AB", null, null),
-                AccountAvatar.Monogram("AB"),
+                AvatarDto(
+                    accountId = ACCOUNT_ID,
+                    avatarType = AvatarTypeDto.MONOGRAM,
+                    avatarMonogram = "AB",
+                    avatarImageUri = null,
+                    avatarIconName = null,
+                ),
+                Avatar.Monogram(accountId = ACCOUNT_ID, value = "AB"),
             ),
             TestCase(
-                AvatarDto(AvatarTypeDto.IMAGE, null, "uri://img", null),
-                AccountAvatar.Image("uri://img"),
+                AvatarDto(
+                    accountId = ACCOUNT_ID,
+                    avatarType = AvatarTypeDto.IMAGE,
+                    avatarMonogram = null,
+                    avatarImageUri = "uri://img",
+                    avatarIconName = null,
+                ),
+                Avatar.Image(accountId = ACCOUNT_ID, uri = "uri://img"),
             ),
             TestCase(
-                AvatarDto(AvatarTypeDto.ICON, null, null, "icon_name"),
-                AccountAvatar.Icon("icon_name"),
+                AvatarDto(
+                    accountId = ACCOUNT_ID,
+                    avatarType = AvatarTypeDto.ICON,
+                    avatarMonogram = null,
+                    avatarImageUri = null,
+                    avatarIconName = "icon_name",
+                ),
+                Avatar.Icon(accountId = ACCOUNT_ID, name = "icon_name"),
             ),
         )
     }

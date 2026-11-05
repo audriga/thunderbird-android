@@ -7,25 +7,29 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
+import androidx.core.view.MenuProvider
+import androidx.lifecycle.Lifecycle
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceScreen
 import androidx.work.WorkInfo
+import app.k9mail.feature.launcher.FeatureLauncherActivity
+import app.k9mail.feature.launcher.FeatureLauncherTarget
 import app.k9mail.feature.telemetry.api.TelemetryManager
 import com.fsck.k9.job.K9JobManager
 import com.fsck.k9.ui.BuildConfig
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.base.extensions.withArguments
 import com.fsck.k9.ui.observe
+import com.fsck.k9.ui.settings.notificationactions.NotificationActionsSettingsActivity
 import com.fsck.k9.ui.settings.remove
 import com.google.android.material.snackbar.Snackbar
 import com.takisoft.preferencex.PreferenceFragmentCompat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import kotlinx.coroutines.flow.FlowCollector
 import net.thunderbird.core.featureflag.FeatureFlagProvider
-import net.thunderbird.core.featureflag.toFeatureFlagKey
+import net.thunderbird.core.featureflag.keys.GeneratedFeatureFlagKey
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -61,24 +65,37 @@ class GeneralSettingsFragment : PreferenceFragmentCompat() {
                 )
                 jobManager.scheduleDebugLogLimit(contentUri.toString()).observe(
                     this,
-                    FlowCollector { workInfo: WorkInfo? ->
-                        if (workInfo != null) {
-                            if (workInfo.state == WorkInfo.State.SUCCEEDED) {
-                                viewModel.showExportSnackbar(true)
-                            } else if (workInfo.state == WorkInfo.State.FAILED) {
-                                viewModel.showExportSnackbar(false)
-                            }
+                ) { workInfo: WorkInfo? ->
+                    if (workInfo != null) {
+                        if (workInfo.state == WorkInfo.State.SUCCEEDED) {
+                            viewModel.showExportSnackbar(true)
+                        } else if (workInfo.state == WorkInfo.State.FAILED) {
+                            viewModel.showExportSnackbar(false)
                         }
-                    },
-                )
+                    }
+                }
             }
         }
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceManager.preferenceDataStore = dataStore
         this.rootKey = rootKey
-        setHasOptionsMenu(true)
         setPreferencesFromResource(R.xml.general_settings, rootKey)
+
+        findPreference<Preference>("notification_actions_settings")?.onPreferenceClickListener =
+            Preference.OnPreferenceClickListener {
+                context?.let { NotificationActionsSettingsActivity.start(it) }
+                true
+            }
+        findPreference<Preference>("remote_feature_flag")?.onPreferenceClickListener =
+            Preference.OnPreferenceClickListener {
+                FeatureLauncherActivity.launch(
+                    context = requireContext(),
+                    target = FeatureLauncherTarget.RemoteFeatureFlag,
+                )
+                true
+            }
+
         val listener = Preference.OnPreferenceChangeListener { _, newValue ->
             if (!(newValue as Boolean)) {
                 jobManager.cancelDebugLogLimit()
@@ -89,7 +106,7 @@ class GeneralSettingsFragment : PreferenceFragmentCompat() {
             true
         }
         findPreference<Preference>("sync_debug_logging")?.onPreferenceChangeListener = listener
-        featureFlagProvider.provide("disable_font_size_config".toFeatureFlagKey())
+        featureFlagProvider.provide(GeneratedFeatureFlagKey.DISABLE_FONT_SIZE_CONFIG)
             .onEnabled {
                 val parentPreference = findPreference<PreferenceCategory>("global_preferences")
                 val fontSizePreferenceScreen = findPreference<PreferenceScreen>("font_size")
@@ -104,7 +121,7 @@ class GeneralSettingsFragment : PreferenceFragmentCompat() {
                 remove()
                 onPreferenceClickListener = null
             } else {
-                onPreferenceClickListener = Preference.OnPreferenceClickListener { preference ->
+                onPreferenceClickListener = Preference.OnPreferenceClickListener {
                     viewModel.onOpenSecretDebugScreen(requireContext())
 
                     true
@@ -127,25 +144,43 @@ class GeneralSettingsFragment : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = preferenceScreen.title
-    }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        if (rootKey == PREFERENCE_SCREEN_DEBUGGING) {
-            inflater.inflate(R.menu.debug_settings_option, menu)
-            currentUiState?.let { uiState ->
-                menu.findItem(R.id.exportLogs).isEnabled = uiState.isExportLogsMenuEnabled
-            }
-        }
-    }
+        val menuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    if (rootKey == PREFERENCE_SCREEN_DEBUGGING) {
+                        menuInflater.inflate(R.menu.debug_settings_option, menu)
+                    }
+                }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.exportLogs) {
-            exportLogsResultContract.launch(GeneralSettingsViewModel.DEFAULT_FILENAME)
-        } else if (item.itemId == R.id.exportSyncLogs) {
-            exportSyncDebugLogsResultContract.launch(formatFileExportUriString())
-        }
+                override fun onPrepareMenu(menu: Menu) {
+                    if (rootKey == PREFERENCE_SCREEN_DEBUGGING) {
+                        currentUiState?.let { uiState ->
+                            menu.findItem(R.id.exportLogs).isEnabled = uiState.isExportLogsMenuEnabled
+                        }
+                    }
+                }
 
-        return super.onOptionsItemSelected(item)
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                    return when (menuItem.itemId) {
+                        R.id.exportLogs -> {
+                            exportLogsResultContract.launch(GeneralSettingsViewModel.DEFAULT_FILENAME)
+                            true
+                        }
+
+                        R.id.exportSyncLogs -> {
+                            exportSyncDebugLogsResultContract.launch(formatFileExportUriString())
+                            true
+                        }
+
+                        else -> false
+                    }
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED,
+        )
     }
 
     private fun initializeDataCollection() {
@@ -205,6 +240,8 @@ class GeneralSettingsFragment : PreferenceFragmentCompat() {
         private const val PREFERENCE_DATA_COLLECTION = "data_collection"
         const val DEFAULT_SYNC_FILENAME = "thunderbird-sync-logs"
 
-        fun create(rootKey: String? = null) = GeneralSettingsFragment().withArguments(ARG_PREFERENCE_ROOT to rootKey)
+        fun create(rootKey: String? = null) = GeneralSettingsFragment().withArguments {
+            putString(ARG_PREFERENCE_ROOT, rootKey)
+        }
     }
 }

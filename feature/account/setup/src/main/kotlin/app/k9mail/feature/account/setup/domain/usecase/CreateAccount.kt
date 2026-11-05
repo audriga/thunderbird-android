@@ -9,20 +9,32 @@ import app.k9mail.feature.account.setup.AccountSetupExternalContract.AccountCrea
 import app.k9mail.feature.account.setup.AccountSetupExternalContract.AccountCreator.AccountCreatorResult
 import app.k9mail.feature.account.setup.domain.DomainContract.UseCase
 import java.util.UUID
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.account.AccountIdFactory
 
 class CreateAccount(
     private val accountCreator: AccountCreator,
-    private val uuidGenerator: () -> String = { UUID.randomUUID().toString() },
+    private val uuidGenerator: () -> AccountId = { AccountIdFactory.create() },
 ) : UseCase.CreateAccount {
     override suspend fun execute(accountState: AccountState): AccountCreatorResult {
+        val emailAddress = checkNotNull(accountState.emailAddress) { "Missing email address" }
+        val incomingServerSettings = checkNotNull(accountState.incomingServerSettings) {
+            "Missing incoming server settings"
+        }
+        val outgoingServerSettings = checkNotNull(accountState.outgoingServerSettings) {
+            "Missing outgoing server settings"
+        }
+        val displayOptions = checkNotNull(accountState.displayOptions) { "Missing display options" }
+        val syncOptions = checkNotNull(accountState.syncOptions) { "Missing sync options" }
+
         val account = Account(
-            uuid = uuidGenerator(),
-            emailAddress = accountState.emailAddress!!,
-            incomingServerSettings = accountState.incomingServerSettings!!.copy(),
-            outgoingServerSettings = accountState.outgoingServerSettings!!.copy(),
+            id = uuidGenerator(),
+            emailAddress = emailAddress,
+            incomingServerSettings = incomingServerSettings.copy(),
+            outgoingServerSettings = outgoingServerSettings.copy(),
             authorizationState = accountState.authorizationState?.value,
             specialFolderSettings = accountState.specialFolderSettings,
-            options = mapOptions(accountState.displayOptions!!, accountState.syncOptions!!),
+            options = mapOptions(displayOptions, syncOptions),
         )
 
         return accountCreator.createAccount(account)

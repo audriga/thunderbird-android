@@ -10,7 +10,8 @@ import java.util.TreeMap;
 
 import com.fsck.k9.FontSizes;
 import com.fsck.k9.K9;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.legacy.logging.Log;
+import net.thunderbird.core.preference.storage.Storage;
 import net.thunderbird.core.preference.storage.StorageEditor;
 
 /*
@@ -22,7 +23,9 @@ import net.thunderbird.core.preference.storage.StorageEditor;
  * - add unit test that validates the default values are actually valid according to the validator
  */
 
-class Settings {
+public class Settings {
+    private static final String TAG = "Settings";
+
     /**
      * Version number of global and account settings.
      *
@@ -34,10 +37,10 @@ class Settings {
      *
      * @see SettingsExporter
      */
-    public static final int VERSION = 105;
+    public static final int VERSION = 112;
 
     static Map<String, Object> validate(int version, Map<String, TreeMap<Integer, SettingsDescription<?>>> settings,
-        Map<String, String> importedSettings, boolean useDefaultValues) {
+            Map<String, String> importedSettings, boolean useDefaultValues) {
 
         Map<String, Object> validatedSettings = new HashMap<>();
         for (Map.Entry<String, TreeMap<Integer, SettingsDescription<?>>> versionedSetting : settings.entrySet()) {
@@ -64,9 +67,9 @@ class Settings {
 
             boolean useDefaultValue;
             if (!importedSettings.containsKey(key)) {
-                Log.v("Key \"%s\" wasn't found in the imported file.%s",
-                    key,
-                    (useDefaultValues) ? " Using default value." : "");
+                Log.v(TAG, "Key \"%s\" wasn't found in the imported file.%s",
+                        key,
+                        (useDefaultValues) ? " Using default value." : "");
 
                 useDefaultValue = useDefaultValues;
             } else {
@@ -76,10 +79,10 @@ class Settings {
                     validatedSettings.put(key, internalValue);
                     useDefaultValue = false;
                 } catch (InvalidSettingValueException e) {
-                    Log.v("Key \"%s\" has invalid value \"%s\" in imported file. %s",
-                        key,
-                        prettyValue,
-                        (useDefaultValues) ? "Using default value." : "Skipping.");
+                    Log.v(TAG, "Key \"%s\" has invalid value \"%s\" in imported file. %s",
+                            key,
+                            prettyValue,
+                            (useDefaultValues) ? "Using default value." : "Skipping.");
 
                     useDefaultValue = useDefaultValues;
                 }
@@ -107,7 +110,7 @@ class Settings {
      * @return The settings converted to the string representation used in the preference storage.
      */
     public static Map<String, String> convert(Map<String, Object> settings,
-        Map<String, TreeMap<Integer, SettingsDescription<?>>> settingDescriptions) {
+            Map<String, TreeMap<Integer, SettingsDescription<?>>> settingDescriptions) {
         Map<String, String> serializedSettings = new HashMap<>();
 
         for (Entry<String, Object> setting : settings.entrySet()) {
@@ -117,7 +120,7 @@ class Settings {
             TreeMap<Integer, SettingsDescription<?>> versionedSetting = settingDescriptions.get(settingName);
             Integer highestVersion = versionedSetting.lastKey();
 
-            //noinspection unchecked
+            @SuppressWarnings("unchecked")
             SettingsDescription<Object> settingDesc =
                 (SettingsDescription<Object>) versionedSetting.get(highestVersion);
 
@@ -126,7 +129,7 @@ class Settings {
 
                 serializedSettings.put(settingName, stringValue);
             } else {
-                Log.w("Settings.convert() called with a setting that should have been removed: %s", settingName);
+                Log.w(TAG, "Settings.convert() called with a setting that should have been removed: %s", settingName);
             }
         }
 
@@ -158,7 +161,7 @@ class Settings {
     }
 
 
-    static class InvalidSettingValueException extends Exception {
+    public static class InvalidSettingValueException extends Exception {
         private static final long serialVersionUID = 1L;
 
         public InvalidSettingValueException() {
@@ -196,13 +199,13 @@ class Settings {
      * negligible.
      * </p>
      */
-     abstract static class SettingsDescription<T> {
+    public abstract static class SettingsDescription<T> {
         /**
          * The setting's default value (internal representation).
          */
         T defaultValue;
 
-        SettingsDescription(T defaultValue) {
+        public SettingsDescription(T defaultValue) {
             this.defaultValue = defaultValue;
         }
 
@@ -269,18 +272,18 @@ class Settings {
         }
     }
 
-    static class V {
+    public static class V {
         public final Integer version;
         public final SettingsDescription<?> description;
 
-        V(Integer version, SettingsDescription<?> description) {
+        public V(Integer version, SettingsDescription<?> description) {
             this.version = version;
             this.description = description;
         }
     }
 
-    static class StringSetting extends SettingsDescription<String> {
-        StringSetting(String defaultValue) {
+    public static class StringSetting extends SettingsDescription<String> {
+        public StringSetting(String defaultValue) {
             super(defaultValue);
         }
 
@@ -295,8 +298,8 @@ class Settings {
         }
     }
 
-    static class BooleanSetting extends SettingsDescription<Boolean> {
-        BooleanSetting(boolean defaultValue) {
+    public static class BooleanSetting extends SettingsDescription<Boolean> {
+        public BooleanSetting(boolean defaultValue) {
             super(defaultValue);
         }
 
@@ -311,8 +314,8 @@ class Settings {
         }
     }
 
-    static class ColorSetting extends SettingsDescription<Integer> {
-        ColorSetting(int defaultValue) {
+    public static class ColorSetting extends SettingsDescription<Integer> {
+        public ColorSetting(int defaultValue) {
             super(defaultValue);
         }
 
@@ -343,10 +346,10 @@ class Settings {
         }
     }
 
-    static class EnumSetting<T extends Enum<T>> extends SettingsDescription<T> {
+    public static class EnumSetting<T extends Enum<T>> extends SettingsDescription<T> {
         private Class<T> enumClass;
 
-        EnumSetting(Class<T> enumClass, T defaultValue) {
+        public EnumSetting(Class<T> enumClass, T defaultValue) {
             super(defaultValue);
             this.enumClass = enumClass;
         }
@@ -367,8 +370,8 @@ class Settings {
      * @param <T>
      *         The type of the internal representation (e.g. {@code Integer}).
      */
-    abstract static class PseudoEnumSetting<T> extends SettingsDescription<T> {
-        PseudoEnumSetting(T defaultValue) {
+    public abstract static class PseudoEnumSetting<T> extends SettingsDescription<T> {
+        public PseudoEnumSetting(T defaultValue) {
             super(defaultValue);
         }
 
@@ -391,10 +394,10 @@ class Settings {
         }
     }
 
-    static class FontSizeSetting extends PseudoEnumSetting<Integer> {
+    public static class FontSizeSetting extends PseudoEnumSetting<Integer> {
         private final Map<Integer, String> mapping;
 
-        FontSizeSetting(int defaultValue) {
+        public FontSizeSetting(int defaultValue) {
             super(defaultValue);
 
             Map<Integer, String> mapping = new HashMap<>();
@@ -426,10 +429,10 @@ class Settings {
         }
     }
 
-    static class WebFontSizeSetting extends PseudoEnumSetting<Integer> {
+    public static class WebFontSizeSetting extends PseudoEnumSetting<Integer> {
         private final Map<Integer, String> mapping;
 
-        WebFontSizeSetting(int defaultValue) {
+        public WebFontSizeSetting(int defaultValue) {
             super(defaultValue);
 
             Map<Integer, String> mapping = new HashMap<>();
@@ -459,11 +462,11 @@ class Settings {
         }
     }
 
-    static class IntegerRangeSetting extends SettingsDescription<Integer> {
+    public static class IntegerRangeSetting extends SettingsDescription<Integer> {
         private int start;
         private int end;
 
-        IntegerRangeSetting(int start, int end, int defaultValue) {
+        public IntegerRangeSetting(int start, int end, int defaultValue) {
             super(defaultValue);
             this.start = start;
             this.end = end;

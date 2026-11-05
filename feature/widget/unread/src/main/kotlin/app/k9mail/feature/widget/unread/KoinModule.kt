@@ -13,12 +13,13 @@ val unreadWidgetModule = module {
     single {
         UnreadWidgetDataProvider(
             context = get(),
-            preferences = get(),
+            accountManager = get(),
             messageCountsProvider = get(),
             defaultFolderProvider = get(),
-            folderRepository = get(),
+            folderQueryRepository = get(),
             folderNameFormatter = get(),
             coreResourceProvider = get(),
+            logger = get(),
         )
     }
     single {
@@ -27,6 +28,16 @@ val unreadWidgetModule = module {
             config = get(),
         )
     }
-    single { UnreadWidgetUpdateListener(unreadWidgetUpdater = get()) }
-    single { UnreadWidgetMigrations(accountRepository = get(), folderRepository = get()) }
+    single {
+        UnreadWidgetUpdateListener(
+            unreadWidgetUpdater = get(),
+            logger = get(),
+        )
+    }
+    single {
+        UnreadWidgetMigrations(
+            accountManager = get(),
+            folderQueryRepository = get(),
+        )
+    }
 }

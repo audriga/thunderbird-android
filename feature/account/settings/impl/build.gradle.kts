@@ -5,21 +5,46 @@ plugins {
 android {
     namespace = "net.thunderbird.feature.account.settings"
     resourcePrefix = "account_settings_"
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
+    api(projects.feature.account.api)
     api(projects.feature.account.settings.api)
     implementation(projects.feature.account.core)
+    implementation(projects.feature.account.avatar.api)
     implementation(projects.feature.account.avatar.impl)
+    implementation(projects.legacy.ui.legacy)
 
-    implementation(projects.core.outcome)
+    implementation(projects.core.featureflag)
+    implementation(projects.core.android.account)
+    implementation(projects.feature.mail.account.api)
+    implementation(projects.core.file)
+    implementation(projects.core.validation)
 
-    implementation(projects.core.logging.implLegacy)
-    implementation(projects.core.ui.compose.designsystem)
-    implementation(projects.core.ui.compose.navigation)
-    implementation(projects.core.ui.compose.preference)
-    implementation(projects.core.ui.legacy.theme2.common)
+    implementation(projects.core.ui.setting.api)
+    implementation(projects.core.ui.setting.component)
 
-    testImplementation(projects.core.logging.testing)
+    implementation(projects.legacy.logging)
+    implementation(projects.core.ui.contract)
+    implementation(projects.core.ui.navigation)
+    implementation(projects.core.common)
+
+    implementation(libs.uri)
+
+    implementation(projects.feature.launcher)
+
+    debugImplementation(projects.core.ui.setting.implDialog)
+
     testImplementation(projects.core.ui.compose.testing)
+}
+
+codeCoverage {
+    branchCoverage = 0
+    lineCoverage = 4
 }

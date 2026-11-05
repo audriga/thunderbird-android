@@ -11,10 +11,12 @@ import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.message.quote.InsertableHtmlContent;
 import net.thunderbird.core.android.account.Identity;
 import net.thunderbird.core.android.account.QuoteStyle;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.legacy.logging.Log;
 
 
 public class IdentityHeaderBuilder {
+    private static final String TAG = "IdentityHeaderBuilder";
+
     private static final int MAX_LINE_LENGTH = 72;
     private static final int FIRST_LINE_EXTRA_LENGTH = K9.IDENTITY_HEADER.length() + 2;
 
@@ -85,6 +87,7 @@ public class IdentityHeaderBuilder {
         // If we're not using the standard identity of signature, append it on to the identity blob.
         if (identity.getSignatureUse() && signatureChanged) {
             appendValue(IdentityField.SIGNATURE, signature);
+            appendValue(IdentityField.SIGNATURE_IS_HTML, Boolean.toString(identity.getSignatureIsHtml()));
         }
 
         if (identityChanged) {
@@ -102,7 +105,7 @@ public class IdentityHeaderBuilder {
         String k9identity = IdentityField.IDENTITY_VERSION_1 + uri.build().getEncodedQuery();
         String headerValue = foldHeaderValue(k9identity);
 
-        Log.d("Generated identity: %s", headerValue);
+        Log.d(TAG, "Generated identity: %s", headerValue);
         return headerValue;
     }
 

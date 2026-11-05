@@ -1,60 +1,149 @@
 package net.thunderbird.feature.account.settings.impl.domain
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import kotlinx.collections.immutable.ImmutableList
+import com.eygraber.uri.Uri
 import kotlinx.coroutines.flow.Flow
-import net.thunderbird.core.outcome.Outcome
-import net.thunderbird.core.ui.compose.preference.api.Preference
-import net.thunderbird.core.ui.compose.preference.api.PreferenceSetting
+import net.thunderbird.components.core.outcome.Outcome
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.validation.ValidationError
 import net.thunderbird.feature.account.AccountId
-import net.thunderbird.feature.account.settings.impl.domain.AccountSettingsDomainContract.SettingsError
-
-internal typealias AccountNameOutcome = Outcome<String, SettingsError>
-internal typealias AccountSettingsOutcome = Outcome<ImmutableList<Preference>, SettingsError>
+import net.thunderbird.feature.account.avatar.Avatar
+import net.thunderbird.feature.account.profile.AccountProfile
 
 internal interface AccountSettingsDomainContract {
 
     interface UseCase {
-
         fun interface GetAccountName {
-            operator fun invoke(accountId: AccountId): Flow<AccountNameOutcome>
+            operator fun invoke(accountId: AccountId): Flow<Outcome<String, AccountSettingError>>
         }
 
-        fun interface GetGeneralPreferences {
-            operator fun invoke(accountId: AccountId): Flow<AccountSettingsOutcome>
+        fun interface GetAccountProfile {
+            operator fun invoke(accountId: AccountId): Flow<Outcome<AccountProfile, AccountSettingError>>
         }
 
-        fun interface UpdateGeneralPreferences {
+        fun interface GetLegacyAccount {
+            suspend operator fun invoke(accountId: AccountId): Outcome<LegacyAccount, AccountSettingError>
+        }
+
+        fun interface UpdateGeneralSettings {
             suspend operator fun invoke(
                 accountId: AccountId,
-                preference: PreferenceSetting<*>,
-            ): Outcome<Unit, SettingsError>
+                command: UpdateGeneralSettingCommand,
+            ): Outcome<Unit, AccountSettingError>
+        }
+
+        fun interface UpdateReadMailSettings {
+            suspend operator fun invoke(
+                accountId: AccountId,
+                command: UpdateReadMessageSettingsCommand,
+            ): Outcome<Unit, AccountSettingError>
+        }
+
+        fun interface UpdateSearchSettings {
+            suspend operator fun invoke(
+                accountId: AccountId,
+                command: UpdateSearchSettingsCommand,
+            ): Outcome<Unit, AccountSettingError>
+        }
+
+        fun interface UpdateFetchingMailSettings {
+            suspend operator fun invoke(
+                accountId: AccountId,
+                command: UpdateFetchingMailSettingsCommand,
+            ): Outcome<Unit, AccountSettingError>
+        }
+
+        fun interface UpdateSendingMailSettings {
+            suspend operator fun invoke(
+                accountId: AccountId,
+                command: UpdateSendingMailSettingsCommand,
+            ): Outcome<Unit, AccountSettingError>
+        }
+
+        fun interface UpdateAvatarImage {
+            suspend operator fun invoke(
+                accountId: AccountId,
+                imageUri: Uri,
+            ): Outcome<Avatar.Image, AccountSettingError>
+        }
+
+        fun interface ValidateAccountName {
+            operator fun invoke(name: String): Outcome<Unit, ValidateAccountNameError>
+        }
+
+        fun interface ValidateAvatarMonogram {
+            operator fun invoke(monogram: String): Outcome<Unit, ValidateMonogramError>
         }
     }
 
-    interface ResourceProvider {
-        interface GeneralResourceProvider {
-            fun profileUi(
-                name: String,
-                color: Int,
-            ): @Composable (Modifier) -> Unit
-
-            val nameTitle: () -> String
-            val nameDescription: () -> String?
-            val nameIcon: () -> ImageVector?
-
-            val colorTitle: () -> String
-            val colorDescription: () -> String?
-            val colorIcon: () -> ImageVector?
-            val colors: ImmutableList<Int>
-        }
+    sealed interface UpdateGeneralSettingCommand {
+        data class UpdateName(val value: String) : UpdateGeneralSettingCommand
+        data class UpdateColor(val value: Int) : UpdateGeneralSettingCommand
+        data class UpdateAvatar(val value: Avatar) : UpdateGeneralSettingCommand
     }
 
-    sealed interface SettingsError {
+    sealed interface UpdateReadMessageSettingsCommand {
+        data class UpdateShowPictures(val value: String) : UpdateReadMessageSettingsCommand
+        data class UpdateIsMarkMessageAsReadOnView(val value: Boolean) : UpdateReadMessageSettingsCommand
+    }
+
+    sealed interface UpdateSearchSettingsCommand {
+        data class UpdateServerSearchLimit(val value: Int) : UpdateSearchSettingsCommand
+    }
+
+    sealed interface UpdateFetchingMailSettingsCommand {
+        data class UpdateLocalFolderSize(val value: Int) : UpdateFetchingMailSettingsCommand
+        data class UpdateSyncMessageFrom(val value: Int) : UpdateFetchingMailSettingsCommand
+        data class UpdateFetchMessageUpTo(val value: Int) : UpdateFetchingMailSettingsCommand
+        data class UpdateFolderPollFrequency(val value: Int) : UpdateFetchingMailSettingsCommand
+        data class UpdateSyncServerDeletions(val value: Boolean) : UpdateFetchingMailSettingsCommand
+        data class UpdateMarkAsReadWhenDeleted(val value: Boolean) : UpdateFetchingMailSettingsCommand
+        data class UpdateDeletePolicy(val value: String) : UpdateFetchingMailSettingsCommand
+        data class UpdateExpungePolicy(val value: String) : UpdateFetchingMailSettingsCommand
+        data class UpdateMaxPushFolders(val value: Int) : UpdateFetchingMailSettingsCommand
+        data class UpdateIdleRefreshMinutes(val value: Int) : UpdateFetchingMailSettingsCommand
+    }
+
+    sealed interface UpdateSendingMailSettingsCommand {
+        data class UpdateMessageFormat(val value: String) : UpdateSendingMailSettingsCommand
+        data class UpdateAlwaysShowCcBcc(val value: Boolean) : UpdateSendingMailSettingsCommand
+        data class UpdateReadReceipt(val value: Boolean) : UpdateSendingMailSettingsCommand
+        data class UpdateReplyQuotingStyle(val value: String) : UpdateSendingMailSettingsCommand
+        data class UpdateQuoteMessageWhenReplying(val value: Boolean) : UpdateSendingMailSettingsCommand
+        data class UpdateReplyAfterQuotedText(val value: Boolean) : UpdateSendingMailSettingsCommand
+        data class UpdateStripSignatureOnReply(val value: Boolean) : UpdateSendingMailSettingsCommand
+        data class UpdateQuotedTextPrefix(val value: String) : UpdateSendingMailSettingsCommand
+        data class UpdateUploadSentMessages(val value: Boolean) : UpdateSendingMailSettingsCommand
+    }
+
+    sealed interface AccountSettingError {
         data class NotFound(
             val message: String,
-        ) : SettingsError
+        ) : AccountSettingError
+
+        data class StorageError(
+            val message: String,
+        ) : AccountSettingError
+
+        data class UnsupportedFormat(
+            val message: String,
+        ) : AccountSettingError
+
+        data class UnsupportedMessageFormat(
+            val message: String,
+        ) : AccountSettingError
+
+        data class UnsupportedQuoteStyle(
+            val message: String,
+        ) : AccountSettingError
+    }
+
+    sealed interface ValidateAccountNameError : ValidationError {
+        data object EmptyName : ValidateAccountNameError
+        data object TooLongName : ValidateAccountNameError
+    }
+
+    sealed interface ValidateMonogramError : ValidationError {
+        data object EmptyMonogram : ValidateMonogramError
+        data object TooLongMonogram : ValidateMonogramError
     }
 }

@@ -2,11 +2,26 @@
 
 import argparse
 import os
+import re
 import requests
 import yaml
 import sys
 
 from jinja2 import Template
+
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "changelog"))
+from generate_changelog_json import (  # noqa: E402
+    extract_release,
+    load_existing_index,
+    load_schema,
+    to_resource_name,
+    update_index,
+    validate_json,
+    write_index_file,
+    write_release_file,
+)
 
 
 def render_notes(
@@ -16,6 +31,7 @@ def render_notes(
     applicationid,
     longform_file,
     print_only=False,
+    overwrite=False,
     notesrepo="thunderbird/thunderbird-notes",
     notesbranch="master",
 ):
@@ -26,12 +42,12 @@ def render_notes(
     """
     tb_notes_filename = f"{version}.yml"
     tb_notes_directory = "android_release"
-    if "0b" in version:
-        tb_notes_filename = f"{version[0:-1]}eta.yml"
+    if re.search(r"0b\d+$", version):
+        tb_notes_filename = f"{re.sub(r'b\d+$', 'beta', version)}.yml"
         tb_notes_directory = "android_beta"
 
     if application == "k9mail":
-        build_type = "main"
+        build_type = "release"
     else:
         if applicationid == "net.thunderbird.android":
             build_type = "release"
@@ -72,7 +88,7 @@ def render_notes(
         render_data["releases"][vers]["versioncode"] = int(versioncode)
         render_data["releases"][vers]["application"] = application
         render_data["releases"][vers]["date"] = release["release_date"]
-        render_data["releases"][vers]["short_notes"] = []
+        render_data["releases"][vers]["short_notes"] = {}
         render_data["releases"][vers]["notes"] = {}
         render_data["releases"][vers]["long_notes"] = []
         for note in yaml_content["notes"]:
@@ -87,22 +103,21 @@ def render_notes(
                     tag = note["tag"].lower().capitalize()
                     if tag not in render_data["releases"][vers]["notes"]:
                         render_data["releases"][vers]["notes"][tag] = []
-                    render_data["releases"][vers]["notes"][tag].append(
-                        note["note"].strip()
-                    )
+                    note_entry = {
+                        "text": note["note"].strip(),
+                        "issues": note.get("issues", []),
+                    }
+                    render_data["releases"][vers]["notes"][tag].append(note_entry)
                     render_data["releases"][vers]["long_notes"].append(note["note"].strip())
                 if "short_note" in note:
-                    render_data["releases"][vers]["short_notes"].append(
+                    tag = note["tag"].lower().capitalize()
+                    if tag not in render_data["releases"][vers]["short_notes"]:
+                        render_data["releases"][vers]["short_notes"][tag] = []
+                    render_data["releases"][vers]["short_notes"][tag].append(
                         note["short_note"].strip()
                     )
 
     render_files = {
-        "changelog_master": {
-            "template": "changelog_master.xml",
-            "outfile": f"./app-{application}/src/{build_type}/res/raw/changelog_master.xml",
-            "render_data": render_data["releases"][version],
-            "autoescape": True,
-        },
         "changelog": {
             "template": "changelog.txt",
             "outfile": f"./app-metadata/{applicationid}/en-US/changelogs/{versioncode}.txt",
@@ -117,35 +132,28 @@ def render_notes(
         },
     }
 
+    if not print_only and not overwrite:
+        for config in render_files.values():
+            if os.path.exists(config["outfile"]):
+                print(
+                    f"Error: Release notes already exist: {config['outfile']}. "
+                    "Use --overwrite to replace them, or --print to preview without writing.",
+                    file=sys.stderr,
+                )
+                return 1
+
     template_base = os.path.join(os.path.dirname(sys.argv[0]), "templates")
 
-    for render_file in render_files:
-        with open(os.path.join(template_base, render_files[render_file]["template"]), "r") as file:
+    for render_file, config in render_files.items():
+        with open(os.path.join(template_base, config["template"]), "r") as file:
             template = file.read()
-        template = Template(template, autoescape=render_files[render_file].get("autoescape", False))
-        rendered = template.render(render_files[render_file]["render_data"])
-        if render_file == "changelog_master":
-            if print_only:
-                print(f"\n==={render_files[render_file]['outfile']}===")
-                print("...")
-                print(rendered)
-                print("...")
-            else:
-                with open(render_files[render_file]["outfile"], "r") as file:
-                    lines = file.readlines()
-                    for index, line in enumerate(lines):
-                        if "<changelog>" in line:
-                            if version in lines[index + 1]:
-                                break
-                            lines.insert(index + 1, rendered)
-                            break
-                with open(render_files[render_file]["outfile"], "w") as file:
-                    file.writelines(lines)
-        elif render_file == "changelog" or render_file == "changelog_long":
+        template = Template(template, autoescape=config.get("autoescape", False))
+        rendered = template.render(config["render_data"])
+        if render_file == "changelog" or render_file == "changelog_long":
             stripped = rendered.lstrip()
-            maxlen = render_files[render_file].get("max_length", float("inf"))
+            maxlen = config.get("max_length", float("inf"))
             if print_only:
-                print(f"\n==={render_files[render_file]['outfile']}===")
+                print(f"\n==={config['outfile']}===")
                 print(stripped)
 
             if len(stripped) > maxlen:
@@ -155,8 +163,37 @@ def render_notes(
                 sys.exit(1)
 
             if not print_only:
-                with open(render_files[render_file]["outfile"], "x") as file:
-                    file.write(stripped)
+                try:
+                    with open(config["outfile"], "w" if overwrite else "x") as file:
+                        file.write(stripped)
+                except FileExistsError:
+                    print(
+                        f"Error: Release notes already exist: {config['outfile']}. "
+                        "Use --overwrite to replace them, or --print to preview without writing.",
+                        file=sys.stderr,
+                    )
+                    return 1
+
+    output_dir = Path(f"app-{application}/src/{build_type}/res/raw")
+    schema_dir = Path(__file__).resolve().parents[2] / "schemas"
+    release_schema = load_schema(schema_dir / "changelog-release.schema.json")
+    index_schema = load_schema(schema_dir / "changelog-index.schema.json")
+    release = extract_release(version, int(versioncode), application, yaml_content)
+    validate_json(release, release_schema, f"Release {version}")
+    index = update_index(load_existing_index(output_dir), release, to_resource_name(version))
+    validate_json(index, index_schema, "Changelog index")
+
+    if print_only:
+        print(f"\n==={output_dir / (to_resource_name(version) + '.json')}===")
+        print(release)
+        print(f"\n==={output_dir / 'changelog_index.json'}===")
+        print(index)
+    else:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        write_release_file(release, output_dir)
+        write_index_file(index, output_dir)
+
+    return 0
 
 
 def main():
@@ -166,6 +203,11 @@ def main():
         "-p",
         action="store_true",
         help="Only print the processed release notes",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace existing store and long-form note files instead of failing",
     )
     parser.add_argument(
         "--repository",
@@ -211,17 +253,18 @@ def main():
     else:
         application = "thunderbird"
 
-    render_notes(
+    return render_notes(
         args.version,
         args.versioncode,
         application,
         args.applicationid,
         args.longform_file,
         print_only=args.print,
+        overwrite=args.overwrite,
         notesrepo=args.repository,
         notesbranch=args.branch,
     )
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

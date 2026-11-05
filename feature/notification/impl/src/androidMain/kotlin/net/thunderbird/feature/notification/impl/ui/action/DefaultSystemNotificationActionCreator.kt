@@ -1,6 +1,6 @@
 package net.thunderbird.feature.notification.impl.ui.action
 
-import net.thunderbird.core.logging.Logger
+import net.thunderbird.components.core.logging.Logger
 import net.thunderbird.feature.notification.api.content.Notification
 import net.thunderbird.feature.notification.api.content.SystemNotification
 import net.thunderbird.feature.notification.api.ui.action.NotificationAction
@@ -16,7 +16,6 @@ internal class DefaultSystemNotificationActionCreator(
         notification: SystemNotification,
         action: NotificationAction,
     ): AndroidNotificationAction {
-        logger.debug(TAG) { "create() called with: notification = $notification, action = $action" }
         val intent = actionIntentCreators
             .first { it.accept(notification, action) }
             .create(notification, action)

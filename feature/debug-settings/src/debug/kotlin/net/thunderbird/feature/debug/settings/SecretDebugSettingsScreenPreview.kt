@@ -4,27 +4,37 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import app.k9mail.core.android.common.provider.NotificationIconResourceProvider
 import app.k9mail.core.ui.compose.common.koin.koinPreview
-import app.k9mail.core.ui.compose.designsystem.PreviewWithThemesLightDark
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import net.thunderbird.components.ui.bolt.PreviewWithThemesLightDark
 import net.thunderbird.core.common.resources.StringsResourceManager
-import net.thunderbird.core.outcome.Outcome
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.account.profile.AccountProfile
+import net.thunderbird.feature.account.profile.AccountProfileRepository
+import net.thunderbird.feature.debug.settings.navigation.SecretDebugSettingsRoute
 import net.thunderbird.feature.debug.settings.notification.DebugNotificationSectionViewModel
-import net.thunderbird.feature.mail.account.api.AccountManager
-import net.thunderbird.feature.mail.account.api.BaseAccount
-import net.thunderbird.feature.notification.api.command.NotificationCommand.Failure
-import net.thunderbird.feature.notification.api.command.NotificationCommand.Success
+import net.thunderbird.feature.notification.api.content.InAppNotification
 import net.thunderbird.feature.notification.api.content.Notification
-import net.thunderbird.feature.notification.api.receiver.InAppNotificationEvent
-import net.thunderbird.feature.notification.api.receiver.InAppNotificationReceiver
-import net.thunderbird.feature.notification.api.sender.NotificationSender
+import net.thunderbird.feature.notification.api.receiver.InAppNotificationStream
 
 @PreviewLightDark
 @Composable
 private fun SecretDebugSettingsScreenPreview() {
     koinPreview {
+        single<InAppNotificationStream> {
+            object : InAppNotificationStream {
+                override val notifications: StateFlow<Set<InAppNotification>> = MutableStateFlow(emptySet())
+            }
+        }
+        single<NotificationIconResourceProvider> {
+            object : NotificationIconResourceProvider {
+                override val pushNotificationIcon: Int = 0
+            }
+        }
         single<DebugNotificationSectionViewModel> {
             DebugNotificationSectionViewModel(
                 stringsResourceManager = object : StringsResourceManager {
@@ -32,34 +42,22 @@ private fun SecretDebugSettingsScreenPreview() {
 
                     override fun stringResource(resourceId: Int, vararg formatArgs: Any?): String = "fake"
                 },
-                accountManager = object : AccountManager<BaseAccount> {
-                    override fun getAccounts(): List<BaseAccount> = listOf()
-                    override fun getAccountsFlow(): Flow<List<BaseAccount>> = flowOf(listOf())
-                    override fun getAccount(accountUuid: String): BaseAccount? = null
-                    override fun getAccountFlow(accountUuid: String): Flow<BaseAccount?> = flowOf(null)
-                    override fun moveAccount(
-                        account: BaseAccount,
-                        newPosition: Int,
-                    ) = Unit
-
-                    override fun saveAccount(account: BaseAccount) = Unit
+                accountProfileRepository = object : AccountProfileRepository {
+                    override fun getAll(): Flow<List<AccountProfile>> = flowOf(listOf())
+                    override fun getById(id: AccountId): Flow<AccountProfile?> = flowOf(null)
+                    override suspend fun update(accountProfile: AccountProfile) = Unit
                 },
-                notificationSender = object : NotificationSender {
-                    override fun send(
-                        notification: Notification,
-                    ): Flow<Outcome<Success<Notification>, Failure<Notification>>> =
-                        error("not implemented")
-                },
-                notificationReceiver = object : InAppNotificationReceiver {
-                    override val events: SharedFlow<InAppNotificationEvent>
-                        get() = error("not implemented")
-                },
+                notificationSender = { _: Notification -> error("not implemented") },
+                inAppNotificationStream = get(),
+                notificationIconResourceProvider = get(),
             )
         }
     } WithContent {
         PreviewWithThemesLightDark {
             SecretDebugSettingsScreen(
+                starterTab = SecretDebugSettingsRoute().tab,
                 onNavigateBack = { },
+                onFinish = { },
                 modifier = Modifier.fillMaxSize(),
             )
         }

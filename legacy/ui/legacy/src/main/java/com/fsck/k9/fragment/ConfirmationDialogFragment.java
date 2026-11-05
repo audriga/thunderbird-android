@@ -10,7 +10,7 @@ import android.os.Bundle;
 
 import androidx.fragment.app.DialogFragment;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.legacy.logging.Log;
 
 public class ConfirmationDialogFragment extends DialogFragment implements OnClickListener,
         OnCancelListener {
@@ -21,6 +21,7 @@ public class ConfirmationDialogFragment extends DialogFragment implements OnClic
     private static final String ARG_MESSAGE = "message";
     private static final String ARG_CONFIRM_TEXT = "confirm";
     private static final String ARG_CANCEL_TEXT = "cancel";
+    private static final String TAG = "ConfirmationDialogFragment";
 
 
     public static ConfirmationDialogFragment newInstance(int dialogId, String title, String message,
@@ -45,6 +46,7 @@ public class ConfirmationDialogFragment extends DialogFragment implements OnClic
 
 
     public interface ConfirmationDialogFragmentListener {
+
         void doPositiveClick(int dialogId);
         void doNegativeClick(int dialogId);
         void dialogCancelled(int dialogId);
@@ -108,7 +110,7 @@ public class ConfirmationDialogFragment extends DialogFragment implements OnClic
         try {
             mListener = (ConfirmationDialogFragmentListener) activity;
         } catch (ClassCastException e) {
-            Log.d("%s did not implement ConfirmationDialogFragmentListener", activity);
+            Log.d(TAG, "%s did not implement ConfirmationDialogFragmentListener", activity);
         }
     }
 

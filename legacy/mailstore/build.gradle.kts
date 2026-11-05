@@ -17,4 +17,13 @@ dependencies {
     implementation(projects.feature.search.implLegacy)
 
     implementation(projects.mail.common)
+
+    testImplementation(projects.core.android.account.fake)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(projects.feature.account.fake)
+}
+
+codeCoverage {
+    branchCoverage = 0
+    lineCoverage = 7
 }

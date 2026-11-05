@@ -6,7 +6,6 @@ import assertk.assertions.isEqualTo
 import kotlin.test.Test
 import net.thunderbird.account.fake.FakeAccountAvatarData
 import net.thunderbird.account.fake.FakeAccountData
-import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.feature.account.AccountId
 import net.thunderbird.feature.account.storage.legacy.fake.FakeStorage
 import net.thunderbird.feature.account.storage.legacy.fake.FakeStorageEditor
@@ -19,74 +18,69 @@ class LegacyAvatarDtoStorageHandlerTest {
     @Test
     fun `load should populate avatar data from storage`() {
         // Arrange
-        val account = createAccount(accountId)
         val storage = createStorage(accountId)
 
         // Act
-        testSubject.load(account, storage)
+        val result = testSubject.load(accountId, storage)
 
         // Assert
-        assertThat(account.avatar.avatarType).isEqualTo(AVATAR_TYPE)
-        assertThat(account.avatar.avatarMonogram).isEqualTo(AVATAR_MONOGRAM)
-        assertThat(account.avatar.avatarImageUri).isEqualTo(AVATAR_IMAGE_URI)
-        assertThat(account.avatar.avatarIconName).isEqualTo(AVATAR_ICON_NAME)
+        assertThat(result.accountId).isEqualTo(accountId)
+        assertThat(result.avatarType).isEqualTo(AVATAR_TYPE)
+        assertThat(result.avatarMonogram).isEqualTo(AVATAR_MONOGRAM)
+        assertThat(result.avatarImageUri).isEqualTo(AVATAR_IMAGE_URI)
+        assertThat(result.avatarIconName).isEqualTo(AVATAR_ICON_NAME)
     }
 
     @Test
     fun `save should store avatar data to storage`() {
         // Arrange
-        val account = createAccount(accountId)
+        val avatarDto = createAvatarDto(accountId)
         val storage = FakeStorage()
         val editor = FakeStorageEditor()
 
         // Act
-        testSubject.save(account, storage, editor)
+        testSubject.save(avatarDto, storage, editor)
 
         // Assert
-        assertThat(editor.values["${accountId.asRaw()}.avatarType"]).isEqualTo(AVATAR_TYPE.name)
-        assertThat(editor.values["${accountId.asRaw()}.avatarMonogram"]).isEqualTo(AVATAR_MONOGRAM)
-        assertThat(editor.values["${accountId.asRaw()}.avatarImageUri"]).isEqualTo(AVATAR_IMAGE_URI)
-        assertThat(editor.values["${accountId.asRaw()}.avatarIconName"]).isEqualTo(null)
+        assertThat(editor.values["$accountId.avatarType"]).isEqualTo(AVATAR_TYPE.name)
+        assertThat(editor.values["$accountId.avatarMonogram"]).isEqualTo(AVATAR_MONOGRAM)
+        assertThat(editor.values["$accountId.avatarImageUri"]).isEqualTo(AVATAR_IMAGE_URI)
+        assertThat(editor.values["$accountId.avatarIconName"]).isEqualTo(null)
     }
 
     @Test
     fun `delete should remove avatar data from storage`() {
         // Arrange
-        val account = createAccount(accountId)
         val storage = FakeStorage()
         val editor = FakeStorageEditor()
 
         // Act
-        testSubject.delete(account, storage, editor)
+        testSubject.delete(accountId, storage, editor)
 
         // Assert
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.avatarType")
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.avatarMonogram")
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.avatarImageUri")
-        assertThat(editor.removedKeys).contains("${accountId.asRaw()}.avatarIconName")
+        assertThat(editor.removedKeys).contains("$accountId.avatarType")
+        assertThat(editor.removedKeys).contains("$accountId.avatarMonogram")
+        assertThat(editor.removedKeys).contains("$accountId.avatarImageUri")
+        assertThat(editor.removedKeys).contains("$accountId.avatarIconName")
     }
 
-    // Arrange methods
-    private fun createAccount(accountId: AccountId): LegacyAccount {
-        return LegacyAccount(accountId.asRaw()).apply {
-            name = "Test Account"
-            chipColor = 0x0099CC // Default color
-            avatar = AvatarDto(
-                avatarType = AVATAR_TYPE,
-                avatarMonogram = AVATAR_MONOGRAM,
-                avatarImageUri = AVATAR_IMAGE_URI,
-                avatarIconName = null,
-            )
-        }
+    private fun createAvatarDto(accountId: AccountId): AvatarDto {
+        return AvatarDto(
+            accountId = accountId,
+            avatarType = AVATAR_TYPE,
+            avatarMonogram = AVATAR_MONOGRAM,
+            avatarImageUri = AVATAR_IMAGE_URI,
+            avatarIconName = null,
+        )
     }
 
     private fun createStorage(accountId: AccountId): FakeStorage {
         return FakeStorage(
             mapOf(
-                "${accountId.asRaw()}.avatarType" to AVATAR_TYPE.name,
-                "${accountId.asRaw()}.avatarMonogram" to AVATAR_MONOGRAM,
-                "${accountId.asRaw()}.avatarImageUri" to AVATAR_IMAGE_URI,
-                "${accountId.asRaw()}.avatarIconName" to AVATAR_ICON_NAME,
+                "$accountId.avatarType" to AVATAR_TYPE.name,
+                "$accountId.avatarMonogram" to AVATAR_MONOGRAM,
+                "$accountId.avatarImageUri" to AVATAR_IMAGE_URI,
+                "$accountId.avatarIconName" to AVATAR_ICON_NAME,
             ),
         )
     }

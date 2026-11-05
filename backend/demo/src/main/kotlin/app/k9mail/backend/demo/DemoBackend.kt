@@ -8,12 +8,17 @@ import com.fsck.k9.backend.api.BackendStorage
 import com.fsck.k9.backend.api.SyncConfig
 import com.fsck.k9.backend.api.SyncListener
 import com.fsck.k9.mail.BodyFactory
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.Part
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.feature.mail.folder.api.FolderPathDelimiter
 
 class DemoBackend(
     private val backendStorage: BackendStorage,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : Backend {
     private val demoStore by lazy { DemoStore() }
 
@@ -31,13 +36,14 @@ class DemoBackend(
     override val supportsFolderSubscriptions: Boolean = false
     override val isPushCapable: Boolean = false
 
-    override fun refreshFolderList() {
-        commandRefreshFolderList.refreshFolderList()
+    override fun refreshFolderList(): FolderPathDelimiter? {
+        return commandRefreshFolderList.refreshFolderList()
     }
 
-    override fun sync(folderServerId: String, syncConfig: SyncConfig, listener: SyncListener) {
-        commandSync.sync(folderServerId, listener)
-    }
+    override fun sync(folderServerId: String, syncConfig: SyncConfig, listener: SyncListener) =
+        runBlocking(ioDispatcher) {
+            commandSync.sync(folderServerId, listener)
+        }
 
     override fun downloadMessage(syncConfig: SyncConfig, folderServerId: String, messageServerId: String) {
         throw UnsupportedOperationException("not implemented")
@@ -47,7 +53,7 @@ class DemoBackend(
         throw UnsupportedOperationException("not implemented")
     }
 
-    override fun downloadCompleteMessage(folderServerId: String, messageServerId: String) {
+    override suspend fun downloadCompleteMessage(folderServerId: String, messageServerId: String) {
         throw UnsupportedOperationException("not implemented")
     }
 
@@ -112,7 +118,7 @@ class DemoBackend(
         return createNewServerId()
     }
 
-    override fun sendMessage(message: Message) {
+    override fun sendMessage(message: Message) = runBlocking(ioDispatcher) {
         commandSendMessage.sendMessage(message)
     }
 

@@ -15,8 +15,8 @@ import com.fsck.k9.mail.store.imap.ImapStore
 import kotlinx.coroutines.test.runTest
 import net.thunderbird.backend.api.folder.RemoteFolderCreationOutcome
 import net.thunderbird.backend.api.folder.RemoteFolderCreationOutcome.Error.FailedToCreateRemoteFolder
-import net.thunderbird.core.logging.testing.TestLogger
-import net.thunderbird.core.outcome.Outcome
+import net.thunderbird.components.core.logging.testing.TestLogger
+import net.thunderbird.components.core.outcome.Outcome
 import org.junit.Test
 
 class ImapRemoteFolderCreatorTest {
@@ -122,6 +122,9 @@ class ImapRemoteFolderCreatorTest {
 private class FakeImapStore(
     private val folder: TestImapFolder,
 ) : ImapStore {
+    override val combinedPrefix: String?
+        get() = throw NotImplementedError("combinedPrefix not implemented")
+
     override fun checkSettings() {
         throw NotImplementedError("checkSettings not implemented")
     }
@@ -134,5 +137,9 @@ private class FakeImapStore(
 
     override fun closeAllConnections() {
         throw NotImplementedError("closeAllConnections not implemented")
+    }
+
+    override fun fetchImapPrefix() {
+        throw NotImplementedError("fetchImapPrefix not implemented")
     }
 }

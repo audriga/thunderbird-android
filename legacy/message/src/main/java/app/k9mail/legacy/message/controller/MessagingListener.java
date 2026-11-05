@@ -6,33 +6,33 @@ import java.util.List;
 import android.content.Context;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.Part;
-import net.thunderbird.core.android.account.LegacyAccount;
+import net.thunderbird.feature.account.AccountId;
 
 
 public interface MessagingListener {
-    void synchronizeMailboxStarted(LegacyAccount account, long folderId);
-    void synchronizeMailboxHeadersStarted(LegacyAccount account, String folderServerId);
-    void synchronizeMailboxHeadersProgress(LegacyAccount account, String folderServerId, int completed, int total);
-    void synchronizeMailboxHeadersFinished(LegacyAccount account, String folderServerId, int totalMessagesInMailbox,
+    void synchronizeMailboxStarted(AccountId accountId, long folderId);
+    void synchronizeMailboxHeadersStarted(AccountId accountId, String folderServerId);
+    void synchronizeMailboxHeadersProgress(AccountId accountId, String folderServerId, int completed, int total);
+    void synchronizeMailboxHeadersFinished(AccountId accountId, String folderServerId, int totalMessagesInMailbox,
             int numNewMessages);
-    void synchronizeMailboxProgress(LegacyAccount account, long folderId, int completed, int total);
-    void synchronizeMailboxNewMessage(LegacyAccount account, String folderServerId, Message message);
-    void synchronizeMailboxRemovedMessage(LegacyAccount account, String folderServerId, String messageServerId);
-    void synchronizeMailboxFinished(LegacyAccount account, long folderId);
-    void synchronizeMailboxFailed(LegacyAccount account, long folderId, String message);
+    void synchronizeMailboxProgress(AccountId accountId, long folderId, int completed, int total);
+    void synchronizeMailboxNewMessage(AccountId accountId, String folderServerId, Message message);
+    void synchronizeMailboxRemovedMessage(AccountId accountId, String folderServerId, String messageServerId);
+    void synchronizeMailboxFinished(AccountId accountId, long folderId);
+    void synchronizeMailboxFailed(AccountId accountId, long folderId, String message);
 
-    void loadMessageRemoteFinished(LegacyAccount account, long folderId, String uid);
-    void loadMessageRemoteFailed(LegacyAccount account, long folderId, String uid, Throwable t);
+    void loadMessageRemoteFinished(AccountId accountId, long folderId, String uid);
+    void loadMessageRemoteFailed(AccountId accountId, long folderId, String uid, Throwable t);
 
-    void checkMailStarted(Context context, LegacyAccount account);
-    void checkMailFinished(Context context, LegacyAccount account);
+    void checkMailStarted(Context context, AccountId accountId);
+    void checkMailFinished(Context context, AccountId accountId);
 
-    void folderStatusChanged(LegacyAccount account, long folderId);
+    void folderStatusChanged(AccountId accountId, long folderId);
 
-    void messageUidChanged(LegacyAccount account, long folderId, String oldUid, String newUid);
+    void messageUidChanged(AccountId accountId, long folderId, String oldUid, String newUid);
 
-    void loadAttachmentFinished(LegacyAccount account, Message message, Part part);
-    void loadAttachmentFailed(LegacyAccount account, Message message, Part part, String reason);
+    void loadAttachmentFinished(AccountId accountId, Message message, Part part);
+    void loadAttachmentFailed(AccountId accountId, Message message, Part part, String reason);
 
     void remoteSearchStarted(long folderId);
     void remoteSearchServerQueryComplete(long folderId, int numResults, int maxResults);

@@ -1,9 +1,9 @@
 package com.fsck.k9.message;
 
 
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.feature.mail.message.composer.signature.HtmlSignatureSanitizer;
+import net.thunderbird.legacy.logging.Log;
 
-import com.fsck.k9.K9;
 import com.fsck.k9.message.html.HtmlConverter;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.internet.TextBody;
@@ -12,6 +12,8 @@ import net.thunderbird.core.preference.GeneralSettingsManager;
 
 
 class TextBodyBuilder {
+    private static final String TAG = "TextBodyBuilder";
+
     public static final String HTML_AND_BODY_START = "<!DOCTYPE html><html><body>";
     public static final String HTML_AND_BODY_END = "</body></html>";
 
@@ -20,16 +22,20 @@ class TextBodyBuilder {
     private boolean mSignatureBeforeQuotedText = false;
     private boolean mInsertSeparator = false;
     private boolean mAppendSignature = true;
+    private boolean mSignatureIsHtml = false;
 
     private String mMessageContent;
     private String mSignature;
     private String mQuotedText;
     private InsertableHtmlContent mQuotedTextHtml;
-    private GeneralSettingsManager generalSettingsManager;
+    private final GeneralSettingsManager generalSettingsManager;
+    private final HtmlSignatureSanitizer htmlSignatureSanitizer;
 
-    public TextBodyBuilder(String messageContent, GeneralSettingsManager generalSettingsManager) {
+    public TextBodyBuilder(String messageContent, GeneralSettingsManager generalSettingsManager,
+        HtmlSignatureSanitizer htmlSignatureSanitizer) {
         mMessageContent = messageContent;
         this.generalSettingsManager = generalSettingsManager;
+        this.htmlSignatureSanitizer = htmlSignatureSanitizer;
     }
 
     /**
@@ -53,7 +59,7 @@ class TextBodyBuilder {
             InsertableHtmlContent quotedHtmlContent = getQuotedTextHtml();
 
             if (generalSettingsManager.getConfig().getDebugging().isDebugLoggingEnabled()) {
-                Log.d("insertable: %s", quotedHtmlContent.toDebugString());
+                Log.d(TAG, "insertable: %s", quotedHtmlContent.toDebugString());
             }
 
             // Convert the text to HTML
@@ -185,7 +191,10 @@ class TextBodyBuilder {
     private String getSignature() {
         String signature = "";
         if (!isEmpty(mSignature)) {
-            signature = "\r\n" + mSignature;
+            final String plainSignature = mSignatureIsHtml
+                    ? HtmlConverter.htmlToText(mSignature)
+                    : mSignature;
+            signature = "\r\n" + plainSignature;
         }
 
         return signature;
@@ -194,7 +203,9 @@ class TextBodyBuilder {
     private String getSignatureHtml() {
         String signature = "";
         if (!isEmpty(mSignature)) {
-            signature = HtmlConverter.textToHtmlFragment(mSignature);
+            signature = mSignatureIsHtml
+                    ? htmlSignatureSanitizer.sanitize(mSignature)
+                    : HtmlConverter.textToHtmlFragment(mSignature);
         }
         return signature;
     }
@@ -245,6 +256,10 @@ class TextBodyBuilder {
 
     public void setAppendSignature(boolean appendSignature) {
         mAppendSignature = appendSignature;
+    }
+
+    public void setSignatureIsHtml(boolean signatureIsHtml) {
+        mSignatureIsHtml = signatureIsHtml;
     }
 
     private static boolean isEmpty(String s) {

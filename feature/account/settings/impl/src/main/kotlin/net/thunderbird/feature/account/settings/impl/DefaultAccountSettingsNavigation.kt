@@ -2,14 +2,21 @@ package net.thunderbird.feature.account.settings.impl
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.toRoute
-import app.k9mail.core.ui.compose.navigation.deepLinkComposable
+import net.thunderbird.core.ui.navigation.deepLinkComposable
 import net.thunderbird.feature.account.AccountIdFactory
 import net.thunderbird.feature.account.settings.api.AccountSettingsNavigation
 import net.thunderbird.feature.account.settings.api.AccountSettingsRoute
+import net.thunderbird.feature.account.settings.impl.ui.fetchingMail.FetchingMailSettingsScreen
+import net.thunderbird.feature.account.settings.impl.ui.fetchingMail.advanced.AdvancedFetchingMailSettingsScreen
 import net.thunderbird.feature.account.settings.impl.ui.general.GeneralSettingsScreen
+import net.thunderbird.feature.account.settings.impl.ui.readingMail.ReadingMailSettingsScreen
+import net.thunderbird.feature.account.settings.impl.ui.search.SearchSettingsScreen
+import net.thunderbird.feature.account.settings.impl.ui.sendingMail.SendingMailSettingsScreen
+import net.thunderbird.feature.account.settings.impl.ui.syncAndNotifications.SyncAndNotificationsScreen
 
 internal class DefaultAccountSettingsNavigation : AccountSettingsNavigation {
 
+    @Suppress("LongMethod")
     override fun registerRoutes(
         navGraphBuilder: NavGraphBuilder,
         onBack: () -> Unit,
@@ -17,7 +24,7 @@ internal class DefaultAccountSettingsNavigation : AccountSettingsNavigation {
     ) {
         with(navGraphBuilder) {
             deepLinkComposable<AccountSettingsRoute.GeneralSettings>(
-                basePath = AccountSettingsRoute.GeneralSettings.Companion.BASE_PATH,
+                basePath = AccountSettingsRoute.GeneralSettings.BASE_PATH,
             ) { backStackEntry ->
                 val generalSettingsRoute = backStackEntry.toRoute<AccountSettingsRoute.GeneralSettings>()
                 val accountId = AccountIdFactory.of(generalSettingsRoute.accountId)
@@ -26,6 +33,110 @@ internal class DefaultAccountSettingsNavigation : AccountSettingsNavigation {
                     accountId = accountId,
                     onBack = onBack,
                 )
+            }
+        }
+
+        with(navGraphBuilder) {
+            deepLinkComposable<AccountSettingsRoute.ReadingMailSettings>(
+                basePath = AccountSettingsRoute.ReadingMailSettings.BASE_PATH,
+            ) { backStackEntry ->
+                val readingMailSettingsRoute = backStackEntry.toRoute<AccountSettingsRoute.ReadingMailSettings>()
+                val accountId = AccountIdFactory.of(readingMailSettingsRoute.accountId)
+
+                ReadingMailSettingsScreen(
+                    accountId = accountId,
+                    onBack = onBack,
+                )
+            }
+        }
+
+        with(navGraphBuilder) {
+            deepLinkComposable<AccountSettingsRoute.SyncAndNotificationSettings>(
+                basePath = AccountSettingsRoute.SyncAndNotificationSettings.BASE_PATH,
+            ) { backStackEntry ->
+                val syncAndNotificationsRoute =
+                    backStackEntry.toRoute<AccountSettingsRoute.SyncAndNotificationSettings>()
+                val accountId = AccountIdFactory.of(syncAndNotificationsRoute.accountId)
+                SyncAndNotificationsScreen(accountId, onBack = onBack)
+            }
+        }
+
+        with(navGraphBuilder) {
+            deepLinkComposable<AccountSettingsRoute.FetchingMailSettings>(
+                basePath = AccountSettingsRoute.FetchingMailSettings.BASE_PATH,
+            ) { backStackEntry ->
+                val fetchingMailSettingsRoute = backStackEntry.toRoute<AccountSettingsRoute.FetchingMailSettings>()
+                val accountId = AccountIdFactory.of(fetchingMailSettingsRoute.accountId)
+
+                FetchingMailSettingsScreen(
+                    accountId = accountId,
+                    onBack = onBack,
+                )
+            }
+        }
+
+        with(navGraphBuilder) {
+            deepLinkComposable<AccountSettingsRoute.SendingMailSettings>(
+                basePath = AccountSettingsRoute.SendingMailSettings.BASE_PATH,
+            ) { backStackEntry ->
+                val sendingMailSettingsRoute = backStackEntry.toRoute<AccountSettingsRoute.SendingMailSettings>()
+                val accountId = AccountIdFactory.of(sendingMailSettingsRoute.accountId)
+
+                SendingMailSettingsScreen(
+                    accountId = accountId,
+                    onBack = onBack,
+                )
+            }
+        }
+
+        with(navGraphBuilder) {
+            deepLinkComposable<AccountSettingsRoute.AdvancedFetchingMailSettings>(
+                basePath = AccountSettingsRoute.AdvancedFetchingMailSettings.BASE_PATH,
+            ) { backStackEntry ->
+                val advancedFetchingMailSettingsRoute =
+                    backStackEntry.toRoute<AccountSettingsRoute.AdvancedFetchingMailSettings>()
+                val accountId = AccountIdFactory.of(advancedFetchingMailSettingsRoute.accountId)
+
+                AdvancedFetchingMailSettingsScreen(
+                    accountId = accountId,
+                    onBack = onBack,
+                )
+            }
+        }
+
+        with(navGraphBuilder) {
+            deepLinkComposable<AccountSettingsRoute.SearchSettings>(
+                basePath = AccountSettingsRoute.SearchSettings.Companion.BASE_PATH,
+            ) { backStackEntry ->
+                val searchSettingsRoute = backStackEntry.toRoute<AccountSettingsRoute.SearchSettings>()
+                val accountId = AccountIdFactory.of(searchSettingsRoute.accountId)
+
+                SearchSettingsScreen(
+                    accountId = accountId,
+                    onBack = onBack,
+                )
+            }
+        }
+
+        with(navGraphBuilder) {
+            deepLinkComposable<AccountSettingsRoute.CompositionSettings>(
+                basePath = AccountSettingsRoute.CompositionSettings.BASE_PATH,
+            ) { backStackEntry ->
+                val compositionSettingsRoute =
+                    backStackEntry.toRoute<AccountSettingsRoute.CompositionSettings>()
+
+                onFinish(compositionSettingsRoute)
+            }
+        }
+
+        with(navGraphBuilder) {
+            deepLinkComposable<AccountSettingsRoute.ManageIdentities>(
+                basePath = AccountSettingsRoute.ManageIdentities.BASE_PATH,
+            ) { backStackEntry ->
+                val manageIdentitiesRoute =
+                    backStackEntry.toRoute<AccountSettingsRoute.ManageIdentities>()
+
+                onFinish(manageIdentitiesRoute)
             }
         }
     }

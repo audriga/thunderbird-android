@@ -2,16 +2,18 @@ package net.thunderbird.feature.navigation.drawer.dropdown.ui.setting
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import app.k9mail.core.ui.compose.designsystem.PreviewWithTheme
+import net.thunderbird.components.ui.bolt.PreviewWithTheme
 
 @Composable
 @Preview(showBackground = true)
 internal fun SettingListPreview() {
     PreviewWithTheme {
         FolderSettingList(
-            onManageFoldersClick = {},
+            onSyncAccountClick = {},
+            onSyncAllAccountsClick = {},
             onSettingsClick = {},
             isUnifiedAccount = false,
+            isLoading = true,
         )
     }
 }
@@ -21,9 +23,11 @@ internal fun SettingListPreview() {
 internal fun SettingListWithUnifiedAccountPreview() {
     PreviewWithTheme {
         FolderSettingList(
-            onManageFoldersClick = {},
+            onSyncAccountClick = {},
+            onSyncAllAccountsClick = {},
             onSettingsClick = {},
             isUnifiedAccount = true,
+            isLoading = false,
         )
     }
 }

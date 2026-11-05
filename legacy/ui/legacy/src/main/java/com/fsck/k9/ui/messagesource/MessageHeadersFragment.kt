@@ -50,7 +50,7 @@ class MessageHeadersFragment : Fragment() {
         var first = true
         for ((name, value) in headers) {
             if (!first) {
-                sb.append("\n")
+                sb.append("\n\n")
             } else {
                 first = false
             }
@@ -67,9 +67,9 @@ class MessageHeadersFragment : Fragment() {
         private const val ARG_REFERENCE = "reference"
 
         fun newInstance(reference: MessageReference): MessageHeadersFragment {
-            return MessageHeadersFragment().withArguments(
-                ARG_REFERENCE to reference.toIdentityString(),
-            )
+            return MessageHeadersFragment().withArguments {
+                putString(ARG_REFERENCE, reference.toIdentityString())
+            }
         }
     }
 }

@@ -10,9 +10,10 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import com.fsck.k9.FakeLegacyAccount
 import com.fsck.k9.helper.ContactNameProvider
 import com.fsck.k9.mail.Address
-import net.thunderbird.account.fake.FakeAccountData.ACCOUNT_ID_RAW
+import net.thunderbird.account.fake.FakeAccountData.ACCOUNT_ID
 import net.thunderbird.core.android.account.Identity
 import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.android.testing.RobolectricTest
@@ -20,7 +21,8 @@ import org.junit.Test
 
 private const val IDENTITY_NAME = "Alice"
 private const val IDENTITY_ADDRESS = "me@domain.example"
-private const val ME_TEXT = "me"
+private const val TO_ME_TEXT = "to me"
+private const val FROM_ME_TEXT = "from me"
 
 class MessageDetailsParticipantFormatterTest : RobolectricTest() {
     private val contactNameProvider = object : ContactNameProvider {
@@ -33,70 +35,113 @@ class MessageDetailsParticipantFormatterTest : RobolectricTest() {
         }
     }
 
-    private val account = LegacyAccount(ACCOUNT_ID_RAW).apply {
-        identities += Identity(name = IDENTITY_NAME, email = IDENTITY_ADDRESS)
-    }
+    private val account = FakeLegacyAccount.create(
+        id = ACCOUNT_ID,
+        identities = listOf(Identity(name = IDENTITY_NAME, email = IDENTITY_ADDRESS)),
+    )
 
     private val participantFormatter = createParticipantFormatter()
 
     @Test
-    fun `identity address with single identity`() {
-        val displayName = participantFormatter.getDisplayName(Address(IDENTITY_ADDRESS, "irrelevant"), account)
+    fun `identity address with single identity as recipient`() {
+        val displayName = participantFormatter.getDisplayName(
+            address = Address(IDENTITY_ADDRESS, "irrelevant"),
+            account = account,
+            isSender = false,
+        )
 
-        assertThat(displayName).isEqualTo(ME_TEXT)
+        assertThat(displayName).isEqualTo(TO_ME_TEXT)
+    }
+
+    @Test
+    fun `identity address with single identity as sender`() {
+        val displayName = participantFormatter.getDisplayName(
+            address = Address(IDENTITY_ADDRESS, "irrelevant"),
+            account = account,
+            isSender = true,
+        )
+
+        assertThat(displayName).isEqualTo(FROM_ME_TEXT)
     }
 
     @Test
     fun `identity address with multiple identities`() {
-        val account = LegacyAccount(ACCOUNT_ID_RAW).apply {
-            identities += Identity(name = IDENTITY_NAME, email = IDENTITY_ADDRESS)
-            identities += Identity(
-                name = "Another identity",
-                email = "irrelevant@domain.example",
-            )
-        }
+        val account = FakeLegacyAccount.create(
+            id = ACCOUNT_ID,
+            identities = listOf(
+                Identity(name = IDENTITY_NAME, email = IDENTITY_ADDRESS),
+                Identity(
+                    name = "Another identity",
+                    email = "irrelevant@domain.example",
+                ),
+            ),
+        )
 
-        val displayName = participantFormatter.getDisplayName(Address(IDENTITY_ADDRESS, "irrelevant"), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address(IDENTITY_ADDRESS, "irrelevant"),
+            account = account,
+            isSender = false,
+        )
 
         assertThat(displayName).isEqualTo(IDENTITY_NAME)
     }
 
     @Test
     fun `identity without a display name`() {
-        val account = LegacyAccount(ACCOUNT_ID_RAW).apply {
-            identities += Identity(name = null, email = IDENTITY_ADDRESS)
-        }
+        val account = FakeLegacyAccount.create(
+            id = ACCOUNT_ID,
+            identities = listOf(Identity(name = null, email = IDENTITY_ADDRESS)),
+        )
 
-        val displayName = participantFormatter.getDisplayName(Address(IDENTITY_ADDRESS, "Bob"), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address(IDENTITY_ADDRESS, "Bob"),
+            account = account,
+            isSender = false,
+        )
 
-        assertThat(displayName).isEqualTo(ME_TEXT)
+        assertThat(displayName).isEqualTo(TO_ME_TEXT)
     }
 
     @Test
     fun `identity and address without a display name`() {
-        val account = LegacyAccount(ACCOUNT_ID_RAW).apply {
-            identities += Identity(name = null, email = IDENTITY_ADDRESS)
-            identities += Identity(
-                name = "Another identity",
-                email = "irrelevant@domain.example",
-            )
-        }
+        val account = FakeLegacyAccount.create(
+            id = ACCOUNT_ID,
+            identities = listOf(
+                Identity(name = null, email = IDENTITY_ADDRESS),
+                Identity(
+                    name = "Another identity",
+                    email = "irrelevant@domain.example",
+                ),
+            ),
+        )
 
-        val displayName = participantFormatter.getDisplayName(Address(IDENTITY_ADDRESS), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address(IDENTITY_ADDRESS),
+            account = account,
+            isSender = false,
+        )
 
-        assertThat(displayName).isEqualTo(ME_TEXT)
+        assertThat(displayName).isEqualTo(TO_ME_TEXT)
     }
 
     @Test
     fun `email address without display name`() {
-        val displayName = participantFormatter.getDisplayName(Address("alice@domain.example"), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address("alice@domain.example"),
+            account = account,
+            isSender = false,
+        )
 
         assertThat(displayName).isNull()
     }
 
     @Test
     fun `email address with display name`() {
-        val displayName = participantFormatter.getDisplayName(Address("alice@domain.example", "Alice"), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address("alice@domain.example", "Alice"),
+            account = account,
+            isSender = false,
+        )
 
         assertThat(displayName).isEqualTo("Alice")
     }
@@ -105,21 +150,33 @@ class MessageDetailsParticipantFormatterTest : RobolectricTest() {
     fun `don't look up contact when showContactNames = false`() {
         val participantFormatter = createParticipantFormatter(showContactNames = false)
 
-        val displayName = participantFormatter.getDisplayName(Address("user1@domain.example", "User 1"), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address("user1@domain.example", "User 1"),
+            account = account,
+            isSender = false,
+        )
 
         assertThat(displayName).isEqualTo("User 1")
     }
 
     @Test
     fun `contact lookup`() {
-        val displayName = participantFormatter.getDisplayName(Address("user1@domain.example"), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address("user1@domain.example"),
+            account = account,
+            isSender = false,
+        )
 
         assertThat(displayName).isEqualTo("Contact One")
     }
 
     @Test
     fun `contact lookup despite display name`() {
-        val displayName = participantFormatter.getDisplayName(Address("user1@domain.example", "User 1"), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address("user1@domain.example", "User 1"),
+            account = account,
+            isSender = false,
+        )
 
         assertThat(displayName).isEqualTo("Contact One")
     }
@@ -128,7 +185,11 @@ class MessageDetailsParticipantFormatterTest : RobolectricTest() {
     fun `colored contact name`() {
         val participantFormatter = createParticipantFormatter(contactNameColor = Color.RED)
 
-        val displayName = participantFormatter.getDisplayName(Address("user1@domain.example"), account)
+        val displayName = participantFormatter.getDisplayName(
+            address = Address("user1@domain.example"),
+            account = account,
+            isSender = false,
+        )
 
         assertThat(displayName.toString()).isEqualTo("Contact One")
         assertThat(displayName).isNotNull().isInstanceOf<Spannable>()
@@ -144,7 +205,8 @@ class MessageDetailsParticipantFormatterTest : RobolectricTest() {
             contactNameProvider = contactNameProvider,
             showContactNames = showContactNames,
             contactNameColor = contactNameColor,
-            meText = ME_TEXT,
+            toMeText = TO_ME_TEXT,
+            fromMeText = FROM_ME_TEXT,
         )
     }
 }

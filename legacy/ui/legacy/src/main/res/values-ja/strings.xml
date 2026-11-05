@@ -36,7 +36,6 @@
     <string name="choose_folder_title">フォルダーを選択</string>
     <string name="choose_folder_move_title">…へ移動</string>
     <string name="choose_folder_copy_title">…へコピー</string>
-    <string name="actionbar_selected"><xliff:g id="selection_count">%d</xliff:g> 通を選択中</string>
     <string name="send_action">送信</string>
     <string name="empty_subject">件名が空です。もう一度クリックすると、そのまま送信します</string>
     <string name="reply_action">返信</string>
@@ -121,9 +120,7 @@
     <!--Title of an error notification that is displayed when creating a notification for a new message has failed-->
     <string name="notification_notify_error_title">通知エラー</string>
     <!--Body of an error notification that is displayed when creating a notification for a new message has failed-->
-    <string name="notification_notify_error_text">新着メッセージのシステム通知の作成中にエラーが発生しました。通知サウンドが存在しないことが原因と思われます。
-\n
-\nタップして通知設定を開いてください。</string>
+    <string name="notification_notify_error_text">新着メッセージのシステム通知の作成中にエラーが発生しました。通知サウンドが存在しないことが原因と思われます。 \n \nタップして通知設定を開いてください。</string>
     <string name="notification_bg_sync_ticker">メール確認中: <xliff:g id="account">%1$s</xliff:g>:<xliff:g id="folder">%2$s</xliff:g></string>
     <string name="notification_bg_sync_title">メール確認中</string>
     <string name="notification_bg_send_ticker">メール送信中: <xliff:g id="account">%s</xliff:g></string>
@@ -174,7 +171,7 @@
     <!--Displayed in the message view screen in front of the number of additional recipients (the ones that are not displayed).-->
     <string name="message_view_additional_recipient_prefix">+</string>
     <!--Displayed in the message view screen if the message was addressed to the user. Make sure this works with 'message_view_recipient_prefix'. In English it's "to me".-->
-    <string name="message_view_me_text">自分</string>
+    <string name="message_view_to_me_text">自分</string>
     <!--Text of the button that is displayed below the message header when the message body references one or more remote images-->
     <string name="message_view_show_remote_images_action">リモート画像を表示</string>
     <string name="message_view_no_viewer"><xliff:g id="mimetype">%s</xliff:g> のビューワーが見つかりません。</string>
@@ -269,7 +266,6 @@
     <string name="archive_folder_label">アーカイブフォルダー</string>
     <string name="spam_folder_label">迷惑メールフォルダー</string>
     <string name="account_setup_incoming_subscribed_folders_only_label">購読したフォルダーのみ表示する</string>
-    <string name="account_setup_auto_expand_folder">自動展開するフォルダー</string>
     <string name="account_setup_options_mail_check_frequency_never">同期しない</string>
     <string name="account_setup_options_mail_check_frequency_15min">15 分ごと</string>
     <string name="account_setup_options_mail_check_frequency_30min">30 分ごと</string>
@@ -313,8 +309,8 @@
     <string name="account_notify_contacts_mail_only_summary">既知の連絡先からのメッセージのみ通知を表示します</string>
     <string name="account_settings_ignore_chat_messages_label">チャットメッセージを無視する</string>
     <string name="account_settings_ignore_chat_messages_summary">メールチャットに属するメッセージの通知を表示しません</string>
-    <string name="account_settings_mark_message_as_read_on_view_label">開封したときに既読にする</string>
-    <string name="account_settings_mark_message_as_read_on_view_summary">メッセージを開いて表示したときに既読にします</string>
+    <string name="account_settings_mark_message_as_read_on_view_label">開封時に既読にする</string>
+    <string name="account_settings_mark_message_as_read_on_view_summary">メッセージを開封して閲覧したときに既読にします</string>
     <string name="account_settings_mark_message_as_read_on_delete_label">削除したときに既読にする</string>
     <string name="account_settings_mark_message_as_read_on_delete_summary">メッセージが削除されたときに既読にします</string>
     <string name="account_settings_notification_channels_label">通知カテゴリー</string>
@@ -323,7 +319,7 @@
     <string name="account_settings_show_pictures_label">常に画像を表示</string>
     <string name="account_settings_show_pictures_never">しない</string>
     <string name="account_settings_show_pictures_only_from_contacts">連絡先からのみ</string>
-    <string name="account_settings_show_pictures_always">誰からも</string>
+    <string name="account_settings_show_pictures_always">誰からでも</string>
     <string name="account_settings_composition">メール送信</string>
     <string name="account_settings_default_quoted_text_shown_label">返信時にメッセージを引用する</string>
     <string name="account_settings_default_quoted_text_shown_summary">返信に元のメッセージを含めます。</string>
@@ -359,8 +355,6 @@
     <string name="account_settings_crypto_encrypt_all_drafts_on">下書きはすべて暗号化して保存されます</string>
     <string name="account_settings_crypto_encrypt_all_drafts_off">暗号化が有効な場合のみ下書きを暗号化します</string>
     <string name="account_settings_mail_check_frequency_label">フォルダーの同期間隔</string>
-    <string name="account_settings_color_label">アカウントの色</string>
-    <string name="account_settings_color_summary">フォルダーとアカウント一覧で使用する色です</string>
     <string name="account_settings_mail_display_count_label">ローカルフォルダーの大きさ</string>
     <string name="account_settings_autodownload_message_size_label">取得するメッセージサイズの上限</string>
     <string name="account_settings_autodownload_message_size_1">1 KiB</string>
@@ -401,7 +395,6 @@
     <string name="account_settings_incoming_summary">受信メールサーバーを設定します</string>
     <string name="account_settings_outgoing_label">送信メールサーバー設定</string>
     <string name="account_settings_outgoing_summary">送信メールサーバー (SMTP) を設定します</string>
-    <string name="account_settings_description_label">アカウント名</string>
     <string name="account_settings_name_label">あなたのお名前</string>
     <string name="notifications_title">通知</string>
     <string name="account_settings_vibration">バイブレーション</string>
@@ -522,7 +515,6 @@
     <string name="account_setup_push_limit_500">フォルダー 500 件</string>
     <string name="account_setup_push_limit_1000">フォルダー 1000 件</string>
     <string name="animations_title">アニメーション</string>
-    <string name="animations_summary">目立つ視覚効果を使用します</string>
     <string name="show_unified_inbox_title">統合受信トレイを表示する</string>
     <string name="show_starred_count_title">スター付きの数を表示する</string>
     <string name="integrated_inbox_title">統合受信トレイ</string>
@@ -682,8 +674,7 @@
     <string name="enable_sign_only">PGP 署名のみ有効にする</string>
     <string name="disable_sign_only">PGP 署名のみ無効にする</string>
     <string name="openpgp_inline_title">PGP/INLINE モード</string>
-    <string name="openpgp_inline_text">メールは PGP/INLINE 形式で送信されます。
-\nこれは互換性のためでのみ使用する必要があります:</string>
+    <string name="openpgp_inline_text">メールは PGP/INLINE 形式で送信されます。 \nこれは互換性のためでのみ使用する必要があります:</string>
     <string name="openpgp_inline_plus_compat">一部のクライアントはこの形式のみ対応します</string>
     <string name="openpgp_inline_minus_transit">署名は転送中に破損する可能性があります</string>
     <string name="openpgp_inline_minus_attach">添付ファイルに対応していません</string>
@@ -731,7 +722,6 @@
     <string name="crypto_msg_encrypted_insecure">暗号化が安全ではないようです</string>
     <string name="locked_attach_unlock">ロック解除</string>
     <string name="locked_attach_unencrypted">この部分は暗号化されていません。安全ではない可能性があります。</string>
-    <string name="locked_attach_title">保護されていない添付ファイル</string>
     <string name="message_progress_text">読み込み中…</string>
     <string name="messageview_decrypt_cancelled">復号がキャンセルされました。</string>
     <string name="messageview_decrypt_retry">再試行</string>
@@ -745,8 +735,7 @@
     <string name="error_sign_only_no_encryption">署名のみモードでは暗号化できません！</string>
     <string name="unsigned_text_divider_label">未署名のテキスト</string>
     <string name="crypto_no_provider_title">このメールは暗号化されています</string>
-    <string name="crypto_no_provider_message">このメールは OpenPGP で暗号化されました。
-\nメールを読むためには、OpenPGP と互換性のあるアプリをインストールして設定する必要があります。</string>
+    <string name="crypto_no_provider_message">このメールは OpenPGP で暗号化されました。 \nメールを読むためには、OpenPGP と互換性のあるアプリをインストールして設定する必要があります。</string>
     <string name="crypto_no_provider_button">設定に移動</string>
     <!--Displayed in the the message list widget when the app hasn't had a chance to send content to it yet-->
     <!--Might be displayed in the message list widget when the list is scrolled and new data can't be fetched fast enough-->
@@ -803,25 +792,15 @@
     <string name="push_info_disable_push_text">新着メッセージの即時通知が不要な場合は、プッシュ同期を無効にして一定間隔で同期してください。一定間隔で新着メールを確認する場合は、通知は不要です。</string>
     <string name="push_info_disable_push_action">プッシュ同期を無効化</string>
     <!--Name of the swipe action to select a message. Try to keep it short.-->
-    <string name="swipe_action_select">選択</string>
     <!--Name of the swipe action to deselect a message. Try to keep it short.-->
-    <string name="swipe_action_deselect">選択を解除</string>
     <!--Name of the swipe action to mark a message as read. Try to keep it short.-->
-    <string name="swipe_action_mark_as_read">既読にする</string>
     <!--Name of the swipe action to mark a message as unread. Try to keep it short.-->
-    <string name="swipe_action_mark_as_unread">未読にする</string>
     <!--Name of the swipe action to add the star to a message. Try to keep it short.-->
-    <string name="swipe_action_add_star">スターを付ける</string>
     <!--Name of the swipe action to remove the star from a message. Try to keep it short.-->
-    <string name="swipe_action_remove_star">スターをはずす</string>
     <!--Name of the swipe action to archive a message. Try to keep it short.-->
-    <string name="swipe_action_archive">アーカイブ</string>
     <!--Name of the swipe action to delete a message. Try to keep it short.-->
-    <string name="swipe_action_delete">削除</string>
     <!--Name of the swipe action to move a message to the Spam folder. Try to keep it short.-->
-    <string name="swipe_action_spam">迷惑メール</string>
     <!--Name of the swipe action to move a message. The ellipsis (…) indicates that there is another step (selecting a folder) before the action is performed. Try to keep it short.-->
-    <string name="swipe_action_move">移動…</string>
     <!--Name of setting to configure whether to show a "compose" floating action button on top of the message list-->
     <string name="general_settings_show_compose_button_title">フロート編集ボタンを表示する</string>
     <!--Displayed in the toolbar when there was an error loading the message list, e.g. because the folder no longer exists.-->
@@ -895,8 +874,83 @@
     <string name="debug_enable_sync_debug_logging_title">同期のデバッグログを有効にする</string>
     <string name="debug_enable_sync_debug_logging_summary">24 時間の同期の診断情報をログに記録します</string>
     <string name="debug_sync_export_logs_title">同期ログをエクスポート</string>
-    <string name="swipe_action_archive_folder_not_set">アーカイブフォルダーを設定してください</string>
     <string name="archiving_not_available_for_this_account">このアカウントではアーカイブは利用できません。</string>
-    <string name="swipe_action_change_swipe_gestures">スワイプ操作の \n変更</string>
     <string name="debug_open_secret_debug_screen">隠しデバッグ画面を開く</string>
+    <string name="message_view_menu_action_export_eml">EML にエクスポート</string>
+    <string name="set_format_html_action">オリジナルのフォーマットを使用</string>
+    <string name="set_format_plain_action">フォーマットなしでメッセージを表示</string>
+    <string name="global_settings_messageview_body_content_type_title">本文の Content-Type</string>
+    <string name="global_settings_messageview_body_content_type_text_html">HTML (text/html)</string>
+    <string name="global_settings_messageview_body_content_type_text_plain">プレーンテキスト (text/plain)</string>
+    <string name="navigation_drawer_preferences">サイドメニュー</string>
+    <string name="expand_folders">フォルダーを展開する</string>
+    <string name="set_format_html_condensed_action">フォーマット付きで表示</string>
+    <string name="set_format_plain_condensed_action">フォーマットなしで表示</string>
+    <string name="account_setup_auto_select_folder">自動選択のフォルダー</string>
+    <string name="debug_invalidate_access_token">テスト: アクセストークンを無効化する</string>
+    <string name="debug_invalidate_access_token_done">アクセストークンが無効です。再度リクエストするとリフレッシュします。</string>
+    <string name="debug_invalidate_access_token_unavailable">このアカウントで利用可能な OAuth トークンはありません。</string>
+    <string name="debug_invalidate_access_token_local">テスト: アクセストークンを無効化する (ローカル)</string>
+    <string name="debug_invalidate_access_token_local_done">ローカルで無効化が要求されました。次のリクエストで新しいトークンを取得します。</string>
+    <string name="debug_invalidate_access_token_server">テスト: アクセストークンを無効化する (サーバー)</string>
+    <string name="debug_invalidate_access_token_server_done">保存したアクセストークンが破損しています。次のリクエストに失敗し、その後リフレッシュします。</string>
+    <string name="debug_force_auth_failure">テスト: 今すぐ認可を失敗させる</string>
+    <string name="debug_force_auth_failure_done">OAuth のステートがクリアされました。次のリクエストに失敗します。</string>
+    <string name="debug_force_auth_failure_unavailable">このアカウントには利用可能な OAuth 設定がありません。</string>
+    <string name="debug_invalidate_access_token_cannot_modify">保存したトークンを編集できません。ローカルで無効化してみてください。</string>
+    <string name="debug_invalidate_access_token_already_modified">保存したアクセストークンは既に編集されています。</string>
+    <string name="debug_feature_flags">デバッグ: 機能フラグ</string>
+    <string name="print_message_action">印刷</string>
+    <string name="general_settings_message_list_date_time_format_title">日付・時刻の書式</string>
+    <string name="general_settings_message_list_date_time_format_contextual">自動</string>
+    <string name="general_settings_message_list_date_time_format_full">フル</string>
+    <string name="sort_by_then_by">次に…</string>
+    <string name="global_settings_splitview_when_unfolded">端末が折り畳まれていないとき分割</string>
+    <string name="camera_capture_lost">アプリが閉じられたため、撮影した画像が削除されました。もう一度お試しください。</string>
+    <string name="changelog_latest_label_text">最新</string>
+    <string name="changelog_type_new_text">新機能</string>
+    <string name="changelog_type_changed_text">変更</string>
+    <string name="changelog_type_fixed_text">修正</string>
+    <string name="notification_actions_settings_title">通知アクション</string>
+    <string name="notification_actions_settings_summary">メール通知に表示するアクションを選択します</string>
+    <string name="notification_summary_delete_title">複数メッセージの通知に削除ボタンを表示する</string>
+    <string name="notification_summary_delete_summary">複数の新着メッセージを要約した通知に削除アクションを追加します</string>
+    <string name="notification_show_contact_picture_title">連絡先画像を通知に表示する</string>
+    <string name="notification_show_contact_picture_summary">差出人のアバターを新着メッセージ通知に表示します</string>
+    <string name="notification_actions_settings_description">通知アクションを並べ替えてください。</string>
+    <string name="notification_actions_cutoff_description">ここまで</string>
+    <string name="notification_actions_cutoff_state">この線より上のをアクションを通知に表示します</string>
+    <string name="notification_actions_shown_state">通知に表示します</string>
+    <string name="notification_actions_hidden_state">通知に表示しません</string>
+    <string name="accessibility_move_up">上に移動</string>
+    <string name="accessibility_move_down">下に移動</string>
+    <string name="accessibility_move_item_up"><xliff:g id="item">%1$s</xliff:g> を上に移動</string>
+    <string name="accessibility_move_item_down"><xliff:g id="item">%1$s</xliff:g> を下に移動</string>
+    <string name="notification_action_star">スター</string>
+    <plurals name="message_view_attachment_summary">
+        <item quantity="other">添付ファイル <xliff:g id="count">%1$d</xliff:g> 個 (<xliff:g id="size">%2$s</xliff:g>)</item>
+    </plurals>
+    <string name="message_view_single_attachment_summary"><xliff:g id="name">%1$s</xliff:g> (<xliff:g id="size">%2$s</xliff:g>)</string>
+    <string name="message_view_attachments_view_all">すべて表示</string>
+    <string name="message_view_attachments_view">表示</string>
+    <string name="message_view_attachments_title">添付ファイル</string>
+    <string name="message_view_attachments_save_all">すべて保存</string>
+    <string name="message_view_from_me_text">自分</string>
+    <string name="general_settings_message_list_date_time_format_iso">ISO</string>
+    <string name="global_settings_privacy_incognito_keyboard">プライベートキーボード</string>
+    <string name="global_settings_privacy_incognito_keyboard_detail">メッセージ作成時の入力内容をキーボードが学習しないように指示します</string>
+    <string name="account_setup_visibility_and_syncing">表示と同期</string>
+    <string name="account_settings_signature_html_label">HTML 署名</string>
+    <string name="account_settings_signature_is_html_label">署名を HTML として保存する</string>
+    <string name="account_settings_signature_is_html_summary">署名を HTML として解釈します。スクリプトとイベントハンドラーは、セキュリティのため削除されます。</string>
+    <string name="account_settings_signature_preview">署名のプレビュー</string>
+    <string name="account_settings_signature_preview_empty">こちらに署名のプレビューが表示されます</string>
+    <string name="account_settings_signature_clear_label">署名をクリア</string>
+    <string name="remote_feature_flag_preferences">リモート機能フラグ</string>
+    <string name="animation_setting_on">オン</string>
+    <string name="animation_setting_off">オフ</string>
+    <string name="animation_setting_follow_system">システム標準を使用</string>
+    <string name="message_compose_encrypting_message">メッセージを暗号化中…</string>
+    <string name="error_no_contact_provider">連絡先アプリが見つかりませんでした。アドレスを追加するには、アプリをインストールしてください。</string>
+    <string name="no_network_message_will_be_sent_later_toast">オフラインです。メッセージは接続が利用可能になった後に送信されます</string>
 </resources>

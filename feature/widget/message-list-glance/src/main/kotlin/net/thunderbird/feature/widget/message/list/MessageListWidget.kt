@@ -12,7 +12,7 @@ import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.provideContent
 import com.fsck.k9.CoreResourceProvider
-import com.fsck.k9.activity.MessageList.Companion.intentDisplaySearch
+import com.fsck.k9.activity.MessageHomeActivity.Companion.intentDisplaySearch
 import kotlin.random.Random.Default.nextInt
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.thunderbird.core.android.account.SortType
 import net.thunderbird.core.preference.GeneralSettingsManager
-import net.thunderbird.feature.search.legacy.SearchAccount.Companion.createUnifiedInboxAccount
+import net.thunderbird.feature.search.legacy.SearchAccount.Companion.createUnifiedInboxSearch
 import net.thunderbird.feature.widget.message.list.ui.MessageListWidgetContent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -42,9 +42,9 @@ internal class MessageListWidget : GlanceAppWidget(), KoinComponent {
 
             LaunchedEffect(Unit) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    val unifiedInboxSearch = createUnifiedInboxAccount(
-                        unifiedInboxTitle = coreResourceProvider.searchUnifiedInboxTitle(),
-                        unifiedInboxDetail = coreResourceProvider.searchUnifiedInboxDetail(),
+                    val unifiedInboxSearch = createUnifiedInboxSearch(
+                        title = coreResourceProvider.searchUnifiedFoldersTitle(),
+                        detail = coreResourceProvider.searchUnifiedFoldersDetail(),
                     ).relatedSearch
                     val messageListConfig = MessageListConfig(
                         search = unifiedInboxSearch,
@@ -68,25 +68,31 @@ internal class MessageListWidget : GlanceAppWidget(), KoinComponent {
     }
 
     private fun openApp(context: Context) {
-        val unifiedInboxAccount = createUnifiedInboxAccount(
-            unifiedInboxTitle = coreResourceProvider.searchUnifiedInboxTitle(),
-            unifiedInboxDetail = coreResourceProvider.searchUnifiedInboxDetail(),
+        val unifiedFoldersSearch = createUnifiedInboxSearch(
+            title = coreResourceProvider.searchUnifiedFoldersTitle(),
+            detail = coreResourceProvider.searchUnifiedFoldersDetail(),
         )
         val intent = intentDisplaySearch(
             context = context,
-            search = unifiedInboxAccount.relatedSearch,
+            search = unifiedFoldersSearch.relatedSearch,
             noThreading = true,
             newTask = true,
             clearTop = true,
         ).apply {
             action = nextInt().toString()
         }
-        PendingIntentCompat.getActivity(
-            context,
-            nextInt(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT,
-            false,
-        )!!.send()
+        // Only returns null when using FLAG_NO_CREATE
+        val pendingIntent = checkNotNull(
+            PendingIntentCompat.getActivity(
+                context,
+                nextInt(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT,
+                false,
+            ),
+        ) {
+            "Failed to create activity PendingIntent"
+        }
+        pendingIntent.send()
     }
 }

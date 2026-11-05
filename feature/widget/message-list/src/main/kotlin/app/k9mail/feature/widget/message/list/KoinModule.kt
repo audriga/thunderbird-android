@@ -6,10 +6,11 @@ val messageListWidgetModule = module {
     single { MessageListWidgetManager(context = get(), messageListRepository = get(), config = get()) }
     factory {
         MessageListLoader(
-            preferences = get(),
+            accountManager = get(),
             messageListRepository = get(),
             messageHelper = get(),
-            generalSettingsManager = get(),
+            messageListPreferencesManager = get(),
+            outboxFolderManager = get(),
         )
     }
 }

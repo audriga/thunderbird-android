@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.PendingIntentCompat
@@ -14,17 +15,23 @@ import com.fsck.k9.QuietTimeChecker
 import com.fsck.k9.notification.NotificationChannelManager.ChannelType
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import net.thunderbird.core.android.account.LegacyAccount
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.components.core.logging.Logger
+import net.thunderbird.core.android.account.LegacyAccountManager
 import net.thunderbird.core.preference.GeneralSettingsManager
 import net.thunderbird.core.preference.notification.NotificationPreference
+import net.thunderbird.feature.account.AccountId
 
-class NotificationHelper(
+private const val TAG = "NotificationHelper"
+
+internal class NotificationHelper(
     private val context: Context,
     private val notificationManager: NotificationManagerCompat,
     private val notificationChannelManager: NotificationChannelManager,
     private val resourceProvider: NotificationResourceProvider,
     private val generalSettingsManager: GeneralSettingsManager,
+    private val notificationIdRegistry: AccountNotificationIdRegistry,
+    private val accountManager: LegacyAccountManager,
+    private val logger: Logger,
 ) {
     fun getContext(): Context {
         return context
@@ -34,12 +41,16 @@ class NotificationHelper(
         return notificationManager
     }
 
-    fun createNotificationBuilder(account: LegacyAccount, channelType: ChannelType): NotificationCompat.Builder {
-        val notificationChannel = notificationChannelManager.getChannelIdFor(account, channelType)
+    fun createNotificationBuilder(
+        accountId: AccountId,
+        channelType: ChannelType,
+        channelVersion: Int,
+    ): NotificationCompat.Builder {
+        val notificationChannel = notificationChannelManager.getChannelIdFor(accountId, channelType, channelVersion)
         return NotificationCompat.Builder(context, notificationChannel)
     }
 
-    fun notify(account: LegacyAccount, notificationId: Int, notification: Notification) {
+    fun notify(accountId: AccountId, notificationId: Int, notification: Notification) {
         try {
             notificationManager.notify(notificationId, notification)
         } catch (e: SecurityException) {
@@ -51,19 +62,33 @@ class NotificationHelper(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 e.message?.contains("does not have permission to") == true
             ) {
-                Log.e(e, "Failed to create a notification for a new message")
-                showNotifyErrorNotification(account)
+                logger.error(TAG, e) { "Failed to post notification with ID $notificationId" }
+                showNotifyErrorNotification(accountId)
             } else {
-                throw e
+                logger.error(TAG, e) { "Failed to post notification for account $accountId" }
             }
         }
     }
 
-    private fun showNotifyErrorNotification(account: LegacyAccount) {
+    fun notify(notificationId: Int, notification: Notification) {
+        try {
+            notificationManager.notify(notificationId, notification)
+        } catch (e: SecurityException) {
+            logger.error(TAG, e) { "Failed to post notification with ID $notificationId" }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun showNotifyErrorNotification(accountId: AccountId) {
+        val account = accountManager.findById(accountId) ?: return
         val title = resourceProvider.notifyErrorTitle()
         val text = resourceProvider.notifyErrorText()
 
-        val messagesNotificationChannelId = notificationChannelManager.getChannelIdFor(account, ChannelType.MESSAGES)
+        val messagesNotificationChannelId = notificationChannelManager.getChannelIdFor(
+            accountId,
+            ChannelType.MESSAGES,
+            account.messagesNotificationChannelVersion,
+        )
         val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
             putExtra(Settings.EXTRA_CHANNEL_ID, messagesNotificationChannelId)
             putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
@@ -72,22 +97,27 @@ class NotificationHelper(
         val notificationSettingsPendingIntent =
             PendingIntentCompat.getActivity(context, account.accountNumber, intent, 0, false)
 
-        val notification = createNotificationBuilder(account, ChannelType.MISCELLANEOUS)
-            .setSmallIcon(resourceProvider.iconWarning)
-            .setColor(account.chipColor)
-            .setWhen(System.currentTimeMillis())
-            .setAutoCancel(true)
-            .setTicker(title)
-            .setContentTitle(title)
-            .setContentText(text)
-            .setContentIntent(notificationSettingsPendingIntent)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setCategory(NotificationCompat.CATEGORY_ERROR)
-            .setErrorAppearance(generalSettingsManager = generalSettingsManager)
-            .build()
+        val notification =
+            createNotificationBuilder(accountId, ChannelType.MISCELLANEOUS, account.messagesNotificationChannelVersion)
+                .setSmallIcon(resourceProvider.iconWarning)
+                .setColor(account.profile.color)
+                .setWhen(System.currentTimeMillis())
+                .setAutoCancel(true)
+                .setTicker(title)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(notificationSettingsPendingIntent)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setCategory(NotificationCompat.CATEGORY_ERROR)
+                .setErrorAppearance(generalSettingsManager = generalSettingsManager)
+                .build()
 
-        val notificationId = NotificationIds.getNewMailSummaryNotificationId(account)
-        notificationManager.notify(notificationId, notification)
+        val notificationId = getNotificationId(account.id)
+        notify(notificationId, notification)
+    }
+
+    private fun getNotificationId(accountId: AccountId): Int {
+        return notificationIdRegistry.getOrAllocate(accountId, AccountNotificationKind.NewMailSummary).value
     }
 
     companion object {
@@ -143,6 +173,10 @@ internal fun NotificationCompat.Builder.setAppearance(
 @OptIn(ExperimentalTime::class)
 internal val NotificationPreference.isQuietTime: Boolean
     get() {
+        if (!isQuietTimeEnabled) {
+            return false
+        }
+
         val clock = DI.get<Clock>()
         val quietTimeChecker = QuietTimeChecker(
             clock = clock,

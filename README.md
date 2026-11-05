@@ -7,6 +7,7 @@ See [FORK.md](FORK.md) for more details on things added by this fork.
 
 <a href="https://play.google.com/store/apps/details?id=net.thunderbird.android&referrer=utm_campaign%3Dandroid_metadata%26utm_medium%3Dweb%26utm_source%3Dgithub.com%26utm_content%3Dbadge" target="_blank"><img src="./docs/assets/get-it-on-play.png" alt="Get it on Google Play" height="28"></a>
 <a href="https://f-droid.org/packages/net.thunderbird.android"><img src="./docs/assets/get-it-on-fdroid.png" alt="Get it on F-Droid" height="28"></a>
+<a href="https://apps.obtainium.imranr.dev/"><img src="./docs/assets/get-it-on-obtainium.png" alt="Get it on Obtainium" height="28"></a>
 [![Latest release](https://img.shields.io/github/release/thunderbird/thunderbird-android.svg?style=for-the-badge&filter=THUNDERBIRD_*&logo=thunderbird)](https://github.com/thunderbird/thunderbird-android/releases/latest)
 [![Latest beta release](https://img.shields.io/github/release/thunderbird/thunderbird-android.svg?include_prereleases&style=for-the-badge&label=beta&filter=THUNDERBIRD_*b*&logo=thunderbird)](https://github.com/thunderbird/thunderbird-android/releases)
 
@@ -22,6 +23,7 @@ Thunderbird for Android can be downloaded from a couple of sources:
 - Thunderbird Beta on [Google Play](https://play.google.com/store/apps/details?id=net.thunderbird.android.beta&referrer=utm_campaign%3Dandroid_metadata%26utm_medium%3Dweb%26utm_source%3Dgithub.com%26utm_content%3Dlink) or [F-Droid](https://f-droid.org/packages/net.thunderbird.android.beta)
 - [Github Releases](https://github.com/thunderbird/thunderbird-android/releases)
 - [FFUpdater](https://f-droid.org/packages/de.marmaro.krt.ffupdater/) allows installing the latest versions from ftp.mozilla.org
+- [Obtainium](https://obtainium.imranr.dev/): Use "Filter release title by regular expression" under "Additional options" with `Thunderbird`. More info in [Complex Obtainium Apps list](https://apps.obtainium.imranr.dev/).
 
 By using Thunderbird for Android Beta, you have early access to current development and are able to try new features earlier.
 
@@ -51,25 +53,33 @@ The Thunderbird Community uses Matrix to communicate:
 - Development and other ways to contribute: [#tb-android-dev:mozilla.org](https://matrix.to/#/#tb-android-dev:mozilla.org)
 - Reach the broader Thunderbird Community in the [community space](https://matrix.to/#/#thunderbird-community:mozilla.org)
 
+## Roadmap
+
+To learn more about all the wonderful things planned for this year please see our
+[roadmap](https://github.com/orgs/thunderbird/projects/19/views/1). The core team's day to day activities are additionally
+tracked in our [sprint board](https://github.com/orgs/thunderbird/projects/20/views/1).
+
 ## Contributing
 
 We welcome contributions from everyone.
 
 - Development: Have you done a little bit of Kotlin? The [CONTRIBUTING](docs/CONTRIBUTING.md) guide will help you get started
-- Translations: Do you speak a language aside from English? [Translating is easy](https://hosted.weblate.org/projects/tb-android/) and just takes a few minutes for your first success.
+- Translations: Do you speak a language aside from English? [Translating is easy](https://hosted.weblate.org/projects/thunderbird/thunderbird-android/) and just takes a few minutes for your first success.
 - We have [a number of other contribution opportunities](https://blog.thunderbird.net/2024/09/contribute-to-thunderbird-for-android/) available.
 - Thunderbird is supported solely by financial contributions from users like you. [Make a financial contribution today](https://www.thunderbird.net/donate/mobile/?form=tfa)!
 - Make sure to check out the [Mozilla Community Participation Guidelines](https://www.mozilla.org/about/governance/policies/participation/).
 
-### Architecture Decision Records (ADR)
+### Engineering Process
 
-We use [Architecture Decision Records](https://adr.github.io/) to document the architectural decisions made in the
-development of Thunderbird for Android. You can find them in the [`docs/architecture/adr`](docs/architecture/adr) directory.
+We use a structured engineering process to propose, decide, and deliver technical changes. This includes:
+- [Requests for Comments (RFCs)](docs/engineering/rfcs/README.md) for technical direction.
+- [Technical Designs](docs/engineering/technical-designs/README.md) for implementation details.
+- [Architecture Decision Records (ADRs)](docs/engineering/adr/README.md) for durable architectural decisions.
 
-For more information about our ADRs, please see the [ADRs README](docs/architecture/adr/README.md).
+You can find more information in the [`docs/engineering`](docs/engineering) directory.
 
-We encourage team members and contributors to read through our ADRs to understand the architectural decisions that
-have shaped this project so far. Feel free to propose new ADRs or suggest modifications to existing ones as needed.
+We encourage team members and contributors to read through our engineering documentation to understand the
+processes and decisions that have shaped this project so far.
 
 ## K-9 Mail
 
@@ -84,6 +94,7 @@ If you prefer the robot dog and would like to keep K-9 Mail around, you can find
 
 - [K-9 Mail on Google Play](https://play.google.com/store/apps/details?id=com.fsck.k9&utm_source=thunderbird-android-github&utm_campaign=download-section)
 - [K-9 Mail on F-Droid](https://f-droid.org/packages/com.fsck.k9/)
+- [K-9 Mail on Obtainium](https://obtainium.imranr.dev/) (use `K-9 Mail` as filter, see [notes](#download) above)
 
 ## Forking
 

@@ -1,73 +1,67 @@
 package net.thunderbird.feature.notification.impl.receiver
 
-import dev.mokkery.matcher.any
-import dev.mokkery.spy
-import dev.mokkery.verify.VerifyMode.Companion.exactly
-import dev.mokkery.verifySuspend
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import net.thunderbird.core.logging.testing.TestLogger
+import net.thunderbird.components.core.logging.testing.TestLogger
 import net.thunderbird.feature.notification.api.NotificationId
 import net.thunderbird.feature.notification.api.NotificationRegistry
 import net.thunderbird.feature.notification.api.content.Notification
 import net.thunderbird.feature.notification.testing.fake.FakeInAppOnlyNotification
+import net.thunderbird.feature.notification.testing.fake.FakeNotificationRegistry
 
 class InAppNotificationNotifierTest {
     @Test
-    fun `show should not publish event when notification is already present in NotificationRegistry`() = runTest {
+    fun `show should not register notification when it is already present in NotificationRegistry`() = runTest {
         // Arrange
-        val notificationId = NotificationId(value = 1)
+        val expectedNotificationId = NotificationId(value = 1)
         val notification = FakeInAppOnlyNotification()
-        val registrar = mapOf(notificationId to notification)
-        val eventBus = spy(InAppNotificationEventBus())
-        val testSubject = createTestSubject(registrar, eventBus)
+        val registrar = mapOf(expectedNotificationId to notification)
+        val registry = FakeNotificationRegistry(initialRegistrar = registrar)
+        val testSubject = createTestSubject(registry)
 
         // Act
-        testSubject.show(notificationId, notification)
+        val actual = testSubject.show(notification)
 
         // Assert
-        verifySuspend(exactly(1)) {
-            eventBus.publish(any())
-        }
+        assertThat(registry.registeredNotifications).isEmpty()
+        assertThat(actual).isEqualTo(expectedNotificationId)
     }
 
     @Test
-    fun `show should publish event when notification is not present in NotificationRegistry`() = runTest {
+    fun `show should register notification when it is not present in NotificationRegistry`() = runTest {
         // Arrange
-        val notificationId = NotificationId(value = Int.MAX_VALUE)
         val notification = FakeInAppOnlyNotification()
+        val registrarInitialSize = 100
         val registrar = buildMap<NotificationId, Notification> {
-            repeat(times = 100) { index ->
+            repeat(times = registrarInitialSize) { index ->
                 put(NotificationId(index), FakeInAppOnlyNotification(title = "fake title $index"))
             }
         }
-        val eventBus = spy(InAppNotificationEventBus())
-        val testSubject = createTestSubject(registrar, eventBus)
+        val registry = FakeNotificationRegistry(
+            initialRegistrar = registrar,
+            useRandomIdForRegistering = false,
+        )
+        val testSubject = createTestSubject(registry)
 
         // Act
-        testSubject.show(notificationId, notification)
+        val id = testSubject.show(notification)
 
         // Assert
-        verifySuspend(exactly(0)) {
-            eventBus.publish(any())
-        }
+        assertThat(registry.registeredNotifications).containsExactly(notification)
+        assertThat(id)
+            .isEqualTo(NotificationId(registrarInitialSize + 1))
     }
 
     private fun createTestSubject(
-        registrar: Map<NotificationId, Notification>,
-        eventBus: InAppNotificationEventBus,
+        registry: NotificationRegistry = FakeNotificationRegistry(),
     ): InAppNotificationNotifier {
         return InAppNotificationNotifier(
             logger = TestLogger(),
-            notificationRegistry = object : NotificationRegistry {
-                override val registrar: Map<NotificationId, Notification> = registrar
-                override fun get(notificationId: NotificationId): Notification? = error("Not yet implemented")
-                override fun get(notification: Notification): NotificationId? = error("Not yet implemented")
-                override suspend fun register(notification: Notification): NotificationId = error("Not yet implemented")
-                override fun unregister(notificationId: NotificationId) = error("Not yet implemented")
-                override fun unregister(notification: Notification) = error("Not yet implemented")
-            },
-            inAppNotificationEventBus = eventBus,
+            notificationRegistry = registry,
         )
     }
 }

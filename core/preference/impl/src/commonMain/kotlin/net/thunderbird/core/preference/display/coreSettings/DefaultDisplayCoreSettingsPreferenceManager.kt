@@ -10,10 +10,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import net.thunderbird.core.logging.Logger
-import net.thunderbird.core.preference.display.KEY_THEME
+import net.thunderbird.components.core.logging.Logger
+import net.thunderbird.core.preference.PreferenceChangeBroker
+import net.thunderbird.core.preference.PreferenceChangeSubscriber
+import net.thunderbird.core.preference.PreferenceScope
 import net.thunderbird.core.preference.storage.Storage
 import net.thunderbird.core.preference.storage.StorageEditor
+import net.thunderbird.core.preference.storage.StorageProvider
 import net.thunderbird.core.preference.storage.getEnumOrDefault
 import net.thunderbird.core.preference.storage.putEnum
 
@@ -21,14 +24,19 @@ private const val TAG = "DefaultDisplayCoreSettingsPreferenceManager"
 
 class DefaultDisplayCoreSettingsPreferenceManager(
     private val logger: Logger,
-    private val storage: Storage,
-    private val storageEditor: StorageEditor,
+    private val storageProvider: StorageProvider,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private var scope: CoroutineScope = CoroutineScope(SupervisorJob()),
-) : DisplayCoreSettingsPreferenceManager {
+    preferenceChangeBroker: PreferenceChangeBroker,
+) : DisplayCoreSettingsPreferenceManager, PreferenceChangeSubscriber {
 
+    init {
+        preferenceChangeBroker.subscribe(this)
+    }
     private val configState: MutableStateFlow<DisplayCoreSettings> = MutableStateFlow(value = loadConfig())
     private val mutex = Mutex()
+    private val storage: Storage
+        get() = storageProvider.storage
 
     override fun getConfig(): DisplayCoreSettings = configState.value
 
@@ -42,24 +50,24 @@ class DefaultDisplayCoreSettingsPreferenceManager(
 
     private fun loadConfig(): DisplayCoreSettings = DisplayCoreSettings(
         fixedMessageViewTheme = storage.getBoolean(
-            KEY_FIXED_MESSAGE_VIEW_THEME,
+            DisplayCoreSettingKey.FixedMessageViewTheme.value,
             DISPLAY_SETTINGS_DEFAULT_FIXED_MESSAGE_VIEW_THEME,
         ),
-        appTheme = storage.getEnumOrDefault(KEY_THEME, DISPLAY_SETTINGS_DEFAULT_APP_THEME),
+        appTheme = storage.getEnumOrDefault(DisplayCoreSettingKey.Theme.value, DISPLAY_SETTINGS_DEFAULT_APP_THEME),
         messageViewTheme = storage.getEnumOrDefault(
-            KEY_MESSAGE_VIEW_THEME,
+            DisplayCoreSettingKey.MessageViewTheme.value,
             DISPLAY_SETTINGS_DEFAULT_MESSAGE_VIEW_THEME,
         ),
         messageComposeTheme = storage.getEnumOrDefault(
-            KEY_MESSAGE_COMPOSE_THEME,
+            DisplayCoreSettingKey.MessageComposeTheme.value,
             DISPLAY_SETTINGS_DEFAULT_MESSAGE_COMPOSE_THEME,
         ),
         appLanguage = storage.getStringOrDefault(
-            KEY_APP_LANGUAGE,
+            DisplayCoreSettingKey.AppLanguage.value,
             DISPLAY_SETTINGS_DEFAULT_APP_LANGUAGE,
         ),
         splitViewMode = storage.getEnumOrDefault(
-            KEY_SPLIT_VIEW_MODE,
+            DisplayCoreSettingKey.SplitViewMode.value,
             DISPLAY_SETTINGS_DEFAULT_SPLIT_VIEW_MODE,
         ),
     )
@@ -68,22 +76,29 @@ class DefaultDisplayCoreSettingsPreferenceManager(
         logger.debug(TAG) { "writeConfig() called with: config = $config" }
         scope.launch(ioDispatcher) {
             mutex.withLock {
-                storageEditor.putEnum(KEY_THEME, config.appTheme)
-                storageEditor.putEnum(KEY_MESSAGE_VIEW_THEME, config.messageViewTheme)
+                val storageEditor = storageProvider.createStorageEditor()
+                storageEditor.putEnum(DisplayCoreSettingKey.Theme.value, config.appTheme)
+                storageEditor.putEnum(DisplayCoreSettingKey.MessageViewTheme.value, config.messageViewTheme)
                 storageEditor.putEnum(
-                    KEY_MESSAGE_COMPOSE_THEME,
+                    DisplayCoreSettingKey.MessageComposeTheme.value,
                     config.messageComposeTheme,
                 )
                 storageEditor.putBoolean(
-                    KEY_FIXED_MESSAGE_VIEW_THEME,
+                    DisplayCoreSettingKey.FixedMessageViewTheme.value,
                     config.fixedMessageViewTheme,
                 )
-                storageEditor.putString(KEY_APP_LANGUAGE, config.appLanguage)
-                storageEditor.putEnum(KEY_SPLIT_VIEW_MODE, config.splitViewMode)
+                storageEditor.putString(DisplayCoreSettingKey.AppLanguage.value, config.appLanguage)
+                storageEditor.putEnum(DisplayCoreSettingKey.SplitViewMode.value, config.splitViewMode)
                 storageEditor.commit().also { commited ->
                     logger.verbose(TAG) { "writeConfig: storageEditor.commit() resulted in: $commited" }
                 }
             }
+        }
+    }
+
+    override fun receive(scope: PreferenceScope) {
+        if (scope == PreferenceScope.ALL || scope == PreferenceScope.DISPLAY_CORE) {
+            configState.update { loadConfig() }
         }
     }
 }

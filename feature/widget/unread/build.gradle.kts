@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(projects.feature.mail.account.api)
+    implementation(projects.core.ui.legacy.theme2.common)
 
     implementation(projects.legacy.ui.legacy)
     implementation(projects.legacy.core)
@@ -11,9 +12,22 @@ dependencies {
 
     implementation(libs.preferencex)
 
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.koin.test)
     testImplementation(libs.robolectric)
 }
 
 android {
     namespace = "app.k9mail.feature.widget.unread"
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+}
+
+codeCoverage {
+    branchCoverage = 10
+    lineCoverage = 16
 }

@@ -1,0 +1,42 @@
+package net.thunderbird.core.ui.setting.dialog.ui.components.list.value
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
+import net.thunderbird.components.ui.bolt.atom.text.TextTitleMedium
+import net.thunderbird.core.ui.setting.SettingValue
+import net.thunderbird.core.ui.setting.component.list.item.SettingItemLayout
+
+@Composable
+internal fun SelectItem(
+    setting: SettingValue.Select,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingItemLayout(
+        onClick = onClick,
+        icon = setting.icon(),
+        modifier = modifier,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                Modifier.weight(1f),
+            ) {
+                if (setting.displayValueAsSecondaryText) {
+                    TextTitleMedium(text = setting.title())
+                    TextBodyMedium(text = setting.value.title())
+                } else {
+                    TextTitleMedium(text = setting.value.title())
+                    setting.description()?.let {
+                        TextBodyMedium(text = it)
+                    }
+                }
+            }
+        }
+    }
+}

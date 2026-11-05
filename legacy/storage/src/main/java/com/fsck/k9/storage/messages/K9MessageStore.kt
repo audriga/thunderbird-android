@@ -6,7 +6,6 @@ import app.k9mail.legacy.mailstore.MessageMapper
 import app.k9mail.legacy.mailstore.MessageStore
 import app.k9mail.legacy.mailstore.MoreMessages
 import app.k9mail.legacy.mailstore.SaveMessageData
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.FolderType
 import com.fsck.k9.mail.Header
 import com.fsck.k9.mailstore.LockableDatabase
@@ -14,8 +13,11 @@ import com.fsck.k9.mailstore.StorageFilesProvider
 import com.fsck.k9.message.extractors.BasicPartInfoExtractor
 import java.util.Date
 import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.common.mail.Flag
 import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.feature.account.AccountId
 import net.thunderbird.feature.mail.folder.api.FolderDetails
+import net.thunderbird.feature.mail.message.list.LocalMessageUidPrefixProvider
 import net.thunderbird.feature.search.legacy.SearchConditionTreeNode
 
 class K9MessageStore(
@@ -23,23 +25,38 @@ class K9MessageStore(
     storageFilesProvider: StorageFilesProvider,
     basicPartInfoExtractor: BasicPartInfoExtractor,
     generalSettingsManager: GeneralSettingsManager,
+    accountId: AccountId,
+    localMessageUidPrefixProvider: LocalMessageUidPrefixProvider,
 ) : MessageStore {
     private val attachmentFileManager = AttachmentFileManager(storageFilesProvider, generalSettingsManager)
     private val threadMessageOperations = ThreadMessageOperations()
     private val saveMessageOperations = SaveMessageOperations(
-        database,
-        attachmentFileManager,
-        basicPartInfoExtractor,
-        threadMessageOperations,
+        lockableDatabase = database,
+        attachmentFileManager = attachmentFileManager,
+        partInfoExtractor = basicPartInfoExtractor,
+        threadMessageOperations = threadMessageOperations,
+        accountId = accountId,
+        localMessageUidPrefixProvider = localMessageUidPrefixProvider,
     )
-    private val copyMessageOperations = CopyMessageOperations(database, attachmentFileManager, threadMessageOperations)
-    private val moveMessageOperations = MoveMessageOperations(database, threadMessageOperations)
+    private val copyMessageOperations = CopyMessageOperations(
+        lockableDatabase = database,
+        attachmentFileManager = attachmentFileManager,
+        threadMessageOperations = threadMessageOperations,
+        accountId = accountId,
+        localMessageUidPrefixProvider = localMessageUidPrefixProvider,
+    )
+    private val moveMessageOperations = MoveMessageOperations(
+        database = database,
+        threadMessageOperations = threadMessageOperations,
+        accountId = accountId,
+        localMessageUidPrefixProvider = localMessageUidPrefixProvider,
+    )
     private val flagMessageOperations = FlagMessageOperations(database)
     private val updateMessageOperations = UpdateMessageOperations(database)
-    private val retrieveMessageOperations = RetrieveMessageOperations(database)
+    private val retrieveMessageOperations = RetrieveMessageOperations(database, localMessageUidPrefixProvider)
     private val retrieveMessageListOperations = RetrieveMessageListOperations(database)
     private val deleteMessageOperations = DeleteMessageOperations(database, attachmentFileManager)
-    private val createFolderOperations = CreateFolderOperations(database)
+    private val createFolderOperations = CreateFolderOperations(database, accountId)
     private val retrieveFolderOperations = RetrieveFolderOperations(database)
     private val checkFolderOperations = CheckFolderOperations(database)
     private val updateFolderOperations = UpdateFolderOperations(database)

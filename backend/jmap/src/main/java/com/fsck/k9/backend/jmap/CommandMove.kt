@@ -1,24 +1,26 @@
 package com.fsck.k9.backend.jmap
 
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.legacy.logging.Log
 import rs.ltt.jmap.client.JmapClient
 import rs.ltt.jmap.common.method.call.email.SetEmailMethodCall
 import rs.ltt.jmap.common.method.response.email.SetEmailMethodResponse
 import rs.ltt.jmap.common.util.Patches
+
+private const val TAG = "CommandMove"
 
 class CommandMove(
     private val jmapClient: JmapClient,
     private val accountId: String,
 ) {
     fun moveMessages(targetFolderServerId: String, messageServerIds: List<String>) {
-        Log.v("Moving %d messages to %s", messageServerIds.size, targetFolderServerId)
+        Log.v(TAG, "Moving %d messages to %s", messageServerIds.size, targetFolderServerId)
 
         val mailboxPatch = Patches.set("mailboxIds", mapOf(targetFolderServerId to true))
         updateEmails(messageServerIds, mailboxPatch)
     }
 
     fun moveMessagesAndMarkAsRead(targetFolderServerId: String, messageServerIds: List<String>) {
-        Log.v("Moving %d messages to %s and marking them as read", messageServerIds.size, targetFolderServerId)
+        Log.v(TAG, "Moving %d messages to %s and marking them as read", messageServerIds.size, targetFolderServerId)
 
         val mailboxPatch = Patches.builder()
             .set("mailboxIds", mapOf(targetFolderServerId to true))
@@ -28,7 +30,7 @@ class CommandMove(
     }
 
     fun copyMessages(targetFolderServerId: String, messageServerIds: List<String>) {
-        Log.v("Copying %d messages to %s", messageServerIds.size, targetFolderServerId)
+        Log.v(TAG, "Copying %d messages to %s", messageServerIds.size, targetFolderServerId)
 
         val mailboxPatch = Patches.set("mailboxIds/$targetFolderServerId", true)
         updateEmails(messageServerIds, mailboxPatch)

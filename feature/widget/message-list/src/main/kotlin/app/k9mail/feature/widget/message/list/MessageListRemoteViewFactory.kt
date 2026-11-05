@@ -9,7 +9,7 @@ import android.widget.RemoteViews
 import android.widget.RemoteViewsService.RemoteViewsFactory
 import androidx.core.content.ContextCompat
 import com.fsck.k9.CoreResourceProvider
-import com.fsck.k9.activity.MessageList
+import com.fsck.k9.activity.MessageHomeActivity
 import net.thunderbird.core.android.account.SortType
 import net.thunderbird.core.preference.GeneralSettingsManager
 import net.thunderbird.feature.search.legacy.LocalMessageSearch
@@ -23,7 +23,7 @@ internal class MessageListRemoteViewFactory(private val context: Context) : Remo
     private val coreResourceProvider: CoreResourceProvider by inject()
     private val generalSettingsManager: GeneralSettingsManager by inject()
 
-    private lateinit var unifiedInboxSearch: LocalMessageSearch
+    private lateinit var unifiedInboxFolders: LocalMessageSearch
 
     private var messageListItems = emptyList<MessageListItem>()
     private var senderAboveSubject = false
@@ -31,9 +31,9 @@ internal class MessageListRemoteViewFactory(private val context: Context) : Remo
     private var unreadTextColor = 0
 
     override fun onCreate() {
-        unifiedInboxSearch = SearchAccount.createUnifiedInboxAccount(
-            unifiedInboxTitle = coreResourceProvider.searchUnifiedInboxTitle(),
-            unifiedInboxDetail = coreResourceProvider.searchUnifiedInboxDetail(),
+        unifiedInboxFolders = SearchAccount.createUnifiedInboxSearch(
+            title = coreResourceProvider.searchUnifiedFoldersTitle(),
+            detail = coreResourceProvider.searchUnifiedFoldersDetail(),
         ).relatedSearch
 
         senderAboveSubject = generalSettingsManager.getConfig().display.inboxSettings.isMessageListSenderAboveSubject
@@ -48,7 +48,7 @@ internal class MessageListRemoteViewFactory(private val context: Context) : Remo
     private fun loadMessageList() {
         // TODO: Use same sort order that is used for the Unified Inbox inside the app
         val messageListConfig = MessageListConfig(
-            search = unifiedInboxSearch,
+            search = unifiedInboxFolders,
             showingThreadedList = generalSettingsManager.getConfig()
                 .display
                 .inboxSettings
@@ -103,7 +103,7 @@ internal class MessageListRemoteViewFactory(private val context: Context) : Remo
             remoteView.setInt(R.id.attachment, "setVisibility", View.GONE)
         }
 
-        val intent = MessageList.actionDisplayMessageTemplateFillIntent(item.messageReference)
+        val intent = MessageHomeActivity.actionDisplayMessageTemplateFillIntent(item.messageReference)
         remoteView.setOnClickFillInIntent(R.id.mail_list_item, intent)
 
         remoteView.setInt(R.id.chip, "setBackgroundColor", item.accountColor)

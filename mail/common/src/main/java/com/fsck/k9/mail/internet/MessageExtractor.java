@@ -10,13 +10,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.thunderbird.core.logging.legacy.Log;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.Message;
 import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.Part;
+import net.thunderbird.legacy.logging.Log;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +30,8 @@ import static com.fsck.k9.mail.internet.Viewable.Text;
 import static com.fsck.k9.mail.internet.Viewable.Textual;
 
 public class MessageExtractor {
+    private static final String TAG = "MessageExtractor";
+
     public static final long NO_TEXT_SIZE_LIMIT = -1L;
 
 
@@ -47,7 +49,7 @@ public class MessageExtractor {
         try {
             Body body = part.getBody();
             if (body == null) {
-                Log.v("No body present for this message part");
+                Log.v(TAG, "No body present for this message part");
                 return null;
             }
 
@@ -62,9 +64,9 @@ public class MessageExtractor {
                 return getTextFromTextPart(part, body, mimeType, textSizeLimit);
             }
 
-            Log.w("Provided non-text part: %s", mimeType);
+            Log.w(TAG, "Provided non-text part: %s", mimeType);
         } catch (IOException | MessagingException e) {
-            Log.e(e, "Unable to getTextFromPart");
+            Log.e(TAG, e, "Unable to getTextFromPart");
         }
 
         return null;

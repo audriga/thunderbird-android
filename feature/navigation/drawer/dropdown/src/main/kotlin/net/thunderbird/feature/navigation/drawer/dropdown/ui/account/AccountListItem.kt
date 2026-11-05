@@ -1,5 +1,6 @@
 package net.thunderbird.feature.navigation.drawer.dropdown.ui.account
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,14 +11,17 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import app.k9mail.core.ui.compose.designsystem.atom.text.TextBodyLarge
-import app.k9mail.core.ui.compose.designsystem.atom.text.TextBodyMedium
-import app.k9mail.core.ui.compose.designsystem.organism.drawer.NavigationDrawerItem
-import app.k9mail.core.ui.compose.theme2.MainTheme
-import net.thunderbird.feature.account.avatar.ui.AvatarOutlined
+import net.thunderbird.components.ui.bolt.atom.icon.Icon
+import net.thunderbird.components.ui.bolt.atom.icon.Icons
+import net.thunderbird.components.ui.bolt.atom.text.TextBodyLargeAutoResize
+import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
+import net.thunderbird.components.ui.bolt.organism.drawer.NavigationDrawerItem
+import net.thunderbird.components.ui.bolt.theme.BoltTheme
+import net.thunderbird.feature.account.avatar.ui.Avatar
 import net.thunderbird.feature.account.avatar.ui.AvatarSize
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.DisplayAccount
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.MailDisplayAccount
+import net.thunderbird.feature.navigation.drawer.dropdown.ui.common.getDisplayAccountAvatar
 import net.thunderbird.feature.navigation.drawer.dropdown.ui.common.getDisplayAccountColor
 import net.thunderbird.feature.navigation.drawer.dropdown.ui.common.getDisplayAccountName
 
@@ -30,27 +34,41 @@ internal fun AccountListItem(
     modifier: Modifier = Modifier,
 ) {
     val color = getDisplayAccountColor(account)
-    val name = getDisplayAccountName(account)
+    val avatar = getDisplayAccountAvatar(account)
 
     NavigationDrawerItem(
         label = { AccountLabel(account = account) },
         selected = selected,
         onClick = { onClick(account) },
-        modifier = modifier.fillMaxWidth()
-            .height(MainTheme.sizes.large),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(BoltTheme.sizes.large),
         icon = {
-            AvatarOutlined(
+            Avatar(
+                avatar = avatar,
                 color = color,
-                name = name,
                 size = AvatarSize.MEDIUM,
             )
         },
         badge = {
-            AccountListItemBadge(
-                unreadCount = account.unreadMessageCount,
-                starredCount = account.starredMessageCount,
-                showStarredCount = showStarredCount,
-            )
+            Crossfade(account.hasError) { hasError ->
+                if (hasError) {
+                    Icon(
+                        imageVector = Icons.DualTone.Warning,
+                        tint = if (selected) {
+                            BoltTheme.colors.onSecondaryContainer
+                        } else {
+                            BoltTheme.colors.error
+                        },
+                    )
+                } else {
+                    AccountListItemBadge(
+                        unreadCount = account.unreadMessageCount,
+                        starredCount = account.starredMessageCount,
+                        showStarredCount = showStarredCount,
+                    )
+                }
+            }
         },
     )
 }
@@ -63,15 +81,17 @@ private fun AccountLabel(
     val name = getDisplayAccountName(account)
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(MainTheme.spacings.half),
+        verticalArrangement = Arrangement.spacedBy(BoltTheme.spacings.half),
         modifier = modifier.fillMaxWidth(),
     ) {
-        TextBodyLarge(
+        TextBodyLargeAutoResize(
             text = buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
                     append(name)
                 }
             },
+            softWrap = true,
+            maxLines = 2,
         )
         if (account is MailDisplayAccount && account.name != account.email) {
             TextBodyMedium(

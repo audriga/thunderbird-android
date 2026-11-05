@@ -5,10 +5,11 @@ import org.koin.dsl.module
 val featureWidgetMessageListModule = module {
     factory {
         MessageListLoader(
-            preferences = get(),
+            accountManager = get(),
             messageListRepository = get(),
             messageHelper = get(),
-            generalSettingsManager = get(),
+            messageListPreferencesManager = get(),
+            outboxFolderManager = get(),
         )
     }
 }

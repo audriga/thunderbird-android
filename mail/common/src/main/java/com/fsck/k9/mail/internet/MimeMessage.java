@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import net.thunderbird.core.logging.legacy.Log;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyFactory;
@@ -27,6 +27,7 @@ import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.MimeType;
 import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.Part;
+import net.thunderbird.legacy.logging.Log;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.dom.field.DateTimeField;
@@ -37,6 +38,7 @@ import org.apache.james.mime4j.parser.MimeStreamParser;
 import org.apache.james.mime4j.stream.BodyDescriptor;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.james.mime4j.stream.MimeConfig;
+import org.apache.james.mime4j.util.ContentUtil;
 import org.jetbrains.annotations.NotNull;
 import net.thunderbird.core.common.exception.MessagingException;
 
@@ -46,6 +48,8 @@ import net.thunderbird.core.common.exception.MessagingException;
  * RFC 2045 style headers.
  */
 public class MimeMessage extends Message {
+    private static final String TAG = "MimeMessage";
+
     private MimeHeader mHeader = new MimeHeader();
     protected Address[] mFrom;
     protected Address[] mSender;
@@ -150,7 +154,7 @@ public class MimeMessage extends Message {
                 DateTimeField field = (DateTimeField) DefaultFieldParser.parse("Date: " + dateHeaderBody);
                 mSentDate = field.getDate();
             } catch (Exception e) {
-                Log.d(e, "Couldn't parse Date header field");
+                Log.d(TAG, e, "Couldn't parse Date header field");
             }
         }
         return mSentDate;
@@ -607,7 +611,7 @@ public class MimeMessage extends Message {
         public void field(Field parsedField) throws MimeException {
             expect(Part.class);
             String name = parsedField.getName();
-            String raw = parsedField.getRaw().toString();
+            String raw = ContentUtil.decode(StandardCharsets.UTF_8, parsedField.getRaw());
             ((Part) stack.peek()).addRawHeader(name, raw);
         }
     }

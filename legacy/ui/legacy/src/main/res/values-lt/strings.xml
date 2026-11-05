@@ -34,7 +34,6 @@
     <string name="choose_folder_title">Pasirinkti aplanką</string>
     <string name="choose_folder_move_title">Perkelti į…</string>
     <string name="choose_folder_copy_title">Kopijuoti į…</string>
-    <string name="actionbar_selected"><xliff:g id="selection_count">%d</xliff:g> pasirinkta</string>
     <string name="send_action">Siųsti</string>
     <string name="empty_subject">Tema yra tuščia. Spustelėkite dar kartą, kad vis tiek išsiųstumėte</string>
     <string name="reply_action">Atsakyti</string>
@@ -73,18 +72,18 @@
     <string name="unsubscribe_action">Atsisakyti prenumeratos</string>
     <string name="show_headers_action">Rodyti antraštes</string>
     <plurals name="copy_address_to_clipboard">
-        <item quantity="one">Nukopijuotas adresas į iškarpinę</item>
-        <item quantity="few">Nukopijuoti adresai į iškarpinę</item>
-        <item quantity="many">Nukopijuota adresų į iškarpinę</item>
-        <item quantity="other">Nukopijuota adresų į iškarpinę</item>
+        <item quantity="one">Adresas nukopijuotas į iškarpinę</item>
+        <item quantity="few">Adresai nukopijuoti į iškarpinę</item>
+        <item quantity="many">Adresų nukopijuota į iškarpinę</item>
+        <item quantity="other">Adresų nukopijuota į iškarpinę</item>
     </plurals>
     <string name="copy_subject_to_clipboard">Nukopijuotas temos tekstas į iškarpinę</string>
     <string name="message_view_theme_action_dark">Perjungti į tamsią temą</string>
     <string name="message_view_theme_action_light">Perjungti į šviesią temą</string>
     <string name="mark_as_unread_action">Žymėti kaip neskaitytą</string>
-    <string name="read_receipt">Skaitymo pranešimas</string>
-    <string name="read_receipt_enabled">Prašys skaitymo pranešimą</string>
-    <string name="read_receipt_disabled">Neprašys skaitymo pranešimo</string>
+    <string name="read_receipt">Pranešimas apie perskaitymą</string>
+    <string name="read_receipt_enabled">Prašys pranešti apie perskaitymą</string>
+    <string name="read_receipt_disabled">Neprašys pranešimo apie perskaitymą</string>
     <string name="add_attachment_action">Pridėti priedą</string>
     <string name="empty_trash_action">Valyti šiukšlinę</string>
     <string name="expunge_action">Valyti</string>
@@ -93,11 +92,11 @@
     <!--Shown in place of the subject when a message has no subject. Showing this in parentheses is customary.-->
     <string name="general_no_subject">(Nėra temos)</string>
     <string name="general_no_sender">Nėra siuntėjo</string>
-    <string name="status_loading_more">Įkeliami laiškai\u2026</string>
+    <string name="status_loading_more">Įkeliami laiškai…</string>
     <string name="status_network_error">Ryšio klaida.</string>
     <string name="status_invalid_id_error">Laiškas nerastas.</string>
     <string name="status_loading_error">Laiško įkėlimo klaida.</string>
-    <string name="load_more_messages_fmt">Įkelti  iki <xliff:g id="messages_to_load">%d</xliff:g> daugiau</string>
+    <string name="load_more_messages_fmt">Įkelti iki <xliff:g id="messages_to_load">%d</xliff:g> daugiau</string>
     <string name="size_format_gigabytes">%.1f GB</string>
     <string name="size_format_megabytes">%.1f MB</string>
     <string name="size_format_kilobytes">%.1f kB</string>
@@ -117,7 +116,7 @@
     <string name="notification_action_archive">Archyvuoti</string>
     <string name="notification_action_archive_all">Archyvuoti viską</string>
     <string name="notification_action_spam">Brukalas</string>
-    <string name="notification_certificate_error_public">Sertifikato klaida.</string>
+    <string name="notification_certificate_error_public">Sertifikato klaida</string>
     <string name="notification_certificate_error_title">Sertifikato klaida <xliff:g id="account">%s</xliff:g></string>
     <string name="notification_certificate_error_text">Patikrinkite serverio nustatymus</string>
     <string name="notification_authentication_error_title">Autentifikavimas nepavyko</string>
@@ -141,7 +140,7 @@
     <string name="debug_enable_debug_logging_title">Įjungti derinimo žurnalą</string>
     <string name="debug_enable_debug_logging_summary">Įrašyti papildomą diagnostinę informaciją</string>
     <string name="debug_enable_sensitive_logging_title">Įrašyti jautrią informaciją</string>
-    <string name="debug_enable_sensitive_logging_summary">Žurnaluose gali būti rodomi slaptažodžiai</string>
+    <string name="debug_enable_sensitive_logging_summary">Žurnaluose gali būti rodomi slaptažodžiai.</string>
     <string name="debug_export_logs_title">Eksportuoti žurnalus</string>
     <string name="debug_export_logs_success">Eksportas sėkmingas. Žurnaluose gali būti konfidencialios informacijos. Būkite atsargūs, kam juos siunčiate.</string>
     <string name="debug_export_logs_failure">Eksportas nepavyko.</string>
@@ -156,8 +155,7 @@
     <string name="message_compose_quote_header_from">Nuo:</string>
     <string name="message_compose_quote_header_to">Kam:</string>
     <string name="message_compose_quote_header_cc">Cc:</string>
-    <string name="message_compose_reply_header_fmt"><xliff:g id="sender">%s</xliff:g> rašė:
-</string>
+    <string name="message_compose_reply_header_fmt"><xliff:g id="sender">%s</xliff:g> rašė:</string>
     <string name="message_compose_reply_header_fmt_with_date"><xliff:g id="sent_date">%1$s</xliff:g>, <xliff:g id="sender">%2$s</xliff:g> parašė:</string>
     <string name="message_compose_error_no_recipients">Turite pridėti bent vieną gavėją.</string>
     <string name="compose_error_incomplete_recipient">Gavėjo lauke pateikti neišsamūs įvesties duomenys!</string>
@@ -177,7 +175,7 @@
     <!--Displayed in the message view screen in front of the number of additional recipients (the ones that are not displayed).-->
     <string name="message_view_additional_recipient_prefix">+</string>
     <!--Displayed in the message view screen if the message was addressed to the user. Make sure this works with 'message_view_recipient_prefix'. In English it's "to me".-->
-    <string name="message_view_me_text">aš</string>
+    <string name="message_view_to_me_text">aš</string>
     <!--Text of the button that is displayed below the message header when the message body references one or more remote images-->
     <string name="message_view_show_remote_images_action">Rodyti nuotolinius paveikslėlius</string>
     <string name="message_view_no_viewer">Nepavyko rasto <xliff:g id="mimetype">%s</xliff:g> peržiūros programos.</string>
@@ -264,7 +262,6 @@
     <string name="archive_folder_label">Archyvas</string>
     <string name="spam_folder_label">Brukalo aplankas</string>
     <string name="account_setup_incoming_subscribed_folders_only_label">Rodyti tik prenumeruotus aplankus</string>
-    <string name="account_setup_auto_expand_folder">Automatiškai išskleisti aplanką</string>
     <string name="account_setup_options_mail_check_frequency_never">Niekada</string>
     <string name="account_setup_options_mail_check_frequency_15min">Kas 15 minučių</string>
     <string name="account_setup_options_mail_check_frequency_30min">Kas 30 minučių</string>
@@ -354,8 +351,6 @@
     <string name="account_settings_crypto_encrypt_all_drafts_on">Visi juodraščiai bus saugomi užšifruoti</string>
     <string name="account_settings_crypto_encrypt_all_drafts_off">Šifruoti juodraščius tik tada, jei įjungtas šifravimas</string>
     <string name="account_settings_mail_check_frequency_label">Aplanko tikrinimo dažnis</string>
-    <string name="account_settings_color_label">Paskyros spalva</string>
-    <string name="account_settings_color_summary">Šios paskyros spalva kuri bus naudojama aplankuose ir paskyrų sąraše</string>
     <string name="account_settings_mail_display_count_label">Vietinio aplanko dydis</string>
     <string name="account_settings_autodownload_message_size_label">Gauti laiškus iki</string>
     <string name="account_settings_autodownload_message_size_1">1 KiB</string>
@@ -396,7 +391,6 @@
     <string name="account_settings_incoming_summary">Konfigūruoti gaunamųjų laiškų serverį</string>
     <string name="account_settings_outgoing_label">Siuntimo serveris</string>
     <string name="account_settings_outgoing_summary">Konfigūruoti siunčiamųjų laiškų(SMTP) serverį</string>
-    <string name="account_settings_description_label">Paskyros pavadinimas</string>
     <string name="account_settings_name_label">Jūsų vardas</string>
     <string name="notifications_title">Pranešimai</string>
     <string name="account_settings_vibration">Vibracija</string>
@@ -517,7 +511,6 @@
     <string name="account_setup_push_limit_500">500 aplankų</string>
     <string name="account_setup_push_limit_1000">1000 aplankų</string>
     <string name="animations_title">Animacija</string>
-    <string name="animations_summary">Naudoti įmantrius vizualinius efektus</string>
     <string name="show_unified_inbox_title">Rodyti suvestinius gautuosius</string>
     <string name="show_starred_count_title">Rodyti žvaigždučių skaičių</string>
     <string name="integrated_inbox_title">Suvestiniai gautieji</string>
@@ -632,7 +625,7 @@
         <item quantity="other">Gauname %d rezultatus</item>
     </plurals>
     <plurals name="remote_search_downloading_limited">
-        <item quantity="one">Gauname %1$d iš %2$d rezultatų</item>
+        <item quantity="one">Gauname %1$d iš %2$d rezultato</item>
         <item quantity="few">Gauname %1$d iš %2$d rezultatų</item>
         <item quantity="many">Gauname %1$d iš %2$d rezultatų</item>
         <item quantity="other">Gauname %1$d iš %2$d rezultatų</item>
@@ -642,7 +635,7 @@
     <string name="action_remote_search">Ieškoti laiškų serveryje</string>
     <string name="remote_search_unavailable_no_network">Paieškai serveryje reikia interneto ryšio.</string>
     <string name="global_settings_background_as_unread_indicator_label">Pakeisti spalvą, kai perskaityta</string>
-    <string name="global_settings_background_as_unread_indicator_summary">Kitoks fonas rodys, kad pranešimas buvo perskaitytas.</string>
+    <string name="global_settings_background_as_unread_indicator_summary">Kitoks fonas rodys, kad pranešimas buvo perskaitytas</string>
     <string name="global_settings_threaded_view_label">Teminis rodinys</string>
     <string name="global_settings_threaded_view_summary">Grupuoti laiškus pagal pokalbį</string>
     <string name="upgrade_databases_title">Atnaujinamos duomenų bazės</string>
@@ -737,7 +730,6 @@
     <string name="crypto_msg_encrypted_insecure">bet šifravimas nelaikomas saugiu</string>
     <string name="locked_attach_unlock">Atrakinti</string>
     <string name="locked_attach_unencrypted">Ši dalis nebuvo užšifruota ir gali būti nesaugi.</string>
-    <string name="locked_attach_title">Neapsaugotas priedas</string>
     <string name="message_progress_text">Įkeliama…</string>
     <string name="messageview_decrypt_cancelled">Iššifravimas buvo atšauktas.</string>
     <string name="messageview_decrypt_retry">Pakartoti</string>
@@ -789,12 +781,7 @@
     <string name="ac_transfer_finish">Kad baigti, atidarykite laišką kitame prietaise ir įveskite sąrankos kodą.</string>
     <string name="ac_transfer_show_code">Rodyti sąrankos kodą</string>
     <string name="ac_transfer_msg_subject">Automatinio šifravimo sąrankos laiškas</string>
-    <string name="ac_transfer_msg_body">Šioje žinutėje pateikiama visa informacija, skirta saugiai perkelti automatinio šifravimo nustatymus ir slaptąjį raktą iš pradinio įrenginio.
-
-Norėdami nustatyti automatinį šifravimą naujajame prietaise, vadovaukitės instrukcijomis, kurios turėtų būti pateiktos naujajame prietaise.
-
-Šią žinutę galite pasilikti ir naudoti kaip atsarginę slaptojo rakto kopiją. Jei norite tai padaryti, turėtumėte užsirašyti slaptažodį ir saugiai jį laikyti.
-</string>
+    <string name="ac_transfer_msg_body">Šioje žinutėje pateikiama visa informacija, skirta saugiai perkelti automatinio šifravimo nustatymus ir slaptąjį raktą iš pradinio įrenginio. Norėdami nustatyti automatinį šifravimą naujajame prietaise, vadovaukitės instrukcijomis, kurios turėtų būti pateiktos naujajame prietaise. Šią žinutę galite pasilikti ir naudoti kaip atsarginę slaptojo rakto kopiją. Jei norite tai padaryti, turėtumėte užsirašyti slaptažodį ir saugiai jį laikyti.</string>
     <string name="ac_transfer_error_send">Siunčiant laišką įvyko klaida. Patikrinkite tinklo ryšį ir siunčiamo serverio konfigūraciją.</string>
     <string name="switch_on">Įj.</string>
     <string name="switch_off">Išj.</string>
@@ -811,25 +798,15 @@ Norėdami nustatyti automatinį šifravimą naujajame prietaise, vadovaukitės i
     <string name="push_info_disable_push_text">Jei jums nereikia momentinių pranešimų apie naujus laiškus, turėtumėte išjungti Push ir naudoti Polling. Polling reguliariai tikrina, ar yra naujų laiškų, ir pranešimo nereikia.</string>
     <string name="push_info_disable_push_action">Išjungti Push</string>
     <!--Name of the swipe action to select a message. Try to keep it short.-->
-    <string name="swipe_action_select">Pasirinkti</string>
     <!--Name of the swipe action to deselect a message. Try to keep it short.-->
-    <string name="swipe_action_deselect">Nebežymėti</string>
     <!--Name of the swipe action to mark a message as read. Try to keep it short.-->
-    <string name="swipe_action_mark_as_read">Pažymėti kaip skaitytą</string>
     <!--Name of the swipe action to mark a message as unread. Try to keep it short.-->
-    <string name="swipe_action_mark_as_unread">Pažymėti kaip neskaitytą</string>
     <!--Name of the swipe action to add the star to a message. Try to keep it short.-->
-    <string name="swipe_action_add_star">Pridėti žvaigždutę</string>
     <!--Name of the swipe action to remove the star from a message. Try to keep it short.-->
-    <string name="swipe_action_remove_star">Pašalinti žvaigždutę</string>
     <!--Name of the swipe action to archive a message. Try to keep it short.-->
-    <string name="swipe_action_archive">Archyvuoti</string>
     <!--Name of the swipe action to delete a message. Try to keep it short.-->
-    <string name="swipe_action_delete">Šalinti</string>
     <!--Name of the swipe action to move a message to the Spam folder. Try to keep it short.-->
-    <string name="swipe_action_spam">Brukalas</string>
     <!--Name of the swipe action to move a message. The ellipsis (…) indicates that there is another step (selecting a folder) before the action is performed. Try to keep it short.-->
-    <string name="swipe_action_move">Perkelti…</string>
     <!--Name of setting to configure whether to show a "compose" floating action button on top of the message list-->
     <!--Displayed in the toolbar when there was an error loading the message list, e.g. because the folder no longer exists.-->
     <string name="message_list_error_title">Klaida</string>
@@ -869,9 +846,7 @@ Norėdami nustatyti automatinį šifravimą naujajame prietaise, vadovaukitės i
     <string name="general_settings_post_remove_action_show_previous_message">Rodyti ankstesnį laišką</string>
     <string name="general_settings_ui_density_relaxed">Mažesnis</string>
     <string name="general_settings_show_compose_button_title">Rodyti slankų rašymo mygtuką</string>
-    <string name="notification_notify_error_text">Bandant sukurti sistemos pranešimą apie naują laišką, įvyko klaida. Tikėtina priežastis – trūkstamas pranešimo garsas.
-\n
-\nBakstelėkite pranešimų nustatymams atverti.</string>
+    <string name="notification_notify_error_text">Bandant sukurti sistemos pranešimą apie naują laišką, įvyko klaida. Tikėtina priežastis – trūkstamas pranešimo garsas. \n \nBakstelėkite pranešimų nustatymams atverti.</string>
     <string name="general_settings_post_remove_action_show_next_message">Rodyti kitą laišką</string>
     <string name="general_settings_post_remove_action_title">Pašalinus ar perkėlus laišką</string>
     <string name="general_settings_right_swipe_title">Braukimas dešinėn</string>
@@ -903,4 +878,31 @@ Norėdami nustatyti automatinį šifravimą naujajame prietaise, vadovaukitės i
     <string name="dialog_confirm_empty_spam_message">Ar tikrai norite išvalyti brukalo aplanką?</string>
     <string name="folder_settings_visible_label">Rodyti aplanką</string>
     <string name="folder_settings_sync_label">Sinchronizuoti</string>
+    <string name="open_camera">Atverti kamerą</string>
+    <string name="attach_file">Prisegti failą</string>
+    <string name="camera_permission_denied">Negautas leidimas naudoti kamerą! Nepavyko padaryti foto</string>
+    <string name="dialog_openkeychain_info_text">Norint naudoti visapusišką šifravimą reikalinga programa \"OpenKeychain\".</string>
+    <string name="push_info_notification_explanation_text">Naudojant \"Push\", <xliff:g id="app_name">%1$s</xliff:g> palaiko ryšį su pašto serveriu. Android sistemai turi būti rodomas pranešimas kol programa veikia fone. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
+    <string name="push_notification_state_alarm_permission_missing">Trūksta leidimo nustatyti pranešimus</string>
+    <string name="push_notification_grant_alarm_permission">Paspauskite norėdami suteikti leidimą.</string>
+    <string name="settings_ui_data_collection">Duomenų rinkimas</string>
+    <string name="settings_ui_telemetry_title">Naudojimas ir techniniai duomenys</string>
+    <string name="folder_settings_push_label">Įjungti \"Push\"</string>
+    <string name="settings_list_action_support">Palaikyti <xliff:g id="app_name">%s</xliff:g></string>
+    <string name="expand_content_description">Išplėsti</string>
+    <string name="debug_enable_sync_debug_logging_title">Įjungti klaidų rašymo sinchronizavimą</string>
+    <string name="archiving_not_available_for_this_account">Šiai paskyrai archyvavimas neprieinamas.</string>
+    <string name="debug_open_secret_debug_screen">Atverti slaptą derinimo ekraną</string>
+    <string name="debug_invalidate_access_token_unavailable">Šiai paskyrai OAuth rakas neprieinamas.</string>
+    <string name="message_view_menu_action_export_eml">Eksportuoti kaip EML</string>
+    <string name="account_setup_auto_select_folder">Automatiškai pasirinkti aplanką</string>
+    <string name="navigation_drawer_preferences">Šoninis meniu</string>
+    <string name="expand_folders">Išplėsti aplankus</string>
+    <string name="set_format_html_action">Naudoti orginalų formatavimą</string>
+    <string name="set_format_html_condensed_action">Rodyti formatuotą</string>
+    <string name="set_format_plain_action">Rodyti neformatuotą</string>
+    <string name="set_format_plain_condensed_action">Rodyti neformatuotą</string>
+    <string name="global_settings_messageview_body_content_type_title">Laiško turinio tipas</string>
+    <string name="global_settings_messageview_body_content_type_text_html">HTML (text/html)</string>
+    <string name="global_settings_messageview_body_content_type_text_plain">Grynasis tekstas (text/plain)</string>
 </resources>

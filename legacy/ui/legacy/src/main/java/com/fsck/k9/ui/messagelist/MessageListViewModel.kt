@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.k9mail.legacy.message.controller.MessageReference
 import java.util.LinkedList
-import net.thunderbird.core.logging.Logger
+import net.thunderbird.components.core.logging.Logger
+
+private const val TAG = "LegacyMessageListViewModel"
 
 class MessageListViewModel(
     private val messageListLiveDataFactory: MessageListLiveDataFactory,
@@ -22,7 +24,7 @@ class MessageListViewModel(
     }
 
     fun loadMessageList(config: MessageListConfig, forceUpdate: Boolean = false) {
-        logger.debug { "loadMessageList() called with: config = $config, forceUpdate = $forceUpdate" }
+        logger.debug(TAG) { "loadMessageList() called with: config = $config, forceUpdate = $forceUpdate" }
         if (!forceUpdate && currentMessageListLiveData?.config == config) return
 
         removeCurrentMessageListLiveData()
@@ -31,7 +33,6 @@ class MessageListViewModel(
         currentMessageListLiveData = liveData
 
         messageListLiveData.addSource(liveData) { items ->
-            logger.debug { "Received new MessageListInfo: $items" }
             messageListLiveData.value = items
         }
     }

@@ -1,30 +1,36 @@
 package com.fsck.k9.notification
 
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import app.k9mail.legacy.message.controller.MessageReference
-import com.fsck.k9.K9
-import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessageReferenceHelper
 import com.fsck.k9.controller.MessagingController
-import com.fsck.k9.mail.Flag
+import kotlin.getValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import net.thunderbird.core.android.account.LegacyAccount
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.components.core.logging.Logger
+import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.core.preference.interaction.InteractionSettingsPreferenceManager
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.account.AccountIdFactory
 import org.koin.android.ext.android.inject
 import org.koin.core.qualifier.named
 
+private const val TAG = "NotificationActionService"
+
 class NotificationActionService : Service() {
-    private val preferences: Preferences by inject()
+    private val accountManager: LegacyAccountManager by inject()
     private val messagingController: MessagingController by inject()
     private val coroutineScope: CoroutineScope by inject(named("AppCoroutineScope"))
+    private val interactionPreferences: InteractionSettingsPreferenceManager by inject()
+    private val logger: Logger by inject()
+    private val interactionSettings get() = interactionPreferences.getConfig()
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.i("NotificationActionService started with startId = %d", startId)
+        logger.info(TAG) { "NotificationActionService started with startId = $startId" }
 
         startHandleCommand(intent, startId)
 
@@ -39,35 +45,38 @@ class NotificationActionService : Service() {
     }
 
     private fun handleCommand(intent: Intent) {
-        val accountUuid = intent.getStringExtra(EXTRA_ACCOUNT_UUID)
-        if (accountUuid == null) {
-            Log.w("Missing account UUID.")
-            return
+        val rawId = intent.getStringExtra(EXTRA_ACCOUNT_UUID)
+        val accountId = rawId?.let { rawId ->
+            try {
+                AccountIdFactory.of(rawId)
+            } catch (_: IllegalArgumentException) {
+                null
+            }
         }
 
-        val account = preferences.getAccount(accountUuid)
-        if (account == null) {
-            Log.w("Could not find account for notification action.")
+        if (accountId == null) {
+            logger.warn(TAG) { "Missing account id: $rawId" }
             return
         }
 
         when (intent.action) {
-            ACTION_MARK_AS_READ -> markMessagesAsRead(intent, account)
+            ACTION_MARK_AS_READ -> markMessagesAsRead(intent, accountId)
             ACTION_DELETE -> deleteMessages(intent)
             ACTION_ARCHIVE -> archiveMessages(intent)
-            ACTION_SPAM -> markMessageAsSpam(intent, account)
-            ACTION_DISMISS -> Log.i("Notification dismissed")
+            ACTION_SPAM -> markMessageAsSpam(intent, accountId)
+            ACTION_STAR -> markMessagesAsStarred(intent, accountId)
+            ACTION_DISMISS -> logger.info(TAG) { "Notification dismissed for account: $accountId" }
         }
 
-        cancelNotifications(intent, account)
+        cancelNotifications(intent, accountId)
     }
 
     override fun onBind(intent: Intent): IBinder? {
         return null
     }
 
-    private fun markMessagesAsRead(intent: Intent, account: LegacyAccount) {
-        Log.i("NotificationActionService marking messages as read")
+    private fun markMessagesAsRead(intent: Intent, accountId: AccountId) {
+        logger.info(TAG) { "NotificationActionService marking messages as read for account: $accountId" }
 
         val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
         val messageReferences = MessageReferenceHelper.toMessageReferenceList(messageReferenceStrings)
@@ -75,12 +84,12 @@ class NotificationActionService : Service() {
         for (messageReference in messageReferences) {
             val folderId = messageReference.folderId
             val uid = messageReference.uid
-            messagingController.setFlag(account, folderId, uid, Flag.SEEN, true)
+            messagingController.setFlag(accountId, folderId, uid, Flag.SEEN, true)
         }
     }
 
     private fun deleteMessages(intent: Intent) {
-        Log.i("NotificationActionService deleting messages")
+        logger.info(TAG) { "NotificationActionService deleting messages" }
 
         val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
         val messageReferences = MessageReferenceHelper.toMessageReferenceList(messageReferenceStrings)
@@ -89,7 +98,7 @@ class NotificationActionService : Service() {
     }
 
     private fun archiveMessages(intent: Intent) {
-        Log.i("NotificationActionService archiving messages")
+        logger.info(TAG) { "NotificationActionService archiving messages" }
 
         val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
         val messageReferences = MessageReferenceHelper.toMessageReferenceList(messageReferenceStrings)
@@ -97,157 +106,68 @@ class NotificationActionService : Service() {
         messagingController.archiveMessages(messageReferences)
     }
 
-    private fun markMessageAsSpam(intent: Intent, account: LegacyAccount) {
-        Log.i("NotificationActionService moving messages to spam")
+    private fun markMessageAsSpam(intent: Intent, accountId: AccountId) {
+        logger.info(TAG) { "NotificationActionService moving messages to spam for account: $accountId" }
 
         val messageReferenceString = intent.getStringExtra(EXTRA_MESSAGE_REFERENCE)
         val messageReference = MessageReference.parse(messageReferenceString)
 
         if (messageReference == null) {
-            Log.w("Invalid message reference: %s", messageReferenceString)
+            logger.warn(TAG) { "Invalid message reference: $messageReferenceString" }
             return
         }
 
-        val spamFolderId = account.spamFolderId
-        if (spamFolderId == null) {
-            Log.w("No spam folder configured")
-            return
-        }
+        val account = accountManager.findById(accountId)
+        val spamFolderId = account?.spamFolderId
 
-        if (!K9.isConfirmSpam && messagingController.isMoveCapable(account)) {
-            val sourceFolderId = messageReference.folderId
-            messagingController.moveMessage(account, sourceFolderId, messageReference, spamFolderId)
+        when {
+            account == null -> {
+                logger.warn(TAG) { "Could not find account for notification action: $accountId" }
+            }
+
+            spamFolderId == null -> {
+                logger.warn(TAG) { "No spam folder configured for account: $accountId" }
+            }
+
+            !interactionSettings.isConfirmSpam && messagingController.isMoveCapable(accountId) -> {
+                val sourceFolderId = messageReference.folderId
+                messagingController.moveMessage(accountId, sourceFolderId, messageReference, spamFolderId)
+            }
         }
     }
 
-    private fun cancelNotifications(intent: Intent, account: LegacyAccount) {
+    private fun markMessagesAsStarred(intent: Intent, accountId: AccountId) {
+        logger.info(TAG) { "NotificationActionService starring messages for account: $accountId" }
+
+        val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
+        val messageReferences = MessageReferenceHelper.toMessageReferenceList(messageReferenceStrings)
+
+        for (messageReference in messageReferences) {
+            val folderId = messageReference.folderId
+            val uid = messageReference.uid
+            messagingController.setFlag(accountId, folderId, uid, Flag.FLAGGED, true)
+        }
+    }
+
+    private fun cancelNotifications(intent: Intent, accountId: AccountId) {
         if (intent.hasExtra(EXTRA_MESSAGE_REFERENCE)) {
             val messageReferenceString = intent.getStringExtra(EXTRA_MESSAGE_REFERENCE)
             val messageReference = MessageReference.parse(messageReferenceString)
 
             if (messageReference != null) {
-                messagingController.cancelNotificationForMessage(account, messageReference)
+                messagingController.cancelNotificationForMessage(accountId, messageReference)
             } else {
-                Log.w("Invalid message reference: %s", messageReferenceString)
+                logger.warn(TAG) { "Invalid message reference: $messageReferenceString" }
             }
         } else if (intent.hasExtra(EXTRA_MESSAGE_REFERENCES)) {
             val messageReferenceStrings = intent.getStringArrayListExtra(EXTRA_MESSAGE_REFERENCES)
             val messageReferences = MessageReferenceHelper.toMessageReferenceList(messageReferenceStrings)
 
             for (messageReference in messageReferences) {
-                messagingController.cancelNotificationForMessage(account, messageReference)
+                messagingController.cancelNotificationForMessage(accountId, messageReference)
             }
         } else {
-            messagingController.cancelNotificationsForAccount(account)
-        }
-    }
-
-    companion object {
-        private const val ACTION_MARK_AS_READ = "ACTION_MARK_AS_READ"
-        private const val ACTION_DELETE = "ACTION_DELETE"
-        private const val ACTION_ARCHIVE = "ACTION_ARCHIVE"
-        private const val ACTION_SPAM = "ACTION_SPAM"
-        private const val ACTION_DISMISS = "ACTION_DISMISS"
-        private const val EXTRA_ACCOUNT_UUID = "accountUuid"
-        private const val EXTRA_MESSAGE_REFERENCE = "messageReference"
-        private const val EXTRA_MESSAGE_REFERENCES = "messageReferences"
-
-        fun createMarkMessageAsReadIntent(context: Context, messageReference: MessageReference): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_MARK_AS_READ
-                putExtra(EXTRA_ACCOUNT_UUID, messageReference.accountUuid)
-                putExtra(EXTRA_MESSAGE_REFERENCES, createSingleItemArrayList(messageReference))
-            }
-        }
-
-        fun createMarkAllAsReadIntent(
-            context: Context,
-            accountUuid: String,
-            messageReferences: List<MessageReference>,
-        ): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_MARK_AS_READ
-                putExtra(EXTRA_ACCOUNT_UUID, accountUuid)
-                putExtra(
-                    EXTRA_MESSAGE_REFERENCES,
-                    MessageReferenceHelper.toMessageReferenceStringList(messageReferences),
-                )
-            }
-        }
-
-        fun createDismissMessageIntent(context: Context, messageReference: MessageReference): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_DISMISS
-                putExtra(EXTRA_ACCOUNT_UUID, messageReference.accountUuid)
-                putExtra(EXTRA_MESSAGE_REFERENCE, messageReference.toIdentityString())
-            }
-        }
-
-        fun createDismissAllMessagesIntent(context: Context, account: LegacyAccount): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_DISMISS
-                putExtra(EXTRA_ACCOUNT_UUID, account.uuid)
-            }
-        }
-
-        fun createDeleteMessageIntent(context: Context, messageReference: MessageReference): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_DELETE
-                putExtra(EXTRA_ACCOUNT_UUID, messageReference.accountUuid)
-                putExtra(EXTRA_MESSAGE_REFERENCES, createSingleItemArrayList(messageReference))
-            }
-        }
-
-        fun createDeleteAllMessagesIntent(
-            context: Context,
-            accountUuid: String,
-            messageReferences: List<MessageReference>,
-        ): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_DELETE
-                putExtra(EXTRA_ACCOUNT_UUID, accountUuid)
-                putExtra(
-                    EXTRA_MESSAGE_REFERENCES,
-                    MessageReferenceHelper.toMessageReferenceStringList(messageReferences),
-                )
-            }
-        }
-
-        fun createArchiveMessageIntent(context: Context, messageReference: MessageReference): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_ARCHIVE
-                putExtra(EXTRA_ACCOUNT_UUID, messageReference.accountUuid)
-                putExtra(EXTRA_MESSAGE_REFERENCES, createSingleItemArrayList(messageReference))
-            }
-        }
-
-        fun createArchiveAllIntent(
-            context: Context,
-            account: LegacyAccount,
-            messageReferences: List<MessageReference>,
-        ): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_ARCHIVE
-                putExtra(EXTRA_ACCOUNT_UUID, account.uuid)
-                putExtra(
-                    EXTRA_MESSAGE_REFERENCES,
-                    MessageReferenceHelper.toMessageReferenceStringList(messageReferences),
-                )
-            }
-        }
-
-        fun createMarkMessageAsSpamIntent(context: Context, messageReference: MessageReference): Intent {
-            return Intent(context, NotificationActionService::class.java).apply {
-                action = ACTION_SPAM
-                putExtra(EXTRA_ACCOUNT_UUID, messageReference.accountUuid)
-                putExtra(EXTRA_MESSAGE_REFERENCE, messageReference.toIdentityString())
-            }
-        }
-
-        private fun createSingleItemArrayList(messageReference: MessageReference): ArrayList<String> {
-            return ArrayList<String>(1).apply {
-                add(messageReference.toIdentityString())
-            }
+            messagingController.cancelNotificationsForAccount(accountId)
         }
     }
 }

@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import app.k9mail.legacy.message.controller.MessageReference;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.legacy.logging.Log;
 
 
 public class MessageReferenceHelper {
+    private static final String TAG = "MessageReferenceHelper";
+
     public static List<MessageReference> toMessageReferenceList(List<String> messageReferenceStrings) {
         List<MessageReference> messageReferences = new ArrayList<>(messageReferenceStrings.size());
         for (String messageReferenceString : messageReferenceStrings) {
@@ -16,7 +18,7 @@ public class MessageReferenceHelper {
             if (messageReference != null) {
                 messageReferences.add(messageReference);
             } else {
-                Log.w("Invalid message reference: %s", messageReferenceString);
+                Log.w(TAG, "Invalid message reference: %s", messageReferenceString);
             }
         }
 

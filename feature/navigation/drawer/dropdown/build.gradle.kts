@@ -5,28 +5,41 @@ plugins {
 android {
     namespace = "net.thunderbird.feature.navigation.drawer.dropdown"
     resourcePrefix = "navigation_drawer_dropdown_"
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
     api(projects.feature.navigation.drawer.api)
 
     implementation(projects.core.android.account)
+    implementation(projects.core.ui.contract)
     implementation(projects.core.ui.theme.api)
-    implementation(projects.core.ui.compose.designsystem)
 
     implementation(projects.feature.account.avatar.impl)
     implementation(projects.feature.mail.account.api)
     implementation(projects.feature.mail.folder.api)
+    implementation(projects.feature.notification.api)
 
     implementation(projects.feature.search.implLegacy)
     implementation(projects.legacy.mailstore)
     implementation(projects.legacy.message)
     implementation(projects.legacy.ui.folder)
     implementation(projects.core.featureflag)
-
     testImplementation(projects.core.ui.compose.testing)
+
+    testImplementation(libs.mockito.kotlin)
 
     // Fakes
     debugImplementation(projects.feature.account.fake)
     testImplementation(projects.feature.account.fake)
+}
+
+codeCoverage {
+    branchCoverage = 0
+    lineCoverage = 9
 }

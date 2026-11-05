@@ -4,7 +4,7 @@
     <!--This should make it easier for forks to change the branding-->
     <!--Used in AndroidManifest.xml-->
     <!--Used in the about dialog-->
-    <string name="about_app_authors_k9">The K-9 Dog Walkers</string>
+    <string name="about_app_authors_k9">K-9 遛狗人</string>
     <string name="source_code">源代码</string>
     <string name="app_license">Apache License, Version 2.0</string>
     <string name="about_project_title">开源项目</string>
@@ -35,7 +35,6 @@
     <string name="choose_folder_title">选择文件夹</string>
     <string name="choose_folder_move_title">移动到…</string>
     <string name="choose_folder_copy_title">复制到…</string>
-    <string name="actionbar_selected"><xliff:g id="selection_count">%d</xliff:g> 已选择</string>
     <string name="send_action">发送</string>
     <string name="empty_subject">主题为空，请再次点击以继续发送</string>
     <string name="reply_action">回复</string>
@@ -91,7 +90,7 @@
     <!--Shown in place of the subject when a message has no subject. Showing this in parentheses is customary.-->
     <string name="general_no_subject">（无主题）</string>
     <string name="general_no_sender">无发件人</string>
-    <string name="status_loading_more">正在加载邮件\u2026</string>
+    <string name="status_loading_more">正在加载邮件…</string>
     <string name="status_network_error">连接错误</string>
     <string name="status_invalid_id_error">未找到邮件</string>
     <string name="status_loading_error">邮件加载错误</string>
@@ -121,7 +120,7 @@
     <string name="notification_notify_error_title">通知错误</string>
     <!--Body of an error notification that is displayed when creating a notification for a new message has failed-->
     <string name="notification_notify_error_text">尝试为新邮件创建系统通知时出错。原因很可能是缺少通知提示音。\n\n请点按以打开通知设置。</string>
-    <string name="notification_bg_sync_ticker">正在检查邮件：<xliff:g id="account">%1$s</xliff:g>：<xliff:g id="folder">%2$s</xliff:g></string>
+    <string name="notification_bg_sync_ticker">正在检查邮件：<xliff:g id="account">%1$s</xliff:g>:<xliff:g id="folder">%2$s</xliff:g></string>
     <string name="notification_bg_sync_title">正在检查邮件</string>
     <string name="notification_bg_send_ticker">正在发送邮件：<xliff:g id="account">%s</xliff:g></string>
     <string name="notification_bg_send_title">正在发送邮件</string>
@@ -132,7 +131,7 @@
     <string name="notification_channel_messages_description">与邮件相关的通知</string>
     <string name="notification_channel_miscellaneous_title">杂项</string>
     <string name="notification_channel_miscellaneous_description">错误等杂项通知。</string>
-    <string name="send_failure_subject">无法发送某些邮件</string>
+    <string name="send_failure_subject">无法发送部分邮件</string>
     <string name="version">版本</string>
     <string name="debug_enable_debug_logging_title">启用调试日志记录</string>
     <string name="debug_enable_debug_logging_summary">记录额外的诊断信息</string>
@@ -157,8 +156,8 @@
     <string name="message_compose_error_no_recipients">您必须至少添加一位收件人。</string>
     <string name="compose_error_incomplete_recipient">收件人字段输入不完整！</string>
     <string name="error_contact_address_not_found">找不到此联系人的电子邮件地址。</string>
-    <string name="message_compose_attachments_skipped_toast">某些附件因尚未下载而无法转发。</string>
-    <string name="message_compose_attachments_forward_toast">此邮件因某些附件尚未下载而无法转发。</string>
+    <string name="message_compose_attachments_skipped_toast">部分附件尚未下载，无法转发。</string>
+    <string name="message_compose_attachments_forward_toast">由于部分附件尚未下载，邮件无法转发。</string>
     <string name="message_compose_show_quoted_text_action">包含引用邮件</string>
     <string name="message_compose_description_delete_quoted_text">移除引用文本</string>
     <string name="message_compose_description_edit_quoted_text">编辑引用文本</string>
@@ -172,12 +171,12 @@
     <!--Displayed in the message view screen in front of the number of additional recipients (the ones that are not displayed).-->
     <string name="message_view_additional_recipient_prefix">+</string>
     <!--Displayed in the message view screen if the message was addressed to the user. Make sure this works with 'message_view_recipient_prefix'. In English it's "to me".-->
-    <string name="message_view_me_text">我</string>
+    <string name="message_view_to_me_text">我</string>
     <!--Text of the button that is displayed below the message header when the message body references one or more remote images-->
     <string name="message_view_show_remote_images_action">显示远程图片</string>
     <string name="message_view_no_viewer">无法找到查看 <xliff:g id="mimetype">%s</xliff:g> 的应用。</string>
     <string name="message_view_download_remainder">下载完整邮件</string>
-    <string name="message_view_sender_label">通过  %1$s</string>
+    <string name="message_view_sender_label">通过 %1$s</string>
     <string name="from_same_sender">来自此发件人的更多邮件</string>
     <string name="message_discarded_toast">邮件已舍弃</string>
     <string name="message_saved_toast">邮件已保存为草稿</string>
@@ -191,7 +190,7 @@
     <string name="global_settings_show_contact_name_label">显示联系人名称</string>
     <string name="global_settings_show_contact_name_summary">如果有收件人名称，请使用联系人中的收件人名称</string>
     <string name="global_settings_registered_name_color_label">为联系人着色</string>
-    <string name="global_settings_registered_name_color_changed">在您的联系人列表中着色名称</string>
+    <string name="global_settings_registered_name_color_changed">为联系人列表中的名称着色</string>
     <string name="general_settings_contact_name_color_label">联系人名称颜色</string>
     <string name="global_settings_messageview_fixedwidth_label">等宽字体</string>
     <string name="global_settings_messageview_fixedwidth_summary">使用等宽字体显示纯文本邮件</string>
@@ -254,7 +253,7 @@
     <string name="quiet_time_ends">勿扰时段结束</string>
     <string name="account_setup_basics_title">设置新账号</string>
     <string name="account_setup_incoming_delete_policy_label">当我删除邮件时</string>
-    <string name="account_setup_incoming_delete_policy_never_label">不要在服务器上删除</string>
+    <string name="account_setup_incoming_delete_policy_never_label">不在服务器上删除</string>
     <string name="account_setup_incoming_delete_policy_delete_label">从服务器删除</string>
     <string name="account_setup_incoming_delete_policy_markread_label">在服务器上标记为已读</string>
     <string name="account_setup_expunge_policy_label">清除服务器上已删除的邮件</string>
@@ -266,8 +265,7 @@
     <string name="trash_folder_label">已删除邮件文件夹</string>
     <string name="archive_folder_label">归档文件夹</string>
     <string name="spam_folder_label">垃圾邮件文件夹</string>
-    <string name="account_setup_incoming_subscribed_folders_only_label">只显示订阅的文件夹</string>
-    <string name="account_setup_auto_expand_folder">自动展开文件夹</string>
+    <string name="account_setup_incoming_subscribed_folders_only_label">仅显示已订阅的文件夹</string>
     <string name="account_setup_options_mail_check_frequency_never">从不</string>
     <string name="account_setup_options_mail_check_frequency_15min">每 15 分钟</string>
     <string name="account_setup_options_mail_check_frequency_30min">每 30 分钟</string>
@@ -286,27 +284,27 @@
     <string name="idle_refresh_period_36min">每 36 分钟</string>
     <string name="idle_refresh_period_48min">每 48 分钟</string>
     <string name="idle_refresh_period_60min">每 60 分钟</string>
-    <string name="account_setup_options_mail_display_count_10">10 封</string>
-    <string name="account_setup_options_mail_display_count_25">25 封</string>
-    <string name="account_setup_options_mail_display_count_50">50 封</string>
-    <string name="account_setup_options_mail_display_count_100">100 封</string>
-    <string name="account_setup_options_mail_display_count_250">250 封</string>
-    <string name="account_setup_options_mail_display_count_500">500 封</string>
-    <string name="account_setup_options_mail_display_count_1000">1000 封</string>
-    <string name="account_setup_options_mail_display_count_2500">2500 封</string>
-    <string name="account_setup_options_mail_display_count_5000">5000 封</string>
-    <string name="account_setup_options_mail_display_count_10000">10000 封</string>
-    <string name="account_setup_options_mail_display_count_all">全部邮件</string>
+    <string name="account_setup_options_mail_display_count_10">10 封邮件</string>
+    <string name="account_setup_options_mail_display_count_25">25 封邮件</string>
+    <string name="account_setup_options_mail_display_count_50">50 封邮件</string>
+    <string name="account_setup_options_mail_display_count_100">100 封邮件</string>
+    <string name="account_setup_options_mail_display_count_250">250 封邮件</string>
+    <string name="account_setup_options_mail_display_count_500">500 封邮件</string>
+    <string name="account_setup_options_mail_display_count_1000">1000 封邮件</string>
+    <string name="account_setup_options_mail_display_count_2500">2500 封邮件</string>
+    <string name="account_setup_options_mail_display_count_5000">5000 封邮件</string>
+    <string name="account_setup_options_mail_display_count_10000">10000 封邮件</string>
+    <string name="account_setup_options_mail_display_count_all">所有邮件</string>
     <string name="move_copy_cannot_copy_unsynced_message">无法复制或移动未与服务器同步的邮件</string>
     <string name="account_settings_push_advanced_title">高级</string>
     <string name="account_settings_title_fmt">账号设置</string>
     <string name="account_settings_notify_label">新邮件通知</string>
     <string name="account_settings_notify_sync_label">同步通知</string>
     <string name="account_settings_email_label">您的电子邮件地址</string>
-    <string name="account_settings_notify_summary">邮件到达时在状态栏中通知</string>
-    <string name="account_settings_notify_sync_summary">检查邮件时在状态栏中通知</string>
-    <string name="account_settings_notify_self_label">包括外发邮件</string>
-    <string name="account_settings_notify_self_summary">显示我发送的邮件的通知</string>
+    <string name="account_settings_notify_summary">邮件到达时在状态栏显示通知</string>
+    <string name="account_settings_notify_sync_summary">检查邮件时在状态栏显示通知</string>
+    <string name="account_settings_notify_self_label">包含外发邮件</string>
+    <string name="account_settings_notify_self_summary">为我发送的邮件显示通知</string>
     <string name="account_notify_contacts_mail_only_label">仅联系人</string>
     <string name="account_notify_contacts_mail_only_summary">仅显示来自已知联系人的邮件通知</string>
     <string name="account_settings_ignore_chat_messages_label">忽略聊天邮件</string>
@@ -314,12 +312,12 @@
     <string name="account_settings_mark_message_as_read_on_view_label">打开时标记为已读</string>
     <string name="account_settings_mark_message_as_read_on_view_summary">打开邮件查看时将其标记为已读</string>
     <string name="account_settings_mark_message_as_read_on_delete_label">删除时标记为已读</string>
-    <string name="account_settings_mark_message_as_read_on_delete_summary">删除邮件时将其标记为已读</string>
+    <string name="account_settings_mark_message_as_read_on_delete_summary">当邮件被删除时将其标记为已读</string>
     <string name="account_settings_notification_channels_label">通知类别</string>
     <string name="account_settings_open_notification_settings_messages_summary">为新邮件配置通知</string>
     <string name="account_settings_open_notification_settings_miscellaneous_summary">配置错误和状态通知</string>
     <string name="account_settings_show_pictures_label">始终显示图片</string>
-    <string name="account_settings_show_pictures_never">从不</string>
+    <string name="account_settings_show_pictures_never">不显示</string>
     <string name="account_settings_show_pictures_only_from_contacts">来自联系人</string>
     <string name="account_settings_show_pictures_always">来自任何人</string>
     <string name="account_settings_composition">发送邮件</string>
@@ -357,27 +355,25 @@
     <string name="account_settings_crypto_encrypt_all_drafts_on">将会加密存储所有草稿</string>
     <string name="account_settings_crypto_encrypt_all_drafts_off">仅当启用加密时才加密草稿</string>
     <string name="account_settings_mail_check_frequency_label">文件夹轮询频率</string>
-    <string name="account_settings_color_label">账号颜色</string>
-    <string name="account_settings_color_summary">账号在文件夹和账号列表中显示时所使用的颜色</string>
     <string name="account_settings_mail_display_count_label">本地文件夹大小</string>
-    <string name="account_settings_autodownload_message_size_label">收取邮件的最大尺寸为</string>
-    <string name="account_settings_autodownload_message_size_1">1 KiB </string>
-    <string name="account_settings_autodownload_message_size_2">2 KiB </string>
-    <string name="account_settings_autodownload_message_size_4">4 KiB </string>
-    <string name="account_settings_autodownload_message_size_8">8 KiB </string>
-    <string name="account_settings_autodownload_message_size_16">16 KiB </string>
-    <string name="account_settings_autodownload_message_size_32">32 KiB </string>
-    <string name="account_settings_autodownload_message_size_64">64 KiB </string>
-    <string name="account_settings_autodownload_message_size_128">128 KiB </string>
-    <string name="account_settings_autodownload_message_size_256">256 KiB </string>
-    <string name="account_settings_autodownload_message_size_512">512 KiB </string>
-    <string name="account_settings_autodownload_message_size_1024">1 MiB </string>
-    <string name="account_settings_autodownload_message_size_2048">2 MiB </string>
-    <string name="account_settings_autodownload_message_size_5120">5 MiB </string>
-    <string name="account_settings_autodownload_message_size_10240">10 MiB </string>
-    <string name="account_settings_autodownload_message_size_any">任何大小（无限制）</string>
-    <string name="account_settings_message_age_label">同步某时段内的邮件</string>
-    <string name="account_settings_message_age_any">任何时段（无限制）</string>
+    <string name="account_settings_autodownload_message_size_label">收取邮件大小上限</string>
+    <string name="account_settings_autodownload_message_size_1">1 KiB</string>
+    <string name="account_settings_autodownload_message_size_2">2 KiB</string>
+    <string name="account_settings_autodownload_message_size_4">4 KiB</string>
+    <string name="account_settings_autodownload_message_size_8">8 KiB</string>
+    <string name="account_settings_autodownload_message_size_16">16 KiB</string>
+    <string name="account_settings_autodownload_message_size_32">32 KiB</string>
+    <string name="account_settings_autodownload_message_size_64">64 KiB</string>
+    <string name="account_settings_autodownload_message_size_128">128 KiB</string>
+    <string name="account_settings_autodownload_message_size_256">256 KiB</string>
+    <string name="account_settings_autodownload_message_size_512">512 KiB</string>
+    <string name="account_settings_autodownload_message_size_1024">1 MiB</string>
+    <string name="account_settings_autodownload_message_size_2048">2 MiB</string>
+    <string name="account_settings_autodownload_message_size_5120">5 MiB</string>
+    <string name="account_settings_autodownload_message_size_10240">10 MiB</string>
+    <string name="account_settings_autodownload_message_size_any">任意大小（无限制）</string>
+    <string name="account_settings_message_age_label">同步邮件时间范围</string>
+    <string name="account_settings_message_age_any">任意时间（无限制）</string>
     <string name="account_settings_message_age_0">今天</string>
     <string name="account_settings_message_age_1">最近 2 天</string>
     <string name="account_settings_message_age_2">最近 3 天</string>
@@ -389,7 +385,7 @@
     <string name="account_settings_message_age_3_months">最近 3 个月</string>
     <string name="account_settings_message_age_6_months">最近 6 个月</string>
     <string name="account_settings_message_age_1_year">最近 1 年</string>
-    <string name="account_settings_sync_remote_deletetions_label">同步服务器的删除</string>
+    <string name="account_settings_sync_remote_deletetions_label">同步服务器删除操作</string>
     <string name="account_settings_sync_remote_deletetions_summary">在服务器上删除邮件时移除邮件</string>
     <string name="account_settings_openpgp_missing">缺少 OpenPGP 应用 - 是否已卸载？</string>
     <string name="folder_settings_title">文件夹设置</string>
@@ -399,7 +395,6 @@
     <string name="account_settings_incoming_summary">配置收件服务器</string>
     <string name="account_settings_outgoing_label">发件服务器</string>
     <string name="account_settings_outgoing_summary">配置发件（SMTP）服务器</string>
-    <string name="account_settings_description_label">账号名称</string>
     <string name="account_settings_name_label">您的名称</string>
     <string name="notifications_title">通知</string>
     <string name="account_settings_vibration">振动</string>
@@ -427,7 +422,7 @@
     <string name="account_settings_notification_light_magenta">洋红</string>
     <string name="account_settings_composition_title">邮件撰写选项</string>
     <string name="account_settings_composition_label">撰写默认值</string>
-    <string name="account_settings_composition_summary">设置您的默认发件人、密送和签名</string>
+    <string name="account_settings_composition_summary">设置默认的发件地址、Bcc 密送地址和签名</string>
     <string name="account_settings_identities_label">管理身份</string>
     <string name="account_settings_identities_summary">设置备用“发件人”地址和签名</string>
     <string name="manage_identities_title">管理身份</string>
@@ -442,35 +437,35 @@
     <string name="manage_identities_move_top_action">移至顶部/设为默认</string>
     <string name="manage_identities_remove_action">移除</string>
     <string name="edit_identity_description_label">身份描述</string>
-    <string name="edit_identity_description_hint">（可选）</string>
+    <string name="edit_identity_description_hint">（选填）</string>
     <string name="edit_identity_name_label">您的名称</string>
-    <string name="edit_identity_name_hint">（可选）</string>
+    <string name="edit_identity_name_hint">（选填）</string>
     <string name="edit_identity_email_label">电子邮件地址</string>
     <string name="edit_identity_email_hint">（必填）</string>
     <string name="edit_identity_reply_to_label">回复地址</string>
-    <string name="edit_identity_reply_to_hint">（可选）</string>
+    <string name="edit_identity_reply_to_hint">（选填）</string>
     <string name="edit_identity_signature_label">签名</string>
-    <string name="edit_identity_signature_hint">（可选）</string>
+    <string name="edit_identity_signature_hint">（选填）</string>
     <string name="account_settings_signature_use_label">使用签名</string>
     <string name="account_settings_signature_label">签名</string>
     <string name="default_identity_description">初始身份</string>
     <string name="choose_identity_title">选择身份</string>
-    <string name="send_as">发送为</string>
+    <string name="send_as">发送身份为</string>
     <string name="no_removable_identity">您不能移除您唯一的身份</string>
     <string name="identity_has_no_email">没有电子邮件地址就无法使用身份</string>
-    <string name="sort_earliest_first">最早的邮件在前</string>
-    <string name="sort_latest_first">最近的邮件在前</string>
+    <string name="sort_earliest_first">最早邮件在前</string>
+    <string name="sort_latest_first">最新邮件在前</string>
     <string name="sort_subject_alpha">主题 A→Z</string>
     <string name="sort_subject_re_alpha">主题 Z→A</string>
     <string name="sort_sender_alpha">发件人 A→Z</string>
     <string name="sort_sender_re_alpha">发件人 Z→A</string>
-    <string name="sort_flagged_first">有星标的邮件在前</string>
-    <string name="sort_flagged_last">无星标的邮件在前</string>
+    <string name="sort_flagged_first">已加星标邮件在前</string>
+    <string name="sort_flagged_last">未加星标邮件在前</string>
     <string name="sort_unread_first">未读邮件在前</string>
     <string name="sort_unread_last">已读邮件在前</string>
-    <string name="sort_attach_first">有附件的邮件在前</string>
-    <string name="sort_unattached_first">无附件的邮件在前</string>
-    <string name="sort_by">排序方式…</string>
+    <string name="sort_attach_first">带附件邮件在前</string>
+    <string name="sort_unattached_first">无附件邮件在前</string>
+    <string name="sort_by">排序依据…</string>
     <string name="sort_by_date">日期</string>
     <string name="sort_by_arrival">到达时间</string>
     <string name="sort_by_subject">主题</string>
@@ -498,7 +493,7 @@
     <string name="messageview_preferences">邮件</string>
     <string name="settings_theme_label">主题</string>
     <string name="settings_message_theme_label">邮件视图主题</string>
-    <string name="settings_compose_theme_label">邮件撰写主题</string>
+    <string name="settings_compose_theme_label">编辑器主题</string>
     <string name="settings_language_label">语言</string>
     <string name="preference_search_no_results">未找到设置</string>
     <string name="settings_message_theme_selection_label">固定邮件主题</string>
@@ -512,7 +507,7 @@
     <string name="batch_select_all">全选</string>
     <string name="account_setup_push_limit_label">推送检查的最大文件夹数</string>
     <string name="account_setup_push_limit_5">5 个文件夹</string>
-    <string name="account_setup_push_limit_10">10 个文件夹 </string>
+    <string name="account_setup_push_limit_10">10 个文件夹</string>
     <string name="account_setup_push_limit_25">25 个文件夹</string>
     <string name="account_setup_push_limit_50">50 个文件夹</string>
     <string name="account_setup_push_limit_100">100 个文件夹</string>
@@ -520,7 +515,6 @@
     <string name="account_setup_push_limit_500">500 个文件夹</string>
     <string name="account_setup_push_limit_1000">1000 个文件夹</string>
     <string name="animations_title">动画</string>
-    <string name="animations_summary">使用绚丽的视觉效果</string>
     <string name="show_unified_inbox_title">显示统一收件箱</string>
     <string name="show_starred_count_title">显示星标邮件数</string>
     <string name="integrated_inbox_title">统一收件箱</string>
@@ -578,7 +572,7 @@
     <string name="dialog_confirm_mark_all_as_read_cancel_button">否</string>
     <string name="dialog_confirm_spam_title">确认移动到垃圾邮件文件夹</string>
     <plurals name="dialog_confirm_spam_message">
-        <item quantity="other">是否确定要移动 <xliff:g id="message_count">%1$d</xliff:g> 封邮件到垃圾邮件文件夹？</item>
+        <item quantity="other">是否确定要将 <xliff:g id="message_count">%1$d</xliff:g> 封邮件移动到垃圾邮件文件夹？</item>
     </plurals>
     <string name="dialog_confirm_spam_confirm_button">是</string>
     <string name="dialog_confirm_spam_cancel_button">否</string>
@@ -611,7 +605,7 @@
     <string name="webview_contextmenu_email_send_action">发送邮件</string>
     <string name="webview_contextmenu_email_save_action">保存到联系人</string>
     <string name="webview_contextmenu_email_copy_action">复制地址到剪贴板</string>
-    <string name="webview_contextmenu_email_clipboard_label">邮件地址</string>
+    <string name="webview_contextmenu_email_clipboard_label">电子邮件地址</string>
     <string name="account_settings_remote_search_num_results_entries_all">全部</string>
     <string name="account_settings_remote_search_num_results_entries_10">10</string>
     <string name="account_settings_remote_search_num_results_entries_25">25</string>
@@ -633,7 +627,7 @@
     <string name="action_remote_search">在服务器上搜索邮件</string>
     <string name="remote_search_unavailable_no_network">服务器搜索需要网络连接。</string>
     <string name="global_settings_background_as_unread_indicator_label">阅读时改变颜色</string>
-    <string name="global_settings_background_as_unread_indicator_summary">不同的背景将显示邮件已阅读</string>
+    <string name="global_settings_background_as_unread_indicator_summary">邮件已被阅读时将显示不同的背景</string>
     <string name="global_settings_threaded_view_label">线程视图</string>
     <string name="global_settings_threaded_view_summary">按对话分组邮件</string>
     <string name="upgrade_databases_title">更新数据库</string>
@@ -673,7 +667,7 @@
     <string name="compose_error_no_key_configured">此账号未配置密钥！请检查您的设置。</string>
     <string name="error_crypto_provider_incompatible">加密提供程序使用不兼容的版本。请检查您的设置！</string>
     <string name="error_crypto_provider_connect">无法连接到加密提供程序，请检查您的设置或点击加密图标重试！</string>
-    <string name="error_crypto_provider_ui_required">端到端加密初始化失败，请检查您的设置</string>
+    <string name="error_crypto_provider_ui_required">无法初始化端到端加密，请检查您的设置</string>
     <string name="error_crypto_inline_attach">PGP/INLINE 模式不支持附件！</string>
     <string name="enable_inline_pgp">启用 PGP/INLINE</string>
     <string name="disable_inline_pgp">禁用 PGP/INLINE</string>
@@ -694,7 +688,7 @@
     <string name="openpgp_dialog_sign_only_text">在此模式下，您的 PGP 密钥将用于为未加密的电子邮件创建加密签名。</string>
     <string name="openpgp_dialog_sign_only_plus_verified">这不会对电子邮件进行加密，但会验证电子邮件是从您的密钥发送的。</string>
     <string name="openpgp_dialog_sign_only_minus_break">发送到邮件列表时，签名可能会损坏。</string>
-    <string name="openpgp_dialog_sign_only_minus_attach">在某些客户端中，签名可能显示为“signature.asc”附件。</string>
+    <string name="openpgp_dialog_sign_only_minus_attach">签名可能在部分客户端中显示为“signature.asc”附件。</string>
     <string name="openpgp_dialog_sign_only_neutral_encsigned">加密邮件始终包含签名。</string>
     <string name="crypto_msg_title_plaintext">纯文本</string>
     <string name="crypto_msg_unencrypted_sign_error">端到端签名包含错误</string>
@@ -728,7 +722,6 @@
     <string name="crypto_msg_encrypted_insecure">但是加密不认为安全</string>
     <string name="locked_attach_unlock">解锁</string>
     <string name="locked_attach_unencrypted">此部分未加密，可能不安全。</string>
-    <string name="locked_attach_title">无保护的附件</string>
     <string name="message_progress_text">正在加载…</string>
     <string name="messageview_decrypt_cancelled">已取消解密。</string>
     <string name="messageview_decrypt_retry">重试</string>
@@ -747,11 +740,11 @@
     <!--Displayed in the the message list widget when the app hasn't had a chance to send content to it yet-->
     <!--Might be displayed in the message list widget when the list is scrolled and new data can't be fetched fast enough-->
     <string name="openpgp_enabled_error_title">无法加密</string>
-    <string name="openpgp_enabled_error_msg">某些选定的收件人不支持此功能！</string>
+    <string name="openpgp_enabled_error_msg">部分所选收件人不支持此功能！</string>
     <string name="enable_encryption">启用加密</string>
     <string name="disable_encryption">禁用加密</string>
     <string name="openpgp_description_text1">对邮件进行加密可确保只有收件人才能阅读，其他人无法阅读。</string>
-    <string name="openpgp_description_text3">加密功能只有在所有收件人都支持的情况下才会显示，而且收件人必须曾经给您发送过电子邮件。</string>
+    <string name="openpgp_description_text3">加密功能只有在所有收件人都支持的情况下才会显示，并且他们必须之前给您发送过邮件。</string>
     <string name="openpgp_description_text2">点击此图标切换加密。</string>
     <string name="openpgp_enabled_error_gotit">知道了</string>
     <string name="openpgp_enabled_error_back">返回</string>
@@ -761,13 +754,13 @@
     <string name="dialog_autocrypt_mutual_title">Autocrypt 相互模式</string>
     <string name="dialog_autocrypt_mutual_description_1">邮件通常会根据选择进行加密，或者在回复加密邮件时进行加密。</string>
     <string name="dialog_autocrypt_mutual_description_2">如果发件人和收件人均启用了相互模式，加密默认会被启用。</string>
-    <string name="dialog_autocrypt_mutual_learn_more">您可以<a href="https://k9mail.app/2018/02/26/OpenPGP-Considerations-Part-III-Autocrypt.html">点击此处</a>了解详情。</string>
+    <string name="dialog_autocrypt_mutual_learn_more">您可以 <a href="https://k9mail.app/2018/02/26/OpenPGP-Considerations-Part-III-Autocrypt.html">点击此处</a> 了解详情。</string>
     <string name="general_settings_title">常规设置</string>
     <string name="dialog_openkeychain_info_title">未安装 OpenPGP 应用</string>
     <string name="dialog_openkeychain_info_install">安装</string>
     <string name="account_settings_crypto_encrypt_subject">加密邮件主题</string>
-    <string name="account_settings_crypto_encrypt_subject_subtitle">某些收件人可能不支持</string>
-    <string name="toast_account_not_found">内部错误：无效账号！</string>
+    <string name="account_settings_crypto_encrypt_subject_subtitle">部分收件人可能不支持</string>
+    <string name="toast_account_not_found">内部错误：账号无效！</string>
     <string name="toast_openpgp_provider_error">连接到 %s 时出错！</string>
     <string name="ac_transfer_setting_title">发送 Autocrypt 设置邮件</string>
     <string name="ac_transfer_setting_summary">与其他设备安全地共享端到端设置</string>
@@ -797,25 +790,15 @@
     <string name="push_info_disable_push_text">如果您不需要新邮件的即时通知，则应禁用推送并使用轮询。轮询会定期检查新邮件，不需要通知。</string>
     <string name="push_info_disable_push_action">禁用推送</string>
     <!--Name of the swipe action to select a message. Try to keep it short.-->
-    <string name="swipe_action_select">选择</string>
     <!--Name of the swipe action to deselect a message. Try to keep it short.-->
-    <string name="swipe_action_deselect">取消选择</string>
     <!--Name of the swipe action to mark a message as read. Try to keep it short.-->
-    <string name="swipe_action_mark_as_read">标记为已读</string>
     <!--Name of the swipe action to mark a message as unread. Try to keep it short.-->
-    <string name="swipe_action_mark_as_unread">标记为未读</string>
     <!--Name of the swipe action to add the star to a message. Try to keep it short.-->
-    <string name="swipe_action_add_star">添加星标</string>
     <!--Name of the swipe action to remove the star from a message. Try to keep it short.-->
-    <string name="swipe_action_remove_star">移除星标</string>
     <!--Name of the swipe action to archive a message. Try to keep it short.-->
-    <string name="swipe_action_archive">归档</string>
     <!--Name of the swipe action to delete a message. Try to keep it short.-->
-    <string name="swipe_action_delete">删除</string>
     <!--Name of the swipe action to move a message to the Spam folder. Try to keep it short.-->
-    <string name="swipe_action_spam">标记为垃圾邮件</string>
     <!--Name of the swipe action to move a message. The ellipsis (…) indicates that there is another step (selecting a folder) before the action is performed. Try to keep it short.-->
-    <string name="swipe_action_move">移动…</string>
     <!--Name of setting to configure whether to show a "compose" floating action button on top of the message list-->
     <string name="general_settings_show_compose_button_title">显示悬浮撰写按钮</string>
     <!--Displayed in the toolbar when there was an error loading the message list, e.g. because the folder no longer exists.-->
@@ -869,7 +852,7 @@
     <string name="about_title">关于 <xliff:g id="app_name">%s</xliff:g></string>
     <string name="dialog_openkeychain_info_text">启用对端到端加密的支持需要使用 OpenKeychain。</string>
     <string name="push_info_notification_explanation_text">使用推送功能时，<xliff:g id="app_name">%1$s</xliff:g> 会保持与邮件服务器的连接。Android 要求在应用处于后台活动状态时显示持续通知。<xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
-    <string name="about_app_authors_thunderbird">Thunderbird Mobile Team</string>
+    <string name="about_app_authors_thunderbird">Thunderbird 移动版团队</string>
     <string name="folder_settings_notifications_label">通知</string>
     <string name="settings_ui_data_collection">数据收集</string>
     <string name="settings_ui_telemetry_title">使用情况和技术数据</string>
@@ -892,8 +875,90 @@
     <string name="debug_enable_sync_debug_logging_summary">记录 24 小时的同步诊断信息</string>
     <string name="debug_sync_export_logs_title">导出同步日志</string>
     <string name="debug_enable_sync_debug_logging_title">启用同步调试日志记录</string>
-    <string name="swipe_action_change_swipe_gestures">更改 \n滑动手势</string>
     <string name="archiving_not_available_for_this_account">此账号无法使用归档功能。</string>
-    <string name="swipe_action_archive_folder_not_set">设置归档文件夹</string>
     <string name="debug_open_secret_debug_screen">打开秘密调试屏幕</string>
+    <string name="debug_invalidate_access_token">测试：使访问令牌失效</string>
+    <string name="debug_invalidate_access_token_done">访问令牌已失效。下次请求将刷新。</string>
+    <string name="debug_invalidate_access_token_unavailable">此账号没有可用的 OAuth 令牌。</string>
+    <string name="debug_invalidate_access_token_local">测试：使访问令牌失效（本地）</string>
+    <string name="debug_invalidate_access_token_local_done">本地失效已请求。下次请求将获取新令牌。</string>
+    <string name="debug_invalidate_access_token_server">测试：使访问令牌失效（服务器）</string>
+    <string name="debug_invalidate_access_token_server_done">存储的访问令牌已损坏。下次请求将失败，然后刷新。</string>
+    <string name="debug_force_auth_failure">测试：现在强制身份验证失败</string>
+    <string name="debug_force_auth_failure_done">OAuth 状态已清除。下次请求将失败。</string>
+    <string name="debug_force_auth_failure_unavailable">此账号没有可用的 OAuth 配置。</string>
+    <string name="debug_invalidate_access_token_cannot_modify">无法修改存储的访问令牌。请尝试本地失效。</string>
+    <string name="debug_invalidate_access_token_already_modified">存储的访问令牌已修改。</string>
+    <string name="message_view_menu_action_export_eml">导出为 EML</string>
+    <string name="account_setup_auto_select_folder">自动选择文件夹</string>
+    <string name="navigation_drawer_preferences">侧边菜单</string>
+    <string name="expand_folders">展开文件夹</string>
+    <string name="set_format_html_action">使用原始格式</string>
+    <string name="set_format_html_condensed_action">显示调整过格式的</string>
+    <string name="set_format_plain_action">显示未调整格式的消息</string>
+    <string name="set_format_plain_condensed_action">显示未调整格式的</string>
+    <string name="global_settings_messageview_body_content_type_title">正文内容类型</string>
+    <string name="global_settings_messageview_body_content_type_text_html">HTML (text/html)</string>
+    <string name="global_settings_messageview_body_content_type_text_plain">纯文本（text/plain）</string>
+    <string name="debug_feature_flags">调试：功能标志</string>
+    <string name="print_message_action">打印</string>
+    <string name="global_settings_splitview_when_unfolded">设备展开时</string>
+    <string name="general_settings_message_list_date_time_format_title">日期/时间格式</string>
+    <string name="general_settings_message_list_date_time_format_contextual">上下文</string>
+    <string name="general_settings_message_list_date_time_format_full">完整</string>
+    <string name="sort_by_then_by">次级依据…</string>
+    <string name="general_settings_message_list_date_time_format_iso">ISO</string>
+    <plurals name="message_view_attachment_summary">
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> 个附件(<xliff:g id="size">%2$s</xliff:g>)</item>
+    </plurals>
+    <string name="message_view_single_attachment_summary"><xliff:g id="name">%1$s</xliff:g> (<xliff:g id="size">%2$s</xliff:g>)</string>
+    <string name="message_view_attachments_view_all">查看全部</string>
+    <string name="message_view_attachments_view">查看</string>
+    <string name="message_view_attachments_title">附件</string>
+    <string name="message_view_attachments_save_all">保存全部</string>
+    <string name="no_network_message_will_be_sent_later_toast">离线。一旦网络连接可用将发送消息</string>
+    <string name="notification_actions_settings_title">通知操作</string>
+    <string name="notification_actions_settings_summary">选择要在电子邮件通知中显示的操作</string>
+    <string name="notification_summary_delete_title">在多条邮件通知中显示删除</string>
+    <string name="notification_summary_delete_summary">在汇总多条新邮件的通知中添加“删除”操作</string>
+    <string name="notification_actions_settings_description">重新排序通知操作。</string>
+    <string name="notification_actions_cutoff_description">显示操作分界线</string>
+    <string name="notification_actions_cutoff_state">此线上方的操作将显示在通知中</string>
+    <string name="notification_actions_shown_state">显示在通知中</string>
+    <string name="notification_actions_hidden_state">不显示在通知中</string>
+    <string name="accessibility_move_up">向上移动</string>
+    <string name="accessibility_move_down">向下移动</string>
+    <string name="accessibility_move_item_up">将 <xliff:g id="item">%1$s</xliff:g> 向上移动</string>
+    <string name="accessibility_move_item_down">将 <xliff:g id="item">%1$s</xliff:g> 向下移动</string>
+    <string name="accessibility_move_cutoff_up">将显示的操作分界线向上移动</string>
+    <string name="accessibility_move_cutoff_down">将显示的操作分界线向下移动</string>
+    <string name="notification_action_star">星标</string>
+    <string name="changelog_latest_label_text">最新</string>
+    <string name="changelog_type_new_text">新增</string>
+    <string name="changelog_type_changed_text">变更</string>
+    <string name="changelog_type_fixed_text">修复</string>
+    <string name="notification_show_contact_picture_title">在通知中显示联系人图片</string>
+    <string name="notification_show_contact_picture_summary">在新邮件通知中显示发件人头像</string>
+    <string name="animation_setting_follow_system">使用系统默认</string>
+    <string name="animation_setting_on">开</string>
+    <string name="animation_setting_off">关</string>
+    <string name="global_settings_privacy_incognito_keyboard">隐身键盘</string>
+    <string name="global_settings_privacy_incognito_keyboard_detail">在撰写邮件时，让键盘不要从您的输入内容中学习</string>
+    <string name="sort_by_indicator">•</string>
+    <string name="account_settings_signature_html_label">HTML 签名</string>
+    <string name="account_settings_signature_is_html_label">将签名保存为 HTML</string>
+    <string name="account_settings_signature_preview">签名预览</string>
+    <string name="account_settings_signature_clear_label">清除签名</string>
+    <string name="account_settings_signature_is_html_summary">将签名解析为 HTML。出于安全考虑，脚本和事件处理程序将被移除。</string>
+    <string name="camera_capture_lost">由于应用已关闭，捕获的图片已丢失。请重试。</string>
+    <string name="message_compose_encrypting_message">正在加密邮件…</string>
+    <string name="message_view_from_me_text">我</string>
+    <string name="account_settings_signature_preview_empty">您的签名预览将显示在此处</string>
+    <string name="error_no_contact_provider">未找到联系人应用。请安装联系人应用以添加此地址。</string>
+    <string name="account_setup_visibility_and_syncing">文件同步和推送</string>
+    <string name="remote_feature_flag_preferences">远程特性标记</string>
+    <string name="account_settings_sync_and_notifications">同步和通知</string>
+    <string name="account_settings_folder_sync_and_push">文件同步和推送</string>
+    <string name="account_settings_fetching_and_data_limits">获取和数据限制</string>
+    <string name="account_settings_folder_visibility">文件可见性</string>
 </resources>

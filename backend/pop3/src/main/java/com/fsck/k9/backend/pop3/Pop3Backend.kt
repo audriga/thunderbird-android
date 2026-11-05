@@ -7,11 +7,12 @@ import com.fsck.k9.backend.api.BackendStorage
 import com.fsck.k9.backend.api.SyncConfig
 import com.fsck.k9.backend.api.SyncListener
 import com.fsck.k9.mail.BodyFactory
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.Part
 import com.fsck.k9.mail.store.pop3.Pop3Store
 import com.fsck.k9.mail.transport.smtp.SmtpTransport
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.feature.mail.folder.api.FolderPathDelimiter
 
 class Pop3Backend(
     accountName: String,
@@ -34,8 +35,9 @@ class Pop3Backend(
     override val supportsFolderSubscriptions = false
     override val isPushCapable = false
 
-    override fun refreshFolderList() {
+    override fun refreshFolderList(): FolderPathDelimiter? {
         commandRefreshFolderList.refreshFolderList()
+        return null
     }
 
     override fun sync(folderServerId: String, syncConfig: SyncConfig, listener: SyncListener) {
@@ -50,7 +52,7 @@ class Pop3Backend(
         throw UnsupportedOperationException("not implemented")
     }
 
-    override fun downloadCompleteMessage(folderServerId: String, messageServerId: String) {
+    override suspend fun downloadCompleteMessage(folderServerId: String, messageServerId: String) {
         commandDownloadMessage.downloadCompleteMessage(folderServerId, messageServerId)
     }
 
@@ -67,7 +69,12 @@ class Pop3Backend(
     }
 
     override fun deleteMessages(folderServerId: String, messageServerIds: List<String>) {
-        commandSetFlag.setFlag(folderServerId, messageServerIds, Flag.DELETED, true)
+        commandSetFlag.setFlag(
+            folderServerId = folderServerId,
+            messageServerIds = messageServerIds,
+            flag = Flag.DELETED,
+            newState = true,
+        )
     }
 
     override fun deleteAllMessages(folderServerId: String) {

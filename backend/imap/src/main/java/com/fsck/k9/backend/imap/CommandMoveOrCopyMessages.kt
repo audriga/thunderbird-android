@@ -3,7 +3,9 @@ package com.fsck.k9.backend.imap
 import com.fsck.k9.mail.store.imap.ImapFolder
 import com.fsck.k9.mail.store.imap.ImapStore
 import com.fsck.k9.mail.store.imap.OpenMode
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.legacy.logging.Log
+
+private const val TAG = "CommandMoveOrCopyMessages"
 
 internal class CommandMoveOrCopyMessages(private val imapStore: ImapStore) {
 
@@ -12,7 +14,12 @@ internal class CommandMoveOrCopyMessages(private val imapStore: ImapStore) {
         targetFolderServerId: String,
         messageServerIds: List<String>,
     ): Map<String, String>? {
-        return moveOrCopyMessages(sourceFolderServerId, targetFolderServerId, messageServerIds, false)
+        return moveOrCopyMessages(
+            srcFolder = sourceFolderServerId,
+            destFolder = targetFolderServerId,
+            uids = messageServerIds,
+            isCopy = false,
+        )
     }
 
     fun copyMessages(
@@ -20,7 +27,12 @@ internal class CommandMoveOrCopyMessages(private val imapStore: ImapStore) {
         targetFolderServerId: String,
         messageServerIds: List<String>,
     ): Map<String, String>? {
-        return moveOrCopyMessages(sourceFolderServerId, targetFolderServerId, messageServerIds, true)
+        return moveOrCopyMessages(
+            srcFolder = sourceFolderServerId,
+            destFolder = targetFolderServerId,
+            uids = messageServerIds,
+            isCopy = true,
+        )
     }
 
     private fun moveOrCopyMessages(
@@ -36,7 +48,7 @@ internal class CommandMoveOrCopyMessages(private val imapStore: ImapStore) {
             remoteSrcFolder = imapStore.getFolder(srcFolder)
 
             if (uids.isEmpty()) {
-                Log.i("moveOrCopyMessages: no remote messages to move, skipping")
+                Log.i(TAG, "moveOrCopyMessages: no remote messages to move, skipping")
                 return null
             }
 
@@ -45,6 +57,7 @@ internal class CommandMoveOrCopyMessages(private val imapStore: ImapStore) {
             val messages = uids.map { uid -> remoteSrcFolder.getMessage(uid) }
 
             Log.d(
+                TAG,
                 "moveOrCopyMessages: source folder = %s, %d messages, destination folder = %s, isCopy = %s",
                 srcFolder,
                 messages.size,

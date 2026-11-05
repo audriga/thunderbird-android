@@ -21,6 +21,7 @@ public class MessageViewInfo {
     public final boolean isSubjectEncrypted;
     public final AttachmentResolver attachmentResolver;
     public final String text;
+    public final String textPlainFormatted;
     public final CryptoResultAnnotation cryptoResultAnnotation;
     public final List<AttachmentViewInfo> attachments;
     public final String extraText;
@@ -32,7 +33,7 @@ public class MessageViewInfo {
     public MessageViewInfo(
             Message message, boolean isMessageIncomplete, Part rootPart,
             String subject, boolean isSubjectEncrypted,
-            String text, List<AttachmentViewInfo> attachments,
+            String text, String textPlainFormatted, List<AttachmentViewInfo> attachments,
             CryptoResultAnnotation cryptoResultAnnotation,
             AttachmentResolver attachmentResolver,
             String extraText, List<AttachmentViewInfo> extraAttachments,
@@ -43,6 +44,7 @@ public class MessageViewInfo {
         this.subject = subject;
         this.isSubjectEncrypted = isSubjectEncrypted;
         this.text = text;
+        this.textPlainFormatted = textPlainFormatted;
         this.cryptoResultAnnotation = cryptoResultAnnotation;
         this.attachmentResolver = attachmentResolver;
         this.attachments = attachments;
@@ -55,7 +57,7 @@ public class MessageViewInfo {
     public MessageViewInfo(
             Message message, boolean isMessageIncomplete, Part rootPart,
             String subject, boolean isSubjectEncrypted,
-            String text, List<AttachmentViewInfo> attachments,
+            String text, String textPlainFormatted, List<AttachmentViewInfo> attachments,
             CryptoResultAnnotation cryptoResultAnnotation,
             AttachmentResolver attachmentResolver,
             String extraText, List<AttachmentViewInfo> extraAttachments,
@@ -67,6 +69,7 @@ public class MessageViewInfo {
         this.subject = subject;
         this.isSubjectEncrypted = isSubjectEncrypted;
         this.text = text;
+        this.textPlainFormatted = textPlainFormatted;
         this.cryptoResultAnnotation = cryptoResultAnnotation;
         this.attachmentResolver = attachmentResolver;
         this.attachments = attachments;
@@ -77,10 +80,10 @@ public class MessageViewInfo {
     }
 
     static MessageViewInfo createWithExtractedContent(Message message, Part rootPart, boolean isMessageIncomplete,
-            String text, List<AttachmentViewInfo> attachments, AttachmentResolver attachmentResolver,
+            String text, String textPlainFormatted, List<AttachmentViewInfo> attachments, AttachmentResolver attachmentResolver,
             UnsubscribeUri preferredUnsubscribeUri, MessageData messageData) {
         return new MessageViewInfo(
-                message, isMessageIncomplete, rootPart, null, false, text, attachments, null, attachmentResolver, null,
+                message, isMessageIncomplete, rootPart, null, false, text, textPlainFormatted, attachments, null, attachmentResolver, null,
                 Collections.<AttachmentViewInfo>emptyList(), preferredUnsubscribeUri, messageData);
     }
 
@@ -89,7 +92,7 @@ public class MessageViewInfo {
             Body emptyBody = new TextBody("");
             Part emptyPart = new MimeBodyPart(emptyBody, "text/plain");
             String subject = message.getSubject();
-            return new MessageViewInfo(message, isMessageIncomplete, emptyPart, subject, false, null, null, null, null,
+            return new MessageViewInfo(message, isMessageIncomplete, emptyPart, subject, false, null, null, null, null, null,
                     null, null, null);
         } catch (MessagingException e) {
             throw new AssertionError(e);
@@ -98,13 +101,14 @@ public class MessageViewInfo {
 
     public static MessageViewInfo createForMetadataOnly(Message message, boolean isMessageIncomplete) {
         String subject = message.getSubject();
-        return new MessageViewInfo(message, isMessageIncomplete, null, subject, false, null, null, null, null, null, null, null);
+        return new MessageViewInfo(message, isMessageIncomplete, null, subject, false, null, null, null, null, null, null, null, null);
     }
 
     MessageViewInfo withCryptoData(CryptoResultAnnotation rootPartAnnotation, String extraViewableText,
             List<AttachmentViewInfo> extraAttachmentInfos, MessageData messageData) {
         return new MessageViewInfo(
-                message, isMessageIncomplete, rootPart, subject, isSubjectEncrypted, text, attachments,
+                message, isMessageIncomplete, rootPart, subject, isSubjectEncrypted, text, textPlainFormatted,
+                attachments,
                 rootPartAnnotation,
                 attachmentResolver,
                 extraViewableText, extraAttachmentInfos,
@@ -115,7 +119,7 @@ public class MessageViewInfo {
 
     MessageViewInfo withSubject(String subject, boolean isSubjectEncrypted) {
         return new MessageViewInfo(
-                message, isMessageIncomplete, rootPart, subject, isSubjectEncrypted, text, attachments,
+                message, isMessageIncomplete, rootPart, subject, isSubjectEncrypted, text, textPlainFormatted, attachments,
                 cryptoResultAnnotation, attachmentResolver, extraText, extraAttachments, preferredUnsubscribeUri, messageData
         );
     }

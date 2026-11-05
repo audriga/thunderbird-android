@@ -12,7 +12,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import app.k9mail.legacy.di.DI;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.legacy.logging.Log;
 
 import com.fsck.k9.mail.Body;
 import net.thunderbird.core.common.exception.MessagingException;
@@ -29,6 +29,8 @@ import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
  * the underlying part structure.
  */
 public class AttachmentResolver {
+    private static final String TAG = "AttachmentResolver";
+
     Map<String,Uri> contentIdToAttachmentUriMap;
 
 
@@ -73,7 +75,7 @@ public class AttachmentResolver {
                         result.put(contentId, attachmentInfo.internalUri);
                     }
                 } catch (MessagingException e) {
-                    Log.e(e, "Error extracting attachment info");
+                    Log.e(TAG, e, "Error extracting attachment info");
                 }
             }
         }

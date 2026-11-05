@@ -1,15 +1,24 @@
 plugins {
     id(ThunderbirdPlugins.Library.kmp)
-}
-
-android {
-    namespace = "net.thunderbird.feature.mail.folder.api"
+    alias(libs.plugins.tb.piisafe)
 }
 
 kotlin {
+    explicitApi()
+
+    android {
+        namespace = "net.thunderbird.feature.mail.folder.api"
+    }
     sourceSets {
         commonMain.dependencies {
+            api(projects.core.architecture.api)
+            implementation(projects.core.common)
+            implementation(projects.feature.account.api)
             implementation(projects.feature.mail.account.api)
         }
     }
+}
+
+codeCoverage {
+    lineCoverage = 0
 }

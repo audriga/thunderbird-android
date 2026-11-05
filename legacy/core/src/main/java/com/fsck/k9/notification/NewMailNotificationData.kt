@@ -1,7 +1,7 @@
 package com.fsck.k9.notification
 
 import app.k9mail.legacy.message.controller.MessageReference
-import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.feature.account.AccountId
 
 internal data class NewMailNotificationData(
     val cancelNotificationIds: List<Int>,
@@ -11,8 +11,9 @@ internal data class NewMailNotificationData(
 )
 
 internal data class BaseNotificationData(
-    val account: LegacyAccount,
+    val accountId: AccountId,
     val accountName: String,
+    val messagesNotificationChannelVersion: Int,
     val groupKey: String,
     val color: Int,
     val newMessagesCount: Int,
@@ -65,6 +66,9 @@ internal enum class NotificationAction {
     Reply,
     MarkAsRead,
     Delete,
+    Archive,
+    Spam,
+    Star,
 }
 
 internal enum class WearNotificationAction {

@@ -9,19 +9,21 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import net.thunderbird.core.logging.legacy.Log;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.Message;
 import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.Part;
+import net.thunderbird.legacy.logging.Log;
 import org.apache.james.mime4j.codec.Base64InputStream;
 import org.apache.james.mime4j.codec.QuotedPrintableInputStream;
 import org.apache.james.mime4j.util.MimeUtil;
 
 
 public class MimeUtility {
+    private static final String TAG = "MimeUtility";
+
     public static String unfold(String s) {
         if (s == null) {
             return null;
@@ -159,7 +161,7 @@ public class MimeUtility {
                     }
                 };
             } else {
-                Log.w("Unsupported encoding: %s", encoding);
+                Log.w(TAG, "Unsupported encoding: %s", encoding);
                 inputStream = rawInputStream;
             }
         } else {

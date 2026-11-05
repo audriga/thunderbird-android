@@ -10,15 +10,18 @@ import android.widget.ListView;
 import android.widget.Toast;
 import net.thunderbird.core.android.account.Identity;
 import net.thunderbird.core.android.account.LegacyAccount;
+import net.thunderbird.core.android.account.LegacyAccountManager;
 import app.k9mail.legacy.di.DI;
-import com.fsck.k9.Preferences;
 import com.fsck.k9.ui.R;
 import com.fsck.k9.ui.identity.IdentityFormatter;
+import net.thunderbird.feature.account.AccountIdFactory;
 
 import java.util.List;
 
-public class ChooseIdentity extends K9ListActivity {
+public class ChooseIdentity extends BaseListActivity {
     private final IdentityFormatter identityFormatter = DI.get(IdentityFormatter.class);
+
+    protected final LegacyAccountManager accountManager = DI.get(LegacyAccountManager.class);
 
     LegacyAccount mAccount;
     ArrayAdapter<String> adapter;
@@ -40,7 +43,7 @@ public class ChooseIdentity extends K9ListActivity {
         getListView().setChoiceMode(ListView.CHOICE_MODE_NONE);
         Intent intent = getIntent();
         String accountUuid = intent.getStringExtra(EXTRA_ACCOUNT);
-        mAccount = Preferences.getPreferences().getAccount(accountUuid);
+        mAccount = accountManager.findById(AccountIdFactory.INSTANCE.of(accountUuid));
 
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
 

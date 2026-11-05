@@ -5,9 +5,27 @@ plugins {
 android {
     namespace = "app.k9mail.core.ui.compose.common"
     resourcePrefix = "core_ui_common_"
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
+    api(projects.core.ui.contract)
+
+    implementation(projects.core.common)
+
+    implementation(libs.androidx.window)
+
     testImplementation(projects.core.ui.compose.testing)
-    testImplementation(projects.core.ui.compose.designsystem)
+    testImplementation(projects.core.ui.compose.common)
+    testImplementation(projects.core.android.testing)
+}
+
+codeCoverage {
+    branchCoverage = 2
+    lineCoverage = 8
 }

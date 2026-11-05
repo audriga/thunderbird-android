@@ -13,6 +13,8 @@ class K9OAuthConfigurationFactory : OAuthConfigurationFactory {
             createGmailConfiguration(),
             createMicrosoftConfiguration(),
             createYahooConfiguration(),
+            createThundermailConfiguration(),
+            createThundermailStageConfiguration(),
         )
     }
 
@@ -65,6 +67,7 @@ class K9OAuthConfigurationFactory : OAuthConfigurationFactory {
         ) to OAuthConfiguration(
             clientId = "e647013a-ada4-4114-b419-e43d250f99c5",
             scopes = listOf(
+                "profile",
                 "openid",
                 "email",
                 "https://outlook.office.com/IMAP.AccessAsUser.All",
@@ -89,4 +92,27 @@ class K9OAuthConfigurationFactory : OAuthConfigurationFactory {
             redirectUri = "${BuildConfig.APPLICATION_ID}://oauth2redirect",
         )
     }
+
+    private fun createThundermailConfiguration(): Pair<List<String>, OAuthConfiguration> =
+        listOf(
+            "mail.tb.pro",
+            "mail.thundermail.com",
+        ) to OAuthConfiguration(
+            clientId = "mobile-android-k9mail",
+            scopes = listOf("openid", "profile", "email", "offline_access"),
+            authorizationEndpoint = "https://auth.tb.pro/realms/tbpro/protocol/openid-connect/auth",
+            tokenEndpoint = "https://auth.tb.pro/realms/tbpro/protocol/openid-connect/token",
+            redirectUri = "${BuildConfig.APPLICATION_ID}://oauth2redirect",
+        )
+
+    private fun createThundermailStageConfiguration(): Pair<List<String>, OAuthConfiguration> =
+        listOf(
+            "mail.stage-thundermail.com",
+        ) to OAuthConfiguration(
+            clientId = "mobile-android-k9mail",
+            scopes = listOf("openid", "profile", "email", "offline_access"),
+            authorizationEndpoint = "https://auth-stage.tb.pro/realms/tbpro/protocol/openid-connect/auth",
+            tokenEndpoint = "https://auth-stage.tb.pro/realms/tbpro/protocol/openid-connect/token",
+            redirectUri = "${BuildConfig.APPLICATION_ID}://oauth2redirect",
+        )
 }

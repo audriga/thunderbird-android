@@ -1,8 +1,7 @@
 package com.fsck.k9.notification
 
-import com.fsck.k9.K9
-import com.fsck.k9.K9.LockScreenNotificationVisibility
 import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.preference.LockScreenNotificationVisibility
 
 private const val MAX_NUMBER_OF_SENDERS_IN_LOCK_SCREEN_NOTIFICATION = 5
 
@@ -11,10 +10,11 @@ internal class BaseNotificationDataCreator {
     fun createBaseNotificationData(notificationData: NotificationData): BaseNotificationData {
         val account = notificationData.account
         return BaseNotificationData(
-            account = account,
+            accountId = account.id,
+            messagesNotificationChannelVersion = account.messagesNotificationChannelVersion,
             groupKey = NotificationGroupKeys.getGroupKey(account),
-            accountName = account.displayName,
-            color = account.chipColor,
+            accountName = account.name?.takeIf { it.isNotBlank() } ?: account.email,
+            color = account.profile.color,
             newMessagesCount = notificationData.newMessagesCount,
             lockScreenNotificationData = createLockScreenNotificationData(notificationData),
             appearance = createNotificationAppearance(account),
@@ -22,7 +22,7 @@ internal class BaseNotificationDataCreator {
     }
 
     private fun createLockScreenNotificationData(data: NotificationData): LockScreenNotificationData {
-        return when (K9.lockScreenNotificationVisibility) {
+        return when (data.lockScreenNotificationVisibility) {
             LockScreenNotificationVisibility.NOTHING -> LockScreenNotificationData.None
             LockScreenNotificationVisibility.APP_NAME -> LockScreenNotificationData.AppName
             LockScreenNotificationVisibility.EVERYTHING -> LockScreenNotificationData.Public
@@ -45,7 +45,7 @@ internal class BaseNotificationDataCreator {
             NotificationAppearance(
                 ringtone = ringtone,
                 vibrationPattern = vibrationPattern,
-                ledColor = account.notificationSettings.light.toColor(account.chipColor),
+                ledColor = account.notificationSettings.light.toColor(account.profile.color),
             )
         }
     }

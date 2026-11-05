@@ -1,5 +1,6 @@
 package com.fsck.k9.storage.messages
 
+import android.database.sqlite.SQLiteDatabase
 import app.k9mail.legacy.mailstore.CreateFolderInfo
 import app.k9mail.legacy.mailstore.FolderSettings
 import assertk.assertThat
@@ -7,12 +8,28 @@ import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import com.fsck.k9.mail.FolderType
 import com.fsck.k9.storage.RobolectricTest
+import net.thunderbird.feature.account.AccountIdFactory
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 class CreateFolderOperationsTest : RobolectricTest() {
-    private val sqliteDatabase = createDatabase()
-    private val lockableDatabase = createLockableDatabaseMock(sqliteDatabase)
-    private val createFolderOperations = CreateFolderOperations(lockableDatabase)
+
+    private val accountId = AccountIdFactory.create()
+    private lateinit var sqliteDatabase: SQLiteDatabase
+    private lateinit var createFolderOperations: CreateFolderOperations
+
+    @Before
+    fun setUp() {
+        sqliteDatabase = createDatabase()
+        val lockableDatabase = createLockableDatabaseMock(sqliteDatabase)
+        createFolderOperations = CreateFolderOperations(lockableDatabase, accountId)
+    }
+
+    @After
+    fun tearDown() {
+        sqliteDatabase.close()
+    }
 
     @Test
     fun `create single folder`() {

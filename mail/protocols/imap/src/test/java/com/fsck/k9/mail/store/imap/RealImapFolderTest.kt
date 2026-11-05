@@ -18,7 +18,6 @@ import assertk.fail
 import com.fsck.k9.mail.Body
 import com.fsck.k9.mail.DefaultBodyFactory
 import com.fsck.k9.mail.FetchProfile
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.FolderType
 import com.fsck.k9.mail.MessageRetrievalListener
 import com.fsck.k9.mail.Part
@@ -31,7 +30,13 @@ import java.io.IOException
 import java.nio.file.Files
 import java.util.Date
 import java.util.TimeZone
+import kotlinx.coroutines.test.runTest
 import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.components.core.logging.testing.TestLogger
+import net.thunderbird.feature.mail.folder.api.FOLDER_DEFAULT_PATH_DELIMITER
+import net.thunderbird.feature.mail.folder.api.FolderPathDelimiter
+import net.thunderbird.legacy.logging.Log
 import net.thunderbird.protocols.imap.folder.attributeName
 import okio.Buffer
 import org.apache.james.mime4j.util.MimeUtil
@@ -55,15 +60,10 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.stub
 import org.mockito.kotlin.whenever
 
-@Suppress("MaxLineLength")
+@Suppress("MaxLineLength", "LargeClass")
 class RealImapFolderTest {
     private val imapStoreConfig = FakeImapStoreConfig()
-    private val internalImapStore = object : InternalImapStore {
-        override val logLabel = "Account"
-        override val config = imapStoreConfig
-        override fun getCombinedPrefix() = ""
-        override fun getPermanentFlagsIndex() = mutableSetOf<Flag>()
-    }
+    private val internalImapStore = FakeInternalImapStore(config = imapStoreConfig)
     private val imapConnection = mock<ImapConnection>()
     private val testConnectionManager = TestConnectionManager(imapConnection)
 
@@ -71,6 +71,7 @@ class RealImapFolderTest {
 
     @Before
     fun setUp() {
+        Log.logger = TestLogger()
         tempDirectory = Files.createTempDirectory("RealImapFolderTest").toFile()
         BinaryTempFileBody.setTempDirectory(tempDirectory)
     }
@@ -396,6 +397,48 @@ class RealImapFolderTest {
         val uidMapping = sourceFolder.moveMessages(messages, destinationFolder)
 
         assertCommandWithIdsIssued("UID MOVE 1 \"la vache dit møø\"")
+    }
+
+    @Test
+    fun `moveMessages() should message to folder using serverId when IMAP Prefix is set`() {
+        // Arrange
+        val prefix = "INBOX"
+        val pathDelimiter = "."
+        val imapStore = FakeInternalImapStore(
+            config = imapStoreConfig,
+            imapPrefix = prefix,
+            pathDelimiter = pathDelimiter,
+        )
+
+        val sourceFolderName = "My New Folder"
+        val sourceFolderId = "$prefix$pathDelimiter$sourceFolderName"
+        val sourceFolder = createFolder(folderName = sourceFolderId, internalImapStore = imapStore)
+        prepareImapFolderForOpen(openMode = OpenMode.READ_WRITE, folderServerId = sourceFolderId)
+
+        val destinationFolderName = "Destination Folder"
+        val destinationFolderId = "$prefix$pathDelimiter$destinationFolderName"
+        val destinationFolder = createFolder(folderName = destinationFolderId, internalImapStore = imapStore)
+        imapConnection.stub {
+            on { hasCapability(Capabilities.MOVE) } doReturn true
+        }
+        val messageUid = "1"
+        val message = createImapMessage(messageUid)
+
+        setupMoveResponses(
+            "* OK [COPYUID 1757454189 2 1]",
+            "* 1 EXPUNGE",
+            "x OK MOVE completed",
+        )
+
+        // Act
+        sourceFolder.open(OpenMode.READ_WRITE)
+        sourceFolder.moveMessages(
+            messages = listOf(message),
+            folder = destinationFolder,
+        )
+
+        // Assert
+        assertCommandWithIdsIssued("UID MOVE $messageUid \"$destinationFolderId\"")
     }
 
     @Test
@@ -777,7 +820,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withEmptyMessageListArgument_shouldDoNothing() {
+    fun fetch_withEmptyMessageListArgument_shouldDoNothing() = runTest {
         val folder = createFolder("Folder")
         val fetchProfile = createFetchProfile()
 
@@ -787,7 +830,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() on closed folder should throw`() {
+    fun `fetch() on closed folder should throw`() = runTest {
         val folder = createFolder("Folder")
         val messages = createImapMessages("1")
         val fetchProfile = createFetchProfile()
@@ -806,7 +849,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withFlagsFetchProfile_shouldIssueRespectiveCommand() {
+    fun fetch_withFlagsFetchProfile_shouldIssueRespectiveCommand() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -820,7 +863,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withEnvelopeFetchProfile_shouldIssueRespectiveCommand() {
+    fun fetch_withEnvelopeFetchProfile_shouldIssueRespectiveCommand() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -839,7 +882,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withStructureFetchProfile_shouldIssueRespectiveCommand() {
+    fun fetch_withStructureFetchProfile_shouldIssueRespectiveCommand() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -853,7 +896,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withStructureFetchProfile_shouldSetContentType() {
+    fun fetch_withStructureFetchProfile_shouldSetContentType() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -870,7 +913,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withStructureFetchProfile_shouldNotBreakOnUnicodeAddresses() {
+    fun fetch_withStructureFetchProfile_shouldNotBreakOnUnicodeAddresses() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -921,7 +964,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with simple content type parameter`() {
+    fun `fetch() with simple content type parameter`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("text" "plain" ("name" "token") NIL NIL "7bit" 42 23)""",
             headerName = MimeHeader.HEADER_CONTENT_TYPE,
@@ -930,7 +973,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with content type parameter that needs to be a quoted string`() {
+    fun `fetch() with content type parameter that needs to be a quoted string`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("text" "plain" ("name" "one two three") NIL NIL "7bit" 42 23)""",
             headerName = MimeHeader.HEADER_CONTENT_TYPE,
@@ -939,7 +982,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with content type parameter that needs to be a quoted string with escaped characters`() {
+    fun `fetch() with content type parameter that needs to be a quoted string with escaped characters`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("text" "plain" ("name" "one \"two\" three") NIL NIL "7bit" 42 23)""",
             headerName = MimeHeader.HEADER_CONTENT_TYPE,
@@ -948,7 +991,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with RFC 2231 encoded content type parameter`() {
+    fun `fetch() with RFC 2231 encoded content type parameter`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("text" "plain" ("name*" "utf-8''filen%C3%A4me.ext") NIL NIL "7bit" 42 23)""",
             headerName = MimeHeader.HEADER_CONTENT_TYPE,
@@ -957,7 +1000,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with UTF-8 encoded content type parameter`() {
+    fun `fetch() with UTF-8 encoded content type parameter`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("text" "plain" ("name" "filenäme.ext") NIL NIL "7bit" 42 23)""",
             headerName = MimeHeader.HEADER_CONTENT_TYPE,
@@ -966,7 +1009,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with simple content disposition parameter`() {
+    fun `fetch() with simple content disposition parameter`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("application" "octet-stream" NIL NIL NIL "8bit" 23 NIL """ +
                 """("attachment" ("filename" "token")) NIL NIL)""",
@@ -976,7 +1019,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with content disposition parameter that needs to be a quoted string`() {
+    fun `fetch() with content disposition parameter that needs to be a quoted string`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("application" "octet-stream" NIL NIL NIL "8bit" 23 NIL """ +
                 """("attachment" ("filename" "one two three")) NIL NIL)""",
@@ -986,17 +1029,18 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with content disposition parameter that needs to be a quoted string with escaped characters`() {
-        testHeaderFromBodyStructure(
-            bodyStructure = """("application" "octet-stream" NIL NIL NIL "8bit" 23 NIL """ +
-                """("attachment" ("filename" "one \"two\" three")) NIL NIL)""",
-            headerName = MimeHeader.HEADER_CONTENT_DISPOSITION,
-            expectedHeaderValue = "attachment;\r\n filename=\"one \\\"two\\\" three\";\r\n size=23",
-        )
-    }
+    fun `fetch() with content disposition parameter that needs to be a quoted string with escaped characters`() =
+        runTest {
+            testHeaderFromBodyStructure(
+                bodyStructure = """("application" "octet-stream" NIL NIL NIL "8bit" 23 NIL """ +
+                    """("attachment" ("filename" "one \"two\" three")) NIL NIL)""",
+                headerName = MimeHeader.HEADER_CONTENT_DISPOSITION,
+                expectedHeaderValue = "attachment;\r\n filename=\"one \\\"two\\\" three\";\r\n size=23",
+            )
+        }
 
     @Test
-    fun `fetch() with RFC 2231 encoded content disposition parameter`() {
+    fun `fetch() with RFC 2231 encoded content disposition parameter`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("application" "octet-stream" NIL NIL NIL "8bit" 23 NIL """ +
                 """("attachment" ("filename*" "utf-8''filen%C3%A4me.ext")) NIL NIL)""",
@@ -1006,7 +1050,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun `fetch() with UTF-8 encoded content disposition parameter`() {
+    fun `fetch() with UTF-8 encoded content disposition parameter`() = runTest {
         testHeaderFromBodyStructure(
             bodyStructure = """("application" "octet-stream" NIL NIL NIL "8bit" 23 NIL """ +
                 """("attachment" ("filename" "filenäme.ext")) NIL NIL)""",
@@ -1016,7 +1060,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withBodySaneFetchProfile_shouldIssueRespectiveCommand() {
+    fun fetch_withBodySaneFetchProfile_shouldIssueRespectiveCommand() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -1030,7 +1074,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withBodySaneFetchProfileAndNoMaximumDownloadSize_shouldIssueRespectiveCommand() {
+    fun fetch_withBodySaneFetchProfileAndNoMaximumDownloadSize_shouldIssueRespectiveCommand() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -1044,7 +1088,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withBodyFetchProfileAndNoMaximumDownloadSize_shouldIssueRespectiveCommand() {
+    fun fetch_withBodyFetchProfileAndNoMaximumDownloadSize_shouldIssueRespectiveCommand() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -1058,7 +1102,7 @@ class RealImapFolderTest {
     }
 
     @Test
-    fun fetch_withFlagsFetchProfile_shouldSetFlags() {
+    fun fetch_withFlagsFetchProfile_shouldSetFlags() = runTest {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -1566,6 +1610,62 @@ class RealImapFolderTest {
         }
     }
 
+    @Test
+    fun `open() should open folder in read-only mode successfully when connection has IMAP prefix`() {
+        // Arrange
+        val prefix = "INBOX"
+        val pathDelimiter = "/"
+        val folderName = "My New Folder"
+        val serverId = "$prefix$pathDelimiter$folderName"
+        val imapStore = FakeInternalImapStore(
+            config = imapStoreConfig,
+            imapPrefix = prefix,
+            pathDelimiter = pathDelimiter,
+        )
+        val openMode = OpenMode.READ_ONLY
+        imapConnection.stub {
+            on { executeSimpleCommand(anyString()) } doReturn createOpenImapResponse(
+                openMode = OpenMode.READ_ONLY,
+            )
+        }
+
+        val folder = createFolder(folderName = serverId, internalImapStore = imapStore)
+
+        // Act
+        folder.open(openMode)
+
+        // Assert
+        assertCommandIssued("EXAMINE \"$serverId\"")
+    }
+
+    @Test
+    fun `open() should open folder in read-write mode successfully when connection has IMAP prefix`() {
+        // Arrange
+        val prefix = "INBOX"
+        val pathDelimiter = "/"
+        val folderName = "My New Folder"
+        val imapStore = FakeInternalImapStore(
+            config = imapStoreConfig,
+            imapPrefix = prefix,
+            pathDelimiter = pathDelimiter,
+        )
+        val serverId = "$prefix$pathDelimiter$folderName"
+        val openMode = OpenMode.READ_WRITE
+        imapConnection.stub {
+            on { executeSimpleCommand(anyString()) } doReturn createOpenImapResponse(
+                openMode = OpenMode.READ_WRITE,
+            )
+        }
+
+        val folder = createFolder(folderName = serverId, internalImapStore = imapStore)
+
+        // Act
+        folder.open(openMode)
+
+        // Assert
+        assertCommandIssued("SELECT \"$serverId\"")
+    }
+
     @Suppress("SameParameterValue")
     private fun createPlainTextPart(serverExtra: String): Part {
         val part = createPart(serverExtra)
@@ -1600,9 +1700,17 @@ class RealImapFolderTest {
         return response
     }
 
-    private fun createFolder(folderName: String): RealImapFolder {
-        return RealImapFolder(internalImapStore, testConnectionManager, folderName, FolderNameCodec())
-    }
+    private fun createFolder(
+        folderName: String,
+        internalImapStore: InternalImapStore = this.internalImapStore,
+        connectionManager: ImapConnectionManager = testConnectionManager,
+        folderNameCodec: FolderNameCodec = FolderNameCodec(),
+    ): RealImapFolder = RealImapFolder(
+        internalImapStore = internalImapStore,
+        connectionManager = connectionManager,
+        serverId = folderName,
+        folderNameCodec = folderNameCodec,
+    )
 
     private fun createImapMessage(uid: String): ImapMessage {
         return mock {
@@ -1622,29 +1730,32 @@ class RealImapFolderTest {
 
     private fun createMessageRetrievalListener() = mock<MessageRetrievalListener<ImapMessage>>()
 
-    private fun prepareImapFolderForOpen(openMode: OpenMode) {
-        val imapResponses = listOf(
-            createImapResponse("* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft NonJunk \$MDNSent)"),
+    private fun createOpenImapResponse(openMode: OpenMode) = buildList {
+        add(
             createImapResponse(
                 "* OK [PERMANENTFLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft NonJunk \$MDNSent \\*)] " +
                     "Flags permitted.",
             ),
-            createImapResponse("* 23 EXISTS"),
-            createImapResponse("* 0 RECENT"),
-            createImapResponse("* OK [UIDVALIDITY 1125022061] UIDs valid"),
-            createImapResponse("* OK [UIDNEXT 57576] Predicted next UID"),
+        )
+        add(createImapResponse("* 23 EXISTS"))
+        add(createImapResponse("* 0 RECENT"))
+        add(createImapResponse("* OK [UIDVALIDITY 1125022061] UIDs valid"))
+        add(createImapResponse("* OK [UIDNEXT 57576] Predicted next UID"))
+        add(
             if (openMode == OpenMode.READ_WRITE) {
                 createImapResponse("2 OK [READ-WRITE] Select completed.")
             } else {
                 createImapResponse("2 OK [READ-ONLY] Examine completed.")
             },
         )
+    }
 
-        if (openMode == OpenMode.READ_WRITE) {
-            whenever(imapConnection.executeSimpleCommand("SELECT \"Folder\"")).thenReturn(imapResponses)
-        } else {
-            whenever(imapConnection.executeSimpleCommand("EXAMINE \"Folder\"")).thenReturn(imapResponses)
-        }
+    private fun prepareImapFolderForOpen(openMode: OpenMode, folderServerId: String = "Folder") {
+        val imapResponses = createOpenImapResponse(openMode)
+
+        val command = if (openMode == OpenMode.READ_WRITE) "SELECT" else "EXAMINE"
+        whenever(imapConnection.executeSimpleCommand("$command \"$folderServerId\""))
+            .thenReturn(imapResponses)
     }
 
     private fun assertCommandWithIdsIssued(expectedCommand: String) {
@@ -1662,7 +1773,7 @@ class RealImapFolderTest {
         val commandUids = commandUidsCaptor.allValues
 
         for (i in commandPrefixes.indices) {
-            val command = commandPrefixes[i] + " " + ImapUtility.join(",", commandUids[i]) +
+            val command = commandPrefixes[i] + " " + commandUids[i].joinToString(",") +
                 if (commandSuffixes[i].isEmpty()) "" else " " + commandSuffixes[i]
 
             if (command == expectedCommand) {
@@ -1703,7 +1814,11 @@ class RealImapFolderTest {
             .thenReturn(imapResponses)
     }
 
-    private fun testHeaderFromBodyStructure(bodyStructure: String, headerName: String, expectedHeaderValue: String) {
+    private suspend fun testHeaderFromBodyStructure(
+        bodyStructure: String,
+        headerName: String,
+        expectedHeaderValue: String,
+    ) {
         val folder = createFolder("Folder")
         prepareImapFolderForOpen(OpenMode.READ_ONLY)
         folder.open(OpenMode.READ_ONLY)
@@ -1734,4 +1849,15 @@ internal class TestConnectionManager(private val connection: ImapConnection) : I
     }
 
     override fun releaseConnection(connection: ImapConnection?) = Unit
+}
+
+private class FakeInternalImapStore(
+    override val config: ImapStoreConfig,
+    override val logLabel: String = "Account",
+    private val imapPrefix: String? = null,
+    private val pathDelimiter: FolderPathDelimiter = FOLDER_DEFAULT_PATH_DELIMITER,
+    private val permanentFlagsIndex: MutableSet<Flag> = mutableSetOf(),
+) : InternalImapStore {
+    override val combinedPrefix: String = imapPrefix?.let { "$it$pathDelimiter" }.orEmpty()
+    override fun getPermanentFlagsIndex() = permanentFlagsIndex
 }

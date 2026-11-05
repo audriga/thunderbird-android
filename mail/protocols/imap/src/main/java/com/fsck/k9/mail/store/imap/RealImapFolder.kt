@@ -3,7 +3,6 @@ package com.fsck.k9.mail.store.imap
 import com.fsck.k9.mail.Body
 import com.fsck.k9.mail.BodyFactory
 import com.fsck.k9.mail.FetchProfile
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.FolderType
 import com.fsck.k9.mail.K9MailLib
 import com.fsck.k9.mail.Message
@@ -25,8 +24,11 @@ import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 import net.thunderbird.core.common.exception.MessagingException
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.legacy.logging.Log
 import net.thunderbird.protocols.imap.folder.attributeName
+
+private const val TAG = "RealImapFolder"
 
 internal class RealImapFolder(
     private val internalImapStore: InternalImapStore,
@@ -70,11 +72,36 @@ internal class RealImapFolder(
         return uidValidity
     }
 
+    @get:Throws(MessagingException::class)
+    private val prefixedName: String
+        get() {
+            val imapPrefix = if (!INBOX.equals(serverId, ignoreCase = true)) {
+                val connection = synchronized(this) {
+                    this.connection ?: connectionManager.getConnection()
+                }
+
+                try {
+                    connection.open()
+                } catch (ioe: IOException) {
+                    throw MessagingException("Unable to get IMAP prefix", ioe)
+                } finally {
+                    if (this.connection == null) {
+                        connectionManager.releaseConnection(connection)
+                    }
+                }
+                internalImapStore.combinedPrefix.orEmpty()
+            } else {
+                ""
+            }
+            val normalizedServerId = serverId.removePrefix(imapPrefix)
+
+            return "$imapPrefix$normalizedServerId"
+        }
 
     @get:Throws(MessagingException::class)
     private val encodedName: String
         get() {
-            return folderNameCodec.encode(serverId)
+            return folderNameCodec.encode(prefixedName)
         }
 
     @Throws(MessagingException::class, IOException::class)
@@ -128,7 +155,7 @@ internal class RealImapFolder(
                 handlePermanentFlags(response)
             }
 
-            handleSelectOrExamineOkResponse(ImapUtility.getLastResponse(responses))
+            handleSelectOrExamineOkResponse(responses.last())
 
             exists = true
 
@@ -136,7 +163,7 @@ internal class RealImapFolder(
         } catch (ioe: IOException) {
             throw ioExceptionHandler(connection, ioe)
         } catch (me: MessagingException) {
-            Log.e(me, "Unable to open connection for %s", logId)
+            Log.e(TAG, me, "Unable to open connection for %s", logId)
             throw me
         }
     }
@@ -173,7 +200,7 @@ internal class RealImapFolder(
         synchronized(this) {
             // If we are mid-search and we get a close request, we gotta trash the connection.
             if (inSearch && connection != null) {
-                Log.i("IMAP search was aborted, shutting down connection.")
+                Log.i(TAG, "IMAP search was aborted, shutting down connection.")
                 connection!!.close()
             } else {
                 connectionManager.releaseConnection(connection)
@@ -248,7 +275,7 @@ internal class RealImapFolder(
             val responses = connection.executeSimpleCommand(command)
             responses.any { ImapResponseParser.equalsIgnoreCase(it[0], Responses.OK) }
         } catch (e: NegativeImapResponseException) {
-            Log.e(e, "Unable to create folder %s for %s", serverId, logId)
+            Log.e(TAG, e, "Unable to create folder %s for %s", serverId, logId)
             false
         } catch (ioe: IOException) {
             throw ioExceptionHandler(this.connection, ioe)
@@ -283,14 +310,14 @@ internal class RealImapFolder(
 
         val uids = messages.map { it.uid.toLong() }.toSet()
         val encodedDestinationFolderName =
-            folderNameCodec.encode(folder.serverId)
+            folderNameCodec.encode(folder.prefixedName)
         val escapedDestinationFolderName = ImapUtility.encodeString(encodedDestinationFolderName)
 
         return try {
             val imapResponses = connection!!.executeCommandWithIdSet(
-                Commands.UID_COPY,
-                escapedDestinationFolderName,
-                uids,
+                commandPrefix = Commands.UID_COPY,
+                commandSuffix = escapedDestinationFolderName,
+                ids = uids,
             )
 
             UidCopyResponse.parse(imapResponses)?.uidMapping
@@ -319,14 +346,14 @@ internal class RealImapFolder(
 
         val uids = messages.map { it.uid.toLong() }.toSet()
         val encodedDestinationFolderName =
-            folderNameCodec.encode(folder.serverId)
+            folderNameCodec.encode(folder.prefixedName)
         val escapedDestinationFolderName = ImapUtility.encodeString(encodedDestinationFolderName)
 
         return try {
             val imapResponses = connection!!.executeCommandWithIdSet(
-                Commands.UID_MOVE,
-                escapedDestinationFolderName,
-                uids,
+                commandPrefix = Commands.UID_MOVE,
+                commandSuffix = escapedDestinationFolderName,
+                ids = uids,
             )
 
             UidCopyResponse.parse(imapResponses, allowUntaggedResponse = true)?.uidMapping
@@ -508,7 +535,11 @@ internal class RealImapFolder(
         val uidSet = mesgUids.map { it.toLong() }.toSet()
 
         try {
-            val imapResponses = connection!!.executeCommandWithIdSet("UID SEARCH UID", "", uidSet)
+            val imapResponses = connection!!.executeCommandWithIdSet(
+                commandPrefix = "UID SEARCH UID",
+                commandSuffix = "",
+                ids = uidSet,
+            )
 
             val searchResponse = SearchResponse.parse(imapResponses)
             return getMessages(searchResponse, null)
@@ -537,7 +568,8 @@ internal class RealImapFolder(
     }
 
     @Throws(MessagingException::class)
-    override fun fetch(
+    @Suppress("CyclomaticComplexMethod", "LongMethod", "NestedBlockDepth")
+    override suspend fun fetch(
         messages: List<ImapMessage>,
         fetchProfile: FetchProfile,
         listener: FetchListener?,
@@ -584,15 +616,15 @@ internal class RealImapFolder(
             fetchFields.add("BODY.PEEK[]")
         }
 
-        val spaceSeparatedFetchFields = ImapUtility.join(" ", fetchFields)
+        val spaceSeparatedFetchFields = fetchFields.joinToString(" ")
         var windowStart = 0
         val processedUids = mutableSetOf<String>()
         while (windowStart < messages.size) {
-            val windowEnd = min(windowStart + FETCH_WINDOW_SIZE, messages.size)
-            val uidWindow = uids.subList(windowStart, windowEnd)
+            val windowEnd = min(a = windowStart + FETCH_WINDOW_SIZE, b = messages.size)
+            val uidWindow = uids.subList(fromIndex = windowStart, toIndex = windowEnd)
 
             try {
-                val commaSeparatedUids = ImapUtility.join(",", uidWindow)
+                val commaSeparatedUids = uidWindow.joinToString(",")
                 val command = String.format("UID FETCH %s (%s)", commaSeparatedUids, spaceSeparatedFetchFields)
                 connection!!.sendCommand(command, false)
 
@@ -613,7 +645,7 @@ internal class RealImapFolder(
                         val message = messageMap[uid]
                         if (message == null) {
                             if (K9MailLib.isDebug()) {
-                                Log.d("Do not have message in messageMap for UID %s for %s", uid, logId)
+                                Log.d(TAG, "Do not have message in messageMap for UID %s for %s", uid, logId)
                             }
                             handleUntaggedResponse(response)
                             continue
@@ -686,7 +718,7 @@ internal class RealImapFolder(
                     val uid = fetchList.getKeyedString("UID")
                     if (message.uid != uid) {
                         if (K9MailLib.isDebug()) {
-                            Log.d("Did not ask for UID %s for %s", uid, logId)
+                            Log.d(TAG, "Did not ask for UID %s for %s", uid, logId)
                         }
                         handleUntaggedResponse(response)
                         continue
@@ -780,7 +812,7 @@ internal class RealImapFolder(
                     parseBodyStructure(bs, message, "TEXT")
                 } catch (e: MessagingException) {
                     if (K9MailLib.isDebug()) {
-                        Log.d(e, "Error handling message for %s", logId)
+                        Log.d(TAG, e, "Error handling message for %s", logId)
                     }
                     message.body = null
                 }
@@ -819,7 +851,7 @@ internal class RealImapFolder(
             if ("UIDNEXT".equals(key, ignoreCase = true)) {
                 uidNext = bracketed.getLong(1)
                 if (K9MailLib.isDebug()) {
-                    Log.d("Got UidNext = %s for %s", uidNext, logId)
+                    Log.d(TAG, "Got UidNext = %s for %s", uidNext, logId)
                 }
             }
         }
@@ -833,7 +865,7 @@ internal class RealImapFolder(
             if (ImapResponseParser.equalsIgnoreCase(response[1], "EXISTS")) {
                 messageCount = response.getNumber(0)
                 if (K9MailLib.isDebug()) {
-                    Log.d("Got untagged EXISTS with value %d for %s", messageCount, logId)
+                    Log.d(TAG, "Got untagged EXISTS with value %d for %s", messageCount, logId)
                 }
             }
 
@@ -842,7 +874,7 @@ internal class RealImapFolder(
             if (ImapResponseParser.equalsIgnoreCase(response[1], "EXPUNGE") && messageCount > 0) {
                 messageCount--
                 if (K9MailLib.isDebug()) {
-                    Log.d("Got untagged EXPUNGE with messageCount %d for %s", messageCount, logId)
+                    Log.d(TAG, "Got untagged EXPUNGE with messageCount %d for %s", messageCount, logId)
                 }
             }
         }
@@ -1056,7 +1088,7 @@ internal class RealImapFolder(
                 val messageId = extractMessageId(message)
                 val newUid = messageId?.let { getUidFromMessageId(it) }
                 if (K9MailLib.isDebug()) {
-                    Log.d("Got UID %s for message for %s", newUid, logId)
+                    Log.d(TAG, "Got UID %s for message for %s", newUid, logId)
                 }
 
                 newUid?.let {
@@ -1080,7 +1112,7 @@ internal class RealImapFolder(
     @Throws(MessagingException::class)
     override fun getUidFromMessageId(messageId: String): String? {
         if (K9MailLib.isDebug()) {
-            Log.d("Looking for UID for message with message-id %s for %s", messageId, logId)
+            Log.d(TAG, "Looking for UID for message with message-id %s for %s", messageId, logId)
         }
 
         val command = String.format("UID SEARCH HEADER MESSAGE-ID %s", ImapUtility.encodeString(messageId))
@@ -1143,11 +1175,15 @@ internal class RealImapFolder(
         try {
             if (connection!!.isUidPlusCapable) {
                 val longUids = uids.map { it.toLong() }.toSet()
-                connection!!.executeCommandWithIdSet(Commands.UID_EXPUNGE, "", longUids)
+                connection!!.executeCommandWithIdSet(
+                    commandPrefix = Commands.UID_EXPUNGE,
+                    commandSuffix = "",
+                    ids = longUids,
+                )
             } else if (fullExpungeFallback) {
                 executeSimpleCommand("EXPUNGE")
             } else {
-                Log.v("Server doesn't support expunging individual messages: %s", uids)
+                Log.v(TAG, "Server doesn't support expunging individual messages: %s", uids)
             }
         } catch (ioe: IOException) {
             throw ioExceptionHandler(connection, ioe)
@@ -1202,7 +1238,7 @@ internal class RealImapFolder(
     }
 
     private fun ioExceptionHandler(connection: ImapConnection?, ioe: IOException): MessagingException {
-        Log.e(ioe, "IOException for %s", logId)
+        Log.e(TAG, ioe, "IOException for %s", logId)
         connection?.close()
         close()
         return MessagingException("IO Error", ioe)

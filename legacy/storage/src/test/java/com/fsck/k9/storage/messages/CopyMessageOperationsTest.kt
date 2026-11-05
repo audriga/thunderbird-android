@@ -1,5 +1,6 @@
 package com.fsck.k9.storage.messages
 
+import android.database.sqlite.SQLiteDatabase
 import assertk.assertThat
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
@@ -8,31 +9,46 @@ import assertk.assertions.isNull
 import com.fsck.k9.mail.testing.crlf
 import com.fsck.k9.mailstore.StorageFilesProvider
 import com.fsck.k9.storage.RobolectricTest
+import net.thunderbird.feature.account.AccountIdFactory
 import okio.buffer
 import okio.sink
 import okio.source
 import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 
 class CopyMessageOperationsTest : RobolectricTest() {
+
+    private val accountId = AccountIdFactory.create()
     private val messagePartDirectory = createRandomTempDirectory()
-    private val sqliteDatabase = createDatabase()
-    private val storageFilesProvider = object : StorageFilesProvider {
-        override fun getDatabaseFile() = error("Not implemented")
-        override fun getAttachmentDirectory() = messagePartDirectory
+    private lateinit var sqliteDatabase: SQLiteDatabase
+    private lateinit var attachmentFileManager: AttachmentFileManager
+    private lateinit var copyMessageOperations: CopyMessageOperations
+
+    @Before
+    fun setUp() {
+        sqliteDatabase = createDatabase()
+        val storageFilesProvider = object : StorageFilesProvider {
+            override fun getDatabaseFile() = error("Not implemented")
+            override fun getAttachmentDirectory() = messagePartDirectory
+        }
+        val lockableDatabase = createLockableDatabaseMock(sqliteDatabase)
+        attachmentFileManager = AttachmentFileManager(storageFilesProvider, mock())
+        val threadMessageOperations = ThreadMessageOperations()
+        val localMessageUidPrefixProvider = FakeLocalMessageUidPrefixProvider()
+        copyMessageOperations = CopyMessageOperations(
+            lockableDatabase,
+            attachmentFileManager,
+            threadMessageOperations,
+            accountId,
+            localMessageUidPrefixProvider,
+        )
     }
-    private val lockableDatabase = createLockableDatabaseMock(sqliteDatabase)
-    private val attachmentFileManager = AttachmentFileManager(storageFilesProvider, mock())
-    private val threadMessageOperations = ThreadMessageOperations()
-    private val copyMessageOperations = CopyMessageOperations(
-        lockableDatabase,
-        attachmentFileManager,
-        threadMessageOperations,
-    )
 
     @After
     fun tearDown() {
+        sqliteDatabase.close()
         messagePartDirectory.deleteRecursively()
     }
 
@@ -114,6 +130,7 @@ class CopyMessageOperationsTest : RobolectricTest() {
                 uid = destinationMessage.uid,
                 folderId = 2,
                 messagePartId = destinationMessage.messagePartId,
+                accountId = accountId.toString(),
             ),
         )
 
@@ -229,6 +246,7 @@ class CopyMessageOperationsTest : RobolectricTest() {
                 uid = destinationMessage.uid,
                 folderId = 2,
                 messagePartId = destinationMessage.messagePartId,
+                accountId = accountId.toString(),
             ),
         )
 

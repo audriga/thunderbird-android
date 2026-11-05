@@ -1,16 +1,22 @@
 package com.fsck.k9.mailstore
 
 import app.k9mail.legacy.mailstore.FolderSettings
-import com.fsck.k9.Preferences
-import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.core.preference.storage.StorageProvider
+import net.thunderbird.feature.account.AccountId
 
 /**
  * Provides imported folder settings if available, otherwise default values.
  */
-class FolderSettingsProvider(val preferences: Preferences, val account: LegacyAccount) {
+class FolderSettingsProvider(
+    val storageProvider: StorageProvider,
+    val accountManager: LegacyAccountManager,
+    val accountId: AccountId,
+) {
     fun getFolderSettings(folderServerId: String): FolderSettings {
-        val storage = preferences.storage
-        val prefix = "${account.uuid}.$folderServerId"
+        val storage = storageProvider.storage
+        val prefix = "$accountId.$folderServerId"
+        val account = getAccountById(accountId)
 
         return FolderSettings(
             visibleLimit = account.displayCount,
@@ -25,8 +31,12 @@ class FolderSettingsProvider(val preferences: Preferences, val account: LegacyAc
         }
     }
 
+    private fun getAccountById(accountId: AccountId) =
+        accountManager.findById(accountId)
+            ?: error("Account not found: $accountId")
+
     private fun removeImportedFolderSettings(prefix: String) {
-        val editor = preferences.createStorageEditor()
+        val editor = storageProvider.createStorageEditor()
 
         editor.remove("$prefix.visible")
         editor.remove("$prefix.syncEnabled")

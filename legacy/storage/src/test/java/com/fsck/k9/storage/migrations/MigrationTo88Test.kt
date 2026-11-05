@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import assertk.assertThat
 import assertk.assertions.containsExactlyInAnyOrder
-import com.fsck.k9.mailstore.MigrationsHelper
 import com.fsck.k9.storage.messages.FolderEntry
 import com.fsck.k9.storage.messages.readFolders
 import kotlin.test.Test
@@ -22,7 +21,7 @@ class MigrationTo88Test {
 
     private val database = createDatabaseVersion87()
     private val account = createAccount()
-    private val migrationHelper = createMigrationsHelper(account)
+    private val migrationHelper = FakeMigrationsHelper(account)
     private val migration = MigrationTo88(database, migrationHelper)
 
     @After
@@ -123,18 +122,6 @@ class MigrationTo88Test {
     private fun createAccount(): LegacyAccount {
         return mock<LegacyAccount> {
             on { folderDisplayMode } doAnswer { folderDisplayMode }
-        }
-    }
-
-    private fun createMigrationsHelper(account: LegacyAccount): MigrationsHelper {
-        return object : MigrationsHelper {
-            override fun getAccount(): LegacyAccount {
-                return account
-            }
-
-            override fun saveAccount() {
-                throw UnsupportedOperationException("not implemented")
-            }
         }
     }
 

@@ -10,7 +10,7 @@
     <string name="account_setup_options_email_signature_error_blank">Numele semnăturii de e-mail nu poate fi necompletat.</string>
     <string name="account_setup_auto_discovery_result_approval_error_approval_required">Este necesar să se aprobe configurația.</string>
     <string name="account_setup_auto_discovery_connection_security_start_tls">StartTLS</string>
-    <string name="account_setup_auto_discovery_result_disclaimer_untrusted_configuration">Am primit configurația pentru serverul de e-mail printr-o conexiune care nu este atât de sigură pe cât ne-am dori. Aceasta înseamnă că există o mică șansă ca cineva s-o fi modificat. Ai putea verifica din nou configurația furnizată pentru a te asigura că este așa cum ar trebui să fie\?</string>
+    <string name="account_setup_auto_discovery_result_disclaimer_untrusted_configuration">Am primit configurația pentru serverul de e-mail printr-o conexiune care nu este atât de sigură pe cât ne-am dori. Aceasta înseamnă că există o mică șansă ca cineva s-o fi modificat. Ai putea verifica din nou configurația furnizată pentru a te asigura că este așa cum ar trebui să fie?</string>
     <string name="account_setup_auto_discovery_result_edit_configuration_button_label">Editare configurație</string>
     <string name="account_setup_error_unknown">Eroare necunoscută</string>
     <string name="account_setup_auto_discovery_connection_security_ssl">SSL/TLS</string>
@@ -18,10 +18,8 @@
     <string name="account_setup_options_account_name_label">Nume cont</string>
     <string name="account_setup_auto_discovery_status_header_title_configuration_found">Configurație găsită</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_required">Este necesară adresa de e-mail.</string>
-    <string name="account_setup_options_display_name_label">Numele dvs.</string>
     <string name="account_setup_auto_discovery_loading_error">Nu s-a putut încărca configurația e-mailului</string>
     <string name="account_setup_auto_discovery_result_approval_checkbox_label">Am încredere în această configurație</string>
-    <string name="account_setup_options_display_name_error_required">Numele este obligatoriu.</string>
     <string name="account_setup_error_network">Eroare de rețea. Verificați starea conexiunii și încercați din nou.</string>
     <string name="account_setup_auto_discovery_validation_error_email_address_invalid">Aceasta nu este recunoscută ca o adresă de e-mail validă.</string>
     <string name="account_setup_options_email_check_frequency_never">Niciodată</string>
@@ -62,4 +60,6 @@
         <item quantity="few">%d mesaje</item>
         <item quantity="other">%d mesaje</item>
     </plurals>
+    <string name="account_setup_options_your_name_label">Numele dvs.</string>
+    <string name="account_setup_options_your_name_error_required">Trebuie să vă scrieți numele.</string>
 </resources>

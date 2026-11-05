@@ -2,14 +2,17 @@ plugins {
     id(ThunderbirdPlugins.Library.kmp)
 }
 
-android {
-    namespace = "net.thunderbird.feature.account"
-}
-
 kotlin {
+    android {
+        namespace = "net.thunderbird.feature.account"
+    }
     sourceSets {
         commonMain.dependencies {
             api(projects.core.architecture.api)
         }
     }
+}
+
+codeCoverage {
+    lineCoverage = 8
 }

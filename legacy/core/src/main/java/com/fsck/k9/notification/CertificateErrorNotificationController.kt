@@ -5,24 +5,34 @@ import android.app.PendingIntent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.account.LegacyAccountManager
 import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.feature.account.AccountId
 
 internal open class CertificateErrorNotificationController(
     private val notificationHelper: NotificationHelper,
     private val actionCreator: NotificationActionCreator,
     private val resourceProvider: NotificationResourceProvider,
     private val generalSettingsManager: GeneralSettingsManager,
+    private val accountManager: LegacyAccountManager,
+    private val notificationIdRegistry: AccountNotificationIdRegistry,
 ) {
-    fun showCertificateErrorNotification(account: LegacyAccount, incoming: Boolean) {
-        val notificationId = NotificationIds.getCertificateErrorNotificationId(account, incoming)
+    fun showCertificateErrorNotification(accountId: AccountId, incoming: Boolean) {
+        val account = accountManager.findById(accountId) ?: return
+
+        val notificationId = getNotificationId(accountId, incoming)
         val editServerSettingsPendingIntent = createContentIntent(account, incoming)
-        val title = resourceProvider.certificateErrorTitle(account.displayName)
+        val title = resourceProvider.certificateErrorTitle(account.profile.name)
         val text = resourceProvider.certificateErrorBody()
 
         val notificationBuilder = notificationHelper
-            .createNotificationBuilder(account, NotificationChannelManager.ChannelType.MISCELLANEOUS)
+            .createNotificationBuilder(
+                account.id,
+                NotificationChannelManager.ChannelType.MISCELLANEOUS,
+                account.messagesNotificationChannelVersion,
+            )
             .setSmallIcon(resourceProvider.iconWarning)
-            .setColor(account.chipColor)
+            .setColor(account.profile.color)
             .setWhen(System.currentTimeMillis())
             .setAutoCancel(true)
             .setTicker(title)
@@ -34,12 +44,21 @@ internal open class CertificateErrorNotificationController(
             .setCategory(NotificationCompat.CATEGORY_ERROR)
             .setErrorAppearance(generalSettingsManager = generalSettingsManager)
 
-        notificationManager.notify(notificationId, notificationBuilder.build())
+        notificationHelper.notify(notificationId, notificationBuilder.build())
     }
 
-    fun clearCertificateErrorNotifications(account: LegacyAccount, incoming: Boolean) {
-        val notificationId = NotificationIds.getCertificateErrorNotificationId(account, incoming)
+    fun clearCertificateErrorNotifications(accountId: AccountId, incoming: Boolean) {
+        val notificationId = getNotificationId(accountId, incoming)
         notificationManager.cancel(notificationId)
+    }
+
+    private fun getNotificationId(accountId: AccountId, incoming: Boolean): Int {
+        val kind = if (incoming) {
+            AccountNotificationKind.CertificateErrorIncoming
+        } else {
+            AccountNotificationKind.CertificateErrorOutgoing
+        }
+        return notificationIdRegistry.getOrAllocate(accountId, kind).value
     }
 
     protected open fun createContentIntent(account: LegacyAccount, incoming: Boolean): PendingIntent {
@@ -52,9 +71,13 @@ internal open class CertificateErrorNotificationController(
 
     private fun createLockScreenNotification(account: LegacyAccount): Notification {
         return notificationHelper
-            .createNotificationBuilder(account, NotificationChannelManager.ChannelType.MISCELLANEOUS)
+            .createNotificationBuilder(
+                account.id,
+                NotificationChannelManager.ChannelType.MISCELLANEOUS,
+                account.messagesNotificationChannelVersion,
+            )
             .setSmallIcon(resourceProvider.iconWarning)
-            .setColor(account.chipColor)
+            .setColor(account.profile.color)
             .setWhen(System.currentTimeMillis())
             .setContentTitle(resourceProvider.certificateErrorTitle())
             .build()

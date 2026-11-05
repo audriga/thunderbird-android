@@ -33,8 +33,6 @@
     <!--Title of the setting to specify the density of the message list-->
     <!--Please use the same translation for "screen lock" as is used in the 'Security' section in Android's settings app-->
     <string name="move_copy_cannot_copy_unsynced_message">Cannot copy or move a message that is not synchronised with the server</string>
-    <string name="account_settings_color_label">Account colour</string>
-    <string name="account_settings_color_summary">The accent colour of this account used in folder and account list</string>
     <string name="account_settings_notification_light_account_color">Account colour</string>
     <!--Displayed in the font size settings screen to configure the font size of the account name in the message view.-->
     <!--Displayed after importing accounts when one or multiple accounts require entering a password-->
@@ -127,7 +125,7 @@
     <string name="changelog_snackbar_button_text">View</string>
     <string name="about_project_title">Open Source Project</string>
     <string name="compose_title_reply">Reply</string>
-    <string name="license">License</string>
+    <string name="license">Licence</string>
     <string name="refresh_folders_action">Refresh folder list</string>
     <string name="changelog_title">Changelog</string>
     <string name="filter_folders_action">Find folder</string>
@@ -143,14 +141,13 @@
     <string name="reply_action">Reply</string>
     <string name="show_headers_action">Show headers</string>
     <string name="user_forum_title">User forum</string>
-    <string name="app_license">Apache License, Version 2.0</string>
+    <string name="app_license">Apache Licence, Version 2.0</string>
     <string name="about_website_title">Website</string>
     <string name="get_help_title">Get help</string>
     <string name="changelog_loading_error">Couldn\'t load the changelog.</string>
     <string name="search_results">Search results</string>
     <string name="send_action">Send</string>
     <string name="read_receipt">Read receipt</string>
-    <string name="actionbar_selected"><xliff:g id="selection_count">%d</xliff:g> selected</string>
     <string name="search_everywhere_action">Search everywhere</string>
     <string name="send_alternate_action">Share</string>
     <string name="accounts_title">Accounts</string>
@@ -178,7 +175,7 @@
     <string name="font_size_tiniest">Tiniest</string>
     <string name="idle_refresh_period_12min">Every 12 minutes</string>
     <string name="general_no_sender">No sender</string>
-    <string name="message_view_me_text">me</string>
+    <string name="message_view_to_me_text">me</string>
     <string name="notifications_title">Notifications</string>
     <string name="account_settings_notification_channels_label">Notification categories</string>
     <string name="message_compose_quote_header_subject">Subject:</string>
@@ -219,7 +216,6 @@
     <string name="folder_settings_include_in_integrated_inbox_label">Unify</string>
     <string name="dialog_confirm_delete_confirm_button">Yes</string>
     <string name="account_settings_notify_sync_summary">Notify in status bar while mail is checked</string>
-    <string name="animations_summary">Use gaudy visual effects</string>
     <string name="settings_export_success_generic">Settings successfully exported</string>
     <string name="account_setup_push_limit_label">Max folders to check with push</string>
     <string name="notification_additional_messages">+ <xliff:g id="additional_messages">%1$d</xliff:g> more on <xliff:g id="account">%2$s</xliff:g></string>
@@ -247,7 +243,6 @@
     <string name="account_settings_message_format_text">Plain Text (remove images and formatting)</string>
     <string name="sort_unread_first">Unread messages first</string>
     <string name="global_settings_notification_quick_delete_title">Show \'Delete\' button</string>
-    <string name="account_settings_description_label">Account name</string>
     <string name="font_size_message_view_recipients">Recipients</string>
     <string name="font_size_default">Default</string>
     <string name="debug_preferences">Debugging</string>
@@ -330,9 +325,7 @@
     <string name="account_settings_crypto_encrypt_all_drafts">Store all drafts encrypted</string>
     <string name="account_settings_vibrate_pattern_4">Pattern 4</string>
     <string name="debug_export_logs_success">Export successful. Logs might contain sensitive information. Be careful who you send them to.</string>
-    <string name="notification_notify_error_text">An error has occurred while trying to create a system notification for a new message. The reason is most likely a missing notification sound.
-\n
-\nTap to open notification settings.</string>
+    <string name="notification_notify_error_text">An error has occurred while trying to create a system notification for a new message. The reason is most likely a missing notification sound. \n \nTap to open notification settings.</string>
     <string name="general_settings_swipe_action_archive">Archive</string>
     <string name="add_attachment_action">Add attachment</string>
     <string name="idle_refresh_period_24min">Every 24 minutes</string>
@@ -353,7 +346,7 @@
     <string name="account_setup_expunge_policy_label">Erase deleted messages on server</string>
     <string name="account_settings_incoming_summary">Configure the incoming mail server</string>
     <string name="edit_identity_reply_to_hint">(Optional)</string>
-    <string name="dialog_confirm_empty_trash_title">Confirm empty trash</string>
+    <string name="dialog_confirm_empty_trash_title">Confirm empty Deleted Items folder</string>
     <string name="account_settings_show_pictures_always">From anyone</string>
     <string name="global_settings_lock_screen_notification_visibility_title">Lock Screen Notifications</string>
     <string name="debug_enable_debug_logging_summary">Log extra diagnostic information</string>
@@ -384,7 +377,7 @@
     <string name="idle_refresh_period_2min">Every 2 minutes</string>
     <string name="message_compose_description_edit_quoted_text">Edit quoted text</string>
     <string name="font_size_small">Small</string>
-    <string name="empty_trash_action">Empty Trash</string>
+    <string name="empty_trash_action">Empty Bin</string>
     <string name="account_setup_incoming_delete_policy_label">When I delete a message</string>
     <string name="account_settings_signature__location_before_quoted_text">Before quoted message</string>
     <string name="compose_error_incomplete_recipient">Recipient field contains incomplete input!</string>
@@ -407,7 +400,7 @@
     <string name="font_size_medium">Medium</string>
     <string name="message_compose_attachments_skipped_toast">Some attachments cannot be forwarded because they have not been downloaded.</string>
     <string name="account_settings_always_show_cc_bcc_label">Always show Cc/Bcc</string>
-    <string name="dialog_confirm_empty_trash_message">Do you want to empty the trash folder?</string>
+    <string name="dialog_confirm_empty_trash_message">Do you want to empty the Deleted Items folder?</string>
     <string name="account_settings_signature__location_label">Signature position</string>
     <string name="account_settings_outgoing_summary">Configure the outgoing mail (SMTP) server</string>
     <string name="notification_action_delete">Delete</string>
@@ -536,7 +529,6 @@
     <string name="account_settings_autodownload_message_size_4">4 KiB</string>
     <string name="notification_bg_sync_title">Checking mail</string>
     <string name="account_settings_sync_remote_deletetions_summary">Remove messages when deleted on server</string>
-    <string name="account_setup_auto_expand_folder">Auto-expand folder</string>
     <string name="remove_attachment_action">Remove attachment</string>
     <string name="general_settings_swipe_action_delete">Delete</string>
     <string name="account_setup_incoming_subscribed_folders_only_label">Show only subscribed folders</string>
@@ -574,7 +566,7 @@
     <string name="idle_refresh_period_3min">Every 3 minutes</string>
     <string name="messageview_preferences">Messages</string>
     <string name="sent_folder_label">Sent folder</string>
-    <string name="trash_folder_label">Trash folder</string>
+    <string name="trash_folder_label">Deleted Items folder</string>
     <string name="settings_message_theme_selection_summary_off">Select the message view theme while viewing the message</string>
     <string name="global_settings_confirm_menu_mark_all_read">Mark all messages as read</string>
     <string name="account_setup_options_mail_display_count_50">50 messages</string>
@@ -675,8 +667,7 @@
     <string name="webview_contextmenu_link_text_clipboard_label">Link text</string>
     <string name="openpgp_inline_ok">Got it!</string>
     <string name="crypto_msg_unsupported_encrypted">Message is encrypted, but in an unsupported format.</string>
-    <string name="crypto_no_provider_message">This email has been encrypted with OpenPGP.
-\nTo read it, you need to install and configure a compatible OpenPGP App.</string>
+    <string name="crypto_no_provider_message">This email has been encrypted with OpenPGP. \nTo read it, you need to install and configure a compatible OpenPGP App.</string>
     <string name="fetching_attachment_dialog_title_send">Sending message</string>
     <string name="message_details_missing_date">Missing \'Date\' header</string>
     <string name="crypto_msg_encrypted_insecure">but encryption not considered secure</string>
@@ -713,14 +704,12 @@
     <string name="push_info_configure_notification_text">However, Android also allows you to hide the notification.</string>
     <string name="crypto_msg_unencrypted_sign_error">end-to-end signature contained an error</string>
     <string name="global_settings_splitview_never">Never</string>
-    <string name="swipe_action_select">Select</string>
     <string name="message_details_bcc_section_title">Bcc</string>
     <string name="openpgp_dialog_sign_only_plus_verified">This does not encrypt the email, but verifies that it was sent from your key.</string>
     <string name="openpgp_inline_minus_transit">Signatures may break during transit</string>
     <string name="ac_transfer_button_send">Send Setup Message</string>
     <string name="messageview_decrypt_incomplete">Encrypted message must be downloaded for decryption.</string>
     <string name="webview_contextmenu_email_clipboard_label">Email address</string>
-    <string name="swipe_action_move">Move…</string>
     <string name="openpgp_dialog_sign_only_title">PGP Sign-Only Mode</string>
     <string name="message_progress_text">Loading…</string>
     <string name="ac_transfer_generating">Generating setup message…</string>
@@ -741,7 +730,6 @@
     <string name="account_settings_crypto_hide_sign_only">Hide unencrypted signatures</string>
     <string name="webview_contextmenu_phone_copy_action">Copy number to clipboard</string>
     <string name="openpgp_description_text3">Encryption will only show up if supported by all recipients, and they must have sent you an email before.</string>
-    <string name="locked_attach_title">Unprotected Attachment</string>
     <string name="enable_inline_pgp">Enable PGP/INLINE</string>
     <string name="enable_encryption">Enable Encryption</string>
     <string name="crypto_msg_unencrypted_sign_unknown">from unknown end-to-end key</string>
@@ -755,7 +743,6 @@
     <string name="crypto_msg_encrypted_incomplete">must fully download message for decryption</string>
     <string name="crypto_msg_unsupported_signed">contains unsupported end-to-end signature</string>
     <string name="openpgp_sign_only_disable">Disable</string>
-    <string name="swipe_action_archive">Archive</string>
     <string name="openpgp_dialog_sign_only_text">In this mode, your PGP key will be used to create a cryptographic signature of an unencrypted email.</string>
     <string name="crypto_msg_title_encrypted_unsigned">Encrypted</string>
     <string name="crypto_msg_title_encrypted_unknown">Encrypted</string>
@@ -781,7 +768,6 @@
     <string name="preview_encrypted">*Encrypted*</string>
     <string name="enable_sign_only">Enable PGP Sign-Only</string>
     <string name="dialog_openkeychain_info_title">No OpenPGP app installed</string>
-    <string name="swipe_action_spam">Spam</string>
     <string name="push_notification_state_wait_network">Sleeping until network is available</string>
     <string name="crypto_msg_encrypted_sign_error">but end-to-end data has errors</string>
     <string name="global_settings_splitview_mode_label">Show split-screen</string>
@@ -803,7 +789,6 @@
     <string name="webview_contextmenu_link_share_action">Share link</string>
     <string name="openpgp_sign_only_ok">Got it!</string>
     <string name="upgrade_databases_title">Upgrading databases</string>
-    <string name="swipe_action_mark_as_read">Mark read</string>
     <string name="push_notification_state_wait_background_sync">Sleeping until background sync is allowed</string>
     <string name="openpgp_sign_only_keep_enabled">Keep Enabled</string>
     <string name="webview_contextmenu_image_view_action">View image</string>
@@ -829,17 +814,12 @@
     <string name="action_remote_search">Search messages on server</string>
     <string name="global_settings_splitview_always">Always</string>
     <string name="address_type_work">Work</string>
-    <string name="swipe_action_delete">Delete</string>
-    <string name="openpgp_inline_text">The email is sent in PGP/INLINE format.
-\nThis should only be used for compatibility:</string>
+    <string name="openpgp_inline_text">The email is sent in PGP/INLINE format. \nThis should only be used for compatibility:</string>
     <string name="openpgp_enabled_error_back">Back</string>
     <string name="account_settings_remote_search_num_results_entries_250">250</string>
-    <string name="swipe_action_deselect">Deselect</string>
     <string name="address_type_mobile">Mobile</string>
-    <string name="swipe_action_add_star">Add star</string>
     <string name="openpgp_inline_keep_enabled">Keep Enabled</string>
     <string name="ac_transfer_sending_to">Sending message to:</string>
-    <string name="swipe_action_remove_star">Remove star</string>
     <string name="reply_to_label">Reply to</string>
     <string name="account_settings_remote_search_num_results_entries_10">10</string>
     <string name="toast_openpgp_provider_error">Error connecting to %s!</string>
@@ -873,7 +853,6 @@
     <string name="loading_attachment">Loading attachment…</string>
     <string name="openpgp_inline_title">PGP/INLINE Mode</string>
     <string name="openpgp_inline_disable">Disable</string>
-    <string name="swipe_action_mark_as_unread">Mark unread</string>
     <string name="openpgp_enabled_error_title">Encryption not possible</string>
     <string name="error_crypto_provider_incompatible">Crypto provider uses incompatible version. Please check your settings!</string>
     <string name="openpgp_enabled_error_gotit">Got it</string>
@@ -902,4 +881,69 @@
     <string name="push_info_notification_explanation_text">When using Push, <xliff:g id="app_name">%1$s</xliff:g> maintains a connection to the mail server. Android requires displaying an ongoing notification while the app is active in the background. <xliff:g id="optional_extended_explanation">%2$s</xliff:g></string>
     <string name="folder_settings_sync_label">Enable sync</string>
     <string name="folder_settings_visible_label">Show folder</string>
+    <string name="open_camera">Open Camera</string>
+    <string name="attach_file">Attach File</string>
+    <string name="camera_permission_denied">Camera Permission Denied! Unable to take photo</string>
+    <string name="debug_enable_sync_debug_logging_title">Enable sync debug logging</string>
+    <string name="debug_enable_sync_debug_logging_summary">Log sync diagnostic information for 24 hours</string>
+    <string name="debug_sync_export_logs_title">Export Sync logs</string>
+    <string name="debug_open_secret_debug_screen">Open Secret debug screen</string>
+    <string name="archiving_not_available_for_this_account">Archiving is not available for this account.</string>
+    <string name="debug_invalidate_access_token">Test: Invalidate access token</string>
+    <string name="debug_invalidate_access_token_done">Access token invalidated. Next request will refresh.</string>
+    <string name="debug_invalidate_access_token_unavailable">No OAuth token available for this account.</string>
+    <string name="debug_invalidate_access_token_local">Test: Invalidate access token (local)</string>
+    <string name="debug_invalidate_access_token_local_done">Local invalidation requested. Next request will fetch a new token.</string>
+    <string name="debug_invalidate_access_token_server">Test: Invalidate access token (server)</string>
+    <string name="debug_invalidate_access_token_server_done">Stored access token corrupted. Next request will fail then refresh.</string>
+    <string name="debug_force_auth_failure">Test: Force auth failure now</string>
+    <string name="debug_force_auth_failure_done">OAuth state cleared. Next request will fail.</string>
+    <string name="debug_force_auth_failure_unavailable">No OAuth configuration available for this account.</string>
+    <string name="debug_invalidate_access_token_cannot_modify">Could not modify stored access token. Try local invalidation.</string>
+    <string name="debug_invalidate_access_token_already_modified">Stored access token already modified.</string>
+    <string name="message_view_menu_action_export_eml">Export as EML</string>
+    <string name="account_setup_auto_select_folder">Auto-select folder</string>
+    <string name="navigation_drawer_preferences">Side Menu</string>
+    <string name="expand_folders">Expand Folders</string>
+    <string name="set_format_html_action">Use original formatting</string>
+    <string name="set_format_html_condensed_action">Show formatted</string>
+    <string name="set_format_plain_action">Show unformatted message</string>
+    <string name="set_format_plain_condensed_action">Show unformatted</string>
+    <string name="global_settings_messageview_body_content_type_title">Body Content-Type</string>
+    <string name="global_settings_messageview_body_content_type_text_html">HTML (text/html)</string>
+    <string name="global_settings_messageview_body_content_type_text_plain">Plain text (text/plain)</string>
+    <string name="debug_feature_flags">DEBUG: Feature Flags</string>
+    <string name="print_message_action">Print</string>
+    <string name="general_settings_message_list_date_time_format_title">Date/Time Format</string>
+    <string name="general_settings_message_list_date_time_format_contextual">Contextual</string>
+    <string name="general_settings_message_list_date_time_format_full">Full</string>
+    <string name="sort_by_then_by">Then by…</string>
+    <string name="global_settings_splitview_when_unfolded">When device is unfolded</string>
+    <plurals name="message_view_attachment_summary">
+        <item quantity="one"><xliff:g id="count">%1$d</xliff:g> Attachment (<xliff:g id="size">%2$s</xliff:g>)</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> Attachments (<xliff:g id="size">%2$s</xliff:g>)</item>
+    </plurals>
+    <string name="message_view_single_attachment_summary"><xliff:g id="name">%1$s</xliff:g> (<xliff:g id="size">%2$s</xliff:g>)</string>
+    <string name="message_view_attachments_view_all">View all</string>
+    <string name="message_view_attachments_view">View</string>
+    <string name="message_view_attachments_title">Attachments</string>
+    <string name="message_view_attachments_save_all">Save all</string>
+    <string name="general_settings_message_list_date_time_format_iso">ISO</string>
+    <string name="no_network_message_will_be_sent_later_toast">Offline. Message will be sent once connection is available</string>
+    <string name="notification_actions_settings_title">Notification actions</string>
+    <string name="notification_actions_settings_summary">Choose which actions appear in email notifications</string>
+    <string name="notification_summary_delete_title">Show Delete on multi-message notifications</string>
+    <string name="notification_summary_delete_summary">Adds a Delete action to notifications that summarise multiple new messages</string>
+    <string name="notification_actions_settings_description">Reorder notification actions.</string>
+    <string name="notification_actions_cutoff_description">Shown actions cutoff</string>
+    <string name="notification_actions_cutoff_state">Actions above this line are shown in the notification</string>
+    <string name="notification_actions_shown_state">Shown in the notification</string>
+    <string name="notification_actions_hidden_state">Not shown in the notification</string>
+    <string name="accessibility_move_up">Move up</string>
+    <string name="accessibility_move_down">Move down</string>
+    <string name="accessibility_move_item_up">Move <xliff:g id="item">%1$s</xliff:g> up</string>
+    <string name="accessibility_move_item_down">Move <xliff:g id="item">%1$s</xliff:g> down</string>
+    <string name="accessibility_move_cutoff_up">Move shown actions cutoff up</string>
+    <string name="accessibility_move_cutoff_down">Move shown actions cutoff down</string>
+    <string name="notification_action_star">Star</string>
 </resources>

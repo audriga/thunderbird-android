@@ -4,22 +4,35 @@ import app.k9mail.core.ui.compose.testing.mvi.eventStateTest
 import app.k9mail.core.ui.compose.testing.mvi.runMviTest
 import app.k9mail.core.ui.compose.testing.mvi.turbinesWithInitialStateCheck
 import app.k9mail.feature.account.common.data.InMemoryAccountStateRepository
-import app.k9mail.feature.account.common.domain.input.StringInputField
 import app.k9mail.feature.account.setup.ui.options.display.DisplayOptionsContract.Effect
 import app.k9mail.feature.account.setup.ui.options.display.DisplayOptionsContract.Event
 import app.k9mail.feature.account.setup.ui.options.display.DisplayOptionsContract.State
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import net.thunderbird.core.common.domain.usecase.validation.ValidationError
-import net.thunderbird.core.common.domain.usecase.validation.ValidationResult
-import net.thunderbird.core.testing.coroutines.MainDispatcherRule
-import org.junit.Rule
-import org.junit.Test
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import net.thunderbird.components.core.outcome.Outcome
+import net.thunderbird.components.ui.testing.coroutines.MainDispatcherHelper
+import net.thunderbird.core.validation.ValidationError
+import net.thunderbird.core.validation.input.StringInputField
 
 class DisplayOptionsViewModelTest {
 
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val mainDispatcher = MainDispatcherHelper(UnconfinedTestDispatcher())
+
+    @BeforeTest
+    fun setUp() {
+        mainDispatcher.setUp()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        mainDispatcher.tearDown()
+    }
 
     private val accountOwnerNameProvider = FakeAccountOwnerNameProvider()
     private val testSubject = DisplayOptionsViewModel(
@@ -82,7 +95,7 @@ class DisplayOptionsViewModelTest {
         runMviTest {
             val viewModel = DisplayOptionsViewModel(
                 validator = FakeDisplayOptionsValidator(
-                    accountNameAnswer = ValidationResult.Failure(TestError),
+                    accountNameAnswer = Outcome.Failure(TestError),
                 ),
                 accountStateRepository = InMemoryAccountStateRepository(),
                 accountOwnerNameProvider = accountOwnerNameProvider,

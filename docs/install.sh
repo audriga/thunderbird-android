@@ -5,9 +5,15 @@
 
 set -e
 
+# Define versions
+MDBOOK_VERSION="0.5.2" # https://github.com/rust-lang/mdBook/releases
+MDBOOK_LAST_CHANGED_VERSION="0.4.0" # https://github.com/badboy/mdbook-last-changed/releases
+MDBOOK_MERMAID_VERSION="0.17.0" # https://github.com/badboy/mdbook-mermaid/releases
+MERMAID_JS_VERSION="v11.14.0" # https://github.com/mermaid-js/mermaid/releases
+
 # Define installation paths
 BASE_DIR=$(dirname -- "${BASH_SOURCE[0]}")
-MERMAID_JS_DIR="${BASE_DIR}/assets/theme/"
+MERMAID_JS_DIR="${BASE_DIR}/assets/additional/js/"
 MERMAID_JS_PATH="${MERMAID_JS_DIR}mermaid.min.js"
 
 # Check if the script was run with "force" argument
@@ -27,36 +33,29 @@ fi
 # Install mdbook
 if $FORCE_UPDATE; then
     echo "Forcing mdbook installation..."
-    cargo install --force mdbook
-    cargo install --force mdbook-alerts
-    cargo install --force mdbook-external-links
-    cargo install --force mdbook-last-changed
-    cargo install --force mdbook-mermaid
-    cargo install --force mdbook-pagetoc
+    cargo install --force mdbook --version $MDBOOK_VERSION
+    cargo install --force mdbook-last-changed --version $MDBOOK_LAST_CHANGED_VERSION
+    cargo install --force mdbook-mermaid --version $MDBOOK_MERMAID_VERSION
 else
-    cargo install mdbook
-    cargo install mdbook-alerts
-    cargo install mdbook-external-links
-    cargo install mdbook-last-changed
-    cargo install mdbook-mermaid
-    cargo install mdbook-pagetoc
-fi
-
-# Fetch latest releases from GitHub
-LATEST_RELEASES=$(curl -s "https://api.github.com/repos/mermaid-js/mermaid/releases" | jq -r '.[].tag_name')
-
-# Extract the latest valid mermaid version (filtering out layout-elk)
-LATEST_MERMAID_VERSION=$(echo "$LATEST_RELEASES" | grep -E '^mermaid@[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/mermaid@//' | sort -V | tail -n 1)
-
-if [ -z "$LATEST_MERMAID_VERSION" ]; then
-    echo "Failed to fetch the latest Mermaid.js version."
-    exit 1
+    cargo install mdbook --version $MDBOOK_VERSION
+    cargo install mdbook-last-changed --version $MDBOOK_LAST_CHANGED_VERSION
+    cargo install mdbook-mermaid --version $MDBOOK_MERMAID_VERSION
 fi
 
 mkdir -p "$MERMAID_JS_DIR"
 
-# Download the latest Mermaid.js
-echo "Downloading Mermaid.js version $LATEST_MERMAID_VERSION..."
-curl -L "https://cdn.jsdelivr.net/npm/mermaid@$LATEST_MERMAID_VERSION/dist/mermaid.min.js" -o "$MERMAID_JS_PATH"
+# Download Mermaid.js. If FORCE_UPDATE is enabled, always re-download/overwrite the file.
+if $FORCE_UPDATE; then
+    echo "Forcing Mermaid.js download of version ${MERMAID_JS_VERSION}..."
+    curl -fL "https://cdn.jsdelivr.net/npm/mermaid@${MERMAID_JS_VERSION}/dist/mermaid.min.js" -o "$MERMAID_JS_PATH"
+else
+    if [ ! -f "$MERMAID_JS_PATH" ]; then
+        echo "Mermaid.js not found. Downloading version ${MERMAID_JS_VERSION}..."
+        curl -fL "https://cdn.jsdelivr.net/npm/mermaid@${MERMAID_JS_VERSION}/dist/mermaid.min.js" -o "$MERMAID_JS_PATH"
+    else
+        echo "Mermaid.js version ${MERMAID_JS_VERSION} already exists at ${MERMAID_JS_PATH}."
+    fi
+fi
+
 
 echo "Installation and update complete!"

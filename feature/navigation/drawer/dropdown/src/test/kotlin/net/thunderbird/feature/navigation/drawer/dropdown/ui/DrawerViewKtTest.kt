@@ -1,16 +1,14 @@
 package net.thunderbird.feature.navigation.drawer.dropdown.ui
 
-import androidx.compose.ui.test.onChildAt
-import androidx.compose.ui.test.printToString
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.k9mail.core.ui.compose.testing.ComposeTest
-import app.k9mail.core.ui.compose.testing.onNodeWithTag
 import app.k9mail.core.ui.compose.testing.setContentWithTheme
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import kotlin.test.Test
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
+import net.thunderbird.account.fake.FakeAccountData.ACCOUNT_ID
 import net.thunderbird.account.fake.FakeAccountData.ACCOUNT_ID_RAW
 import net.thunderbird.feature.navigation.drawer.dropdown.FolderDrawerState
 import net.thunderbird.feature.navigation.drawer.dropdown.ui.DrawerContract.Effect
@@ -32,11 +30,9 @@ internal class DrawerViewKtTest : ComposeTest() {
                 openAccount = { counter.openAccountCount++ },
                 openFolder = { _, _ -> counter.openFolderCount++ },
                 openUnifiedFolder = { counter.openUnifiedFolderCount++ },
-                openManageFolders = { counter.openManageFoldersCount++ },
                 openSettings = { counter.openSettingsCount++ },
                 openAddAccount = { counter.openAddAccountCount++ },
                 closeDrawer = { counter.closeDrawerCount++ },
-                featureFlagProvider = FakeFeatureFlagProvider(isEnabled = true),
                 viewModel = viewModel,
             )
         }
@@ -51,16 +47,13 @@ internal class DrawerViewKtTest : ComposeTest() {
         verifyCounter.openFolderCount++
         viewModel.effect(
             Effect.OpenFolder(
-                accountId = ACCOUNT_ID_RAW,
+                accountId = ACCOUNT_ID,
                 folderId = 1,
             ),
         )
 
         verifyCounter.openUnifiedFolderCount++
         viewModel.effect(Effect.OpenUnifiedFolder)
-
-        verifyCounter.openManageFoldersCount++
-        viewModel.effect(Effect.OpenManageFolders)
 
         verifyCounter.openSettingsCount++
         viewModel.effect(Effect.OpenSettings)
@@ -87,20 +80,18 @@ internal class DrawerViewKtTest : ComposeTest() {
                 openAccount = { },
                 openFolder = { _, _ -> },
                 openUnifiedFolder = { },
-                openManageFolders = { },
                 openSettings = { },
                 openAddAccount = { },
                 closeDrawer = { },
-                featureFlagProvider = FakeFeatureFlagProvider(isEnabled = true),
                 viewModel = viewModel,
             )
         }
 
-        drawerStateFlow.emit(initialDrawerState.copy(selectedAccountUuid = FakeData.ACCOUNT.uuid))
+        drawerStateFlow.emit(initialDrawerState.copy(selectedAccountId = ACCOUNT_ID))
 
-        viewModel.events.contains(Event.SelectAccount(FakeData.ACCOUNT.uuid))
+        viewModel.events.contains(Event.SelectAccount(accountId = ACCOUNT_ID))
 
-        drawerStateFlow.emit(initialDrawerState.copy(selectedAccountUuid = null))
+        drawerStateFlow.emit(initialDrawerState.copy(selectedAccountId = null))
 
         viewModel.events.contains(Event.SelectAccount(null))
 
@@ -113,55 +104,11 @@ internal class DrawerViewKtTest : ComposeTest() {
         viewModel.events.contains(Event.SelectFolder(null))
     }
 
-    @Test
-    fun `pull refresh should listen to view model state`() = runTest {
-        val initialState = State(
-            isLoading = false,
-        )
-        val viewModel = FakeDrawerViewModel(initialState)
-
-        setContentWithTheme {
-            DrawerView(
-                drawerState = FolderDrawerState(),
-                openAccount = {},
-                openFolder = { _, _ -> },
-                openUnifiedFolder = {},
-                openManageFolders = {},
-                openSettings = {},
-                openAddAccount = {},
-                closeDrawer = {},
-                featureFlagProvider = FakeFeatureFlagProvider(isEnabled = true),
-                viewModel = viewModel,
-            )
-        }
-
-        onNodeWithTag("PullToRefreshBox").assertExists()
-        onNodeWithTag("PullToRefreshIndicator").assertExists()
-            .onChildAt(0).assertExists()
-            .printToString()
-            .contains("ProgressBarRangeInfo(current=0.0, range=0.0..1.0, steps=0)")
-
-        viewModel.applyState(initialState.copy(isLoading = true))
-
-        onNodeWithTag("PullToRefreshIndicator").assertExists()
-            .onChildAt(0).assertExists()
-            .printToString()
-            .contains("ProgressBarRangeInfo(current=0.0, range=0.0..0.0, steps=0)")
-
-        viewModel.applyState(initialState.copy(isLoading = false))
-
-        onNodeWithTag("PullToRefreshIndicator").assertExists()
-            .onChildAt(0).assertExists()
-            .printToString()
-            .contains("ProgressBarRangeInfo(current=0.0, range=0.0..1.0, steps=0)")
-    }
-
     @Suppress("DataClassShouldBeImmutable")
     private data class Counter(
         var openAccountCount: Int = 0,
         var openFolderCount: Int = 0,
         var openUnifiedFolderCount: Int = 0,
-        var openManageFoldersCount: Int = 0,
         var openSettingsCount: Int = 0,
         var openAddAccountCount: Int = 0,
         var closeDrawerCount: Int = 0,

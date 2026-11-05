@@ -1,10 +1,11 @@
 package com.fsck.k9.backend.api
 
 import com.fsck.k9.mail.BodyFactory
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.Part
 import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.feature.mail.folder.api.FolderPathDelimiter
 
 interface Backend {
     val supportsFlags: Boolean
@@ -18,7 +19,7 @@ interface Backend {
     val isPushCapable: Boolean
 
     @Throws(MessagingException::class)
-    fun refreshFolderList()
+    fun refreshFolderList(): FolderPathDelimiter?
 
     // TODO: Add a way to cancel the sync process
     fun sync(folderServerId: String, syncConfig: SyncConfig, listener: SyncListener)
@@ -30,7 +31,7 @@ interface Backend {
     fun downloadMessageStructure(folderServerId: String, messageServerId: String)
 
     @Throws(MessagingException::class)
-    fun downloadCompleteMessage(folderServerId: String, messageServerId: String)
+    suspend fun downloadCompleteMessage(folderServerId: String, messageServerId: String)
 
     @Throws(MessagingException::class)
     fun setFlag(folderServerId: String, messageServerIds: List<String>, flag: Flag, newState: Boolean)

@@ -13,11 +13,14 @@ import com.fsck.k9.helper.MimeTypeUtil
 import com.fsck.k9.helper.mapToSet
 import com.fsck.k9.preferences.SettingsExporter
 import kotlin.concurrent.thread
-import net.thunderbird.core.android.account.AccountManager
-import net.thunderbird.core.logging.legacy.Log
+import kotlinx.coroutines.runBlocking
+import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.legacy.logging.Log
 import okio.ByteString.Companion.toByteString
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
+
+private const val TAG = "SettingsProvider"
 
 /**
  * A `ContentProvider` that makes settings available to another app.
@@ -27,7 +30,7 @@ import org.koin.core.component.KoinComponent
  * settings (including passwords).
  */
 class SettingsProvider : ContentProvider(), KoinComponent {
-    private val accountManager: AccountManager by inject()
+    private val accountManager: LegacyAccountManager by inject()
     private val settingsExporter: SettingsExporter by inject()
 
     override fun onCreate(): Boolean {
@@ -40,21 +43,23 @@ class SettingsProvider : ContentProvider(), KoinComponent {
 
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? {
         if (!isTrustedCaller()) {
-            Log.d("Caller must be in the allowlist")
+            Log.d(TAG, "Caller must be in the allowlist")
             return null
         }
 
         val (readFileDescriptor, writeFileDescriptor) = ParcelFileDescriptor.createPipe()
 
         thread {
-            val accountUuids = accountManager.getAccounts().mapToSet { it.uuid }
+            val accountIds = accountManager.findAll().mapToSet { it.id.toString() }
             ParcelFileDescriptor.AutoCloseOutputStream(writeFileDescriptor).use { outputStream ->
-                settingsExporter.exportPreferences(
-                    outputStream,
-                    includeGlobals = true,
-                    accountUuids,
-                    includePasswords = true,
-                )
+                runBlocking {
+                    settingsExporter.exportPreferences(
+                        outputStream,
+                        includeGlobals = true,
+                        accountIds,
+                        includePasswords = true,
+                    )
+                }
             }
         }
 
@@ -127,16 +132,16 @@ class SettingsProvider : ContentProvider(), KoinComponent {
         }
 
         if (callerSignature == null) {
-            Log.v("Couldn't retrieve caller signature")
+            Log.v(TAG, "Couldn't retrieve caller signature")
             return false
         }
 
         val callerSignatureHash = callerSignature.toByteArray().toByteString().sha256().hex()
         val result = callerSignatureHash in expectedHashes
         if (result) {
-            Log.d("Caller %s signature fingerprint matches %s", callerPackage, callerSignatureHash)
+            Log.d(TAG, "Caller %s signature fingerprint matches %s", callerPackage, callerSignatureHash)
         } else {
-            Log.d("Failed! Signature mismatch for calling package %s (%s)", callerPackage, callerSignatureHash)
+            Log.d(TAG, "Failed! Signature mismatch for calling package %s (%s)", callerPackage, callerSignatureHash)
         }
 
         return result

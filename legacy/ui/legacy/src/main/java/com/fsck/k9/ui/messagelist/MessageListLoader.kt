@@ -1,32 +1,42 @@
 package com.fsck.k9.ui.messagelist
 
 import app.k9mail.legacy.mailstore.MessageListRepository
-import com.fsck.k9.Preferences
+import com.fsck.k9.contacts.ContactLetterBitmapCreator
 import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.mailstore.LocalStoreProvider
 import com.fsck.k9.mailstore.MessageColumns
-import com.fsck.k9.search.getAccounts
+import com.fsck.k9.search.getLegacyAccounts
 import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.core.android.account.LegacyAccountManager
 import net.thunderbird.core.android.account.SortType
-import net.thunderbird.core.logging.legacy.Log
-import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.featureflag.FeatureFlagProvider
+import net.thunderbird.core.featureflag.keys.GeneratedFeatureFlagKey
+import net.thunderbird.core.preference.display.visualSettings.message.list.MessageListPreferencesManager
+import net.thunderbird.feature.mail.folder.api.OutboxFolderManager
 import net.thunderbird.feature.search.legacy.LocalMessageSearch
 import net.thunderbird.feature.search.legacy.api.MessageSearchField
 import net.thunderbird.feature.search.legacy.sql.SqlWhereClause
+import net.thunderbird.legacy.logging.Log
 
+private const val TAG = "MessageListLoader"
+
+@Suppress("LongParameterList")
 class MessageListLoader(
-    private val preferences: Preferences,
+    private val accountManager: LegacyAccountManager,
     private val localStoreProvider: LocalStoreProvider,
     private val messageListRepository: MessageListRepository,
     private val messageHelper: MessageHelper,
-    private val generalSettingsManager: GeneralSettingsManager,
+    private val messageListPreferencesManager: MessageListPreferencesManager,
+    private val outboxFolderManager: OutboxFolderManager,
+    private val featureFlagProvider: FeatureFlagProvider,
+    private val contactLetterBitmapCreator: ContactLetterBitmapCreator,
 ) {
 
     fun getMessageList(config: MessageListConfig): MessageListInfo {
         return try {
             getMessageListInfo(config)
         } catch (e: Exception) {
-            Log.e(e, "Error while fetching message list")
+            Log.e(TAG, e, "Error while fetching message list")
 
             // TODO: Return an error object instead of an empty list
             MessageListInfo(messageListItems = emptyList(), hasMoreMessages = false)
@@ -34,7 +44,7 @@ class MessageListLoader(
     }
 
     private fun getMessageListInfo(config: MessageListConfig): MessageListInfo {
-        val accounts = config.search.getAccounts(preferences)
+        val accounts = config.search.getLegacyAccounts(accountManager)
         val messageListItems = accounts
             .flatMap { account ->
                 loadMessageListForAccount(account, config)
@@ -47,24 +57,33 @@ class MessageListLoader(
     }
 
     private fun loadMessageListForAccount(account: LegacyAccount, config: MessageListConfig): List<MessageListItem> {
-        val accountUuid = account.uuid
+        val accountId = account.id
         val threadId = getThreadId(config.search)
         val sortOrder = buildSortOrder(config)
-        val mapper = MessageListItemMapper(messageHelper, account, generalSettingsManager)
+        val mapper = MessageListItemMapper(
+            messageHelper,
+            account,
+            messageListPreferencesManager,
+            outboxFolderManager,
+            contactLetterBitmapCreator = contactLetterBitmapCreator.takeIf {
+                featureFlagProvider.provide(GeneratedFeatureFlagKey.USE_COMPOSE_FOR_MESSAGE_LIST_ITEMS).isEnabled() ||
+                    featureFlagProvider.provide(GeneratedFeatureFlagKey.ENABLE_MESSAGE_LIST_NEW_STATE).isEnabled()
+            },
+        )
 
         return when {
             threadId != null -> {
-                messageListRepository.getThread(accountUuid, threadId, sortOrder, mapper)
+                messageListRepository.getThread(accountId, threadId, sortOrder, mapper)
             }
 
             config.showingThreadedList -> {
                 val (selection, selectionArgs) = buildSelection(account, config)
-                messageListRepository.getThreadedMessages(accountUuid, selection, selectionArgs, sortOrder, mapper)
+                messageListRepository.getThreadedMessages(accountId, selection, selectionArgs, sortOrder, mapper)
             }
 
             else -> {
                 val (selection, selectionArgs) = buildSelection(account, config)
-                messageListRepository.getMessages(accountUuid, selection, selectionArgs, sortOrder, mapper)
+                messageListRepository.getMessages(accountId, selection, selectionArgs, sortOrder, mapper)
             }
         }
     }
@@ -74,7 +93,7 @@ class MessageListLoader(
         val queryArgs = mutableListOf<String>()
 
         val activeMessage = config.activeMessage
-        val selectActive = activeMessage != null && activeMessage.accountUuid == account.uuid
+        val selectActive = activeMessage != null && activeMessage.accountId == account.id
         if (selectActive && activeMessage != null) {
             query.append("(${MessageColumns.UID} = ? AND ${MessageColumns.FOLDER_ID} = ?) OR (")
             queryArgs.add(activeMessage.uid)
@@ -174,7 +193,7 @@ class MessageListLoader(
         return if (accounts.size == 1 && folderIds.size == 1) {
             val account = accounts[0]
             val folderId = folderIds[0]
-            val localStore = localStoreProvider.getInstance(account)
+            val localStore = localStoreProvider.getInstance(account.id)
             val localFolder = localStore.getFolder(folderId)
             localFolder.open()
             localFolder.hasMoreMessages()

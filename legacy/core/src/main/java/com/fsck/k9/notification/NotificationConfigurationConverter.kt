@@ -17,7 +17,7 @@ class NotificationConfigurationConverter(
         val light = notificationLightDecoder.decode(
             isBlinkLightsEnabled = notificationConfiguration.isBlinkLightsEnabled,
             lightColor = notificationConfiguration.lightColor,
-            accountColor = account.chipColor,
+            accountColor = account.profile.color,
         )
 
         val vibration = notificationVibrationDecoder.decode(

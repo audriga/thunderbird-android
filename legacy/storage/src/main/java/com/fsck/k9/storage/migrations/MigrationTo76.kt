@@ -6,7 +6,9 @@ import app.k9mail.core.android.common.database.map
 import com.fsck.k9.mailstore.MigrationsHelper
 import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.common.mail.Protocols
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.legacy.logging.Log
+
+private const val TAG = "MigrationTo76"
 
 /**
  * Clean up special local folders
@@ -28,35 +30,31 @@ import net.thunderbird.core.logging.legacy.Log
 internal class MigrationTo76(private val db: SQLiteDatabase, private val migrationsHelper: MigrationsHelper) {
     fun cleanUpSpecialLocalFolders() {
         val account = migrationsHelper.account
+        if (!account.isPop3()) return
 
-        Log.v("Cleaning up Outbox folder")
-        val outboxFolderId =
-            account.outboxFolderId ?: createFolder("Outbox", "K9MAIL_INTERNAL_OUTBOX", OUTBOX_FOLDER_TYPE)
-        deleteOtherOutboxFolders(outboxFolderId)
-        account.outboxFolderId = outboxFolderId
+        Log.v(TAG, "Cleaning up Drafts folder")
+        val draftsFolderId = account.draftsFolderId ?: createFolder("Drafts", "Drafts", DRAFTS_FOLDER_TYPE)
+        moveMessages(DRAFTS_FOLDER_TYPE, draftsFolderId)
 
-        if (account.isPop3()) {
-            Log.v("Cleaning up Drafts folder")
-            val draftsFolderId = account.draftsFolderId ?: createFolder("Drafts", "Drafts", DRAFTS_FOLDER_TYPE)
-            moveMessages(DRAFTS_FOLDER_TYPE, draftsFolderId)
-            account.draftsFolderId = draftsFolderId
+        Log.v(TAG, "Cleaning up Sent folder")
+        val sentFolderId = account.sentFolderId ?: createFolder("Sent", "Sent", SENT_FOLDER_TYPE)
+        moveMessages(SENT_FOLDER_TYPE, sentFolderId)
 
-            Log.v("Cleaning up Sent folder")
-            val sentFolderId = account.sentFolderId ?: createFolder("Sent", "Sent", SENT_FOLDER_TYPE)
-            moveMessages(SENT_FOLDER_TYPE, sentFolderId)
-            account.sentFolderId = sentFolderId
+        Log.v(TAG, "Cleaning up Trash folder")
+        val trashFolderId = account.trashFolderId ?: createFolder("Trash", "Trash", TRASH_FOLDER_TYPE)
+        moveMessages(TRASH_FOLDER_TYPE, trashFolderId)
 
-            Log.v("Cleaning up Trash folder")
-            val trashFolderId = account.trashFolderId ?: createFolder("Trash", "Trash", TRASH_FOLDER_TYPE)
-            moveMessages(TRASH_FOLDER_TYPE, trashFolderId)
-            account.trashFolderId = trashFolderId
+        migrationsHelper.updateAccount { latestAccount ->
+            latestAccount.copy(
+                draftsFolderId = draftsFolderId,
+                sentFolderId = sentFolderId,
+                trashFolderId = trashFolderId,
+            )
         }
-
-        migrationsHelper.saveAccount()
     }
 
     private fun createFolder(name: String, serverId: String, type: String): Long {
-        Log.v("  Creating new local folder (name=$name, serverId=$serverId, type=$type)…")
+        Log.v(TAG, "  Creating new local folder (name=$name, serverId=$serverId, type=$type)…")
         val values = ContentValues().apply {
             put("name", name)
             put("visible_limit", 25)
@@ -71,16 +69,9 @@ internal class MigrationTo76(private val db: SQLiteDatabase, private val migrati
         }
 
         val folderId = db.insert("folders", null, values)
-        Log.v("    Created folder with ID $folderId")
+        Log.v(TAG, "    Created folder with ID $folderId")
 
         return folderId
-    }
-
-    private fun deleteOtherOutboxFolders(outboxFolderId: Long) {
-        val otherFolderIds = getOtherFolders(OUTBOX_FOLDER_TYPE, outboxFolderId)
-        for (folderId in otherFolderIds) {
-            deleteFolder(folderId)
-        }
     }
 
     private fun getOtherFolders(folderType: String, excludeFolderId: Long): List<Long> {
@@ -106,25 +97,24 @@ internal class MigrationTo76(private val db: SQLiteDatabase, private val migrati
     }
 
     private fun moveMessages(sourceFolderId: Long, destinationFolderId: Long) {
-        Log.v("  Moving messages from folder [$sourceFolderId] to folder [$destinationFolderId]…")
+        Log.v(TAG, "  Moving messages from folder [$sourceFolderId] to folder [$destinationFolderId]…")
 
         val values = ContentValues().apply {
             put("folder_id", destinationFolderId)
         }
         val rows = db.update("messages", values, "folder_id = ?", arrayOf(sourceFolderId.toString()))
 
-        Log.v("    $rows messages moved.")
+        Log.v(TAG, "    $rows messages moved.")
     }
 
     private fun deleteFolder(folderId: Long) {
-        Log.v("  Deleting folder [$folderId]")
+        Log.v(TAG, "  Deleting folder [$folderId]")
         db.delete("folders", "id = ?", arrayOf(folderId.toString()))
     }
 
     private fun LegacyAccount.isPop3() = incomingServerSettings.type == Protocols.POP3
 
     companion object {
-        private const val OUTBOX_FOLDER_TYPE = "outbox"
         private const val DRAFTS_FOLDER_TYPE = "drafts"
         private const val SENT_FOLDER_TYPE = "sent"
         private const val TRASH_FOLDER_TYPE = "trash"

@@ -1,5 +1,6 @@
 package net.thunderbird.feature.notification.api.content
 
+import net.thunderbird.feature.account.AccountId
 import net.thunderbird.feature.notification.api.NotificationChannel
 import net.thunderbird.feature.notification.api.NotificationSeverity
 import net.thunderbird.feature.notification.api.ui.action.NotificationAction
@@ -42,6 +43,8 @@ sealed class PushServiceNotification : AppNotification(), SystemNotification {
         override val actions: Set<NotificationAction>,
         override val icon: NotificationIcon = NotificationIcons.PushServiceInitializing,
     ) : PushServiceNotification() {
+        override val accountId: AccountId? = null
+
         companion object {
             /**
              * Creates an [Initializing] notification.
@@ -67,6 +70,8 @@ sealed class PushServiceNotification : AppNotification(), SystemNotification {
         override val actions: Set<NotificationAction>,
         override val icon: NotificationIcon = NotificationIcons.PushServiceListening,
     ) : PushServiceNotification() {
+        override val accountId: AccountId? = null
+
         companion object {
             /**
              * Creates a new [Listening] push service notification.
@@ -92,6 +97,8 @@ sealed class PushServiceNotification : AppNotification(), SystemNotification {
         override val actions: Set<NotificationAction>,
         override val icon: NotificationIcon = NotificationIcons.PushServiceWaitBackgroundSync,
     ) : PushServiceNotification() {
+        override val accountId: AccountId? = null
+
         companion object {
             /**
              * Creates a [WaitBackgroundSync] notification.
@@ -117,6 +124,8 @@ sealed class PushServiceNotification : AppNotification(), SystemNotification {
         override val actions: Set<NotificationAction>,
         override val icon: NotificationIcon = NotificationIcons.PushServiceWaitNetwork,
     ) : PushServiceNotification() {
+        override val accountId: AccountId? = null
+
         companion object {
             /**
              * Creates a [WaitNetwork] notification.
@@ -145,6 +154,7 @@ sealed class PushServiceNotification : AppNotification(), SystemNotification {
         override val contentText: String?,
         override val icon: NotificationIcon = NotificationIcons.AlarmPermissionMissing,
     ) : PushServiceNotification(), InAppNotification {
+        override val accountId: AccountId? = null
         override val severity: NotificationSeverity = NotificationSeverity.Critical
 
         companion object {
@@ -170,9 +180,9 @@ sealed class PushServiceNotification : AppNotification(), SystemNotification {
  * @return A set of [NotificationAction] instances.
  */
 private suspend fun buildNotificationActions(): Set<NotificationAction> = setOf(
-    NotificationAction.Tap,
+    NotificationAction.Tap(),
     NotificationAction.CustomAction(
-        title = getString(resource = Res.string.push_info_disable_push_action),
+        label = getString(resource = Res.string.push_info_disable_push_action),
         icon = NotificationActionIcons.DisablePushAction,
     ),
 )

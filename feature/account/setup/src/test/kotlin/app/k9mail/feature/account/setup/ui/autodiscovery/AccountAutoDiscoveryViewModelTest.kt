@@ -9,8 +9,6 @@ import app.k9mail.feature.account.common.data.InMemoryAccountStateRepository
 import app.k9mail.feature.account.common.domain.AccountDomainContract
 import app.k9mail.feature.account.common.domain.entity.AccountState
 import app.k9mail.feature.account.common.domain.entity.IncomingProtocolType
-import app.k9mail.feature.account.common.domain.input.BooleanInputField
-import app.k9mail.feature.account.common.domain.input.StringInputField
 import app.k9mail.feature.account.oauth.ui.fake.FakeAccountOAuthViewModel
 import app.k9mail.feature.account.setup.domain.entity.AutoDiscoverySettingsFixture
 import app.k9mail.feature.account.setup.ui.autodiscovery.AccountAutoDiscoveryContract.AutoDiscoveryUiResult
@@ -21,17 +19,32 @@ import app.k9mail.feature.account.setup.ui.autodiscovery.AccountAutoDiscoveryCon
 import app.k9mail.feature.account.setup.ui.autodiscovery.AccountAutoDiscoveryContract.State
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import net.thunderbird.core.common.domain.usecase.validation.ValidationError
-import net.thunderbird.core.common.domain.usecase.validation.ValidationResult
-import net.thunderbird.core.testing.coroutines.MainDispatcherRule
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import net.thunderbird.components.core.outcome.Outcome
+import net.thunderbird.components.ui.testing.coroutines.MainDispatcherHelper
+import net.thunderbird.core.validation.ValidationError
+import net.thunderbird.core.validation.input.BooleanInputField
+import net.thunderbird.core.validation.input.StringInputField
 
 class AccountAutoDiscoveryViewModelTest {
 
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val mainDispatcher = MainDispatcherHelper(UnconfinedTestDispatcher())
+
+    @BeforeTest
+    fun setUp() {
+        mainDispatcher.setUp()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        mainDispatcher.tearDown()
+    }
 
     @Test
     fun `should reset state when EmailAddressChanged event is received`() = runMviTest {
@@ -212,7 +225,7 @@ class AccountAutoDiscoveryViewModelTest {
             )
             val testSubject = AccountAutoDiscoveryViewModel(
                 validator = FakeAccountAutoDiscoveryValidator(
-                    emailAddressAnswer = ValidationResult.Failure(TestError),
+                    emailAddressAnswer = Outcome.Failure(TestError),
                 ),
                 getAutoDiscovery = { AutoDiscoveryResult.NoUsableSettingsFound },
                 oAuthViewModel = FakeAccountOAuthViewModel(),
@@ -309,7 +322,7 @@ class AccountAutoDiscoveryViewModelTest {
             )
             val viewModel = AccountAutoDiscoveryViewModel(
                 validator = FakeAccountAutoDiscoveryValidator(
-                    passwordAnswer = ValidationResult.Failure(TestError),
+                    passwordAnswer = Outcome.Failure(TestError),
                 ),
                 getAutoDiscovery = { AutoDiscoveryResult.NoUsableSettingsFound },
                 oAuthViewModel = FakeAccountOAuthViewModel(),

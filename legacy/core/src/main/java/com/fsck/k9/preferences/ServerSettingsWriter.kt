@@ -29,17 +29,18 @@ internal class ServerSettingsWriter(
             key,
             serverSettingsJson,
             generalSettingsManager.getConfig().debugging.isDebugLoggingEnabled,
+            generalSettingsManager.getConfig().debugging.isSensitiveLoggingEnabled,
         )
     }
 
-    private fun createServerSettings(server: ValidatedSettings.Server): ServerSettings {
+    fun createServerSettings(server: ValidatedSettings.Server): ServerSettings {
         val validatedSettings = server.settings
 
         val host = validatedSettings[HOST] as String
         val port = validatedSettings[PORT] as Int
         val connectionSecurity = ConnectionSecurity.valueOf(validatedSettings[CONNECTION_SECURITY] as String)
         val authenticationType = AuthType.valueOf(validatedSettings[AUTHENTICATION_TYPE] as String)
-        val username = validatedSettings[USERNAME] as String
+        val username = (validatedSettings[USERNAME] as? String) ?: ""
         val rawPassword = validatedSettings[PASSWORD] as? String
         val password = if (authenticationType == AuthType.XOAUTH2) "" else rawPassword
         val clientCertificateAlias = validatedSettings[CLIENT_CERTIFICATE_ALIAS] as? String

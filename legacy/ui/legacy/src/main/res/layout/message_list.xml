@@ -5,58 +5,92 @@
     android:id="@+id/navigation_drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.fsck.k9.activity.MessageList"
+    tools:context="com.fsck.k9.activity.MessageHomeActivity"
     >
 
+    <!--
+     As the navigation of Message List (MessageHomeActivity) is based on the ViewSwitcher,
+     which just toggle the visibility of existing views rather than creating/destroying the
+     Fragments, the Fragment's lifecycle methods, such as onViewCreated, are not properly called.
+
+     Modern layouts (ConstraintLayout, CoordinatorLayout) optimize measurement during visibility
+     toggles and WindowInsets updates, sometimes causing a transient layout pass with incorrect bounds.
+     The RecyclerView incorrectly treats this pass as a successful update and marks its state as "clean".
+     Consequently, it fails to trigger onBindViewHolder when the view is fully restored, leaving the
+     UI stuck displaying the previous stale state instead of the new data.
+
+     RelativeLayout is used to enforce strict vertical dependencies. By using layout_below, it
+     ensures the Toolbar is measured before the container. This prevents the race condition and forces
+     the RecyclerView to recognize its actual bounds, ensuring the adapter binds correctly without
+     performance-heavy requestLayout() calls.
+
+     Until we move this screen to use a modern navigation system, or rewrite it using Jetpack Compose,
+     we need to use this workaround.
+    -->
     <RelativeLayout
-        android:id="@+id/drawer_content"
+        android:id="@+id/coordinator_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         >
 
-        <include
-            android:id="@+id/toolbar"
-            layout="@layout/message_list_toolbar"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/app_bar_layout"
+            style="@style/Widget.App.AppBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            />
-
-        <ProgressBar
-            android:id="@+id/message_list_progress"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/toolbar"
-            android:layout_marginTop="-6dp"
-            android:elevation="8dp"
-            android:max="10000"
-            android:visibility="invisible"
-            />
-
-        <com.fsck.k9.view.ViewSwitcher
-            android:id="@+id/container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/toolbar"
             >
 
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/message_list_container"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                tools:layout="@layout/message_list_fragment"
+            <include
+                android:id="@+id/toolbar"
+                layout="@layout/message_list_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 />
 
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/message_view_container"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                tools:layout="@layout/message"
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <FrameLayout
+            android:id="@+id/content_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/app_bar_layout"
+            >
+
+            <ProgressBar
+                android:id="@+id/message_list_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-6dp"
+                android:elevation="8dp"
+                android:max="10000"
+                android:visibility="invisible"
                 />
 
-        </com.fsck.k9.view.ViewSwitcher>
+            <com.fsck.k9.view.ViewSwitcher
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
+
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/message_list_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    tools:layout="@layout/message_list_fragment"
+                    />
+
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/message_view_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    tools:layout="@layout/message"
+                    />
+
+            </com.fsck.k9.view.ViewSwitcher>
+
+        </FrameLayout>
 
     </RelativeLayout>
 

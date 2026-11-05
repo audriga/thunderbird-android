@@ -2,15 +2,23 @@ package net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import net.thunderbird.components.core.logging.Logger
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.mail.folder.FolderType
+import net.thunderbird.feature.mail.folder.api.FOLDER_DEFAULT_PATH_DELIMITER
 import net.thunderbird.feature.mail.folder.api.Folder
-import net.thunderbird.feature.mail.folder.api.FolderType
+import net.thunderbird.feature.mail.folder.api.FolderPathDelimiter
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.DomainContract.UseCase
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.DisplayFolder
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.DisplayTreeFolder
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.MailDisplayFolder
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.UnifiedDisplayFolder
 
-internal class GetDisplayTreeFolder : UseCase.GetDisplayTreeFolder {
+private const val TAG = "GetDisplayTreeFolder"
+
+internal class GetDisplayTreeFolder(
+    private val logger: Logger,
+) : UseCase.GetDisplayTreeFolder {
     private var placeholderCounter = 0L
 
     override fun invoke(folders: List<DisplayFolder>, maxDepth: Int): DisplayTreeFolder {
@@ -24,12 +32,15 @@ internal class GetDisplayTreeFolder : UseCase.GetDisplayTreeFolder {
             )
         }
 
+        val pathDelimiter = folders.firstOrNull()?.pathDelimiter ?: FOLDER_DEFAULT_PATH_DELIMITER
         val accountFolders = folders.filterIsInstance<MailDisplayFolder>().map {
-            val path = flattenPath(it.folder.name, maxDepth)
-            println("Flattened path for ${it.folder.name} → $path")
+            val path = flattenPath(it.folder.name, pathDelimiter, maxDepth)
+            logger.debug(TAG) { "Flattened path for ${it.folder.name} → $path" }
             path to it
         }
-        val accountFolderTreeList = buildAccountFolderTree(accountFolders)
+        val accountFolderTreeList = accountFolders.firstOrNull()?.let { (_, folder) ->
+            buildAccountFolderTree(accountFolders, pathDelimiter, folder.accountId)
+        } ?: emptyList()
 
         return DisplayTreeFolder(
             displayFolder = null,
@@ -40,18 +51,20 @@ internal class GetDisplayTreeFolder : UseCase.GetDisplayTreeFolder {
         )
     }
 
-    private fun flattenPath(folderName: String, maxDepth: Int): List<String> {
-        val parts = folderName.split("/").map { it.takeIf { it.isNotBlank() } ?: "(Unnamed)" }
+    private fun flattenPath(folderName: String, folderPathDelimiter: FolderPathDelimiter, maxDepth: Int): List<String> {
+        val parts = folderName.split(folderPathDelimiter).map { it.takeIf { it.isNotBlank() } ?: "(Unnamed)" }
 
         return if (parts.size <= maxDepth) {
             parts
         } else {
-            parts.take(maxDepth) + listOf(parts.drop(maxDepth).joinToString("/"))
+            parts.take(maxDepth) + listOf(parts.drop(maxDepth).joinToString(folderPathDelimiter))
         }
     }
 
     private fun buildAccountFolderTree(
         paths: List<Pair<List<String>, MailDisplayFolder>>,
+        pathDelimiter: FolderPathDelimiter,
+        accountId: AccountId,
         parentPath: String = "",
     ): List<DisplayTreeFolder> {
         return paths.groupBy { it.first.getOrNull(0) ?: "(Unnamed)" }
@@ -68,11 +81,17 @@ internal class GetDisplayTreeFolder : UseCase.GetDisplayTreeFolder {
                     if (segments.size == 1) folder else null
                 }
 
-                val fullPath = if (parentPath.isBlank()) segment else "$parentPath/$segment"
+                val fullPath = if (parentPath.isBlank()) segment else "${parentPath}${pathDelimiter}$segment"
 
-                val currentFolder = currentFolders.firstOrNull() ?: createPlaceholderFolder(fullPath)
+                val currentFolder = currentFolders.firstOrNull()
+                    ?: createPlaceholderFolder(fullPath, pathDelimiter, accountId)
 
-                val children = buildAccountFolderTree(childPaths, fullPath)
+                val children = buildAccountFolderTree(
+                    paths = childPaths,
+                    pathDelimiter = pathDelimiter,
+                    accountId = accountId,
+                    parentPath = fullPath,
+                )
 
                 val totalUnread = children.sumOf { it.totalUnreadCount } + currentFolder.unreadMessageCount
                 val totalStarred = children.sumOf { it.totalStarredCount } + currentFolder.starredMessageCount
@@ -87,12 +106,16 @@ internal class GetDisplayTreeFolder : UseCase.GetDisplayTreeFolder {
             }
     }
 
-    private fun createPlaceholderFolder(name: String): MailDisplayFolder {
+    private fun createPlaceholderFolder(
+        name: String,
+        pathDelimiter: FolderPathDelimiter,
+        accountId: AccountId,
+    ): MailDisplayFolder {
         placeholderCounter += 1
         return MailDisplayFolder(
-            accountId = "placeholder",
+            accountId = accountId,
             folder = Folder(
-                id = placeholderCounter,
+                id = -placeholderCounter,
                 name = name,
                 type = FolderType.REGULAR,
                 isLocalOnly = false,
@@ -100,6 +123,8 @@ internal class GetDisplayTreeFolder : UseCase.GetDisplayTreeFolder {
             isInTopGroup = true,
             unreadMessageCount = 0,
             starredMessageCount = 0,
+            pathDelimiter = pathDelimiter,
+            isPlaceholder = true,
         )
     }
 }

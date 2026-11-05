@@ -8,12 +8,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import app.k9mail.core.ui.compose.designsystem.PreviewWithThemeLightDark
-import app.k9mail.core.ui.compose.theme2.MainTheme
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.collections.immutable.toPersistentList
-import net.thunderbird.feature.mail.account.api.BaseAccount
+import net.thunderbird.components.ui.bolt.PreviewWithThemeLightDark
+import net.thunderbird.components.ui.bolt.theme.BoltTheme
+import net.thunderbird.feature.account.AccountIdFactory
+import net.thunderbird.feature.account.avatar.Avatar
+import net.thunderbird.feature.account.profile.AccountProfile
 import net.thunderbird.feature.notification.api.content.MailNotification
 
 @OptIn(ExperimentalUuidApi::class)
@@ -23,11 +25,13 @@ private fun DebugNotificationSectionPreview() {
     PreviewWithThemeLightDark {
         val accounts = remember {
             List(size = 10) {
-                object : BaseAccount {
-                    override val uuid: String = Uuid.random().toString()
-                    override val name: String? = "Account $it"
-                    override val email: String = "account-$it@mail.com"
-                }
+                val id = AccountIdFactory.create()
+                AccountProfile(
+                    id = id,
+                    name = "Account $it",
+                    color = 0,
+                    avatar = Avatar.Monogram(accountId = id, value = "A$it"),
+                )
             }.toPersistentList()
         }
         var state by remember {
@@ -40,7 +44,7 @@ private fun DebugNotificationSectionPreview() {
         }
         DebugNotificationSection(
             state = state,
-            modifier = Modifier.padding(MainTheme.spacings.triple),
+            modifier = Modifier.padding(BoltTheme.spacings.triple),
             onAccountSelect = { state = state.copy(selectedAccount = it) },
         )
     }
@@ -53,11 +57,13 @@ private fun PreviewSingleMailNotification() {
     PreviewWithThemeLightDark {
         val accounts = remember {
             List(size = 10) {
-                object : BaseAccount {
-                    override val uuid: String = Uuid.random().toString()
-                    override val name: String? = "Account $it"
-                    override val email: String = "account-$it@mail.com"
-                }
+                val id = AccountIdFactory.create()
+                AccountProfile(
+                    id = id,
+                    name = "Account $it",
+                    color = 0,
+                    avatar = Avatar.Monogram(accountId = id, value = "A$it"),
+                )
             }.toPersistentList()
         }
         var state by remember {
@@ -71,7 +77,7 @@ private fun PreviewSingleMailNotification() {
         }
         DebugNotificationSection(
             state = state,
-            modifier = Modifier.padding(MainTheme.spacings.triple),
+            modifier = Modifier.padding(BoltTheme.spacings.triple),
             onAccountSelect = { state = state.copy(selectedAccount = it) },
         )
     }

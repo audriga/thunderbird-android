@@ -24,7 +24,7 @@ import androidx.glance.layout.width
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import com.fsck.k9.activity.MessageList
+import com.fsck.k9.activity.MessageHomeActivity
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,15 +38,20 @@ internal fun MessageListItemView(item: MessageListItem) {
     Row(
         GlanceModifier.Companion.fillMaxWidth().wrapContentHeight().clickable {
             CoroutineScope(Dispatchers.IO).launch {
-                val intent = MessageList.Companion.actionDisplayMessageIntent(context, item.messageReference)
-                PendingIntentCompat.getActivity(
-                    context,
-                    Random.Default.nextInt(),
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT,
-                    false,
-                )!!
-                    .send()
+                val intent = MessageHomeActivity.Companion.actionDisplayMessageIntent(context, item.messageReference)
+                // Only returns null when using FLAG_NO_CREATE
+                val pendingIntent = checkNotNull(
+                    PendingIntentCompat.getActivity(
+                        context,
+                        Random.Default.nextInt(),
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT,
+                        false,
+                    ),
+                ) {
+                    "Failed to create activity PendingIntent"
+                }
+                pendingIntent.send()
             }
         },
     ) {

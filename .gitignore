@@ -5,6 +5,9 @@ local.properties
 # Kotlin
 .kotlin/
 
+# Python
+__pycache__/
+
 # mdBook
 book/
 
@@ -46,3 +49,12 @@ captures/
 
 # Screenshots
 adb-screenshots/
+# Extracted eml files
+eml-files/
+
+# Merged PRs report
+merged-prs-*.md
+merged-prs-*.csv
+
+# Weblate cache
+cli/weblate-cli/weblate-components-cache.json

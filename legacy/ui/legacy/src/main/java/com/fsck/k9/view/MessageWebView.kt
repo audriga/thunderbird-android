@@ -2,40 +2,54 @@ package com.fsck.k9.view
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.util.AttributeSet
-import android.webkit.WebSettings.LayoutAlgorithm
-import android.webkit.WebSettings.RenderPriority
 import android.webkit.WebView
+import com.fsck.k9.core.BuildConfig
 import com.fsck.k9.mailstore.AttachmentResolver
+import kotlin.math.roundToInt
 import net.thunderbird.core.android.common.view.showInDarkMode
 import net.thunderbird.core.android.common.view.showInLightMode
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.core.android.webkit.ThunderbirdWebViewSettings
+import net.thunderbird.legacy.logging.Log
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 import app.k9mail.legacy.message.controller.MessageReference
 
 class MessageWebView : WebView, KoinComponent {
+private const val TAG = "MessageWebView"
+
+class MessageWebView : WebView, KoinComponent, ThunderbirdWebViewSettings {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
 
     private val webViewClientFactory: WebViewClientFactory by inject()
 
-    fun blockNetworkData(shouldBlockNetworkData: Boolean) {
+    override var loadWithOverviewMode: Boolean
+        get() = settings.loadWithOverviewMode
+        set(value) {
+            settings.loadWithOverviewMode = value
+        }
+
+    override fun blockNetworkData(shouldBlockNetworkData: Boolean) {
         // Images with content: URIs will not be blocked, nor will network images that are already in the WebView cache.
         try {
             settings.blockNetworkLoads = false
         } catch (e: SecurityException) {
-            Log.e(e, "Failed to unblock network loads. Missing INTERNET permission?")
+            Log.e(TAG, e, "Failed to unblock network loads. Missing INTERNET permission?")
         }
     }
 
-    fun configure(config: WebViewConfig) {
+    override fun configure(config: WebViewConfig) {
         isVerticalScrollBarEnabled = true
-        setVerticalScrollbarOverlay(true)
         scrollBarStyle = SCROLLBARS_INSIDE_OVERLAY
         isLongClickable = true
+
+        // Do not force a view-specific hardware layer. Long messages can make this WebView taller than the
+        // device's maximum GPU texture size, causing WebView to crash while creating the layer.
+        setLayerType(LAYER_TYPE_NONE, null)
 
         configureDarkLightMode(this, config)
 
@@ -52,20 +66,21 @@ class MessageWebView : WebView, KoinComponent {
 
             javaScriptEnabled = true
             loadsImagesAutomatically = true
-            blockNetworkLoads =false
+            blockNetworkLoads = false
             blockNetworkImage  = false
-            setRenderPriority(RenderPriority.HIGH)
-
-            // TODO: Review alternatives. NARROW_COLUMNS is deprecated on KITKAT
-            layoutAlgorithm = LayoutAlgorithm.NARROW_COLUMNS
 
             overScrollMode = OVER_SCROLL_NEVER
 
             textZoom = config.textZoom
+
+            // Values range from smaller than default (1.0) to double size: 0.85, 1.0, 1.15, 1.3, 1.5, 1.8, 2.0
+            val fontScale = Resources.getSystem().configuration.fontScale
+            settings.textZoom = (settings.textZoom * fontScale).roundToInt()
         }
 
         // Disable network images by default. This is overridden by preferences.
         blockNetworkData(false)
+        setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
     }
 
     private fun configureDarkLightMode(

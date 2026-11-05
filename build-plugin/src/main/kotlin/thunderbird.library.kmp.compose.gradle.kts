@@ -1,63 +1,106 @@
+import net.thunderbird.gradle.plugin.ProjectConfig
+
 plugins {
-    id("com.android.library")
+    id("com.android.kotlin.multiplatform.library")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("thunderbird.quality.detekt.typed")
-    id("thunderbird.quality.spotless")
+    id("net.thunderbird.gradle.plugin.quality.coverage")
+    id("net.thunderbird.gradle.plugin.quality.detekt")
+    id("net.thunderbird.gradle.plugin.quality.spotless")
 }
 
 kotlin {
-    androidTarget {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
+    android {
+        compileSdk = ProjectConfig.Android.sdkCompile
+        minSdk = ProjectConfig.Android.sdkMin
+
+        androidResources.enable = true
+
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
+
         compilerOptions {
-            jvmTarget.set(ThunderbirdProjectConfig.Compiler.jvmTarget)
+            jvmTarget.set(ProjectConfig.Compiler.jvmTarget)
         }
     }
 
     jvm {
         compilerOptions {
-            jvmTarget.set(ThunderbirdProjectConfig.Compiler.jvmTarget)
+            jvmTarget.set(ProjectConfig.Compiler.jvmTarget)
         }
     }
 
     sourceSets {
+        val isComponentsBuild = rootProject.name == "components"
+
         commonMain.dependencies {
             implementation(project.dependencies.platform(libs.kotlin.bom))
             implementation(project.dependencies.platform(libs.koin.bom))
-            implementation(libs.bundles.shared.kmp.common)
-            implementation(libs.bundles.shared.kmp.compose)
+            implementation(project.dependencies.platform(libs.tb.mobile.components.bom))
 
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
+            implementation(libs.bundles.shared.kmp.common)
+            implementation(libs.bundles.shared.kmp.compose.common)
+
+            implementation(libs.jetbrains.compose.runtime)
+            implementation(libs.jetbrains.compose.foundation)
+            implementation(libs.jetbrains.compose.ui)
+            implementation(libs.jetbrains.compose.components.resources)
+            implementation(libs.jetbrains.compose.components.ui.preview)
+
+            implementation(libs.bundles.shared.tmc.components)
+            if (!isComponentsBuild) {
+                implementation(libs.tb.mobile.components.ui.bolt)
+            }
         }
 
         commonTest.dependencies {
             implementation(libs.bundles.shared.kmp.common.test)
+            implementation(libs.bundles.shared.kmp.compose.common.test)
+
+            implementation(libs.bundles.shared.tmc.components.test)
+            if (!isComponentsBuild) {
+                implementation(libs.tb.mobile.components.ui.testing)
+            }
         }
 
         androidMain.dependencies {
             implementation(libs.bundles.shared.kmp.android)
             implementation(libs.bundles.shared.kmp.compose.android)
-            implementation(compose.preview)
+        }
+
+        androidHostTest.dependencies {
+            implementation(libs.bundles.shared.kmp.android.test)
+            implementation(libs.bundles.shared.kmp.compose.android.test)
+        }
+
+        jvmMain.dependencies {
+            implementation(libs.bundles.shared.kmp.jvm)
+            implementation(libs.bundles.shared.kmp.compose.jvm)
+        }
+
+        jvmTest.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.bundles.shared.kmp.jvm.test)
+            implementation(libs.bundles.shared.kmp.compose.jvm.test)
         }
     }
 }
 
-android {
-    compileSdk = ThunderbirdProjectConfig.Android.sdkCompile
+configureKotlinJavaCompatibility()
 
-    defaultConfig {
-        minSdk = ThunderbirdProjectConfig.Android.sdkMin
-    }
+tasks.withType<Test>().configureEach {
+    jvmArgs(ProjectConfig.Testing.robolectricJvmArgs)
+}
 
-    compileOptions {
-        sourceCompatibility = ThunderbirdProjectConfig.Compiler.javaCompatibility
-        targetCompatibility = ThunderbirdProjectConfig.Compiler.javaCompatibility
-    }
-
-    configureSharedComposeConfig(libs)
+tasks.register("testsOnCi") {
+    dependsOn(
+        tasks.withType<Test>(),
+    )
 }

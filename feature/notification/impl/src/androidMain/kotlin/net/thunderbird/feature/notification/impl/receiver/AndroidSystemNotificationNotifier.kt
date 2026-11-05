@@ -7,8 +7,9 @@ import androidx.core.app.NotificationManagerCompat
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
-import net.thunderbird.core.logging.Logger
+import net.thunderbird.components.core.logging.Logger
 import net.thunderbird.feature.notification.api.NotificationId
+import net.thunderbird.feature.notification.api.NotificationRegistry
 import net.thunderbird.feature.notification.api.content.SystemNotification
 import net.thunderbird.feature.notification.api.ui.action.NotificationAction
 import net.thunderbird.feature.notification.api.ui.style.SystemNotificationStyle
@@ -20,17 +21,25 @@ private const val TAG = "AndroidSystemNotificationNotifier"
 internal class AndroidSystemNotificationNotifier(
     private val logger: Logger,
     private val applicationContext: Context,
+    private val notificationRegistry: NotificationRegistry,
     private val notificationActionCreator: NotificationActionCreator<SystemNotification>,
 ) : SystemNotificationNotifier {
     private val notificationManager: NotificationManagerCompat = NotificationManagerCompat.from(applicationContext)
 
     override suspend fun show(
-        id: NotificationId,
         notification: SystemNotification,
-    ) {
-        logger.debug(TAG) { "show() called with: id = $id, notification = $notification" }
+    ): NotificationId {
+        logger.debug(TAG) { "show() called with: notification = $notification" }
+        val id = notificationRegistry.register(notification)
         val androidNotification = notification.toAndroidNotification()
         notificationManager.notify(id.value, androidNotification)
+        return id
+    }
+
+    override suspend fun dismiss(id: NotificationId) {
+        logger.debug(TAG) { "dismiss() called with: id = $id" }
+        notificationManager.cancel(id.value)
+        notificationRegistry.unregister(id)
     }
 
     override fun dispose() {
@@ -60,16 +69,23 @@ internal class AndroidSystemNotificationNotifier(
                     }
                 }
 
+                val overrideTap = systemNotification
+                    .actions
+                    .firstOrNull {
+                        it is NotificationAction.Tap && it.override != null
+                    } as? NotificationAction.Tap
+
                 val tapAction = notificationActionCreator.create(
                     notification = systemNotification,
-                    action = NotificationAction.Tap,
+                    action = overrideTap?.override ?: NotificationAction.Tap(),
                 )
                 setContentIntent(tapAction.pendingIntent)
 
                 setNotificationStyle(notification = systemNotification)
 
-                if (actions.isNotEmpty()) {
-                    for (action in actions) {
+                val actionsWithoutTap = actions.filterNot { it is NotificationAction.Tap }
+                if (actionsWithoutTap.isNotEmpty()) {
+                    for (action in actionsWithoutTap) {
                         val notificationAction = notificationActionCreator
                             .create(notification = systemNotification, action)
 

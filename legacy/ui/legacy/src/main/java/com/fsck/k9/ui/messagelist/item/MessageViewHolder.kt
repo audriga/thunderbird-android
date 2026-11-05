@@ -20,25 +20,25 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.isVisible
 import app.k9mail.core.ui.legacy.designsystem.atom.icon.Icons
 import com.fsck.k9.FontSizes
-import com.fsck.k9.UiDensity
 import com.fsck.k9.contacts.ContactPictureLoader
+import com.fsck.k9.helper.Utility
 import com.fsck.k9.mail.Address
 import com.fsck.k9.ui.R
-import com.fsck.k9.ui.helper.RelativeDateTimeFormatter
 import com.fsck.k9.ui.messagelist.MessageListAppearance
 import com.fsck.k9.ui.messagelist.MessageListItem
-import com.fsck.k9.ui.messagelist.MlfUtils
 import com.google.android.material.textview.MaterialTextView
 import java.util.Locale
 import kotlin.math.max
+import net.thunderbird.core.preference.display.visualSettings.message.list.UiDensity
+import net.thunderbird.feature.mail.message.list.R as MessageListR
 
+@Suppress("TooManyFunctions")
 class MessageViewHolder(
     view: View,
-    private val appearance: MessageListAppearance,
+    private val appearance: () -> MessageListAppearance,
     private val theme: Resources.Theme,
     private val res: Resources,
     private val contactsPictureLoader: ContactPictureLoader,
-    private val relativeDateTimeFormatter: RelativeDateTimeFormatter,
     private val colors: MessageViewHolderColors,
 ) : MessageListViewHolder(view) {
 
@@ -59,6 +59,7 @@ class MessageViewHolder(
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun bind(messageListItem: MessageListItem, isActive: Boolean, isSelected: Boolean) {
+        val appearance = appearance()
         if (appearance.showContactPicture) {
             contactPictureClickArea.isSelected = isSelected
             if (isSelected) {
@@ -69,9 +70,9 @@ class MessageViewHolder(
                 contactPictureView.isVisible = true
             }
             contactPictureClickArea.contentDescription = if (isSelected) {
-                res.getString(R.string.swipe_action_deselect)
+                res.getString(MessageListR.string.swipe_action_deselect)
             } else {
-                res.getString(R.string.swipe_action_select)
+                res.getString(MessageListR.string.swipe_action_select)
             }
         }
 
@@ -80,14 +81,17 @@ class MessageViewHolder(
         with(messageListItem) {
             val foregroundColor = selectForegroundColor(isSelected, isRead, isActive)
             val maybeBoldTypeface = if (isRead) Typeface.NORMAL else Typeface.BOLD
-            val displayDate = relativeDateTimeFormatter.formatDate(messageDate)
             val displayThreadCount = if (appearance.showingThreadedList) threadCount else 0
-            val subject = MlfUtils.buildSubject(subject, res.getString(R.string.general_no_subject), displayThreadCount)
+            val subject = buildSubject(
+                subject = subject,
+                noSubjectText = res.getString(R.string.general_no_subject),
+                threadCount = displayThreadCount,
+            )
 
-            if (appearance.showAccountChip) {
-                val accountChipDrawable = chipView.drawable.mutate()
-                DrawableCompat.setTint(accountChipDrawable, account.chipColor)
-                chipView.setImageDrawable(accountChipDrawable)
+            if (appearance.showAccountIndicator) {
+                val accountIndicatorDrawable = chipView.drawable.mutate()
+                DrawableCompat.setTint(accountIndicatorDrawable, account.profile.color)
+                chipView.setImageDrawable(accountIndicatorDrawable)
             }
 
             if (appearance.stars) {
@@ -136,7 +140,7 @@ class MessageViewHolder(
 
             dateView.typeface = Typeface.create(dateView.typeface, maybeBoldTypeface)
             dateView.setTextColor(foregroundColor)
-            dateView.text = displayDate
+            dateView.text = messageListItem.displayMessageDateTime
             attachmentView.isVisible = hasAttachments
             attachmentView.setColorFilter(foregroundColor)
 
@@ -148,6 +152,19 @@ class MessageViewHolder(
                 statusView.isVisible = false
             }
         }
+    }
+
+    private fun buildSubject(
+        subject: String?,
+        noSubjectText: String,
+        threadCount: Int,
+    ): String = if (subject.isNullOrEmpty()) {
+        noSubjectText
+    } else if (threadCount > 1) {
+        // If this is a thread, strip the RE/FW from the subject.  "Be like Outlook."
+        Utility.stripSubject(subject)
+    } else {
+        subject
     }
 
     private fun getPreview(isMessageEncrypted: Boolean, previewText: String): String {
@@ -197,6 +214,7 @@ class MessageViewHolder(
     }
 
     private fun addBeforePreviewSpan(text: Spannable, length: Int, messageRead: Boolean) {
+        val appearance = appearance()
         val fontSize = if (appearance.senderAboveSubject) {
             appearance.fontSizes.messageListSubject
         } else {
@@ -225,7 +243,7 @@ class MessageViewHolder(
     }
 
     private fun selectBackgroundColor(selected: Boolean, read: Boolean, active: Boolean): Int {
-        val backGroundAsReadIndicator = appearance.backGroundAsReadIndicator
+        val backGroundAsReadIndicator = appearance().backGroundAsReadIndicator
         return when {
             selected -> colors.selectedBackground
             active -> colors.activeBackground
@@ -261,11 +279,10 @@ class MessageViewHolder(
         fun create(
             layoutInflater: LayoutInflater,
             parent: ViewGroup?,
-            appearance: MessageListAppearance,
+            appearance: () -> MessageListAppearance,
             theme: Resources.Theme,
             res: Resources,
             contactsPictureLoader: ContactPictureLoader,
-            relativeDateTimeFormatter: RelativeDateTimeFormatter,
             colors: MessageViewHolderColors,
             onClickListener: View.OnClickListener,
             onLongClickListener: View.OnLongClickListener,
@@ -282,9 +299,9 @@ class MessageViewHolder(
                 theme = theme,
                 res = res,
                 contactsPictureLoader = contactsPictureLoader,
-                relativeDateTimeFormatter = relativeDateTimeFormatter,
                 colors = colors,
             )
+            val appearance = appearance()
 
             applyFontSizes(holder, appearance.fontSizes, appearance.senderAboveSubject)
             applyDensityValue(holder, appearance.density, res)
@@ -297,7 +314,7 @@ class MessageViewHolder(
                 holder.contactPictureView.isVisible = false
             }
 
-            holder.chipView.isVisible = appearance.showAccountChip
+            holder.chipView.isVisible = appearance.showAccountIndicator
 
             // 1 preview line is needed even if it is set to 0, because subject is part of the same text view
             holder.previewView.maxLines = max(appearance.previewLines, 1)

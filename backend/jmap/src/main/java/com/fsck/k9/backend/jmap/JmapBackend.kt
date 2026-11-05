@@ -7,9 +7,10 @@ import com.fsck.k9.backend.api.BackendStorage
 import com.fsck.k9.backend.api.SyncConfig
 import com.fsck.k9.backend.api.SyncListener
 import com.fsck.k9.mail.BodyFactory
-import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.Part
+import net.thunderbird.core.common.mail.Flag
+import net.thunderbird.feature.mail.folder.api.FolderPathDelimiter
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import rs.ltt.jmap.client.JmapClient
@@ -40,8 +41,8 @@ class JmapBackend(
     override val supportsFolderSubscriptions = false // TODO: add support
     override val isPushCapable = false // FIXME
 
-    override fun refreshFolderList() {
-        commandRefreshFolderList.refreshFolderList()
+    override fun refreshFolderList(): FolderPathDelimiter? {
+        return commandRefreshFolderList.refreshFolderList()
     }
 
     override fun sync(folderServerId: String, syncConfig: SyncConfig, listener: SyncListener) {
@@ -56,7 +57,7 @@ class JmapBackend(
         throw UnsupportedOperationException("not implemented")
     }
 
-    override fun downloadCompleteMessage(folderServerId: String, messageServerId: String) {
+    override suspend fun downloadCompleteMessage(folderServerId: String, messageServerId: String) {
         throw UnsupportedOperationException("not implemented")
     }
 

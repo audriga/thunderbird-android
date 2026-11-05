@@ -15,24 +15,23 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import app.k9mail.core.ui.compose.common.mvi.observeWithoutEffect
-import app.k9mail.core.ui.compose.designsystem.atom.button.ButtonFilled
-import app.k9mail.core.ui.compose.designsystem.atom.button.ButtonText
-import app.k9mail.core.ui.compose.designsystem.atom.text.TextBodyMedium
-import app.k9mail.core.ui.compose.designsystem.molecule.input.SelectInput
-import app.k9mail.core.ui.compose.designsystem.molecule.input.TextInput
-import app.k9mail.core.ui.compose.theme2.MainTheme
 import kotlin.reflect.KClass
 import kotlinx.collections.immutable.ImmutableList
-import net.thunderbird.feature.debug.settings.DebugSection
+import net.thunderbird.components.ui.bolt.atom.button.ButtonFilled
+import net.thunderbird.components.ui.bolt.atom.button.ButtonText
+import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
+import net.thunderbird.components.ui.bolt.molecule.input.SelectInput
+import net.thunderbird.components.ui.bolt.molecule.input.TextInput
+import net.thunderbird.components.ui.bolt.theme.BoltTheme
+import net.thunderbird.core.ui.contract.mvi.observeWithoutEffect
+import net.thunderbird.feature.account.profile.AccountProfile
 import net.thunderbird.feature.debug.settings.DebugSubSection
 import net.thunderbird.feature.debug.settings.R
 import net.thunderbird.feature.debug.settings.notification.DebugNotificationSectionContract.Event
 import net.thunderbird.feature.debug.settings.notification.DebugNotificationSectionContract.ViewModel
-import net.thunderbird.feature.mail.account.api.BaseAccount
 import net.thunderbird.feature.notification.api.content.MailNotification
 import net.thunderbird.feature.notification.api.content.Notification
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 private const val UUID_MAX_CHAR_DISPLAY = 4
 
@@ -66,7 +65,7 @@ internal fun DebugNotificationSection(
 internal fun DebugNotificationSection(
     state: DebugNotificationSectionContract.State,
     modifier: Modifier = Modifier,
-    onAccountSelect: (BaseAccount) -> Unit = {},
+    onAccountSelect: (AccountProfile) -> Unit = {},
     onOptionChange: (KClass<out Notification>) -> Unit = {},
     onTriggerSystemNotificationClick: () -> Unit = {},
     onTriggerInAppNotificationClick: () -> Unit = {},
@@ -76,43 +75,39 @@ internal fun DebugNotificationSection(
     onPreviewChange: (String) -> Unit = {},
     onClearStatusLog: () -> Unit = {},
 ) {
-    DebugSection(
-        title = stringResource(R.string.debug_settings_notifications_title),
+    Column(
+        verticalArrangement = Arrangement.spacedBy(BoltTheme.spacings.quadruple),
         modifier = modifier,
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(MainTheme.spacings.quadruple),
-        ) {
-            CommonNotificationInformation(state, onAccountSelect)
-            SystemNotificationSection(
-                state = state,
-                onOptionChange = onOptionChange,
-                onClick = onTriggerSystemNotificationClick,
-                onSenderChange = onSenderChange,
-                onSubjectChange = onSubjectChange,
-                onSummaryChange = onSummaryChange,
-                onPreviewChange = onPreviewChange,
-            )
-            InAppNotificationSection(
-                selectedNotificationType = state.selectedInAppNotificationType,
-                options = state.inAppNotificationTypes,
-                onOptionChange = onOptionChange,
-                onClick = onTriggerInAppNotificationClick,
-            )
-            NotificationStatusLog(state.notificationStatusLog, onClearStatusLog)
-        }
+        CommonNotificationInformation(state, onAccountSelect)
+        SystemNotificationSection(
+            state = state,
+            onOptionChange = onOptionChange,
+            onClick = onTriggerSystemNotificationClick,
+            onSenderChange = onSenderChange,
+            onSubjectChange = onSubjectChange,
+            onSummaryChange = onSummaryChange,
+            onPreviewChange = onPreviewChange,
+        )
+        InAppNotificationSection(
+            selectedNotificationType = state.selectedInAppNotificationType,
+            options = state.inAppNotificationTypes,
+            onOptionChange = onOptionChange,
+            onClick = onTriggerInAppNotificationClick,
+        )
+        NotificationStatusLog(state.notificationStatusLog, onClearStatusLog)
     }
 }
 
 @Composable
 private fun CommonNotificationInformation(
     state: DebugNotificationSectionContract.State,
-    onAccountSelect: (BaseAccount) -> Unit,
+    onAccountSelect: (AccountProfile) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     DebugSubSection(
         title = stringResource(R.string.debug_settings_notifications_common_notification_information),
-        modifier = modifier.padding(start = MainTheme.spacings.double),
+        modifier = modifier.padding(start = BoltTheme.spacings.double),
     ) {
         val loadingText = stringResource(R.string.debug_settings_notifications_loading)
         SelectInput(
@@ -123,10 +118,9 @@ private fun CommonNotificationInformation(
             },
             optionToStringTransformation = { account ->
                 account?.let { account ->
-                    val uuidStart = account.uuid.take(UUID_MAX_CHAR_DISPLAY)
-                    val uuidEnd = account.uuid.take(UUID_MAX_CHAR_DISPLAY)
-                    val accountDisplay = account.name ?: account.email
-                    "$uuidStart..$uuidEnd - $accountDisplay"
+                    val uuidStart = account.id.toString().take(UUID_MAX_CHAR_DISPLAY)
+                    val uuidEnd = account.id.toString().take(UUID_MAX_CHAR_DISPLAY)
+                    "$uuidStart..$uuidEnd - ${account.name}"
                 } ?: loadingText
             },
         )
@@ -146,7 +140,7 @@ private fun SystemNotificationSection(
 ) {
     DebugSubSection(
         title = stringResource(R.string.debug_settings_notifications_system_notification),
-        modifier = modifier.padding(start = MainTheme.spacings.double),
+        modifier = modifier.padding(start = BoltTheme.spacings.double),
     ) {
         Column {
             TriggerNotificationSection(
@@ -193,7 +187,7 @@ private fun InAppNotificationSection(
 ) {
     DebugSubSection(
         title = stringResource(R.string.debug_settings_notifications_in_app_notification),
-        modifier = modifier.padding(start = MainTheme.spacings.double),
+        modifier = modifier.padding(start = BoltTheme.spacings.double),
     ) {
         TriggerNotificationSection(
             selectedNotificationType = selectedNotificationType,
@@ -213,7 +207,7 @@ private fun TriggerNotificationSection(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(MainTheme.spacings.oneHalf),
+        verticalArrangement = Arrangement.spacedBy(BoltTheme.spacings.oneHalf),
         modifier = modifier,
     ) {
         val selectedOption = remember(selectedNotificationType, options) {
@@ -243,7 +237,7 @@ private fun ColumnScope.NotificationStatusLog(
 ) {
     AnimatedVisibility(
         visible = notificationStatusLog.isNotEmpty(),
-        modifier = modifier.padding(start = MainTheme.spacings.double),
+        modifier = modifier.padding(start = BoltTheme.spacings.double),
     ) {
         DebugSubSection(
             title = stringResource(R.string.debug_settings_notification_status_log),

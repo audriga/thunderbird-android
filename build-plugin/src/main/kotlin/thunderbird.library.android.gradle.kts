@@ -1,42 +1,86 @@
+import net.thunderbird.gradle.plugin.ProjectConfig
+
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("thunderbird.quality.detekt.typed")
-    id("thunderbird.quality.spotless")
+    id("net.thunderbird.gradle.plugin.quality.coverage")
+    id("net.thunderbird.gradle.plugin.quality.detekt")
+    id("net.thunderbird.gradle.plugin.quality.spotless")
 }
 
 android {
-    configureSharedConfig(project)
+    compileSdk = ProjectConfig.Android.sdkCompile
+
+    defaultConfig {
+        minSdk = ProjectConfig.Android.sdkMin
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    compileOptions {
+        sourceCompatibility = ProjectConfig.Compiler.javaCompatibility
+        targetCompatibility = ProjectConfig.Compiler.javaCompatibility
+    }
 
     buildFeatures {
         buildConfig = false
     }
 
-    kotlinOptions {
-        jvmTarget = ThunderbirdProjectConfig.Compiler.javaCompatibility.toString()
+    lint {
+        warningsAsErrors = false
+        abortOnError = true
+        checkDependencies = true
+        @Suppress("UnstableApiUsage")
+        lintConfig = isolated.rootProject.projectDirectory.file("config/lint/lint.xml").asFile
+        checkReleaseBuilds = System.getenv("CI_CHECK_RELEASE_BUILDS")?.toBoolean() ?: true
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/DEPENDENCIES",
+                "/META-INF/LICENSE",
+                "/META-INF/LICENSE.txt",
+                "/META-INF/NOTICE",
+                "/META-INF/NOTICE.txt",
+                "/META-INF/README",
+                "/META-INF/README.md",
+                "/META-INF/CHANGES",
+                "/LICENSE.txt",
+            )
+        }
     }
 
     testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
+        unitTests.all {
+            it.jvmArgs(ProjectConfig.Testing.robolectricJvmArgs)
         }
     }
 }
 
 kotlin {
-    sourceSets.all {
-        compilerOptions {
-            freeCompilerArgs.add("-Xwhen-guards")
-        }
+    compilerOptions {
+        jvmTarget.set(ProjectConfig.Compiler.jvmTarget)
     }
 }
 
 dependencies {
     implementation(platform(libs.kotlin.bom))
     implementation(platform(libs.koin.bom))
+    implementation(platform(libs.tb.mobile.components.bom))
 
-    implementation(libs.bundles.shared.jvm.main)
-    implementation(libs.bundles.shared.jvm.android)
+    implementation(libs.bundles.shared.android)
+    implementation(libs.bundles.shared.tmc.components)
 
-    testImplementation(libs.bundles.shared.jvm.test)
+    testImplementation(libs.bundles.shared.android.test)
+    testImplementation(libs.bundles.shared.tmc.components.test)
+}
+
+tasks.register("testsOnCi") {
+    dependsOn(
+        tasks.withType<Test>().matching {
+            it.name != "testReleaseUnitTest"
+        },
+    )
 }

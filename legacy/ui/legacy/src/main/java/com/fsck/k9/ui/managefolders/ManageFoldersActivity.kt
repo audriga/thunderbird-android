@@ -3,22 +3,21 @@ package com.fsck.k9.ui.managefolders
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import androidx.core.os.bundleOf
 import androidx.navigation.NavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.fsck.k9.ui.R
-import com.fsck.k9.ui.base.K9Activity
+import com.fsck.k9.ui.base.BaseActivity
 import com.fsck.k9.ui.base.extensions.findNavController
-import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.feature.account.AccountId
 
-class ManageFoldersActivity : K9Activity() {
+class ManageFoldersActivity : BaseActivity() {
     private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setLayout(R.layout.activity_manage_folders)
-        setTitle(R.string.folders_action)
+        setTitle(R.string.account_setup_visibility_and_syncing)
 
         val accountUuid = intent.getStringExtra(EXTRA_ACCOUNT) ?: error("Missing Intent extra '$EXTRA_ACCOUNT'")
 
@@ -28,9 +27,9 @@ class ManageFoldersActivity : K9Activity() {
     private fun initializeNavController(accountUuid: String) {
         navController = findNavController(R.id.nav_host_fragment)
 
-        val fragmentArguments = bundleOf(
-            ManageFoldersFragment.EXTRA_ACCOUNT to accountUuid,
-        )
+        val fragmentArguments = Bundle().apply {
+            putString(ManageFoldersFragment.EXTRA_ACCOUNT, accountUuid)
+        }
         navController.setGraph(R.navigation.navigation_manage_folders, fragmentArguments)
 
         val appBarConfiguration = AppBarConfiguration(topLevelDestinationIds = emptySet())
@@ -50,9 +49,9 @@ class ManageFoldersActivity : K9Activity() {
         private const val EXTRA_ACCOUNT = "account"
 
         @JvmStatic
-        fun launch(activity: Activity, account: LegacyAccount) {
+        fun launch(activity: Activity, accountId: AccountId) {
             val intent = Intent(activity, ManageFoldersActivity::class.java).apply {
-                putExtra(EXTRA_ACCOUNT, account.uuid)
+                putExtra(EXTRA_ACCOUNT, accountId.toString())
             }
             activity.startActivity(intent)
         }

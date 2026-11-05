@@ -23,7 +23,7 @@ import com.fsck.k9.crypto.MessageCryptoStructureDetector;
 import com.fsck.k9.helper.ListUnsubscribeHelper;
 import com.fsck.k9.helper.UnsubscribeUri;
 import com.fsck.k9.mail.Address;
-import com.fsck.k9.mail.Flag;
+import net.thunderbird.core.common.mail.Flag;
 import com.fsck.k9.mail.Message;
 import kotlin.Lazy;
 import net.fortuna.ical4j.data.ParserException;
@@ -38,7 +38,7 @@ import com.fsck.k9.message.html.HtmlConverter;
 import app.k9mail.html.cleaner.HtmlProcessor;
 import org.json.JSONException;
 import org.openintents.openpgp.util.OpenPgpUtils;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.legacy.logging.Log;
 
 import static com.fsck.k9.mail.internet.MimeUtility.getHeaderParameter;
 import static com.fsck.k9.mail.internet.Viewable.Alternative;
@@ -51,6 +51,8 @@ import static org.koin.java.KoinJavaComponent.inject;
 
 public class MessageViewInfoExtractor {
     Lazy<JavaScriptIsolate> javaScriptIsolateLazy = inject(JavaScriptIsolate.class);
+    private static final String TAG = "MessageViewInfoExtractor";
+
     private static final String TEXT_DIVIDER =
             "------------------------------------------------------------------------";
     private static final int TEXT_DIVIDER_LENGTH = TEXT_DIVIDER.length();
@@ -81,7 +83,7 @@ public class MessageViewInfoExtractor {
         boolean shouldRenderSML = new SMLTrustHelper().shouldRenderSML(message, cryptoAnnotations, cryptoContentPart);
         if (cryptoContentPart == null) {
             if (cryptoAnnotations != null && !cryptoAnnotations.isEmpty()) {
-                Log.e("Got crypto message cryptoContentAnnotations but no crypto root part!");
+                Log.e(TAG, "Got crypto message cryptoContentAnnotations but no crypto root part!");
             }
             MessageViewInfo messageViewInfo = extractSimpleMessageForView(message, message);
             return messageViewInfo.withSubject(message.getSubject(), false);
@@ -167,7 +169,7 @@ public class MessageViewInfoExtractor {
         UnsubscribeUri preferredUnsubscribeUri = ListUnsubscribeHelper.INSTANCE.getPreferredListUnsubscribeUri(message);
 
         return MessageViewInfo.createWithExtractedContent(
-                message, contentPart, isMessageIncomplete, viewable.html, attachmentInfos, attachmentResolver,
+                message, contentPart, isMessageIncomplete, viewable.html, HtmlConverter.textToHtml(viewable.text), attachmentInfos, attachmentResolver,
                 preferredUnsubscribeUri, viewable.messageData);
     }
 

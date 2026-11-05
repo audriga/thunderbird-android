@@ -10,11 +10,11 @@ dependencies {
     api(projects.core.mail.mailserver)
     api(projects.core.android.common)
     api(projects.core.android.account)
+    api(projects.core.common)
     api(projects.core.preference.impl)
-    api(projects.core.android.logging)
-    api(projects.core.logging.implFile)
-    api(projects.core.logging.implComposite)
+    api(projects.core.logging.api)
     api(projects.core.android.network)
+    api(libs.tb.mobile.components.core.outcome)
     api(projects.feature.mail.folder.api)
     api(projects.feature.account.storage.legacy)
 
@@ -23,61 +23,63 @@ dependencies {
     api(projects.legacy.di)
     api(projects.legacy.mailstore)
     api(projects.legacy.message)
+    implementation(projects.legacy.logging)
     implementation(projects.feature.notification.api)
 
     implementation(projects.plugins.openpgpApiLib.openpgpApi)
     implementation(projects.feature.telemetry.api)
     implementation(projects.core.featureflag)
-    implementation(projects.core.logging.implComposite)
 
     api(libs.androidx.annotation)
 
     implementation(libs.okio)
     implementation(libs.commons.io)
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.localbroadcastmanager)
     implementation(libs.jsoup)
     implementation(libs.moshi)
-    implementation(libs.timber)
     implementation(libs.mime4j.core)
     implementation(libs.mime4j.dom)
+    implementation(libs.uri)
     implementation(projects.feature.navigation.drawer.api)
+    implementation(projects.feature.mail.message.list.api)
+    implementation(projects.feature.mail.message.reader.api)
+    implementation(projects.feature.mail.message.composer.api)
 
+    // SML Dependencies.
+    // TODO: Check which ones are still needed.
     implementation(libs.mustache)
     implementation(libs.jackson)
-
-    // TODO
     //implementation(libs.ical4j)
     //implementation(libs.ical4jvcard)
     implementation(libs.ical4jserializer)
-
     implementation(files("../../libs/h2lj.jar"))
     implementation(files("../../libs/hetc.jar"))
     implementation(files("../../libs/ld2h.jar"))
     implementation(files("../../libs/kitinerary-android.aar"))
     implementation(libs.androidx.javascript.engine)
 
-    //implementation files('libs/h2lj.jar', 'libs/hetc.jar', 'libs/ld2h.jar')
-
-    testApi(projects.core.testing)
-    testApi(projects.core.android.testing)
-    testImplementation(projects.core.logging.testing)
+    testImplementation(projects.core.android.account.fake)
+    testImplementation(projects.core.testing)
+    testImplementation(libs.tb.mobile.components.ui.testing)
+    testImplementation(projects.core.android.testing)
     testImplementation(projects.feature.telemetry.noop)
     testImplementation(projects.mail.testing)
     testImplementation(projects.backend.imap)
     testImplementation(projects.mail.protocols.smtp)
     testImplementation(projects.legacy.storage)
+    testImplementation(projects.core.android.common)
 
-    testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.reflect)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.jdom2)
+    testImplementation(libs.mockito.kotlin)
 
     // test fakes
     testImplementation(projects.feature.account.fake)
+    testImplementation(projects.feature.notification.testing)
 }
 
 android {
@@ -86,4 +88,15 @@ android {
     buildFeatures {
         buildConfig = true
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+}
+
+codeCoverage {
+    branchCoverage = 41
+    lineCoverage = 46
 }

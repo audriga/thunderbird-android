@@ -3,15 +3,15 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.legacy.ui.legacy)
     implementation(projects.legacy.core)
-    implementation(projects.legacy.storage)
     implementation(projects.legacy.cryptoOpenpgp)
+    implementation(projects.legacy.logging)
+    implementation(projects.legacy.storage)
+    implementation(projects.legacy.ui.legacy)
     implementation(projects.backend.imap)
     implementation(projects.backend.pop3)
 
     implementation(projects.core.featureflag)
-    implementation(projects.core.logging.api)
     implementation(projects.feature.launcher)
 
     implementation(projects.feature.account.setup)
@@ -23,23 +23,22 @@ dependencies {
     implementation(projects.feature.widget.messageList)
 
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
     implementation(libs.preferencex)
-    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.appauth)
 
     implementation(libs.glide)
     annotationProcessor(libs.glide.compiler)
 
-    if (project.hasProperty("k9mail.enableLeakCanary") && project.property("k9mail.enableLeakCanary") == "true") {
-        debugImplementation(libs.leakcanary.android)
-    }
-
-    testImplementation(projects.core.logging.testing)
+    testImplementation(projects.core.android.account.fake)
     testImplementation(libs.robolectric)
     testImplementation(projects.feature.account.fake)
 }
 
 android {
     namespace = "com.fsck.k9.common"
+}
+
+codeCoverage {
+    branchCoverage = 10
+    lineCoverage = 4
 }

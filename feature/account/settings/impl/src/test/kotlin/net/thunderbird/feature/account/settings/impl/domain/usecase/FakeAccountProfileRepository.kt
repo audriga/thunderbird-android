@@ -12,10 +12,14 @@ internal class FakeAccountProfileRepository(
     initialAccountProfile: AccountProfile? = null,
 ) : AccountProfileRepository {
 
-    private val accountProfileState = MutableStateFlow<AccountProfile?>(initialAccountProfile)
+    private val accountProfileState = MutableStateFlow(initialAccountProfile)
     private val accountProfile: StateFlow<AccountProfile?> = accountProfileState
 
-    override fun getById(accountId: AccountId): Flow<AccountProfile?> {
+    override fun getAll(): Flow<List<AccountProfile>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getById(id: AccountId): Flow<AccountProfile?> {
         return accountProfile
     }
 

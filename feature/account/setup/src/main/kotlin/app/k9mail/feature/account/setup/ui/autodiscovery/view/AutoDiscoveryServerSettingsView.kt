@@ -9,19 +9,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import app.k9mail.autodiscovery.api.ConnectionSecurity
-import app.k9mail.core.ui.compose.designsystem.atom.icon.Icon
-import app.k9mail.core.ui.compose.designsystem.atom.icon.Icons
-import app.k9mail.core.ui.compose.designsystem.atom.text.TextBodyLarge
-import app.k9mail.core.ui.compose.designsystem.atom.text.TextBodyMedium
-import app.k9mail.core.ui.compose.theme2.MainTheme
 import app.k9mail.feature.account.setup.ui.autodiscovery.toAutoDiscoveryConnectionSecurityString
+import net.thunderbird.components.ui.bolt.atom.icon.Icon
+import net.thunderbird.components.ui.bolt.atom.icon.Icons
+import net.thunderbird.components.ui.bolt.atom.text.TextBodyLarge
+import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
+import net.thunderbird.components.ui.bolt.theme.BoltTheme
 import net.thunderbird.core.common.net.Hostname
 import net.thunderbird.core.common.net.isIpAddress
 
@@ -35,9 +35,9 @@ internal fun AutoDiscoveryServerSettingsView(
     username: String = "",
     isIncoming: Boolean = true,
 ) {
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     Column(
-        verticalArrangement = Arrangement.spacedBy(MainTheme.spacings.default),
+        verticalArrangement = Arrangement.spacedBy(BoltTheme.spacings.default),
         modifier = modifier,
     ) {
         TextBodyLarge(
@@ -105,7 +105,7 @@ private fun ServerSettingRow(
         if (showIcon) {
             Icon(
                 imageVector = icon,
-                modifier = Modifier.padding(end = MainTheme.spacings.default),
+                modifier = Modifier.padding(end = BoltTheme.spacings.default),
             )
         }
         TextBodyMedium(

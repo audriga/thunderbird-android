@@ -2,8 +2,9 @@ package com.fsck.k9
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.fsck.k9.notification.FakePlatformConfigProvider
 import com.fsck.k9.preferences.UnifiedInboxConfigurator
-import net.thunderbird.core.android.account.AccountManager
+import net.thunderbird.core.android.account.LegacyAccountManager
 import net.thunderbird.core.preference.GeneralSettings
 import net.thunderbird.core.preference.GeneralSettingsManager
 import net.thunderbird.core.preference.display.DisplaySettings
@@ -22,16 +23,17 @@ import org.mockito.junit.MockitoJUnitRunner
 @RunWith(MockitoJUnitRunner::class)
 class UnifiedInboxConfiguratorTest {
 
-    private lateinit var accountManager: AccountManager
+    private lateinit var accountManager: LegacyAccountManager
     private lateinit var generalSettingsManager: GeneralSettingsManager
     private lateinit var configurator: UnifiedInboxConfigurator
 
     @Before
     fun setUp() {
-        accountManager = mock(AccountManager::class.java)
+        accountManager = mock(LegacyAccountManager::class.java)
         generalSettingsManager =
             FakeGeneralSettingsManager(
                 GeneralSettings(
+                    platformConfigProvider = FakePlatformConfigProvider(),
                     display = DisplaySettings(
                         inboxSettings = DisplayInboxSettings(
                             isShowUnifiedInbox = false,
@@ -58,7 +60,7 @@ class UnifiedInboxConfiguratorTest {
     @Test
     fun `configureUnifiedInbox should enable unified inbox when there are exactly two accounts`() {
         // Given
-        `when`(accountManager.getAccounts()).thenReturn(listOf(mock(), mock()))
+        `when`(accountManager.findAll()).thenReturn(listOf(mock(), mock()))
 
         // When
         configurator.configureUnifiedInbox()
@@ -68,9 +70,21 @@ class UnifiedInboxConfiguratorTest {
     }
 
     @Test
+    fun `configureUnifiedInbox should disable unified inbox when there is only one account`() {
+        // Given
+        `when`(accountManager.findAll()).thenReturn(listOf(mock()))
+
+        // When
+        configurator.configureUnifiedInbox()
+
+        // Then
+        assertThat(generalSettingsManager.getConfig().display.inboxSettings.isShowUnifiedInbox).isEqualTo(false)
+    }
+
+    @Test
     fun `configureUnifiedInbox should not enable unified inbox when there are less than two accounts`() {
         // Given
-        `when`(accountManager.getAccounts()).thenReturn(listOf(mock()))
+        `when`(accountManager.findAll()).thenReturn(listOf(mock()))
 
         // When
         configurator.configureUnifiedInbox()
@@ -82,7 +96,7 @@ class UnifiedInboxConfiguratorTest {
     @Test
     fun `configureUnifiedInbox should not enable unified inbox when there are more than two accounts`() {
         // Given
-        `when`(accountManager.getAccounts()).thenReturn(listOf(mock(), mock(), mock()))
+        `when`(accountManager.findAll()).thenReturn(listOf(mock(), mock(), mock()))
 
         // When
         configurator.configureUnifiedInbox()
@@ -93,8 +107,10 @@ class UnifiedInboxConfiguratorTest {
 }
 
 private class FakeGeneralSettingsManager(private var generalSettings: GeneralSettings) : GeneralSettingsManager {
+    @Deprecated("Use PreferenceManager<GeneralSettings>.getConfig() instead")
     override fun getSettings() = error("Not implemented")
 
+    @Deprecated("Use PreferenceManager<GeneralSettings>.getConfigFlow() instead")
     override fun getSettingsFlow() = error("Not implemented")
 
     override fun save(config: GeneralSettings) {

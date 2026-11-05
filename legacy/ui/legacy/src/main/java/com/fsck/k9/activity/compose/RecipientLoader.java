@@ -29,12 +29,14 @@ import com.fsck.k9.mail.Address;
 import com.fsck.k9.view.RecipientSelectView.Recipient;
 import com.fsck.k9.view.RecipientSelectView.RecipientCryptoStatus;
 import org.apache.james.mime4j.util.CharsetUtil;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.legacy.logging.Log;
 
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 
 
 public class RecipientLoader extends AsyncTaskLoader<List<Recipient>> {
+    private static final String TAG = "RecipientLoader";
+
     /*
      * Indexes of the fields in the projection. This must match the order in {@link #PROJECTION}.
      */
@@ -234,7 +236,7 @@ public class RecipientLoader extends AsyncTaskLoader<List<Recipient>> {
                 return;
             }
         } catch (Exception e) {
-            Log.e(e, "Couldn't obtain recipients from crypto provider!");
+            Log.e(TAG, e, "Couldn't obtain recipients from crypto provider!");
             return;
         }
 

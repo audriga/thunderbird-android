@@ -1,0 +1,87 @@
+package net.thunderbird.core.ui.setting.dialog.ui.fake
+
+import kotlinx.collections.immutable.persistentListOf
+import net.thunderbird.components.ui.bolt.atom.icon.Icons
+import net.thunderbird.core.ui.setting.SettingValue
+import net.thunderbird.core.ui.setting.SettingValue.SegmentedButton.SegmentedButtonOption
+import net.thunderbird.core.ui.setting.SettingValue.Select.SelectOption
+
+internal object FakeSettingData {
+
+    val text = SettingValue.Text(
+        id = "text",
+        icon = { Icons.Outlined.Delete },
+        title = { "Title" },
+        description = { "Description" },
+        value = "Value",
+    )
+
+    val actionText = SettingValue.ActionText(
+        id = "text",
+        icon = { Icons.Outlined.Delete },
+        title = { "Title" },
+        description = { "Description" },
+        value = "Value",
+        onClick = {},
+    )
+
+    val color = SettingValue.Color(
+        id = "color",
+        icon = { Icons.Outlined.Delete },
+        title = { "Title" },
+        description = { "Description" },
+        value = 0xFFFF0000.toInt(),
+        colors = persistentListOf(
+            0xFFFF0000.toInt(),
+            0xFF00FF00.toInt(),
+            0xFF0000FF.toInt(),
+        ),
+    )
+
+    private val segmentedButtonOptions = persistentListOf(
+        SegmentedButtonOption(id = "1", title = { "Option 1" }, value = "1"),
+        SegmentedButtonOption(id = "2", title = { "Option 2" }, value = "2"),
+        SegmentedButtonOption(id = "3", title = { "Option 3" }, value = "3"),
+    )
+
+    val segmentedButton = SettingValue.SegmentedButton(
+        id = "compact_select_single_option",
+        title = { "Title" },
+        description = { "Description" },
+        value = segmentedButtonOptions[1],
+        options = segmentedButtonOptions,
+    )
+
+    private val selectOptions = persistentListOf(
+        SelectOption("1") { "Option 1" },
+        SelectOption("2") { "Option 2" },
+        SelectOption("3") { "Option 3" },
+        SelectOption("4") { "Option 4" },
+        SelectOption("5") { "Option 5" },
+        SelectOption("6") { "Option 6" },
+    )
+
+    val select = SettingValue.Select(
+        id = "select_single_option",
+        title = { "Title" },
+        icon = { Icons.Outlined.Info },
+        description = { "Description" },
+        value = selectOptions[1],
+        options = selectOptions,
+    )
+
+    val switch = SettingValue.Switch(
+        id = "switch",
+        title = { "Title" },
+        description = { "Description" },
+        value = true,
+    )
+
+    val settings = persistentListOf(
+        text,
+        color,
+        segmentedButton,
+        select,
+        switch,
+    )
+}

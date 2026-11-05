@@ -6,6 +6,7 @@ import app.k9mail.core.ui.compose.testing.setContentWithTheme
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import kotlin.test.Test
+import net.thunderbird.core.ui.setting.emptySettings
 import net.thunderbird.feature.account.AccountIdFactory
 import net.thunderbird.feature.account.settings.impl.ui.general.GeneralSettingsContract.Effect
 import net.thunderbird.feature.account.settings.impl.ui.general.GeneralSettingsContract.State
@@ -24,6 +25,8 @@ internal class GeneralSettingsScreenKtTest : ComposeTest() {
                 accountId = accountId,
                 onBack = { onBackCounter++ },
                 viewModel = viewModel,
+                provider = FakeSettingViewProvider(),
+                builder = { _, _, _ -> emptySettings() },
             )
         }
 
@@ -46,6 +49,8 @@ internal class GeneralSettingsScreenKtTest : ComposeTest() {
                 accountId = accountId,
                 onBack = { onBackCounter++ },
                 viewModel = viewModel,
+                provider = FakeSettingViewProvider(),
+                builder = { _, _, _ -> emptySettings() },
             )
         }
 

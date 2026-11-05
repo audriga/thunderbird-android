@@ -15,13 +15,14 @@ import com.fsck.k9.mail.internet.AddressHeaderBuilder;
 import com.fsck.k9.mail.internet.Headers;
 import net.thunderbird.core.android.account.Identity;
 import net.thunderbird.core.android.account.QuoteStyle;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.feature.mail.message.composer.signature.HtmlSignatureSanitizer;
+import net.thunderbird.legacy.logging.Log;
 import com.fsck.k9.K9;
 import app.k9mail.legacy.message.controller.MessageReference;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BoundaryGenerator;
-import com.fsck.k9.mail.Flag;
+import net.thunderbird.core.common.mail.Flag;
 import net.thunderbird.core.common.exception.MessagingException;
 import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeBodyPart;
@@ -39,6 +40,8 @@ import org.apache.james.mime4j.util.MimeUtil;
 
 
 public abstract class MessageBuilder {
+    private static final String TAG = "MessageBuilder";
+
     private final MessageIdGenerator messageIdGenerator;
     protected final BoundaryGenerator boundaryGenerator;
     protected final CoreResourceProvider resourceProvider;
@@ -73,17 +76,20 @@ public abstract class MessageBuilder {
     protected boolean isDraft;
     private boolean isPgpInlineEnabled;
 
-    private GeneralSettingsManager settingsManager;
+    private final GeneralSettingsManager settingsManager;
+    private final HtmlSignatureSanitizer htmlSignatureSanitizer;
 
     protected MessageBuilder(MessageIdGenerator messageIdGenerator,
             BoundaryGenerator boundaryGenerator,
             CoreResourceProvider resourceProvider,
-            GeneralSettingsManager settingsManager
+            GeneralSettingsManager settingsManager,
+            HtmlSignatureSanitizer htmlSignatureSanitizer
         ) {
         this.messageIdGenerator = messageIdGenerator;
         this.boundaryGenerator = boundaryGenerator;
         this.resourceProvider = resourceProvider;
         this.settingsManager = settingsManager;
+        this.htmlSignatureSanitizer = htmlSignatureSanitizer;
     }
 
     /**
@@ -317,7 +323,7 @@ public abstract class MessageBuilder {
      *         original message.
      */
     private TextBody buildText(boolean isDraft, SimpleMessageFormat simpleMessageFormat) {
-        TextBodyBuilder textBodyBuilder = new TextBodyBuilder(text, settingsManager);
+        final TextBodyBuilder textBodyBuilder = new TextBodyBuilder(text, settingsManager, htmlSignatureSanitizer);
 
         /*
          * Find out if we need to include the original message as quoted text.
@@ -351,6 +357,7 @@ public abstract class MessageBuilder {
         if (useSignature) {
             textBodyBuilder.setAppendSignature(true);
             textBodyBuilder.setSignature(signature);
+            textBodyBuilder.setSignatureIsHtml(identity.getSignatureIsHtml());
             textBodyBuilder.setSignatureBeforeQuotedText(isSignatureBeforeQuotedText);
         } else {
             textBodyBuilder.setAppendSignature(false);
@@ -621,7 +628,7 @@ public abstract class MessageBuilder {
     final protected void deliverResult() {
         synchronized (callbackLock) {
             if (asyncCallback == null) {
-                Log.d("Keeping message builder result in queue for later delivery");
+                Log.d(TAG, "Keeping message builder result in queue for later delivery");
                 return;
             }
             if (queuedMimeMessage != null) {

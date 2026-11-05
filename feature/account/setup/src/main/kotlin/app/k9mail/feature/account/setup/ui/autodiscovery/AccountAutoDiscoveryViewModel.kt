@@ -5,10 +5,8 @@ import app.k9mail.autodiscovery.api.AutoDiscoveryResult
 import app.k9mail.autodiscovery.api.ImapServerSettings
 import app.k9mail.autodiscovery.api.IncomingServerSettings
 import app.k9mail.autodiscovery.demo.DemoServerSettings
-import app.k9mail.core.ui.compose.common.mvi.BaseViewModel
 import app.k9mail.feature.account.common.domain.AccountDomainContract
 import app.k9mail.feature.account.common.domain.entity.IncomingProtocolType
-import app.k9mail.feature.account.common.domain.input.StringInputField
 import app.k9mail.feature.account.oauth.domain.entity.OAuthResult
 import app.k9mail.feature.account.oauth.ui.AccountOAuthContract
 import app.k9mail.feature.account.setup.domain.DomainContract.UseCase
@@ -21,7 +19,9 @@ import app.k9mail.feature.account.setup.ui.autodiscovery.AccountAutoDiscoveryCon
 import app.k9mail.feature.account.setup.ui.autodiscovery.AccountAutoDiscoveryContract.State
 import app.k9mail.feature.account.setup.ui.autodiscovery.AccountAutoDiscoveryContract.Validator
 import kotlinx.coroutines.launch
-import net.thunderbird.core.common.domain.usecase.validation.ValidationResult
+import net.thunderbird.components.core.outcome.Outcome
+import net.thunderbird.core.ui.contract.mvi.BaseViewModel
+import net.thunderbird.core.validation.input.StringInputField
 
 @Suppress("TooManyFunctions")
 internal class AccountAutoDiscoveryViewModel(
@@ -41,13 +41,19 @@ internal class AccountAutoDiscoveryViewModel(
     override fun event(event: Event) {
         when (event) {
             is Event.EmailAddressChanged -> changeEmailAddress(event.emailAddress)
+
             is Event.PasswordChanged -> changePassword(event.password)
+
             is Event.ResultApprovalChanged -> changeConfigurationApproval(event.confirmed)
+
             is Event.OnOAuthResult -> onOAuthResult(event.result)
 
             Event.OnNextClicked -> onNext()
+
             Event.OnBackClicked -> onBack()
+
             Event.OnRetryClicked -> onRetry()
+
             Event.OnEditConfigurationClicked -> {
                 navigateNext(isAutomaticConfig = false)
             }
@@ -95,7 +101,9 @@ internal class AccountAutoDiscoveryViewModel(
                 }
 
             ConfigStep.PASSWORD -> submitPassword()
+
             ConfigStep.OAUTH -> Unit
+
             ConfigStep.MANUAL_SETUP -> navigateNext(isAutomaticConfig = false)
         }
     }
@@ -110,11 +118,11 @@ internal class AccountAutoDiscoveryViewModel(
     private fun submitEmail() {
         with(state.value) {
             val emailValidationResult = validator.validateEmailAddress(emailAddress.value)
-            val hasError = emailValidationResult is ValidationResult.Failure
+            val hasError = emailValidationResult is Outcome.Failure
 
             updateState {
                 it.copy(
-                    emailAddress = it.emailAddress.updateFromValidationResult(emailValidationResult),
+                    emailAddress = it.emailAddress.updateFromValidationOutcome(emailValidationResult),
                 )
             }
 
@@ -208,13 +216,13 @@ internal class AccountAutoDiscoveryViewModel(
                 emailValidationResult,
                 passwordValidationResult,
                 configurationApprovalValidationResult,
-            ).any { it is ValidationResult.Failure }
+            ).any { it is Outcome.Failure }
 
             updateState {
                 it.copy(
-                    emailAddress = it.emailAddress.updateFromValidationResult(emailValidationResult),
-                    password = it.password.updateFromValidationResult(passwordValidationResult),
-                    configurationApproved = it.configurationApproved.updateFromValidationResult(
+                    emailAddress = it.emailAddress.updateFromValidationOutcome(emailValidationResult),
+                    password = it.password.updateFromValidationOutcome(passwordValidationResult),
+                    configurationApproved = it.configurationApproved.updateFromValidationOutcome(
                         configurationApprovalValidationResult,
                     ),
                 )

@@ -18,7 +18,9 @@ import com.fsck.k9.preferences.Settings.PseudoEnumSetting;
 import com.fsck.k9.preferences.Settings.SettingsDescription;
 import com.fsck.k9.preferences.Settings.StringSetting;
 import com.fsck.k9.preferences.Settings.V;
-import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo104;
+import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo106;
+import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo107;
+import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo112;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo53;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo54;
 import com.fsck.k9.preferences.upgrader.AccountSettingsUpgraderTo74;
@@ -33,6 +35,7 @@ import net.thunderbird.core.android.account.MessageFormat;
 import net.thunderbird.core.android.account.QuoteStyle;
 import net.thunderbird.core.android.account.ShowPictures;
 import net.thunderbird.core.android.account.SortType;
+import net.thunderbird.feature.account.storage.legacy.serializer.ServerSettingsDtoSerializer;
 import net.thunderbird.core.android.account.SmlVariant;
 import net.thunderbird.feature.account.storage.profile.AvatarTypeDto;
 import net.thunderbird.feature.mail.folder.api.SpecialFolderSelection;
@@ -47,6 +50,8 @@ import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAU
 import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_SORT_ASCENDING;
 import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_STRIP_SIGNATURE;
 import static net.thunderbird.core.android.account.AccountDefaultsProvider.DEFAULT_VISIBLE_LIMIT;
+import static net.thunderbird.feature.account.storage.legacy.LegacyAccountStorageHandler.FOLDER_PATH_DELIMITER_KEY;
+import static net.thunderbird.feature.mail.folder.api.FolderPathDelimiterKt.FOLDER_DEFAULT_PATH_DELIMITER;
 
 
 class AccountSettingsDescriptions {
@@ -77,7 +82,8 @@ class AccountSettingsDescriptions {
         ));
         s.put("automaticCheckIntervalMinutes", Settings.versions(
                 new V(1, new IntegerResourceSetting(-1, R.array.check_frequency_values)),
-                new V(61, new IntegerResourceSetting(60, R.array.check_frequency_values))
+                new V(61, new IntegerResourceSetting(60, R.array.check_frequency_values)),
+                new V(107, new IntegerResourceSetting(15, R.array.check_frequency_values))
         ));
         s.put("chipColor", Settings.versions(
                 new V(1, new ColorSetting(0xFF0000FF))
@@ -148,7 +154,8 @@ class AccountSettingsDescriptions {
                 ))
         ));
         s.put("messageFormatAuto", Settings.versions(
-                new V(2, new BooleanSetting(DEFAULT_MESSAGE_FORMAT_AUTO))
+                new V(2, new BooleanSetting(DEFAULT_MESSAGE_FORMAT_AUTO)),
+                new V(112, null)
         ));
         s.put("messageReadReceipt", Settings.versions(
                 new V(1, new BooleanSetting(DEFAULT_MESSAGE_READ_RECEIPT))
@@ -312,6 +319,10 @@ class AccountSettingsDescriptions {
         s.put("avatarIconName", Settings.versions(
             new V(104, new StringSetting(null))
         ));
+        s.put(
+            FOLDER_PATH_DELIMITER_KEY,
+            Settings.versions(new V(106, new StringSetting(FOLDER_DEFAULT_PATH_DELIMITER)))
+        );
         // note that there is no setting for openPgpProvider, because this will have to be set up together
         // with the actual provider after import anyways.
 
@@ -324,7 +335,9 @@ class AccountSettingsDescriptions {
         u.put(80, new AccountSettingsUpgraderTo80());
         u.put(81, new AccountSettingsUpgraderTo81());
         u.put(91, new AccountSettingsUpgraderTo91());
-        u.put(104, new AccountSettingsUpgraderTo104());
+        u.put(106, new AccountSettingsUpgraderTo106(new ServerSettingsDtoSerializer()));
+        u.put(107, new AccountSettingsUpgraderTo107());
+        u.put(112, new AccountSettingsUpgraderTo112());
 
         UPGRADERS = Collections.unmodifiableMap(u);
     }

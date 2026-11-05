@@ -5,14 +5,23 @@ plugins {
 android {
     namespace = "app.k9mail.feature.migration.qrcode"
     resourcePrefix = "migration_qrcode_"
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
     implementation(projects.core.common)
     implementation(projects.core.android.account)
+    implementation(projects.core.featureflag)
+    implementation(projects.feature.mail.folder.api)
     implementation(projects.legacy.common)
+    implementation(projects.legacy.logging)
     implementation(projects.legacy.ui.base)
-    implementation(projects.core.ui.compose.designsystem)
+    implementation(projects.core.ui.contract)
 
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
@@ -22,7 +31,10 @@ dependencies {
     implementation(libs.okio)
     implementation(libs.zxing)
 
-    testImplementation(projects.core.logging.testing)
     testImplementation(projects.core.ui.compose.testing)
-    testImplementation(projects.core.ui.compose.theme2.k9mail)
+}
+
+codeCoverage {
+    branchCoverage = 0
+    lineCoverage = 1
 }

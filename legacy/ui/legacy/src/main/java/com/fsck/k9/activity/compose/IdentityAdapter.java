@@ -12,12 +12,13 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 import net.thunderbird.core.android.account.LegacyAccount;
+import net.thunderbird.core.android.account.LegacyAccountManager;
 import app.k9mail.legacy.di.DI;
 import net.thunderbird.core.android.account.Identity;
-import com.fsck.k9.Preferences;
 import com.fsck.k9.ui.R;
 import com.fsck.k9.ui.identity.IdentityFormatter;
 import com.google.android.material.textview.MaterialTextView;
+
 
 /**
  * Adapter for the <em>Choose identity</em> list view.
@@ -28,6 +29,7 @@ import com.google.android.material.textview.MaterialTextView;
  */
 public class IdentityAdapter extends BaseAdapter {
     private final IdentityFormatter identityFormatter = DI.get(IdentityFormatter.class);
+    private final LegacyAccountManager accountManager = DI.get(LegacyAccountManager.class);
 
     private LayoutInflater mLayoutInflater;
     private List<Object> mItems;
@@ -37,8 +39,7 @@ public class IdentityAdapter extends BaseAdapter {
                 Context.LAYOUT_INFLATER_SERVICE);
 
         List<Object> items = new ArrayList<>();
-        Preferences prefs = Preferences.getPreferences();
-        Collection<LegacyAccount> accounts = prefs.getAccounts();
+        Collection<LegacyAccount> accounts = accountManager.findAll();
         for (LegacyAccount account : accounts) {
             items.add(account);
             List<Identity> identities = account.getIdentities();
@@ -102,8 +103,8 @@ public class IdentityAdapter extends BaseAdapter {
 
             LegacyAccount account = (LegacyAccount) item;
             AccountHolder holder = (AccountHolder) view.getTag();
-            holder.name.setText(account.getDisplayName());
-            holder.chip.setBackgroundColor(account.getChipColor());
+            holder.name.setText(account.getProfile().getName());
+            holder.chip.setBackgroundColor(account.getProfile().getColor());
         } else if (item instanceof IdentityContainer) {
             if (convertView != null && convertView.getTag() instanceof IdentityHolder) {
                 view = convertView;

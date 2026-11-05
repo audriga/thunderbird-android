@@ -12,11 +12,13 @@ import androidx.activity.result.contract.ActivityResultContracts.RequestPermissi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import app.k9mail.core.ui.compose.common.mvi.observe
 import app.k9mail.feature.migration.qrcode.ui.QrCodeScannerContract.Effect
 import app.k9mail.feature.migration.qrcode.ui.QrCodeScannerContract.Event
-import net.thunderbird.core.logging.legacy.Log
-import org.koin.androidx.compose.koinViewModel
+import net.thunderbird.core.ui.contract.mvi.observe
+import net.thunderbird.legacy.logging.Log
+import org.koin.compose.viewmodel.koinViewModel
+
+private const val TAG = "QrCodeScannerScreen"
 
 @Composable
 internal fun QrCodeScannerScreen(
@@ -58,7 +60,7 @@ private fun Context.goToAppInfoScreen() {
     try {
         startActivity(intent)
     } catch (e: ActivityNotFoundException) {
-        Log.e(e, "Error opening Android's app settings")
+        Log.e(TAG, e, "Error opening Android's app settings")
     }
 }
 

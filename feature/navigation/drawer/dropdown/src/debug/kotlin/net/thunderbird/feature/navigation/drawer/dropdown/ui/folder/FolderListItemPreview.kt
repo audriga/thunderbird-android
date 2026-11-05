@@ -1,11 +1,11 @@
 package net.thunderbird.feature.navigation.drawer.dropdown.ui.folder
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
-import app.k9mail.core.ui.compose.designsystem.PreviewWithThemes
 import app.k9mail.legacy.ui.folder.FolderNameFormatter
-import net.thunderbird.feature.mail.folder.api.FolderType
+import net.thunderbird.components.ui.bolt.PreviewWithThemes
+import net.thunderbird.feature.mail.folder.FolderType
 import net.thunderbird.feature.navigation.drawer.dropdown.ui.FakeData.DISPLAY_FOLDER
 import net.thunderbird.feature.navigation.drawer.dropdown.ui.FakeData.DISPLAY_TREE_FOLDER_WITH_UNIFIED_FOLDER
 import net.thunderbird.feature.navigation.drawer.dropdown.ui.FakeData.UNIFIED_FOLDER
@@ -19,7 +19,7 @@ internal fun FolderListItemPreview() {
             selectedFolderId = "unknown",
             showStarredCount = false,
             onClick = {},
-            folderNameFormatter = FolderNameFormatter(LocalContext.current.resources),
+            folderNameFormatter = FolderNameFormatter(LocalResources.current),
         )
     }
 }
@@ -30,10 +30,10 @@ internal fun FolderListItemSelectedPreview() {
     PreviewWithThemes {
         FolderListItem(
             displayFolder = DISPLAY_FOLDER,
-            selectedFolderId = DISPLAY_FOLDER.id,
+            selectedFolderId = DISPLAY_FOLDER.folderId,
             showStarredCount = false,
             onClick = {},
-            folderNameFormatter = FolderNameFormatter(LocalContext.current.resources),
+            folderNameFormatter = FolderNameFormatter(LocalResources.current),
         )
     }
 }
@@ -47,7 +47,7 @@ internal fun FolderListItemWithStarredPreview() {
             selectedFolderId = "unknown",
             showStarredCount = true,
             onClick = {},
-            folderNameFormatter = FolderNameFormatter(LocalContext.current.resources),
+            folderNameFormatter = FolderNameFormatter(LocalResources.current),
         )
     }
 }
@@ -58,10 +58,10 @@ internal fun FolderListItemWithStarredSelectedPreview() {
     PreviewWithThemes {
         FolderListItem(
             displayFolder = DISPLAY_FOLDER,
-            selectedFolderId = DISPLAY_FOLDER.id,
+            selectedFolderId = DISPLAY_FOLDER.folderId,
             showStarredCount = true,
             onClick = {},
-            folderNameFormatter = FolderNameFormatter(LocalContext.current.resources),
+            folderNameFormatter = FolderNameFormatter(LocalResources.current),
         )
     }
 }
@@ -79,7 +79,7 @@ internal fun FolderListItemWithInboxFolderPreview() {
             selectedFolderId = "unknown",
             showStarredCount = true,
             onClick = {},
-            folderNameFormatter = FolderNameFormatter(LocalContext.current.resources),
+            folderNameFormatter = FolderNameFormatter(LocalResources.current),
         )
     }
 }
@@ -93,7 +93,7 @@ internal fun FolderListItemWithUnifiedFolderPreview() {
             selectedFolderId = "unknown",
             showStarredCount = false,
             onClick = {},
-            folderNameFormatter = FolderNameFormatter(LocalContext.current.resources),
+            folderNameFormatter = FolderNameFormatter(LocalResources.current),
         )
     }
 }
@@ -105,10 +105,10 @@ internal fun FolderListItemWithUnifiedFolderSelectedPreview() {
         FolderListItem(
             displayFolder = UNIFIED_FOLDER,
             treeFolder = DISPLAY_TREE_FOLDER_WITH_UNIFIED_FOLDER,
-            selectedFolderId = UNIFIED_FOLDER.id,
+            selectedFolderId = UNIFIED_FOLDER.folderId,
             showStarredCount = false,
             onClick = {},
-            folderNameFormatter = FolderNameFormatter(LocalContext.current.resources),
+            folderNameFormatter = FolderNameFormatter(LocalResources.current),
         )
     }
 }
@@ -123,7 +123,7 @@ internal fun FolderListItemStarredCountPreview() {
             selectedFolderId = null,
             showStarredCount = true,
             onClick = {},
-            folderNameFormatter = FolderNameFormatter(LocalContext.current.resources),
+            folderNameFormatter = FolderNameFormatter(LocalResources.current),
         )
     }
 }

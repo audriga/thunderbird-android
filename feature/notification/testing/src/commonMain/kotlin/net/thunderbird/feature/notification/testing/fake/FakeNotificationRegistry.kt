@@ -1,31 +1,55 @@
 package net.thunderbird.feature.notification.testing.fake
 
 import kotlin.random.Random
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import net.thunderbird.feature.notification.api.NotificationId
 import net.thunderbird.feature.notification.api.NotificationRegistry
 import net.thunderbird.feature.notification.api.content.Notification
 
-open class FakeNotificationRegistry : NotificationRegistry {
-    override val registrar: Map<NotificationId, Notification>
-        get() = TODO("Not yet implemented")
+open class FakeNotificationRegistry(
+    initialRegistrar: Map<NotificationId, Notification> = mutableMapOf(),
+    private val useRandomIdForRegistering: Boolean = true,
+) : NotificationRegistry {
+    private val internalRegistrar = MutableStateFlow(initialRegistrar)
+    val registeredNotifications = mutableListOf<Notification>()
+    val unregisteredNotificationIds = mutableListOf<NotificationId>()
+    val unregisteredNotifications = mutableListOf<Notification>()
 
-    override fun get(notificationId: NotificationId): Notification? {
-        TODO("Not yet implemented")
-    }
+    override fun get(notificationId: NotificationId): Notification? = internalRegistrar.value[notificationId]
 
-    override fun get(notification: Notification): NotificationId? {
-        TODO("Not yet implemented")
-    }
+    open fun getValue(notificationId: NotificationId): Notification = internalRegistrar.value.getValue(notificationId)
+
+    override fun get(notification: Notification): NotificationId? = internalRegistrar.value
+        .firstNotNullOfOrNull {
+            it.takeIf { it.value == notification }?.key
+        }
+
+    open fun getValue(notification: Notification): NotificationId = internalRegistrar.value
+        .firstNotNullOf {
+            it.takeIf { it.value == notification }?.key
+        }
 
     override suspend fun register(notification: Notification): NotificationId {
-        return NotificationId(value = Random.Default.nextInt())
+        registeredNotifications += notification
+        val id = NotificationId(
+            value = if (useRandomIdForRegistering) Random.nextInt() else internalRegistrar.value.size + 1,
+        )
+        internalRegistrar.update { it + (id to notification) }
+        return id
     }
 
     override fun unregister(notificationId: NotificationId) {
-        TODO("Not yet implemented")
+        unregisteredNotificationIds += notificationId
+        internalRegistrar.update { current -> current - notificationId }
     }
 
     override fun unregister(notification: Notification) {
-        TODO("Not yet implemented")
+        unregisteredNotifications += notification
+        internalRegistrar.update { current -> current.filterValues { it != notification } }
     }
+
+    override fun contains(notification: Notification): Boolean = internalRegistrar.value.values.contains(notification)
+
+    override fun contains(notificationId: NotificationId): Boolean = internalRegistrar.value.containsKey(notificationId)
 }

@@ -1,0 +1,119 @@
+package net.thunderbird.feature.mail.message.list.ui.event
+
+import net.thunderbird.core.common.action.SwipeActions
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.mail.message.list.domain.model.SortCriteria
+import net.thunderbird.feature.mail.message.list.preferences.MessageListPreferences
+import net.thunderbird.feature.mail.message.list.ui.state.MessageItemUi
+
+/**
+ * Represents the events that can be triggered from the message list screen.
+ * These events are handled by the [MessageListViewModel] to update the UI state.
+ */
+sealed interface MessageListEvent {
+    sealed interface SystemEvent : MessageListEvent
+    sealed interface UserEvent : MessageListEvent
+
+    /**
+     * A system event to trigger the loading of initial configurations for the message list.
+     * This includes loading swipe actions, user preferences, and available sort types.
+     */
+    data object LoadConfigurations : SystemEvent
+
+    /**
+     * A system event indicating that the swipe actions for one or more accounts have been loaded.
+     *
+     * @param swipeActions A map where the key is the [AccountId] and the value is the corresponding [SwipeActions]
+     *                     configuration for that account.
+     */
+    data class SwipeActionsLoaded(val swipeActions: Map<AccountId, SwipeActions>) : SystemEvent
+
+    /**
+     * A system event to update the message list preferences.
+     * This is typically triggered when preferences change from an external source, like the settings screen.
+     *
+     * @param preferences The new [MessageListPreferences] to apply.
+     */
+    data class UpdatePreferences(val preferences: MessageListPreferences) : SystemEvent
+
+    /**
+     * A system event indicating that the sort criteria for various accounts have been loaded.
+     *
+     * @param sortCriteriaPerAccount A map where the key is the [AccountId] and the value is the
+     *  corresponding [SortCriteria]. A `null` key represents the sort criteria for the Unified Inbox.
+     */
+    data class SortCriteriaLoaded(val sortCriteriaPerAccount: Map<AccountId?, SortCriteria>) : SystemEvent
+
+    /**
+     * Signals that all initial configurations, such as preferences, swipe actions, and sort types,
+     * have been successfully loaded and applied. This event indicates that the system is ready
+     * to proceed with loading the actual message list content.
+     */
+    data object AllConfigsReady : SystemEvent
+
+    /**
+     * A system event to update the progress of the loading indicator.
+     *
+     * @param progress A float value between 0.0 and 1.0 representing the loading completion percentage.
+     */
+    data class UpdateLoadingProgress(val progress: Float, val messages: List<MessageItemUi> = emptyList()) : SystemEvent
+
+    /**
+     * A system event indicating that a list of messages has been successfully loaded.
+     *
+     * @param messages The list of [MessageItemUi] objects to be displayed.
+     */
+    data class MessagesLoaded(val messages: List<MessageItemUi>) : SystemEvent
+
+    /**
+     * Event triggered when the user initiates selection mode, usually through a long press on a message item.
+     */
+    data object EnterSelectionMode : UserEvent
+
+    /**
+     * Event triggered when the user exits the message selection mode.
+     * This typically happens when the user deselects all messages or cancels the selection action.
+     */
+    data object ExitSelectionMode : UserEvent
+
+    /**
+     * Represents the event of a user requesting to load more messages in the list.
+     */
+    data object LoadMore : UserEvent
+
+    /**
+     * Triggers a refresh of the message list, fetching the latest messages from the server.
+     */
+    data object Refresh : UserEvent
+
+    /**
+     * An event that is triggered when the user changes the sort order of the message list.
+     *
+     * @param accountId The [AccountId] of the account for which the sort order is being changed. When `null`,
+     *  the sort type is for the Unified Inbox.
+     * @param sortCriteria The new [SortCriteria] to apply.
+     */
+    data class ChangeSortCriteria(val accountId: AccountId?, val sortCriteria: SortCriteria) : UserEvent
+
+    /**
+     * A user event triggered when the footer of the message list is clicked.
+     * This is typically used to load more messages.
+     */
+    data object OnFooterClick : UserEvent
+
+    /**
+     * Event triggered when the user requests to load the next page of messages in the message list.
+     *
+     * This event is typically fired when the user scrolls to the bottom of the current message list
+     * and pagination is required to fetch additional messages. It signals that more messages should
+     * be loaded from the data source and appended to the existing list.
+     *
+     * @see UserEvent
+     * @see MessageListEvent
+     */
+    data object LoadNextPage : UserEvent
+
+    // region [ Legacy Support events ]
+    data class UpdateFooter(val footer: String?) : SystemEvent
+    // endregion [ Legacy Support events ]
+}

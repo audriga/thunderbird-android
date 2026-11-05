@@ -6,6 +6,8 @@ import com.fsck.k9.backend.api.FolderInfo
 import com.fsck.k9.mail.AuthenticationFailedException
 import com.fsck.k9.mail.FolderType
 import net.thunderbird.core.common.exception.MessagingException
+import net.thunderbird.feature.mail.folder.api.FOLDER_DEFAULT_PATH_DELIMITER
+import net.thunderbird.feature.mail.folder.api.FolderPathDelimiter
 import rs.ltt.jmap.client.JmapClient
 import rs.ltt.jmap.client.api.ErrorResponseException
 import rs.ltt.jmap.client.api.InvalidSessionResourceException
@@ -24,7 +26,8 @@ internal class CommandRefreshFolderList(
     private val jmapClient: JmapClient,
     private val accountId: String,
 ) {
-    fun refreshFolderList() {
+    @Suppress("ThrowsCount", "TooGenericExceptionCaught")
+    fun refreshFolderList(): FolderPathDelimiter? {
         try {
             backendStorage.createFolderUpdater().use { folderUpdater ->
                 val state = backendStorage.getExtraString(STATE)
@@ -45,6 +48,7 @@ internal class CommandRefreshFolderList(
         } catch (e: Exception) {
             throw MessagingException(e)
         }
+        return FOLDER_DEFAULT_PATH_DELIMITER
     }
 
     private fun fetchMailboxes(folderUpdater: BackendFolderUpdater) {
@@ -58,11 +62,11 @@ internal class CommandRefreshFolderList(
         val (foldersToUpdate, foldersToCreate) = foldersOnServer.partition { it.id in oldFolderServerIds }
 
         for (folder in foldersToUpdate) {
-            folderUpdater.changeFolder(folder.id, folder.name, folder.type)
+            folderUpdater.changeFolder(folderServerId = folder.id, name = folder.name, type = folder.type)
         }
 
         val newFolders = foldersToCreate.map { folder ->
-            FolderInfo(folder.id, folder.name, folder.type)
+            FolderInfo(serverId = folder.id, name = folder.name, type = folder.type)
         }
         folderUpdater.createFolders(newFolders)
 
@@ -70,7 +74,7 @@ internal class CommandRefreshFolderList(
         val removedFolderServerIds = oldFolderServerIds - newFolderServerIds
         folderUpdater.deleteFolders(removedFolderServerIds)
 
-        backendStorage.setExtraString(STATE, response.state)
+        backendStorage.setExtraString(name = STATE, value = response.state)
     }
 
     private fun fetchMailboxUpdates(folderUpdater: BackendFolderUpdater, state: String) {
@@ -120,12 +124,12 @@ internal class CommandRefreshFolderList(
         val changedMailboxResponse = changedMailboxesCall.getMainResponseBlocking<GetMailboxMethodResponse>()
 
         val foldersToCreate = createdMailboxResponse.list.map { folder ->
-            FolderInfo(folder.id, folder.name, folder.type)
+            FolderInfo(serverId = folder.id, name = folder.name, type = folder.type)
         }
         folderUpdater.createFolders(foldersToCreate)
 
         for (folder in changedMailboxResponse.list) {
-            folderUpdater.changeFolder(folder.id, folder.name, folder.type)
+            folderUpdater.changeFolder(folderServerId = folder.id, name = folder.name, type = folder.type)
         }
 
         val destroyed = mailboxChangesResponse.destroyed
@@ -133,7 +137,7 @@ internal class CommandRefreshFolderList(
             folderUpdater.deleteFolders(it.toList())
         }
 
-        backendStorage.setExtraString(STATE, mailboxChangesResponse.newState)
+        backendStorage.setExtraString(name = STATE, value = mailboxChangesResponse.newState)
 
         return UpdateState(
             state = mailboxChangesResponse.newState,

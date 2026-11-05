@@ -1,20 +1,24 @@
 package app.k9mail.feature.account.server.settings.ui.outgoing
 
 import app.k9mail.feature.account.common.domain.entity.AccountState
+import app.k9mail.feature.account.common.domain.entity.OutgoingProtocolType
 import app.k9mail.feature.account.common.domain.entity.toAuthType
 import app.k9mail.feature.account.common.domain.entity.toAuthenticationType
 import app.k9mail.feature.account.common.domain.entity.toConnectionSecurity
 import app.k9mail.feature.account.common.domain.entity.toMailConnectionSecurity
-import app.k9mail.feature.account.common.domain.input.NumberInputField
-import app.k9mail.feature.account.common.domain.input.StringInputField
 import app.k9mail.feature.account.server.settings.ui.common.toInvalidEmailDomain
 import app.k9mail.feature.account.server.settings.ui.outgoing.OutgoingServerSettingsContract.State
 import com.fsck.k9.mail.ServerSettings
+import net.thunderbird.core.validation.input.NumberInputField
+import net.thunderbird.core.validation.input.StringInputField
 
 fun AccountState.toOutgoingServerSettingsState(): State {
-    val password = getOutgoingServerPassword()
+    // Server settings with an unsupported protocol (e.g. "demo" from the debug/daily DemoAutoDiscovery) are treated
+    // like missing settings, so the user ends up with the manual configuration defaults.
+    val outgoingSettings = outgoingServerSettings?.takeIf { OutgoingProtocolType.fromNameOrNull(it.type) != null }
+    val password = getOutgoingServerPassword(outgoingSettings)
 
-    return outgoingServerSettings?.toOutgoingServerSettingsState(password)
+    return outgoingSettings?.toOutgoingServerSettingsState(password)
         ?: State(
             username = StringInputField(value = emailAddress ?: ""),
             password = StringInputField(value = password),
@@ -22,17 +26,17 @@ fun AccountState.toOutgoingServerSettingsState(): State {
         )
 }
 
-private fun AccountState.getOutgoingServerPassword(): String {
-    return if (outgoingServerSettings?.authenticationType?.toAuthenticationType()?.isPasswordRequired == false) {
+private fun AccountState.getOutgoingServerPassword(outgoingSettings: ServerSettings?): String {
+    return if (outgoingSettings?.authenticationType?.toAuthenticationType()?.isPasswordRequired == false) {
         ""
     } else {
-        outgoingServerSettings?.password ?: incomingServerSettings?.password ?: ""
+        outgoingSettings?.password ?: incomingServerSettings?.password ?: ""
     }
 }
 
 private fun ServerSettings.toOutgoingServerSettingsState(password: String): State {
     return State(
-        server = StringInputField(value = host ?: ""),
+        server = StringInputField(value = host),
         security = connectionSecurity.toConnectionSecurity(),
         port = NumberInputField(value = port.toLong()),
         authenticationType = authenticationType.toAuthenticationType(),
@@ -46,7 +50,7 @@ internal fun State.toServerSettings(): ServerSettings {
     return ServerSettings(
         type = "smtp",
         host = server.value.trim(),
-        port = port.value!!.toInt(),
+        port = checkNotNull(port.value) { "Missing port" }.toInt(),
         connectionSecurity = security.toMailConnectionSecurity(),
         authenticationType = authenticationType.toAuthType(),
         username = if (authenticationType.isUsernameRequired) username.value.trim() else "",

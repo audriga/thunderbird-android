@@ -33,10 +33,14 @@
     <string name="version">সংস্করণ</string>
     <string name="message_compose_subject_hint">বিষয়</string>
     <string name="message_to_label">প্রতি:</string>
-    <string name="message_view_me_text">আমি</string>
+    <string name="message_view_to_me_text">আমি</string>
     <string name="general_settings_swipe_action_archive">সংরক্ষণাগার</string>
     <string name="message_view_cc_label">সিসি:</string>
     <string name="general_settings_swipe_action_delete">অপসারণ</string>
     <string name="message_view_additional_recipient_prefix">+</string>
     <string name="general_settings_swipe_action_spam">স্প্যাম</string>
+    <string name="compose_action">তৈরি</string>
+    <string name="search_action">অনুসন্ধান</string>
+    <string name="send_alternate_action">শেয়ার</string>
+    <string name="copy_action">অনুলিপি</string>
 </resources>

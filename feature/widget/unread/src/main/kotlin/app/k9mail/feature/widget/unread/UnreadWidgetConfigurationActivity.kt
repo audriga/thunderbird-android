@@ -2,14 +2,19 @@ package app.k9mail.feature.widget.unread
 
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
-import com.fsck.k9.ui.base.K9Activity
+import com.fsck.k9.ui.base.BaseActivity
 import com.fsck.k9.ui.base.extensions.fragmentTransaction
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.components.core.logging.Logger
+import org.koin.android.ext.android.inject
+
+private const val TAG = "UnreadWidgetConfigurationActivity"
 
 /**
  * Activity to select an account for the unread widget.
  */
-class UnreadWidgetConfigurationActivity : K9Activity() {
+class UnreadWidgetConfigurationActivity : BaseActivity() {
+
+    private val logger: Logger by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,7 +28,7 @@ class UnreadWidgetConfigurationActivity : K9Activity() {
         }
 
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            Log.e("Received an invalid widget ID")
+            logger.error(TAG) { "Received an invalid widget ID" }
             finish()
             return
         }

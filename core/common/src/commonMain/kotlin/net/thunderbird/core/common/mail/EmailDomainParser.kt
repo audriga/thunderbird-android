@@ -27,7 +27,7 @@ internal class EmailDomainParser(
     input: String,
     startIndex: Int = 0,
     endIndex: Int = input.length,
-) : AbstractParser(input, startIndex, endIndex) {
+) : BaseParser(input, startIndex, endIndex) {
 
     fun parseDomain(): EmailDomain {
         val domain = readDomain()
@@ -69,10 +69,12 @@ internal class EmailDomainParser(
                     requireLetDig = true
                     expect(HYPHEN)
                 }
+
                 character.isLetDig -> {
                     requireLetDig = false
                     expectLetDig()
                 }
+
                 else -> break
             }
         }

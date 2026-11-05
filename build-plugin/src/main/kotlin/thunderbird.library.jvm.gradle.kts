@@ -1,15 +1,17 @@
+import net.thunderbird.gradle.plugin.ProjectConfig
 import org.gradle.jvm.tasks.Jar
 
 plugins {
     `java-library`
     id("org.jetbrains.kotlin.jvm")
-    id("thunderbird.quality.detekt.typed")
-    id("thunderbird.quality.spotless")
+    id("net.thunderbird.gradle.plugin.quality.coverage")
+    id("net.thunderbird.gradle.plugin.quality.detekt")
+    id("net.thunderbird.gradle.plugin.quality.spotless")
 }
 
 java {
-    sourceCompatibility = ThunderbirdProjectConfig.Compiler.javaCompatibility
-    targetCompatibility = ThunderbirdProjectConfig.Compiler.javaCompatibility
+    sourceCompatibility = ProjectConfig.Compiler.javaCompatibility
+    targetCompatibility = ProjectConfig.Compiler.javaCompatibility
 }
 
 tasks.withType<Jar> {
@@ -19,12 +21,31 @@ tasks.withType<Jar> {
     archiveBaseName.set(projectDotPath)
 }
 
+tasks.withType<Test> {
+    jvmArgs(
+        "-XX:+EnableDynamicAgentLoading",
+        "-Djdk.attach.allowAttachSelf=true",
+    )
+}
+
 configureKotlinJavaCompatibility()
 
 dependencies {
     implementation(platform(libs.kotlin.bom))
     implementation(platform(libs.koin.bom))
+    implementation(platform(libs.tb.mobile.components.bom))
 
-    implementation(libs.bundles.shared.jvm.main)
+    implementation(libs.bundles.shared.jvm)
+    implementation(libs.bundles.shared.tmc.components)
+
     testImplementation(libs.bundles.shared.jvm.test)
+    testImplementation(libs.bundles.shared.tmc.components.test)
+}
+
+tasks.register("testsOnCi") {
+    dependsOn(
+        tasks.withType<Test>().matching {
+            it.name.contains("konsist").not()
+        },
+    )
 }

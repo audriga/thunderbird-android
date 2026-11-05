@@ -12,12 +12,6 @@ import net.thunderbird.feature.notification.api.content.Notification
  */
 interface NotificationRegistry {
     /**
-     * A [Map] off all the current notifications, associated with their IDs,
-     * being displayed to the user.
-     */
-    val registrar: Map<NotificationId, Notification>
-
-    /**
      * Retrieves a [Notification] object based on its [notificationId].
      *
      * @param notificationId The ID of the notification to retrieve.
@@ -58,4 +52,20 @@ interface NotificationRegistry {
      * @param notification The [Notification] object to unregister.
      */
     fun unregister(notification: Notification)
+
+    /**
+     * Checks if a specific notification is currently registered.
+     *
+     * @param notification The [Notification] object to check.
+     * @return `true` if the notification is registered, `false` otherwise.
+     */
+    operator fun contains(notification: Notification): Boolean
+
+    /**
+     * Checks if a notification with the given [notificationId] is currently registered.
+     *
+     * @param notificationId The ID of the notification to check.
+     * @return `true` if the notification is registered, `false` otherwise.
+     */
+    operator fun contains(notificationId: NotificationId): Boolean
 }

@@ -1,37 +1,67 @@
 package net.thunderbird.feature.navigation.drawer.dropdown.ui.setting
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import app.k9mail.core.ui.compose.designsystem.atom.icon.Icons
-import app.k9mail.core.ui.compose.theme2.MainTheme
+import net.thunderbird.components.ui.bolt.atom.icon.Icons
+import net.thunderbird.components.ui.bolt.common.window.WindowHeightSizeClass
+import net.thunderbird.components.ui.bolt.common.window.WindowWidthSizeClass
+import net.thunderbird.components.ui.bolt.common.window.calculateWindowSizeInfo
+import net.thunderbird.components.ui.bolt.theme.BoltTheme
 import net.thunderbird.feature.navigation.drawer.dropdown.R
 
 @Composable
 internal fun AccountSettingList(
     onAddAccountClick: () -> Unit,
     onSyncAllAccountsClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    isLoading: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val windowSizeInfo = calculateWindowSizeInfo()
+    val isLandscape = windowSizeInfo.size.width > windowSizeInfo.size.height
+    val isCompactHeight = windowSizeInfo.sizeClass.heightSizeClass == WindowHeightSizeClass.Compact
+    val isSmallDisplay = windowSizeInfo.sizeClass.widthSizeClass == WindowWidthSizeClass.Small ||
+        windowSizeInfo.sizeClass.heightSizeClass == WindowHeightSizeClass.Small
+    val hideText = (isLandscape && isCompactHeight) || isSmallDisplay
+
     SettingList(
-        modifier = modifier
-            .padding(vertical = MainTheme.spacings.default)
-            .fillMaxWidth(),
+        modifier = if (hideText) {
+            modifier
+                .padding(vertical = BoltTheme.spacings.double)
+                .fillMaxWidth()
+                .height(BoltTheme.sizes.iconAvatar)
+        } else {
+            modifier
+                .padding(vertical = BoltTheme.spacings.default)
+                .fillMaxWidth()
+        },
     ) {
-        item {
+        item(span = { if (hideText) GridItemSpan(1) else GridItemSpan(maxLineSpan) }) {
             SettingListItem(
                 label = stringResource(id = R.string.navigation_drawer_dropdown_action_sync_all_accounts),
                 onClick = onSyncAllAccountsClick,
                 icon = Icons.Outlined.Sync,
+                isLoading = isLoading,
             )
         }
-        item {
+        item(span = { if (hideText) GridItemSpan(1) else GridItemSpan(maxLineSpan) }) {
             SettingListItem(
                 label = stringResource(id = R.string.navigation_drawer_dropdown_action_add_account),
                 onClick = onAddAccountClick,
                 icon = Icons.Outlined.Add,
+            )
+        }
+        item(span = { if (hideText) GridItemSpan(1) else GridItemSpan(maxLineSpan) }) {
+            SettingListItem(
+                label = stringResource(id = R.string.navigation_drawer_dropdown_action_settings),
+                onClick = onSettingsClick,
+                icon = Icons.Outlined.Settings,
             )
         }
     }

@@ -6,8 +6,6 @@ import app.k9mail.autodiscovery.api.SmtpServerSettings
 import app.k9mail.feature.account.common.domain.entity.AccountState
 import app.k9mail.feature.account.common.domain.entity.AuthenticationType
 import app.k9mail.feature.account.common.domain.entity.IncomingProtocolType
-import app.k9mail.feature.account.common.domain.input.NumberInputField
-import app.k9mail.feature.account.common.domain.input.StringInputField
 import app.k9mail.feature.account.server.settings.ui.incoming.IncomingServerSettingsContract
 import app.k9mail.feature.account.server.settings.ui.outgoing.OutgoingServerSettingsContract
 import app.k9mail.feature.account.setup.domain.entity.AutoDiscoveryAuthenticationType
@@ -18,6 +16,8 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import net.thunderbird.core.common.net.toHostname
 import net.thunderbird.core.common.net.toPort
+import net.thunderbird.core.validation.input.NumberInputField
+import net.thunderbird.core.validation.input.StringInputField
 import org.junit.Test
 
 class AccountAutoDiscoveryStateMapperKtTest {
@@ -204,14 +204,12 @@ class AccountAutoDiscoveryStateMapperKtTest {
         val AUTO_DISCOVERY_STATE_USERNAME_EMPTY = AUTO_DISCOVERY_STATE.copy(
             autoDiscoverySettings = AUTO_DISCOVERY_STATE.autoDiscoverySettings?.copy(
                 incomingServerSettings = (
-                    AUTO_DISCOVERY_STATE.autoDiscoverySettings
-                        ?.incomingServerSettings as ImapServerSettings
+                    AUTO_DISCOVERY_STATE.autoDiscoverySettings.incomingServerSettings as ImapServerSettings
                     ).copy(
                     username = "",
                 ),
                 outgoingServerSettings = (
-                    AUTO_DISCOVERY_STATE.autoDiscoverySettings
-                        ?.outgoingServerSettings as SmtpServerSettings
+                    AUTO_DISCOVERY_STATE.autoDiscoverySettings.outgoingServerSettings as SmtpServerSettings
                     ).copy(
                     username = "",
                 ),

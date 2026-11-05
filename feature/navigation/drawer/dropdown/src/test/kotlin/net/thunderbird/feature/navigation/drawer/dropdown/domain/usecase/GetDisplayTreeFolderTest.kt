@@ -5,8 +5,11 @@ import assertk.assertions.isEqualTo
 import kotlin.test.Test
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import net.thunderbird.components.core.logging.testing.TestLogger
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.account.AccountIdFactory
+import net.thunderbird.feature.mail.folder.FolderType
 import net.thunderbird.feature.mail.folder.api.Folder
-import net.thunderbird.feature.mail.folder.api.FolderType
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.DisplayFolder
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.DisplayTreeFolder
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.MailDisplayFolder
@@ -27,7 +30,7 @@ class GetDisplayTreeFolderTest {
         val folders = listOf(
             regularFolder,
         )
-        val testSubject = GetDisplayTreeFolder()
+        val testSubject = GetDisplayTreeFolder(logger = TestLogger())
 
         // act
         val result = testSubject(folders, 1)
@@ -59,7 +62,7 @@ class GetDisplayTreeFolderTest {
         val folders = listOf(
             unifiedFolder,
         )
-        val testSubject = GetDisplayTreeFolder()
+        val testSubject = GetDisplayTreeFolder(logger = TestLogger())
 
         // act
         val result = testSubject(folders, 1)
@@ -98,7 +101,7 @@ class GetDisplayTreeFolderTest {
             unifiedFolder,
             regularFolder,
         )
-        val testSubject = GetDisplayTreeFolder()
+        val testSubject = GetDisplayTreeFolder(logger = TestLogger())
 
         // act
         val result = testSubject(folders, 1)
@@ -154,7 +157,7 @@ class GetDisplayTreeFolderTest {
             starredMessageCount = 3,
         )
         val folders = listOf(flatFolder, noNameFolder, weirdFolder, nestedWeird)
-        val testSubject = GetDisplayTreeFolder()
+        val testSubject = GetDisplayTreeFolder(logger = TestLogger())
 
         // act
         val result = testSubject(folders, maxDepth = 2)
@@ -174,11 +177,12 @@ class GetDisplayTreeFolderTest {
             children = persistentListOf(
                 DisplayTreeFolder(
                     displayFolder = MailDisplayFolder(
-                        accountId = "accountId",
+                        accountId = ACCOUNT_ID,
                         folder = Folder(id = 1, name = "Inbox", type = FolderType.REGULAR, isLocalOnly = false),
                         isInTopGroup = true,
                         unreadMessageCount = 2,
                         starredMessageCount = 1,
+                        pathDelimiter = "/",
                     ),
                     displayName = "Inbox",
                     totalUnreadCount = 2,
@@ -187,11 +191,12 @@ class GetDisplayTreeFolderTest {
                 ),
                 DisplayTreeFolder(
                     displayFolder = MailDisplayFolder(
-                        accountId = "accountId",
+                        accountId = ACCOUNT_ID,
                         folder = Folder(id = 2, name = "", type = FolderType.REGULAR, isLocalOnly = false),
                         isInTopGroup = true,
                         unreadMessageCount = 4,
                         starredMessageCount = 2,
+                        pathDelimiter = "/",
                     ),
                     displayName = "(Unnamed)",
                     totalUnreadCount = 5,
@@ -199,9 +204,9 @@ class GetDisplayTreeFolderTest {
                     children = persistentListOf(
                         DisplayTreeFolder(
                             displayFolder = MailDisplayFolder(
-                                accountId = "placeholder",
+                                accountId = ACCOUNT_ID,
                                 folder = Folder(
-                                    id = 1L,
+                                    id = -1L,
                                     name = "(Unnamed)/(Unnamed)",
                                     type = FolderType.REGULAR,
                                     isLocalOnly = false,
@@ -209,6 +214,8 @@ class GetDisplayTreeFolderTest {
                                 isInTopGroup = true,
                                 unreadMessageCount = 0,
                                 starredMessageCount = 0,
+                                pathDelimiter = "/",
+                                isPlaceholder = true,
                             ),
                             displayName = "(Unnamed)",
                             totalUnreadCount = 1,
@@ -216,7 +223,7 @@ class GetDisplayTreeFolderTest {
                             children = persistentListOf(
                                 DisplayTreeFolder(
                                     displayFolder = MailDisplayFolder(
-                                        accountId = "accountId",
+                                        accountId = ACCOUNT_ID,
                                         folder = Folder(
                                             id = 3,
                                             name = "///",
@@ -226,6 +233,7 @@ class GetDisplayTreeFolderTest {
                                         isInTopGroup = true,
                                         unreadMessageCount = 1,
                                         starredMessageCount = 2,
+                                        pathDelimiter = "/",
                                     ),
                                     displayName = "(Unnamed)/(Unnamed)",
                                     totalUnreadCount = 1,
@@ -238,11 +246,13 @@ class GetDisplayTreeFolderTest {
                 ),
                 DisplayTreeFolder(
                     displayFolder = MailDisplayFolder(
-                        accountId = "placeholder",
-                        folder = Folder(id = 2, name = "valid1", type = FolderType.REGULAR, isLocalOnly = false),
+                        accountId = ACCOUNT_ID,
+                        folder = Folder(id = -2, name = "valid1", type = FolderType.REGULAR, isLocalOnly = false),
                         isInTopGroup = true,
                         unreadMessageCount = 0,
                         starredMessageCount = 0,
+                        pathDelimiter = "/",
+                        isPlaceholder = true,
                     ),
                     displayName = "valid1",
                     totalUnreadCount = 6,
@@ -250,9 +260,9 @@ class GetDisplayTreeFolderTest {
                     children = persistentListOf(
                         DisplayTreeFolder(
                             displayFolder = MailDisplayFolder(
-                                accountId = "placeholder",
+                                accountId = ACCOUNT_ID,
                                 folder = Folder(
-                                    id = 3L,
+                                    id = -3L,
                                     name = "valid1/(Unnamed)",
                                     type = FolderType.REGULAR,
                                     isLocalOnly = false,
@@ -260,6 +270,8 @@ class GetDisplayTreeFolderTest {
                                 isInTopGroup = true,
                                 unreadMessageCount = 0,
                                 starredMessageCount = 0,
+                                pathDelimiter = "/",
+                                isPlaceholder = true,
                             ),
                             displayName = "(Unnamed)",
                             totalUnreadCount = 6,
@@ -267,7 +279,7 @@ class GetDisplayTreeFolderTest {
                             children = persistentListOf(
                                 DisplayTreeFolder(
                                     displayFolder = MailDisplayFolder(
-                                        accountId = "accountId",
+                                        accountId = ACCOUNT_ID,
                                         folder = Folder(
                                             id = 4,
                                             name = "valid1///valid2",
@@ -277,6 +289,7 @@ class GetDisplayTreeFolderTest {
                                         isInTopGroup = true,
                                         unreadMessageCount = 6,
                                         starredMessageCount = 3,
+                                        pathDelimiter = "/",
                                     ),
                                     displayName = "(Unnamed)/valid2",
                                     totalUnreadCount = 6,
@@ -309,7 +322,7 @@ class GetDisplayTreeFolderTest {
             starredMessageCount = 1,
         )
         val folders = listOf(folder1, folder2)
-        val testSubject = GetDisplayTreeFolder()
+        val testSubject = GetDisplayTreeFolder(logger = TestLogger())
 
         // act
         val result = testSubject(folders, maxDepth = 3)
@@ -321,11 +334,12 @@ class GetDisplayTreeFolderTest {
             children = persistentListOf(
                 createDisplayTreeFolder(
                     displayFolder = createDisplayAccountFolder(
-                        accountId = "placeholder",
-                        folderId = 1L,
+                        accountId = ACCOUNT_ID,
+                        folderId = -1L,
                         folderName = "folderLevel1",
                         unreadMessageCount = 0,
                         starredMessageCount = 0,
+                        isPlaceholder = true,
                     ),
                     displayName = "folderLevel1",
                     totalUnreadCount = 8,
@@ -368,7 +382,7 @@ class GetDisplayTreeFolderTest {
             starredMessageCount = 1,
         )
         val folders = listOf(deepFolder, deeperFolder)
-        val testSubject = GetDisplayTreeFolder()
+        val testSubject = GetDisplayTreeFolder(logger = TestLogger())
 
         // act
         val result = testSubject(folders, maxDepth = 2)
@@ -380,11 +394,12 @@ class GetDisplayTreeFolderTest {
             children = persistentListOf(
                 createDisplayTreeFolder(
                     displayFolder = createDisplayAccountFolder(
-                        accountId = "placeholder",
-                        folderId = 1,
+                        accountId = ACCOUNT_ID,
+                        folderId = -1L,
                         folderName = "level1",
                         unreadMessageCount = 0,
                         starredMessageCount = 0,
+                        isPlaceholder = true,
                     ),
                     displayName = "level1",
                     totalUnreadCount = 12,
@@ -392,11 +407,12 @@ class GetDisplayTreeFolderTest {
                     children = persistentListOf(
                         createDisplayTreeFolder(
                             displayFolder = createDisplayAccountFolder(
-                                accountId = "placeholder",
-                                folderId = 2L,
+                                accountId = ACCOUNT_ID,
+                                folderId = -2L,
                                 folderName = "level1/level2",
                                 unreadMessageCount = 0,
                                 starredMessageCount = 0,
+                                isPlaceholder = true,
                             ),
                             displayName = "level2",
                             totalUnreadCount = 12,
@@ -425,12 +441,15 @@ class GetDisplayTreeFolderTest {
     }
 
     private companion object {
+        val ACCOUNT_ID = AccountIdFactory.create()
+
         fun createDisplayAccountFolder(
             folderId: Long,
             folderName: String,
             unreadMessageCount: Int,
             starredMessageCount: Int,
-            accountId: String = "accountId",
+            accountId: AccountId = ACCOUNT_ID,
+            isPlaceholder: Boolean = false,
         ): MailDisplayFolder {
             return MailDisplayFolder(
                 accountId = accountId,
@@ -443,6 +462,8 @@ class GetDisplayTreeFolderTest {
                 isInTopGroup = true,
                 unreadMessageCount = unreadMessageCount,
                 starredMessageCount = starredMessageCount,
+                pathDelimiter = "/",
+                isPlaceholder = isPlaceholder,
             )
         }
 
@@ -452,7 +473,7 @@ class GetDisplayTreeFolderTest {
             starredMessageCount: Int,
         ): UnifiedDisplayFolder {
             return UnifiedDisplayFolder(
-                id = unifiedFolderType.name.lowercase(),
+                folderId = unifiedFolderType.name.lowercase(),
                 unifiedType = unifiedFolderType,
                 unreadMessageCount = unreadMessageCount,
                 starredMessageCount = starredMessageCount,

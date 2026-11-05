@@ -2,11 +2,14 @@ package app.k9mail.feature.widget.unread
 
 import app.k9mail.legacy.message.controller.SimpleMessagingListener
 import com.fsck.k9.mail.Message
-import net.thunderbird.core.android.account.LegacyAccount
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.components.core.logging.Logger
+import net.thunderbird.feature.account.AccountId
+
+private const val TAG = "UnreadWidgetUpdateListener"
 
 class UnreadWidgetUpdateListener(
     private val unreadWidgetUpdater: UnreadWidgetUpdater,
+    private val logger: Logger,
 ) : SimpleMessagingListener() {
 
     @Suppress("TooGenericExceptionCaught")
@@ -14,23 +17,23 @@ class UnreadWidgetUpdateListener(
         try {
             unreadWidgetUpdater.updateAll()
         } catch (e: Exception) {
-            Log.e(e, "Error while updating unread widget(s)")
+            logger.error(TAG, e) { "Error while updating unread widget(s)" }
         }
     }
 
     override fun synchronizeMailboxRemovedMessage(
-        account: LegacyAccount,
+        accountId: AccountId,
         folderServerId: String,
         messageServerId: String,
     ) {
         updateUnreadWidget()
     }
 
-    override fun synchronizeMailboxNewMessage(account: LegacyAccount, folderServerId: String, message: Message) {
+    override fun synchronizeMailboxNewMessage(accountId: AccountId, folderServerId: String, message: Message) {
         updateUnreadWidget()
     }
 
-    override fun folderStatusChanged(account: LegacyAccount, folderId: Long) {
+    override fun folderStatusChanged(accountId: AccountId, folderId: Long) {
         updateUnreadWidget()
     }
 }

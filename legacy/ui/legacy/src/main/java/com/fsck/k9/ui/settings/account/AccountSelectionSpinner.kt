@@ -65,7 +65,7 @@ class AccountSelectionSpinner : AppCompatSpinner {
 
             return view.apply {
                 name.text = title
-                email.text = account.displayName
+                email.text = account.profile.name
             }
         }
 

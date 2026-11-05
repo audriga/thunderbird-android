@@ -22,23 +22,23 @@
     <string name="settings_import_later_button">بعداً</string>
     <string name="settings_importing">در حال درون‌برد تنظیمات…</string>
     <plurals name="settings_import_password_prompt">
-        <item quantity="one">برای اینکه بتوانید از حساب «<xliff:g id="account">%s</xliff:g>» استفاده کنید، باید گذرواژهٔ میزبان را ارائه نمایید.</item>
-        <item quantity="other">برای اینکه بتوانید از حساب «<xliff:g id="account">%s</xliff:g>» استفاده کنید، باید گذرواژه‌های کارساز را ارائه نمایید.</item>
+        <item quantity="one">برای اینکه بتوانید از حساب «<xliff:g id="account">%s</xliff:g>» استفاده کنید، باید گذرواژهٔ سرور را ارائه نمایید.</item>
+        <item quantity="other">برای اینکه بتوانید از حساب «<xliff:g id="account">%s</xliff:g>» استفاده کنید، باید گذرواژه‌های سرور را ارائه نمایید.</item>
     </plurals>
-    <string name="settings_import_incoming_server_password_hint">گذرواژهٔ کارساز ورودی</string>
-    <string name="settings_import_outgoing_server_password_hint">گذرواژهٔ کارساز خروجی</string>
-    <string name="settings_import_use_same_password_for_outgoing_server">برای کارساز خروجی از همان گذرواژه استفاده کن</string>
-    <string name="settings_import_server_name_format">نام کارساز:<xliff:g id="hostname">%s</xliff:g></string>
+    <string name="settings_import_incoming_server_password_hint">گذرواژهٔ سرور ورودی</string>
+    <string name="settings_import_outgoing_server_password_hint">گذرواژهٔ سرور خروجی</string>
+    <string name="settings_import_use_same_password_for_outgoing_server">برای سرور خروجی از همان گذرواژه استفاده کن</string>
+    <string name="settings_import_server_name_format">نام سرور:<xliff:g id="hostname">%s</xliff:g></string>
     <string name="settings_import_oauth_description">برای استفاده‌ از این حساب باید وارد شده و اجازهٔ دسترسی به رایانامه‌هایتان را به برنامه بدهید.</string>
     <string name="settings_import_oauth_sign_in">ورود</string>
-    <string name="settings_import_oauth_sign_in_with_google">ورود با حساب گوگل</string>
+    <string name="settings_import_oauth_sign_in_with_google">ورود با گوگل</string>
     <string name="settings_import_oauth_error_oauth_flow_canceled">مجوزدهی لغو شد</string>
     <string name="settings_import_oauth_error_oauth_flow_failed">مجوزدهی به علت این خطا ناتمام ماند: <xliff:g id="error">%s</xliff:g></string>
     <string name="settings_import_oauth_error_oauth_not_supported">OAuth 2.0 فعلا توسط این ارائه دهنده پشتیبانی نمی‌شود.</string>
     <string name="settings_import_oauth_error_browser_not_found">برنامه نمی تواند مرورگری را پیدا کند تا دسترسی به حسابتان را بگیرد.</string>
-    <string name="settings_import_general_settings_item">تنظیمات کلی</string>
+    <string name="settings_import_general_settings_item">تنظیمات عمومی</string>
     <string name="settings_import_pick_app_button">درون‌ریزی از برنامه</string>
     <string name="settings_import_pick_app_dialog_title">درون‌ریزی از برنامه</string>
-    <string name="settings_import_app_version_not_supported">نگارش برنامه پشتیبانی نمی‌شود.</string>
+    <string name="settings_import_app_version_not_supported">نگارش کاره پشتیبانی نمی‌شود.</string>
     <string name="settings_import_scan_qr_code_button">پویش رمزینه</string>
 </resources>

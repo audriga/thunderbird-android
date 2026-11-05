@@ -19,10 +19,12 @@ import net.thunderbird.core.common.net.Hostname
 import net.thunderbird.core.common.net.Port
 import net.thunderbird.core.common.net.toHostname
 import net.thunderbird.core.common.net.toPort
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.legacy.logging.Log
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
+
+private const val TAG = "RealAutoconfigParser"
 
 private typealias ServerSettingsFactory<T> = (
     hostname: Hostname,
@@ -66,6 +68,7 @@ private class ClientConfigParser(
                     "clientConfig" -> {
                         result = parseClientConfig()
                     }
+
                     else -> skipElement()
                 }
             }
@@ -87,6 +90,7 @@ private class ClientConfigParser(
                     "emailProvider" -> {
                         result = parseEmailProvider()
                     }
+
                     else -> skipElement()
                 }
             }
@@ -117,16 +121,19 @@ private class ClientConfigParser(
                             domainFound = true
                         }
                     }
+
                     "incomingServer" -> {
                         parseServer("imap", ::createImapServerSettings)?.let { serverSettings ->
                             incomingServerSettings.add(serverSettings)
                         }
                     }
+
                     "outgoingServer" -> {
                         parseServer("smtp", ::createSmtpServerSettings)?.let { serverSettings ->
                             outgoingServerSettings.add(serverSettings)
                         }
                     }
+
                     else -> {
                         skipElement()
                     }
@@ -159,7 +166,7 @@ private class ClientConfigParser(
     ): T? {
         val type = pullParser.getAttributeValue(null, "type")
         if (type != protocolType) {
-            Log.d("Unsupported '%s[type]' value: '%s'", pullParser.name, type)
+            Log.d(TAG, "Unsupported '%s[type]' value: '%s'", pullParser.name, type)
             skipElement()
             return null
         }
@@ -226,10 +233,13 @@ private class ClientConfigParser(
     private fun String.toAuthenticationType(): AuthenticationType? {
         return when (this) {
             "OAuth2" -> OAuth2
+
             "password-cleartext" -> PasswordCleartext
+
             "password-encrypted" -> PasswordEncrypted
+
             else -> {
-                Log.d("Ignoring unknown 'authentication' value '$this'")
+                Log.d(TAG, "Ignoring unknown 'authentication' value '$this'")
                 null
             }
         }
@@ -253,9 +263,11 @@ private class ClientConfigParser(
                 XmlPullParser.END_DOCUMENT -> {
                     parserError("End of document reached while reading element '$tagName'")
                 }
+
                 XmlPullParser.END_TAG -> {
                     if (pullParser.name == tagName && pullParser.depth == depth) return
                 }
+
                 else -> {
                     block(eventType)
                 }
@@ -270,6 +282,7 @@ private class ClientConfigParser(
                 XmlPullParser.TEXT -> {
                     text = pullParser.text
                 }
+
                 else -> {
                     parserError("Expected text, but got ${XmlPullParser.TYPES[eventType]}")
                 }
@@ -280,7 +293,7 @@ private class ClientConfigParser(
     }
 
     private fun skipElement() {
-        Log.d("Skipping element '%s'", pullParser.name)
+        Log.d(TAG, "Skipping element '%s'", pullParser.name)
         readElement { /* Do nothing */ }
     }
 

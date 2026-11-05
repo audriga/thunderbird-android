@@ -1,7 +1,5 @@
 package net.thunderbird.feature.notification.api.ui.style
 
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import net.thunderbird.feature.notification.api.ui.style.builder.InAppNotificationStyleBuilder
 
 /**
@@ -11,13 +9,11 @@ import net.thunderbird.feature.notification.api.ui.style.builder.InAppNotificati
  * feedback or information.
  */
 sealed interface InAppNotificationStyle {
-    companion object {
-        /**
-         * Represents an undefined in-app notification style.
-         * This can be used as a default or placeholder when no specific style is applicable.
-         */
-        val Undefined: List<InAppNotificationStyle> = emptyList()
-    }
+    /**
+     * Represents an undefined in-app notification style.
+     * This can be used as a default or placeholder when no specific style is applicable.
+     */
+    data object Undefined : InAppNotificationStyle
 
     /**
      * @see InAppNotificationStyleBuilder.bannerInline
@@ -28,14 +24,14 @@ sealed interface InAppNotificationStyle {
      * @see InAppNotificationStyleBuilder.bannerGlobal
      */
     data class BannerGlobalNotification(
-        val priority: Int,
+        val priority: NotificationPriority,
     ) : InAppNotificationStyle
 
     /**
      * @see [InAppNotificationStyleBuilder.snackbar]
      */
     data class SnackbarNotification(
-        val duration: Duration = 10.seconds,
+        val duration: SnackbarDuration = SnackbarDuration.Short,
     ) : InAppNotificationStyle
 
     /**
@@ -44,24 +40,38 @@ sealed interface InAppNotificationStyle {
     data object DialogNotification : InAppNotificationStyle
 }
 
+enum class SnackbarDuration { Short, Long, Indefinite }
+
+@JvmInline
+value class NotificationPriority(val value: UInt) : Comparable<NotificationPriority> {
+    override fun compareTo(other: NotificationPriority): Int = value.compareTo(other.value)
+
+    companion object {
+        val Min = NotificationPriority(UInt.MIN_VALUE)
+        val Max = NotificationPriority(UInt.MAX_VALUE)
+    }
+}
+
 /**
  * Configures the in-app notification style.
  *
  * Example:
  * ```
- * inAppNotificationStyles {
+ * inAppNotificationStyle {
+ *     bannerInline()
+ * }
+ *
+ * inAppNotificationStyle {
  *     snackbar(duration = 30.seconds)
- *     bottomSheet()
  * }
  * ```
  *
  * @param builder A lambda function with [InAppNotificationStyleBuilder] as its receiver,
- * used to configure the system notification style.
+ * used to configure the in-app notification style.
  * @return a list of [InAppNotificationStyle]
  */
-@NotificationStyleMarker
-fun inAppNotificationStyles(
+fun inAppNotificationStyle(
     builder: @NotificationStyleMarker InAppNotificationStyleBuilder.() -> Unit,
-): List<InAppNotificationStyle> {
+): InAppNotificationStyle {
     return InAppNotificationStyleBuilder().apply(builder).build()
 }

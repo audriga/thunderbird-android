@@ -2,6 +2,9 @@ package app.k9mail.feature.widget.unread
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.account.AccountIdFactory
 
 internal class UnreadWidgetRepository(
     private val context: Context,
@@ -11,13 +14,13 @@ internal class UnreadWidgetRepository(
 
     fun saveWidgetConfiguration(configuration: UnreadWidgetConfiguration) {
         val appWidgetId = configuration.appWidgetId
-        val editor = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-        editor.putString(PREF_PREFIX_KEY + appWidgetId, configuration.accountUuid)
-        editor.putString(PREF_PREFIX_KEY + appWidgetId + PREF_FOLDER_ID_SUFFIX_KEY, configuration.folderId?.toString())
-        editor.apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            putString(PREF_PREFIX_KEY + appWidgetId, configuration.accountId.toString())
+            putString(PREF_PREFIX_KEY + appWidgetId + PREF_FOLDER_ID_SUFFIX_KEY, configuration.folderId?.toString())
+        }
     }
 
-    fun getWidgetData(appWidgetId: Int): UnreadWidgetData? {
+    suspend fun getWidgetData(appWidgetId: Int): UnreadWidgetData? {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val version = prefs.getInt(PREF_VERSION_KEY, 1)
@@ -25,15 +28,16 @@ internal class UnreadWidgetRepository(
             upgradePreferences(version, prefs)
         }
 
-        val accountUuid = prefs.getString(PREF_PREFIX_KEY + appWidgetId, null) ?: return null
+        val accountIdRaw = prefs.getString(PREF_PREFIX_KEY + appWidgetId, null) ?: return null
+        val accountId = AccountIdFactory.of(accountIdRaw)
         val folderId = prefs.getString(PREF_PREFIX_KEY + appWidgetId + PREF_FOLDER_ID_SUFFIX_KEY, null)?.toLongOrNull()
 
-        val configuration = UnreadWidgetConfiguration(appWidgetId, accountUuid, folderId)
+        val configuration = UnreadWidgetConfiguration(appWidgetId, accountId, folderId)
 
         return dataRetriever.loadUnreadWidgetData(configuration)
     }
 
-    private fun upgradePreferences(version: Int, preferences: SharedPreferences) {
+    private suspend fun upgradePreferences(version: Int, preferences: SharedPreferences) {
         if (version > PREFS_VERSION) {
             error("UnreadWidgetRepository: Version downgrades are not supported")
         } else {
@@ -42,10 +46,10 @@ internal class UnreadWidgetRepository(
     }
 
     fun deleteWidgetConfiguration(appWidgetId: Int) {
-        val editor = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-        editor.remove(PREF_PREFIX_KEY + appWidgetId)
-        editor.remove(PREF_PREFIX_KEY + appWidgetId + PREF_FOLDER_ID_SUFFIX_KEY)
-        editor.apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            remove(PREF_PREFIX_KEY + appWidgetId)
+            remove(PREF_PREFIX_KEY + appWidgetId + PREF_FOLDER_ID_SUFFIX_KEY)
+        }
     }
 
     companion object {
@@ -59,4 +63,4 @@ internal class UnreadWidgetRepository(
     }
 }
 
-data class UnreadWidgetConfiguration(val appWidgetId: Int, val accountUuid: String, val folderId: Long?)
+data class UnreadWidgetConfiguration(val appWidgetId: Int, val accountId: AccountId, val folderId: Long?)

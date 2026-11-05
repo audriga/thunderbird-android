@@ -1,7 +1,9 @@
 package net.thunderbird.core.preference
 
+import net.thunderbird.core.common.appConfig.PlatformConfigProvider
 import net.thunderbird.core.preference.debugging.DebuggingSettings
 import net.thunderbird.core.preference.display.DisplaySettings
+import net.thunderbird.core.preference.interaction.InteractionSettings
 import net.thunderbird.core.preference.network.NetworkSettings
 import net.thunderbird.core.preference.notification.NotificationPreference
 import net.thunderbird.core.preference.privacy.PrivacySettings
@@ -15,17 +17,24 @@ import net.thunderbird.core.preference.privacy.PrivacySettings
  */
 // TODO: Move over settings from K9
 data class GeneralSettings(
+    val platformConfigProvider: PlatformConfigProvider,
     val network: NetworkSettings = NetworkSettings(),
     val notification: NotificationPreference = NotificationPreference(),
     val display: DisplaySettings = DisplaySettings(),
     val privacy: PrivacySettings = PrivacySettings(),
-    val debugging: DebuggingSettings = DebuggingSettings(),
+    val debugging: DebuggingSettings = DebuggingSettings(isDebugLoggingEnabled = platformConfigProvider.isDebug),
+    val interaction: InteractionSettings = InteractionSettings(),
 )
 
 enum class BackgroundSync {
     ALWAYS,
     NEVER,
     FOLLOW_SYSTEM_AUTO_SYNC,
+}
+
+enum class BodyContentType {
+    TEXT_HTML,
+    TEXT_PLAIN,
 }
 
 enum class AppTheme {
@@ -53,4 +62,28 @@ enum class SplitViewMode {
     ALWAYS,
     NEVER,
     WHEN_IN_LANDSCAPE,
+    WHEN_UNFOLDED,
+}
+
+/**
+ * Controls behaviour of delete button in notifications.
+ */
+enum class NotificationQuickDelete {
+    ALWAYS,
+    FOR_SINGLE_MSG,
+    NEVER,
+}
+
+enum class LockScreenNotificationVisibility {
+    EVERYTHING,
+    SENDERS,
+    MESSAGE_COUNT,
+    APP_NAME,
+    NOTHING,
+}
+
+enum class AnimationPreference {
+    ON,
+    OFF,
+    FOLLOW_SYSTEM,
 }

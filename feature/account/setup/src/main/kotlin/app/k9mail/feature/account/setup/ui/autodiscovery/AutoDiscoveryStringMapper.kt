@@ -6,7 +6,7 @@ import app.k9mail.feature.account.setup.R
 import app.k9mail.feature.account.setup.domain.entity.AutoDiscoveryConnectionSecurity
 import app.k9mail.feature.account.setup.domain.usecase.ValidateConfigurationApproval
 import app.k9mail.feature.account.setup.domain.usecase.ValidateEmailAddress
-import net.thunderbird.core.common.domain.usecase.validation.ValidationError
+import net.thunderbird.core.validation.ValidationError
 
 internal fun AutoDiscoveryConnectionSecurity.toAutoDiscoveryConnectionSecurityString(resources: Resources): String {
     return when (this) {
@@ -30,6 +30,7 @@ internal fun AccountAutoDiscoveryContract.Error.toAutoDiscoveryErrorString(resou
 internal fun ValidationError.toAutoDiscoveryValidationErrorString(resources: Resources): String {
     return when (this) {
         is ValidateEmailAddress.ValidateEmailAddressError -> toEmailAddressErrorString(resources)
+
         is ValidatePassword.ValidatePasswordError -> toPasswordErrorString(resources)
 
         is ValidateConfigurationApproval.ValidateConfigurationApprovalError -> toConfigurationApprovalErrorString(

@@ -10,16 +10,20 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartScreenCallback
 import androidx.preference.PreferenceScreen
 import com.fsck.k9.ui.R
-import com.fsck.k9.ui.base.K9Activity
+import com.fsck.k9.ui.base.BaseActivity
 import com.fsck.k9.ui.base.extensions.fragmentTransaction
 import com.fsck.k9.ui.base.extensions.fragmentTransactionWithBackStack
 import com.fsck.k9.ui.base.livedata.observeNotNull
-import net.thunderbird.core.logging.legacy.Log
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.feature.account.AccountIdFactory
+import net.thunderbird.legacy.logging.Log
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class AccountSettingsActivity : K9Activity(), OnPreferenceStartScreenCallback {
+private const val TAG = "AccountSettingsActivity"
+
+class AccountSettingsActivity : BaseActivity(), OnPreferenceStartScreenCallback {
     private val accountViewModel: AccountSettingsViewModel by viewModel()
-    private lateinit var accountUuid: String
+    private lateinit var accountId: AccountId
     private var startScreenKey: String? = null
     private var fragmentAdded = false
 
@@ -34,7 +38,7 @@ class AccountSettingsActivity : K9Activity(), OnPreferenceStartScreenCallback {
         initializeActionBar()
 
         if (!decodeArguments()) {
-            Log.d("Invalid arguments")
+            Log.d(TAG, "Invalid arguments")
             finish()
             return
         }
@@ -49,7 +53,7 @@ class AccountSettingsActivity : K9Activity(), OnPreferenceStartScreenCallback {
 
         accountSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
-                onAccountSelected(selectedAccountUuid = accountSpinner.selection.uuid)
+                onAccountSelected(selectedAccountUuid = accountSpinner.selection.id.toString())
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) = Unit
@@ -61,22 +65,23 @@ class AccountSettingsActivity : K9Activity(), OnPreferenceStartScreenCallback {
     }
 
     private fun onAccountSelected(selectedAccountUuid: String) {
-        if (selectedAccountUuid != accountUuid && !isFinishing) {
+        if (selectedAccountUuid != accountId.toString() && !isFinishing) {
             start(this, selectedAccountUuid)
             finish()
         }
     }
 
     private fun decodeArguments(): Boolean {
-        accountUuid = intent.getStringExtra(ARG_ACCOUNT_UUID) ?: return false
+        accountId = intent.getStringExtra(ARG_ACCOUNT_UUID)
+            ?.let { AccountIdFactory.of(it) } ?: return false
         startScreenKey = intent.getStringExtra(ARG_START_SCREEN_KEY)
         return true
     }
 
     private fun loadAccount() {
-        accountViewModel.getAccount(accountUuid).observe(this) { account ->
+        accountViewModel.getAccount(accountId).observe(this) { account ->
             if (account == null) {
-                Log.w("Account with UUID %s not found", accountUuid)
+                Log.w(TAG, "Account with ID %s not found", accountId)
                 finish()
                 return@observe
             }
@@ -91,7 +96,10 @@ class AccountSettingsActivity : K9Activity(), OnPreferenceStartScreenCallback {
         if (needToAddFragment && !fragmentAdded) {
             fragmentAdded = true
             fragmentTransaction {
-                add(R.id.accountSettingsContainer, AccountSettingsFragment.create(accountUuid, startScreenKey))
+                add(
+                    R.id.accountSettingsContainer,
+                    AccountSettingsFragment.create(accountId.toString(), startScreenKey),
+                )
             }
         }
     }
@@ -110,7 +118,10 @@ class AccountSettingsActivity : K9Activity(), OnPreferenceStartScreenCallback {
         preferenceScreen: PreferenceScreen,
     ): Boolean {
         fragmentTransactionWithBackStack {
-            replace(R.id.accountSettingsContainer, AccountSettingsFragment.create(accountUuid, preferenceScreen.key))
+            replace(
+                R.id.accountSettingsContainer,
+                AccountSettingsFragment.create(accountId.toString(), preferenceScreen.key),
+            )
         }
 
         return true
@@ -126,20 +137,18 @@ class AccountSettingsActivity : K9Activity(), OnPreferenceStartScreenCallback {
         private const val ARG_START_SCREEN_KEY = "startScreen"
 
         @JvmStatic
-        fun start(context: Context, accountUuid: String) {
+        @JvmOverloads
+        fun start(context: Context, accountUuid: String, startScreenKey: String? = null) {
             val intent = Intent(context, AccountSettingsActivity::class.java).apply {
                 putExtra(ARG_ACCOUNT_UUID, accountUuid)
+                startScreenKey?.let { putExtra(ARG_START_SCREEN_KEY, it) }
             }
             context.startActivity(intent)
         }
 
         @JvmStatic
         fun startCryptoSettings(context: Context, accountUuid: String) {
-            val intent = Intent(context, AccountSettingsActivity::class.java).apply {
-                putExtra(ARG_ACCOUNT_UUID, accountUuid)
-                putExtra(ARG_START_SCREEN_KEY, AccountSettingsFragment.PREFERENCE_OPENPGP)
-            }
-            context.startActivity(intent)
+            start(context, accountUuid, AccountSettingsFragment.PREFERENCE_OPENPGP)
         }
     }
 }

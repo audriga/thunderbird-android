@@ -6,6 +6,7 @@
         <item>ar</item>
         <item>be</item>
         <item>bg</item>
+        <item>br</item>
         <item>ca</item>
         <item>co</item>
         <item>cs</item>
@@ -24,6 +25,7 @@
         <item>fr</item>
         <item>fy</item>
         <item>ga</item>
+        <item>gd</item>
         <item>gl</item>
         <item>hr</item>
         <item>hu</item>
@@ -48,6 +50,7 @@
         <item>sq</item>
         <item>sr</item>
         <item>sv</item>
+        <item>ta_IN</item>
         <item>tr</item>
         <item>uk</item>
         <item>vi</item>
@@ -149,6 +152,12 @@
         <item>follow_system</item>
     </string-array>
 
+    <string-array name="animation_values" translatable="false">
+        <item>ON</item>
+        <item>OFF</item>
+        <item>FOLLOW_SYSTEM</item>
+    </string-array>
+
     <string-array name="message_theme_values" translatable="false">
         <item>light</item>
         <item>dark</item>
@@ -189,6 +198,7 @@
         <item>ALWAYS</item>
         <item>NEVER</item>
         <item>WHEN_IN_LANDSCAPE</item>
+        <item>WHEN_UNFOLDED</item>
     </string-array>
 
     <string-array name="confirm_action_values" translatable="false">
@@ -228,6 +238,11 @@
     <string-array name="post_mark_as_unread_navigation_values" translatable="false">
         <item>StayOnCurrentMessage</item>
         <item>ReturnToMessageList</item>
+    </string-array>
+
+    <string-array name="messageview_body_content_type_values" translatable="false">
+        <item>TEXT_HTML</item>
+        <item>TEXT_PLAIN</item>
     </string-array>
 
 </resources>

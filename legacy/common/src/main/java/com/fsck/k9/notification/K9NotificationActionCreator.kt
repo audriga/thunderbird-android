@@ -11,13 +11,13 @@ import app.k9mail.feature.launcher.FeatureLauncherActivity
 import app.k9mail.feature.launcher.FeatureLauncherTarget
 import app.k9mail.legacy.mailstore.MessageStoreManager
 import app.k9mail.legacy.message.controller.MessageReference
-import com.fsck.k9.K9
-import com.fsck.k9.activity.MessageList
+import com.fsck.k9.activity.MessageHomeActivity
 import com.fsck.k9.activity.compose.MessageActions
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider
 import com.fsck.k9.ui.notification.DeleteConfirmationActivity
 import net.thunderbird.core.android.account.LegacyAccount
 import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.feature.account.AccountId
 import net.thunderbird.feature.search.legacy.LocalMessageSearch
 
 /**
@@ -38,6 +38,7 @@ internal class K9NotificationActionCreator(
     private val messageStoreManager: MessageStoreManager,
     private val generalSettingsManager: GeneralSettingsManager,
 ) : NotificationActionCreator {
+    private val interactionSettings get() = generalSettingsManager.getConfig().interaction
 
     override fun createViewMessagePendingIntent(messageReference: MessageReference): PendingIntent {
         val openInUnifiedInbox =
@@ -45,16 +46,16 @@ internal class K9NotificationActionCreator(
                 isIncludedInUnifiedInbox(messageReference)
         val intent = createMessageViewIntent(messageReference, openInUnifiedInbox)
 
-        return PendingIntentCompat.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createActivityPendingIntent(intent)
     }
 
-    override fun createViewFolderPendingIntent(account: LegacyAccount, folderId: Long): PendingIntent {
-        val intent = createMessageListIntent(account, folderId)
-        return PendingIntentCompat.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+    override fun createViewFolderPendingIntent(accountId: AccountId, folderId: Long): PendingIntent {
+        val intent = createMessageListIntent(accountId, folderId)
+        return createActivityPendingIntent(intent)
     }
 
     override fun createViewMessagesPendingIntent(
-        account: LegacyAccount,
+        accountId: AccountId,
         messageReferences: List<MessageReference>,
     ): PendingIntent {
         val folderIds = extractFolderIds(messageReferences)
@@ -63,80 +64,83 @@ internal class K9NotificationActionCreator(
                 .display
                 .inboxSettings
                 .isShowUnifiedInbox &&
-            areAllIncludedInUnifiedInbox(account, folderIds)
+            areAllIncludedInUnifiedInbox(accountId, folderIds)
         ) {
-            createUnifiedInboxIntent(account)
+            createUnifiedInboxIntent(accountId)
         } else if (folderIds.size == 1) {
-            createMessageListIntent(account, folderIds.first())
+            createMessageListIntent(accountId, folderIds.first())
         } else {
-            createNewMessagesIntent(account)
+            createNewMessagesIntent(accountId)
         }
-        return PendingIntentCompat.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createActivityPendingIntent(intent)
     }
 
-    override fun createViewFolderListPendingIntent(account: LegacyAccount): PendingIntent {
-        val intent = createMessageListIntent(account)
-        return PendingIntentCompat.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+    override fun createViewFolderListPendingIntent(accountId: AccountId): PendingIntent {
+        val intent = createMessageListIntent(accountId)
+        return createActivityPendingIntent(intent)
     }
 
-    override fun createDismissAllMessagesPendingIntent(account: LegacyAccount): PendingIntent {
-        val intent = NotificationActionService.createDismissAllMessagesIntent(context, account).apply {
-            data = Uri.parse("data:,dismissAll/${account.uuid}/${System.currentTimeMillis()}")
+    override fun createDismissAllMessagesPendingIntent(accountId: AccountId): PendingIntent {
+        val intent = NotificationActionIntents.createDismissAllMessagesIntent(context, accountId).apply {
+            data = Uri.parse("data:,dismissAll/${accountId}/${System.currentTimeMillis()}")
         }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createServicePendingIntent(intent)
     }
 
     override fun createDismissMessagePendingIntent(messageReference: MessageReference): PendingIntent {
-        val intent = NotificationActionService.createDismissMessageIntent(context, messageReference).apply {
+        val intent = NotificationActionIntents.createDismissMessageIntent(context, messageReference).apply {
             data = Uri.parse("data:,dismiss/${messageReference.toIdentityString()}")
         }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createServicePendingIntent(intent)
     }
 
     override fun createReplyPendingIntent(messageReference: MessageReference): PendingIntent {
         val intent = MessageActions.getActionReplyIntent(context, messageReference).apply {
             data = Uri.parse("data:,reply/${messageReference.toIdentityString()}")
         }
-        return PendingIntentCompat.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createActivityPendingIntent(intent)
     }
 
     override fun createMarkMessageAsReadPendingIntent(messageReference: MessageReference): PendingIntent {
-        val intent = NotificationActionService.createMarkMessageAsReadIntent(context, messageReference).apply {
+        val intent = NotificationActionIntents.createMarkMessageAsReadIntent(context, messageReference).apply {
             data = Uri.parse("data:,markAsRead/${messageReference.toIdentityString()}")
         }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createServicePendingIntent(intent)
     }
 
     override fun createMarkAllAsReadPendingIntent(
-        account: LegacyAccount,
+        accountId: AccountId,
         messageReferences: List<MessageReference>,
     ): PendingIntent {
-        val accountUuid = account.uuid
         val intent =
-            NotificationActionService.createMarkAllAsReadIntent(context, accountUuid, messageReferences).apply {
-                data = Uri.parse("data:,markAllAsRead/$accountUuid/${System.currentTimeMillis()}")
+            NotificationActionIntents.createMarkAllAsReadIntent(
+                context,
+                accountId,
+                messageReferences,
+            ).apply {
+                data = Uri.parse("data:,markAllAsRead/$accountId/${System.currentTimeMillis()}")
             }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createServicePendingIntent(intent)
     }
 
     override fun getEditIncomingServerSettingsIntent(account: LegacyAccount): PendingIntent {
         val intent = FeatureLauncherActivity.getIntent(
             context = context,
-            target = FeatureLauncherTarget.AccountEditIncomingSettings(account.uuid),
+            target = FeatureLauncherTarget.AccountEditIncomingSettings(account.id),
         )
-        return PendingIntentCompat.getActivity(context, account.accountNumber, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createActivityPendingIntent(intent, requestCode = account.accountNumber)
     }
 
     override fun getEditOutgoingServerSettingsIntent(account: LegacyAccount): PendingIntent {
         val intent = FeatureLauncherActivity.getIntent(
             context = context,
-            target = FeatureLauncherTarget.AccountEditOutgoingSettings(account.uuid),
+            target = FeatureLauncherTarget.AccountEditOutgoingSettings(account.id),
         )
-        return PendingIntentCompat.getActivity(context, account.accountNumber, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createActivityPendingIntent(intent, requestCode = account.accountNumber)
     }
 
     override fun createDeleteMessagePendingIntent(messageReference: MessageReference): PendingIntent {
-        return if (K9.isConfirmDeleteFromNotification) {
+        return if (interactionSettings.isConfirmDeleteFromNotification) {
             createDeleteConfirmationPendingIntent(messageReference)
         } else {
             createDeleteServicePendingIntent(messageReference)
@@ -144,27 +148,27 @@ internal class K9NotificationActionCreator(
     }
 
     private fun createDeleteServicePendingIntent(messageReference: MessageReference): PendingIntent {
-        val intent = NotificationActionService.createDeleteMessageIntent(context, messageReference).apply {
+        val intent = NotificationActionIntents.createDeleteMessageIntent(context, messageReference).apply {
             data = Uri.parse("data:,delete/${messageReference.toIdentityString()}")
         }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createServicePendingIntent(intent)
     }
 
     private fun createDeleteConfirmationPendingIntent(messageReference: MessageReference): PendingIntent {
         val intent = DeleteConfirmationActivity.getIntent(context, messageReference).apply {
             data = Uri.parse("data:,deleteConfirmation/${messageReference.toIdentityString()}")
         }
-        return PendingIntentCompat.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createActivityPendingIntent(intent)
     }
 
     override fun createDeleteAllPendingIntent(
-        account: LegacyAccount,
+        accountId: AccountId,
         messageReferences: List<MessageReference>,
     ): PendingIntent {
-        return if (K9.isConfirmDeleteFromNotification) {
+        return if (interactionSettings.isConfirmDeleteFromNotification) {
             getDeleteAllConfirmationPendingIntent(messageReferences)
         } else {
-            getDeleteAllServicePendingIntent(account, messageReferences)
+            getDeleteAllServicePendingIntent(accountId, messageReferences)
         }
     }
 
@@ -172,95 +176,120 @@ internal class K9NotificationActionCreator(
         val intent = DeleteConfirmationActivity.getIntent(context, messageReferences).apply {
             data = Uri.parse("data:,deleteAllConfirmation/${System.currentTimeMillis()}")
         }
-        return PendingIntentCompat.getActivity(context, 0, intent, FLAG_CANCEL_CURRENT, false)!!
+        return createActivityPendingIntent(intent, flags = FLAG_CANCEL_CURRENT)
     }
 
     private fun getDeleteAllServicePendingIntent(
-        account: LegacyAccount,
+        accountId: AccountId,
         messageReferences: List<MessageReference>,
     ): PendingIntent {
-        val accountUuid = account.uuid
         val intent =
-            NotificationActionService.createDeleteAllMessagesIntent(context, accountUuid, messageReferences).apply {
-                data = Uri.parse("data:,deleteAll/$accountUuid/${System.currentTimeMillis()}")
-            }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+            NotificationActionIntents.createDeleteAllMessagesIntent(context, accountId, messageReferences)
+                .apply {
+                    data = Uri.parse("data:,deleteAll/$accountId/${System.currentTimeMillis()}")
+                }
+        return createServicePendingIntent(intent)
     }
 
     override fun createArchiveMessagePendingIntent(messageReference: MessageReference): PendingIntent {
-        val intent = NotificationActionService.createArchiveMessageIntent(context, messageReference).apply {
+        val intent = NotificationActionIntents.createArchiveMessageIntent(context, messageReference).apply {
             data = Uri.parse("data:,archive/${messageReference.toIdentityString()}")
         }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createServicePendingIntent(intent)
     }
 
     override fun createArchiveAllPendingIntent(
-        account: LegacyAccount,
+        accountId: AccountId,
         messageReferences: List<MessageReference>,
     ): PendingIntent {
-        val intent = NotificationActionService.createArchiveAllIntent(context, account, messageReferences).apply {
-            data = Uri.parse("data:,archiveAll/${account.uuid}/${System.currentTimeMillis()}")
+        val intent = NotificationActionIntents.createArchiveAllIntent(context, accountId, messageReferences).apply {
+            data = Uri.parse("data:,archiveAll/${accountId}/${System.currentTimeMillis()}")
         }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createServicePendingIntent(intent)
     }
 
     override fun createMarkMessageAsSpamPendingIntent(messageReference: MessageReference): PendingIntent {
-        val intent = NotificationActionService.createMarkMessageAsSpamIntent(context, messageReference).apply {
+        val intent = NotificationActionIntents.createMarkMessageAsSpamIntent(context, messageReference).apply {
             data = Uri.parse("data:,spam/${messageReference.toIdentityString()}")
         }
-        return PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
+        return createServicePendingIntent(intent)
     }
 
-    private fun createMessageListIntent(account: LegacyAccount): Intent {
-        val folderId = defaultFolderProvider.getDefaultFolder(account)
+    override fun createMarkMessageAsStarPendingIntent(messageReference: MessageReference): PendingIntent {
+        val intent = NotificationActionIntents.createMarkMessageAsStarIntent(context, messageReference).apply {
+            data = Uri.parse("data:,star/${messageReference.toIdentityString()}")
+        }
+        return createServicePendingIntent(intent)
+    }
+
+    private fun createActivityPendingIntent(
+        intent: Intent,
+        requestCode: Int = 0,
+        flags: Int = FLAG_UPDATE_CURRENT,
+    ): PendingIntent {
+        // Only returns null when using FLAG_NO_CREATE
+        return checkNotNull(PendingIntentCompat.getActivity(context, requestCode, intent, flags, false)) {
+            "Failed to create activity PendingIntent"
+        }
+    }
+
+    private fun createServicePendingIntent(intent: Intent): PendingIntent {
+        // Only returns null when using FLAG_NO_CREATE
+        return checkNotNull(PendingIntentCompat.getService(context, 0, intent, FLAG_UPDATE_CURRENT, false)) {
+            "Failed to create service PendingIntent"
+        }
+    }
+
+    private fun createMessageListIntent(accountId: AccountId): Intent {
+        val folderId = defaultFolderProvider.getDefaultFolder(accountId)
         val search = LocalMessageSearch().apply {
             addAllowedFolder(folderId)
-            addAccountUuid(account.uuid)
+            addAccountId(accountId)
         }
 
-        return MessageList.intentDisplaySearch(
+        return MessageHomeActivity.intentDisplaySearch(
             context = context,
             search = search,
             noThreading = false,
             newTask = true,
             clearTop = true,
         ).apply {
-            data = Uri.parse("data:,messageList/${account.uuid}/$folderId")
+            data = Uri.parse("data:,messageList/${accountId}/$folderId")
         }
     }
 
-    private fun createMessageListIntent(account: LegacyAccount, folderId: Long): Intent {
+    private fun createMessageListIntent(accountId: AccountId, folderId: Long): Intent {
         val search = LocalMessageSearch().apply {
             addAllowedFolder(folderId)
-            addAccountUuid(account.uuid)
+            addAccountId(accountId)
         }
 
-        return MessageList.intentDisplaySearch(
+        return MessageHomeActivity.intentDisplaySearch(
             context = context,
             search = search,
             noThreading = false,
             newTask = true,
             clearTop = true,
         ).apply {
-            data = Uri.parse("data:,messageList/${account.uuid}/$folderId")
+            data = Uri.parse("data:,messageList/${accountId}/$folderId")
         }
     }
 
     private fun createMessageViewIntent(messageReference: MessageReference, openInUnifiedInbox: Boolean): Intent {
-        return MessageList.actionDisplayMessageIntent(context, messageReference, openInUnifiedInbox).apply {
+        return MessageHomeActivity.actionDisplayMessageIntent(context, messageReference, openInUnifiedInbox).apply {
             data = Uri.parse("data:,messageView/${messageReference.toIdentityString()}")
         }
     }
 
-    private fun createUnifiedInboxIntent(account: LegacyAccount): Intent {
-        return MessageList.createUnifiedInboxIntent(context, account).apply {
-            data = Uri.parse("data:,unifiedInbox/${account.uuid}")
+    private fun createUnifiedInboxIntent(accountId: AccountId): Intent {
+        return MessageHomeActivity.createUnifiedInboxIntent(context, accountId).apply {
+            data = Uri.parse("data:,unifiedInbox/${accountId}")
         }
     }
 
-    private fun createNewMessagesIntent(account: LegacyAccount): Intent {
-        return MessageList.createNewMessagesIntent(context, account).apply {
-            data = Uri.parse("data:,newMessages/${account.uuid}")
+    private fun createNewMessagesIntent(accountId: AccountId): Intent {
+        return MessageHomeActivity.createNewMessagesIntent(context, accountId).apply {
+            data = Uri.parse("data:,newMessages/${accountId}")
         }
     }
 
@@ -268,13 +297,13 @@ internal class K9NotificationActionCreator(
         return messageReferences.asSequence().map { it.folderId }.toSet()
     }
 
-    private fun areAllIncludedInUnifiedInbox(account: LegacyAccount, folderIds: Collection<Long>): Boolean {
-        val messageStore = messageStoreManager.getMessageStore(account)
+    private fun areAllIncludedInUnifiedInbox(accountId: AccountId, folderIds: Collection<Long>): Boolean {
+        val messageStore = messageStoreManager.getMessageStore(accountId)
         return messageStore.areAllIncludedInUnifiedInbox(folderIds)
     }
 
     private fun isIncludedInUnifiedInbox(messageReference: MessageReference): Boolean {
-        val messageStore = messageStoreManager.getMessageStore(messageReference.accountUuid)
+        val messageStore = messageStoreManager.getMessageStore(messageReference.accountId)
         return messageStore.areAllIncludedInUnifiedInbox(listOf(messageReference.folderId))
     }
 }

@@ -2,11 +2,14 @@ package com.fsck.k9.view
 
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ReplyToParser
+import com.fsck.k9.mail.Message
 import com.fsck.k9.mailstore.AttachmentResolver
-import com.fsck.k9.message.ReplyActionStrategy
+import com.fsck.k9.message.LegacyReplyActionStrategy
 import com.fsck.k9.ui.helper.RelativeDateTimeFormatter
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import kotlin.time.ExperimentalTime
+import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.feature.mail.message.reader.api.strategy.ReplyActionStrategy
 import org.koin.dsl.module
 
 val viewModule = module {
@@ -16,7 +19,11 @@ val viewModule = module {
         RelativeDateTimeFormatter(context = get(), clock = get())
     }
     factory { ReplyToParser() }
-    factory { ReplyActionStrategy(replyRoParser = get()) }
+    factory<ReplyActionStrategy<LegacyAccount, Message>> {
+        LegacyReplyActionStrategy(
+            replyRoParser = get(),
+        )
+    }
     factory { (attachmentResolver: AttachmentResolver?, onPageFinishedListener: OnPageFinishedListener?, messageReference: MessageReference) ->
         K9WebViewClient(clipboardManager = get(), attachmentResolver, onPageFinishedListener, messageReference)
     }

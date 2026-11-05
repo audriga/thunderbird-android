@@ -12,23 +12,18 @@ import androidx.navigation.compose.rememberNavController
 import app.k9mail.feature.account.setup.navigation.AccountSetupNavHost
 import app.k9mail.feature.account.setup.navigation.AccountSetupRoute
 import app.k9mail.feature.onboarding.migration.api.OnboardingMigrationManager
-import app.k9mail.feature.onboarding.permissions.domain.PermissionsDomainContract.UseCase.HasRuntimePermissions
 import app.k9mail.feature.onboarding.permissions.ui.PermissionsScreen
 import app.k9mail.feature.onboarding.welcome.ui.WelcomeScreen
 import app.k9mail.feature.settings.import.ui.SettingsImportAction
 import app.k9mail.feature.settings.import.ui.SettingsImportScreen
 import org.koin.compose.koinInject
 
-private const val NESTED_NAVIGATION_ROUTE_WELCOME = "welcome"
+const val NESTED_NAVIGATION_ROUTE_WELCOME = "welcome"
 private const val NESTED_NAVIGATION_ROUTE_MIGRATION = "migration"
 private const val NESTED_NAVIGATION_ROUTE_ACCOUNT_SETUP = "account_setup"
 private const val NESTED_NAVIGATION_ROUTE_SETTINGS_IMPORT = "settings_import"
 private const val NESTED_NAVIGATION_ROUTE_SETTINGS_IMPORT_QR_CODE = "settings_import_qr_code"
-private const val NESTED_NAVIGATION_ROUTE_PERMISSIONS = "permissions"
-
-private fun NavController.navigateToMigration() {
-    navigate(NESTED_NAVIGATION_ROUTE_MIGRATION)
-}
+const val NESTED_NAVIGATION_ROUTE_PERMISSIONS = "permissions"
 
 private fun NavController.navigateToAccountSetup() {
     navigate(NESTED_NAVIGATION_ROUTE_ACCOUNT_SETUP)
@@ -54,18 +49,13 @@ private fun NavController.navigateToPermissions() {
 @Composable
 fun OnboardingNavHost(
     onFinish: (OnboardingRoute) -> Unit,
-    hasRuntimePermissions: HasRuntimePermissions = koinInject(),
     onboardingMigrationManager: OnboardingMigrationManager = koinInject(),
 ) {
     val navController = rememberNavController()
     var accountUuid by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun onImportSuccess() {
-        if (hasRuntimePermissions()) {
-            navController.navigateToPermissions()
-        } else {
-            onFinish(OnboardingRoute.Onboarding(null))
-        }
+        navController.navigateToPermissions()
     }
 
     NavHost(
@@ -74,22 +64,16 @@ fun OnboardingNavHost(
     ) {
         composable(route = NESTED_NAVIGATION_ROUTE_WELCOME) {
             WelcomeScreen(
-                onStartClick = {
-                    if (onboardingMigrationManager.isFeatureIncluded()) {
-                        navController.navigateToMigration()
-                    } else {
-                        navController.navigateToAccountSetup()
-                    }
-                },
+                onStartClick = { onFinish(OnboardingRoute.ThundermailAddAccount) },
                 onImportClick = { navController.navigateToSettingsImport() },
                 appNameProvider = koinInject(),
-                onboardingMigrationManager = koinInject(),
             )
         }
 
         composable(route = NESTED_NAVIGATION_ROUTE_MIGRATION) {
             onboardingMigrationManager.OnboardingMigrationScreen(
                 onQrCodeScan = { navController.navigateToSettingsImportQrCode() },
+                onThundermailClick = { onFinish(OnboardingRoute.ThundermailSignIn) },
                 onAddAccount = { navController.navigateToAccountSetup() },
                 onImport = { navController.navigateToSettingsImport() },
             )
@@ -101,16 +85,15 @@ fun OnboardingNavHost(
                 onFinish = { route: AccountSetupRoute ->
                     when (route) {
                         is AccountSetupRoute.AccountSetup -> {
-                            val createdAccountUuid = route.accountId
-                            accountUuid = createdAccountUuid
-                            if (hasRuntimePermissions()) {
-                                navController.navigateToPermissions()
-                            } else {
-                                onFinish(OnboardingRoute.Onboarding(createdAccountUuid))
-                            }
+                            navController.navigateToPermissions()
                         }
+
+                        AccountSetupRoute.ThundermailScanQrCode -> onFinish(OnboardingRoute.ThundermailScanQrCode)
+
+                        AccountSetupRoute.ThundermailSignIn -> onFinish(OnboardingRoute.ThundermailSignIn)
                     }
                 },
+                skipToIncomingValidation = false,
             )
         }
 

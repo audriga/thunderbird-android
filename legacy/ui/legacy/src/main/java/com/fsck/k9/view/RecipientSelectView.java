@@ -14,6 +14,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract.Contacts;
@@ -24,6 +25,8 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ListPopupWindow;
 import android.widget.ListView;
@@ -34,7 +37,6 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.app.LoaderManager.LoaderCallbacks;
 import androidx.loader.content.Loader;
 import app.k9mail.legacy.di.DI;
-import com.fsck.k9.K9;
 import com.fsck.k9.activity.AlternateRecipientAdapter;
 import com.fsck.k9.activity.AlternateRecipientAdapter.AlternateRecipientListener;
 import com.fsck.k9.activity.compose.RecipientAdapter;
@@ -47,14 +49,17 @@ import com.fsck.k9.view.RecipientSelectView.Recipient;
 import com.google.android.material.textview.MaterialTextView;
 import com.tokenautocomplete.TokenCompleteTextView;
 import de.hdodenhof.circleimageview.CircleImageView;
+import net.thunderbird.legacy.logging.Log;
 import net.thunderbird.core.preference.GeneralSettingsManager;
-import net.thunderbird.core.logging.legacy.Log;
+import net.thunderbird.core.preference.display.visualSettings.message.list.MessageListPreferencesManager;
 
 import static com.fsck.k9.FontSizes.FONT_DEFAULT;
 
 
 public class RecipientSelectView extends TokenCompleteTextView<Recipient> implements LoaderCallbacks<List<Recipient>>,
     AlternateRecipientListener {
+
+    private static final String TAG = "RecipientSelectView";
 
     private static final int MINIMUM_LENGTH_FOR_FILTERING = 2;
 
@@ -66,7 +71,8 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
 
     private final UserInputEmailAddressParser emailAddressParser = DI.get(UserInputEmailAddressParser.class);
 
-    private final GeneralSettingsManager generalSettingsManager = DI.get(GeneralSettingsManager.class);
+    private final MessageListPreferencesManager messageListPreferencesManager =
+        DI.get(MessageListPreferencesManager.class);
 
     private RecipientAdapter adapter;
     @Nullable
@@ -95,6 +101,20 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
     public RecipientSelectView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initView(context);
+    }
+
+    @Override
+    public InputConnection onCreateInputConnection(@NonNull EditorInfo outAttrs) {
+        InputConnection ic = super.onCreateInputConnection(outAttrs);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isIncognitoKeyboardEnabled()) {
+            outAttrs.imeOptions |= EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING;
+        }
+        return ic;
+    }
+
+    private boolean isIncognitoKeyboardEnabled() {
+        GeneralSettingsManager generalSettingsManager = DI.get(GeneralSettingsManager.class);
+        return generalSettingsManager.getConfig().getPrivacy().isIncognitoKeyboardEnabled();
     }
 
     private void initView(Context context) {
@@ -143,8 +163,11 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
 
         // Since the recipient chip views are not part of the view hierarchy we need to manually invalidate this
         // RecipientSelectView whenever a contact picture was loaded in order for the image to be drawn.
+        // The redraw is posted because Glide can deliver a memory-cached picture synchronously while the token span is
+        // being drawn (see RecipientTokenSpan.draw()). Changing the text's spans at that point reflows the layout in the
+        // middle of the draw pass and crashes in DynamicLayout.getLineStart().
         RecipientCircleImageView contactPhotoView = view.findViewById(R.id.contact_photo);
-        contactPhotoView.setOnSetImageDrawableListener(this::redrawTokens);
+        contactPhotoView.setOnSetImageDrawableListener(() -> post(this::redrawTokens));
 
         return view;
     }
@@ -153,7 +176,7 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
         RecipientTokenViewHolder holder = (RecipientTokenViewHolder) view.getTag();
 
         holder.vName.setText(recipient.getDisplayNameOrAddress(
-            generalSettingsManager.getConfig().getDisplay().isShowCorrespondentNames()
+            messageListPreferencesManager.getConfig().isShowCorrespondentNames()
         ));
         if (tokenTextSize != FONT_DEFAULT) {
             holder.vName.setTextSize(TypedValue.COMPLEX_UNIT_SP, tokenTextSize);
@@ -223,7 +246,7 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
         }
 
         super.onFocusChanged(hasFocus, direction, previous);
-        if (hasFocus) {
+        if (hasFocus && shouldShowImeOnFocus()) {
             displayKeyboard();
         }
     }
@@ -475,7 +498,7 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
         List<Recipient> currentRecipients = getObjects();
         int indexOfRecipient = currentRecipients.indexOf(recipientToReplace);
         if (indexOfRecipient == -1) {
-            Log.e("Tried to refresh invalid view token!");
+            Log.e(TAG, "Tried to refresh invalid view token!");
             return;
         }
         Recipient currentRecipient = currentRecipients.get(indexOfRecipient);
@@ -486,7 +509,7 @@ public class RecipientSelectView extends TokenCompleteTextView<Recipient> implem
 
         View recipientTokenView = getTokenViewForRecipient(currentRecipient);
         if (recipientTokenView == null) {
-            Log.e("Tried to refresh invalid view token!");
+            Log.e(TAG, "Tried to refresh invalid view token!");
             return;
         }
 

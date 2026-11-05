@@ -1,8 +1,7 @@
 # User Flows
 
-The user flows diagrams below illustrate typical paths users take through the application, helping developers understand how different components interact from a user perspective.
-
-For information about the repository structure and module organization, see the [Project Structure document](project-structure.md).
+The user flows diagrams below illustrate typical paths users take through the application, helping developers
+understand how different components interact from a user perspective.
 
 ## Mail
 
@@ -22,3 +21,4 @@ We plan to test these user flows using [maestro](https://maestro.dev/), a tool f
 simple YAML format, making it easy to define user interactions and verify application behavior.
 
 The current flows could be found in the *`ui-flows` directory in the repository.
+

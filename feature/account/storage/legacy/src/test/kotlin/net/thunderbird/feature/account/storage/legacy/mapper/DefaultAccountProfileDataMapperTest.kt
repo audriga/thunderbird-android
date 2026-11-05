@@ -22,7 +22,7 @@ class DefaultAccountProfileDataMapperTest {
         val expected = createAccountProfile()
 
         val testSubject = DefaultAccountProfileDataMapper(
-            avatarMapper = FakeAccountAvatarDataMapper(
+            avatarMapper = FakeAvatarDataMapper(
                 dto = dto.avatar,
                 domain = expected.avatar,
             ),
@@ -45,7 +45,7 @@ class DefaultAccountProfileDataMapperTest {
         val expected = createProfileDto()
 
         val testSubject = DefaultAccountProfileDataMapper(
-            avatarMapper = FakeAccountAvatarDataMapper(
+            avatarMapper = FakeAvatarDataMapper(
                 dto = expected.avatar,
                 domain = domain.avatar,
             ),
@@ -67,6 +67,7 @@ class DefaultAccountProfileDataMapperTest {
             name: String = PROFILE_NAME,
             color: Int = PROFILE_COLOR,
             avatar: AvatarDto = AvatarDto(
+                accountId = ACCOUNT_ID,
                 avatarType = AvatarTypeDto.IMAGE,
                 avatarMonogram = null,
                 avatarImageUri = AVATAR_IMAGE_URI,
