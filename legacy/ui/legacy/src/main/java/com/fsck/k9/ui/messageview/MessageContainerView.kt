@@ -38,6 +38,8 @@ import com.fsck.k9.mailstore.MessageViewInfo
 import com.fsck.k9.message.html.DisplayHtml
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.sml.SMLCard
+import com.fsck.k9.ui.sml.SMLCards
+import com.fsck.k9.ui.sml.cardsExist
 import com.fsck.k9.view.MessageWebView
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.fsck.k9.view.WebViewConfigProvider
@@ -439,43 +441,14 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
         resetView()
         renderAttachments(messageViewInfo)
 
-        val structuredDataList = messageViewInfo.messageData?.structuredData.orEmpty()
-        val extracted = messageViewInfo.messageData?.extracted
-        val itiExtractedList = messageViewInfo.messageData?.itiExtracted.orEmpty()
-        if (structuredDataList.isNotEmpty()) {
+        if (cardsExist(messageViewInfo)) {
             setCustomCardContent {
-                Column {
-                    structuredDataList.forEach { jsonObject ->
-                        SMLCard(
-                            initialJsonObject = jsonObject,
-                            clipboardManager = clipboardManager,
-                            messageReference = messageReference,
-                            context = context,
-                            )
-                    }
-                }
-            }
-        } else if (extracted != null) {
-            setCustomCardContent {
-                SMLCard(
-                    initialJsonObject = messageViewInfo.messageData.extracted,
+                SMLCards(
+                    messageViewInfo = messageViewInfo,
+                    messageReference = messageReference,
                     context = context,
                     clipboardManager = clipboardManager,
-                    messageReference = messageReference,
                 )
-            }
-        } else if (itiExtractedList.isNotEmpty()) {
-            setCustomCardContent {
-                Column {
-                    itiExtractedList.forEach { jsonObject ->
-                        SMLCard(
-                            initialJsonObject = jsonObject,
-                            clipboardManager = clipboardManager,
-                            messageReference = messageReference,
-                            context = context,
-                        )
-                    }
-                }
             }
         }
         val messageText = messageViewInfo.text
