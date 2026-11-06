@@ -136,9 +136,9 @@ zxingJavaSE = "3.5.4"
 mustache = "0.9.14"
 barber = "2024.04.03.174754-97b01fc"
 jackson = "2.17.2"
-ical4j = "4.0.4"
-ical4jvcard = "2.0.0-rc2"
-ical4jserializer = "0.3.2"
+ical4j = "4.4.0"
+ical4jvcard = "2.1.0"
+ical4jserializer = "0.4.1"
 andrdoidxJavascriptEngine = "1.0.0"
 
 [plugins]

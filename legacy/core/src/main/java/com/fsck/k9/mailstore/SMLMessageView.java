@@ -364,9 +364,16 @@ public abstract class SMLMessageView {
 //                                total.append(line).append('\n');
 //                            }
 //                            String icsContent = total.toString();
-                        CalendarBuilder cbuilder = new CalendarBuilder();
-                        Calendar cal = cbuilder.build(is);
-                        String icalText = cal.toString();
+                        String icalText;
+                        Calendar cal;
+                        try {
+                            CalendarBuilder cbuilder = new CalendarBuilder();
+                            // Todo currently cbuilder.build always throws with NoSuchMethodError (something about ZoneRulesProvider)
+                            cal = cbuilder.build(is);
+                            icalText = cal.toString();
+                        } catch (Throwable e) {
+                            return;
+                        }
 //                        System.out.println(cal.getUid());
                         List<StructuredData> eventJsons = new ArrayList<>();
                         for (CalendarComponent c : cal.getComponents()) {
