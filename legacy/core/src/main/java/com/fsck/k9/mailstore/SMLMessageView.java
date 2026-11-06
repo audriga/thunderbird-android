@@ -628,12 +628,17 @@ public abstract class SMLMessageView {
             headerMap = null;
             contextDate = null;
         }
-        JSONArray kitiExtract = new Kitinerary.Extractor()
+        JSONArray kitiExtract;
+        try {
+        kitiExtract = new Kitinerary.Extractor()
             .addText(text, "text/plain", headerMap)
             .addText(rawHtml, "text/html", headerMap)
             .setContextDate(contextDate)
             .setPostprocessing(true)
             .extract();
+        } catch (Throwable e) {
+            kitiExtract = new JSONArray();
+        }
         List<StructuredData> data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.JSON_LD);
         if (data.isEmpty()) {
             data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.MICRODATA);
