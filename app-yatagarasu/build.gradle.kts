@@ -284,6 +284,8 @@ dependencies {
 
     implementation(projects.feature.onboarding.migration.thunderbird)
     implementation(projects.feature.migration.launcher.thunderbird)
+    implementation(projects.feature.thundermail.api)
+    implementation(projects.feature.thundermail.yatagarasu)
 
 
     implementation(libs.androidx.javascript.engine)

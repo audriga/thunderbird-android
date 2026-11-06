@@ -318,6 +318,7 @@ include(
     ":feature:thundermail:internal:common",
     ":feature:thundermail:thunderbird",
     ":feature:thundermail:k9mail",
+    ":feature:thundermail:yatagarasu",
 )
 
 check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
