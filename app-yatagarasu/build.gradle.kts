@@ -275,12 +275,12 @@ dependencies {
     debugImplementation(projects.feature.autodiscovery.demo)
     "dailyImplementation"(projects.feature.autodiscovery.demo)
 
-    "fossImplementation"(projects.feature.funding.link)
+    "fossImplementation"(projects.feature.funding.noop)
 
-    fullDebugImplementation(projects.feature.funding.googleplay)
-    fullDailyImplementation(projects.feature.funding.googleplay)
-    fullBetaImplementation(projects.feature.funding.googleplay)
-    fullReleaseImplementation(projects.feature.funding.googleplay)
+    fullDebugImplementation(projects.feature.funding.noop)
+    fullDailyImplementation(projects.feature.funding.noop)
+    fullBetaImplementation(projects.feature.funding.noop)
+    fullReleaseImplementation(projects.feature.funding.noop)
 
     implementation(projects.feature.onboarding.migration.thunderbird)
     implementation(projects.feature.migration.launcher.thunderbird)
