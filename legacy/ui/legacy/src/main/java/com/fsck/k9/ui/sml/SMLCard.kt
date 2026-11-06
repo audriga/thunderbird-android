@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -44,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
@@ -375,6 +377,8 @@ private fun SimpleCard(
                     if (title.isNotEmpty()) {
                         Text(
                             text = title,
+                            maxLines = 1,
+                            overflow = TextOverflow.MiddleEllipsis,
                             modifier = Modifier.padding(bottom = 4.dp),
                             style = MaterialTheme.typography.titleSmall,
                         )
@@ -382,7 +386,11 @@ private fun SimpleCard(
                     if (description.isNotEmpty()) {
                         Text(
                             text = description,
-                            modifier = Modifier.padding(bottom = 8.dp),
+                            modifier = Modifier
+                                .padding(bottom = 8.dp),
+//                                .heightIn(0.dp, 56.dp)
+                            maxLines = 5,
+                            overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
