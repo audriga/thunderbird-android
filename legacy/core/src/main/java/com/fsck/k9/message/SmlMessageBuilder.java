@@ -24,11 +24,13 @@ import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.message.quote.InsertableHtmlContent;
 import net.thunderbird.core.preference.GeneralSettingsManager;
+import net.thunderbird.feature.mail.message.composer.signature.HtmlSignatureSanitizer;
 
 
 public abstract class SmlMessageBuilder extends MessageBuilder {
 
     final private GeneralSettingsManager settingsManager;
+    final private HtmlSignatureSanitizer htmlSignatureSanitizer;
     private String plainText;
     private String htmlText;
     // For the multipart variant, should we have a jsonld parameter and create the part here
@@ -39,10 +41,12 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
     protected SmlMessageBuilder(MessageIdGenerator messageIdGenerator,
         BoundaryGenerator boundaryGenerator,
         CoreResourceProvider resourceProvider,
-        GeneralSettingsManager settingsManager
+        GeneralSettingsManager settingsManager,
+        HtmlSignatureSanitizer htmlSignatureSanitizer
     ) {
-        super(messageIdGenerator, boundaryGenerator, resourceProvider, settingsManager);
+        super(messageIdGenerator, boundaryGenerator, resourceProvider, settingsManager, htmlSignatureSanitizer);
         this.settingsManager = settingsManager;
+        this.htmlSignatureSanitizer = htmlSignatureSanitizer;
     }
 
     /**
@@ -182,7 +186,7 @@ public abstract class SmlMessageBuilder extends MessageBuilder {
     private TextBody buildText(boolean isDraft, SimpleMessageFormat simpleMessageFormat) {
         TextBodyBuilder textBodyBuilder;
         if (simpleMessageFormat == SimpleMessageFormat.TEXT) {
-            textBodyBuilder = new TextBodyBuilder(plainText, settingsManager);
+            textBodyBuilder = new TextBodyBuilder(plainText, settingsManager, htmlSignatureSanitizer);
         } else {
             // don't care about quoted/ signature etc right now, and would need to edit TextBodyBuilder, to not break HTML,
             // if we wanted to use it as it has been.

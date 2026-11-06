@@ -174,7 +174,7 @@ internal class LegacyToDomainMessageMapper(
         logger.verbose(TAG) { "$LOG_ID extracting legacy message attachments" }
         val attachmentParts = ArrayList<Part>()
         logger.verbose(TAG) { "$LOG_ID finding attachments within message" }
-        MessageExtractor.findViewablesAndAttachments(this, null, attachmentParts)
+        MessageExtractor.findViewablesAndAttachments(this, null, attachmentParts, null)
         logger.verbose(TAG) { "$LOG_ID found ${attachmentParts.size} attachment parts" }
         return attachmentParts.takeIf { it.isNotEmpty() }?.map { it.toComposedMessageAttachment(this, accountId) }
     }

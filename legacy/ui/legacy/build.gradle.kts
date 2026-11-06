@@ -68,15 +68,13 @@ dependencies {
     implementation(libs.circleImageView)
     implementation(libs.androidx.work.runtime)
 
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.jetbrains.compose.material3)
+    implementation(libs.jetbrains.compose.material.icons.extended)
 
-    // Image loading with Landscapist (includes Coil support)
-    implementation(libs.lanscapist.coil) {
-        exclude(group = "io.coil-kt", module = "coil-gif")
-        exclude(group = "io.coil-kt", module = "coil-video")
+    implementation(libs.landscapist.coil) {
         exclude(group = "io.coil-kt.coil3", module = "coil-network-ktor3")
         exclude(group = "io.ktor")
+        exclude(group = "org.jetbrains.skiko")
     }
 
     implementation(libs.commons.io)

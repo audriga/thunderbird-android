@@ -816,8 +816,7 @@ class MessageListFragment :
     private fun goBack() {
         fragmentListener.goBack()
     }
-
-    override fun onCompose(sml: Boolean = false) {
+    override fun onCompose(sml: Boolean) {
         if (!isSingleAccountMode) {
             fragmentListener.onCompose(null, sml)
         } else {

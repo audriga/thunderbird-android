@@ -29,12 +29,12 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.net.toUri
-import coil3.toUri
-import net.thunderbird.core.logging.Logger
+import net.thunderbird.components.core.logging.Logger
 import net.thunderbird.core.preference.GeneralSettingsManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+private const val TAG = "ActionButtonUtil"
 class ActionButtonUtil(
     private val onReload: ((JSONObject) -> Unit),
     private val clipboardManager: ClipboardManager,
@@ -106,8 +106,7 @@ class ActionButtonUtil(
                     }
                 }
             } catch (e: JSONException) {
-                // todo logging
-//                e(e, "Error trying to add phone button descriptions")
+                logger.error(TAG, e, {"Error trying to add phone button descriptions"})
             }
             // try to get mail
             try {
@@ -119,8 +118,7 @@ class ActionButtonUtil(
                     }
                 }
             } catch (e: JSONException) {
-                // todo logging
-//                e(e, "Error trying to add phone button descriptions")
+                logger.error(TAG, e, {"Error trying to add phone button descriptions"})
             }
         }
 
@@ -150,8 +148,7 @@ class ActionButtonUtil(
                 }
             }
         } catch (e: JSONException) {
-            // todo logging
-//            e(e, "Error trying to add geo button descriptions")
+            logger.error(TAG,e, { "Error trying to add geo button descriptions" })
         }
         if (shouldMakeSharableAsMail(type)) {
             val shareAsMailButtonDesc = getShareAsMailButtonDesc(jsonObject)
@@ -201,8 +198,7 @@ class ActionButtonUtil(
                             return getPotentiallyNestedMediaContentUrl(mediaElement, mediaType)
                         }
                     } catch (e: JSONException) {
-                        // todo logging
-//                        e(e, "Error while iteration over audio or video jsonld element")
+                        logger.error(TAG,e, { "Error while iteration over audio or video jsonld element" })
                     }
                 }
             } else if (media is JSONObject) {

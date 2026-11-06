@@ -11,7 +11,7 @@ object ProjectConfig {
     }
 
     object Android {
-        const val sdkMin = 24
+        const val sdkMin = 28
 
         // Only needed for application
         const val sdkTarget = 36

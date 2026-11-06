@@ -18,7 +18,7 @@ object MessageActions {
      * activity.
      */
     @JvmStatic
-    fun actionCompose(context: Context, accountId: AccountId? = null, sml: Boolean) {
+    fun actionCompose(context: Context, accountId: AccountId? = null, sml: Boolean = false) {
         val getDefaultAccountId = DI.get<GetDefaultAccountId>()
         val targetAccountId = accountId ?: getDefaultAccountId()
         if (targetAccountId == null) {

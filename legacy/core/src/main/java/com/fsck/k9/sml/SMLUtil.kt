@@ -9,8 +9,8 @@ import org.audriga.ld2h.HeadProvider
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import timber.log.Timber.Forest.e
 
+// TODO check new logging and comment e(...) lines back in with corresponding logger
 object SMLUtil {
     @JvmStatic
     fun css(): String {
@@ -82,7 +82,7 @@ object SMLUtil {
                     }
                 }
             } catch (e: JSONException) {
-                e(e, "Error trying to add phone button descriptions")
+//                e(e, "Error trying to add phone button descriptions")
             }
             // try to get mail
             try {
@@ -94,7 +94,7 @@ object SMLUtil {
                     }
                 }
             } catch (e: JSONException) {
-                e(e, "Error trying to add phone button descriptions")
+//                e(e, "Error trying to add phone button descriptions")
             }
         }
 
@@ -121,7 +121,7 @@ object SMLUtil {
                 }
             }
         } catch (e: JSONException) {
-            e(e, "Error trying to add geo button descriptions")
+//            e(e, "Error trying to add geo button descriptions")
         }
         if (shouldMakeSharableAsMail(type)) {
             val shareAsMailButtonDesc = getShareAsMailButtonDesc(jsonObject)
@@ -178,7 +178,7 @@ object SMLUtil {
                             return getPotentiallyNestedMediaContentUrl(mediaElement, mediaType)
                         }
                     } catch (e: JSONException) {
-                        e(e, "Error while iteration over audio or video jsonld element")
+//                        e(e, "Error while iteration over audio or video jsonld element")
                     }
                 }
             } else if (media is JSONObject) {

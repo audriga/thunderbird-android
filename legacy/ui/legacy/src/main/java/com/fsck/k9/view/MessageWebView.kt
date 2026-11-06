@@ -17,7 +17,6 @@ import org.koin.core.component.inject
 
 import app.k9mail.legacy.message.controller.MessageReference
 
-class MessageWebView : WebView, KoinComponent {
 private const val TAG = "MessageWebView"
 
 class MessageWebView : WebView, KoinComponent, ThunderbirdWebViewSettings {

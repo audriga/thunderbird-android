@@ -165,9 +165,9 @@ public class SMLMessageComposeUtil {
     }
 
     public boolean handleJsonLdAttachment(Attachment attachment) {
-        if (MimeTypeUtil.isSameMimeType(attachment.contentType, "application/json") || MimeTypeUtil.isSameMimeType(
-            attachment.contentType, "application/json+ld")) {
-            String filename = attachment.filename;
+        if (MimeTypeUtil.isSameMimeType(attachment.getContentType(), "application/json") || MimeTypeUtil.isSameMimeType(
+            attachment.getContentType(), "application/json+ld")) {
+            String filename = attachment.getFileName();
             if (filename == null) {
                 return false;
             }

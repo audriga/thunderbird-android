@@ -920,7 +920,7 @@ class LegacyMessageListFragment :
         fragmentListener.goBack()
     }
 
-    override fun onCompose() {
+    override fun onCompose(sml: Boolean) {
         if (!isSingleAccountMode) {
             fragmentListener.onCompose(null)
         } else {

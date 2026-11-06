@@ -94,8 +94,8 @@ class AccountSettingsDataStore(
             "upload_sent_messages" -> updateValue { it.copy(isUploadSentMessages = value) }
             "ignore_chat_messages" -> updateValue { it.copy(isIgnoreChatMessages = value) }
             "subscribed_folders_only" -> updateSubscribedFoldersOnly(value)
-            "debug_view" -> account.debugView = value
-            "demo_view" -> account.demoView = value
+            "debug_view" -> updateDebugView(value)
+            "demo_view" -> updateDemoView(value)
             else -> return
         }
 
@@ -225,7 +225,7 @@ class AccountSettingsDataStore(
             "account_remote_search_num_results" -> updateValue { it.copy(remoteSearchNumResults = value.toInt()) }
             "account_ringtone" -> setNotificationSound(value)
             "notification_light" -> setNotificationLight(value)
-            "sml_variant_enum" -> account.smlVariant = SmlVariant.valueOf(value)
+            "sml_variant_enum" -> updateValue { it.copy(smlVariant = SmlVariant.valueOf(value)) }
             else -> return
         }
 
@@ -373,6 +373,16 @@ class AccountSettingsDataStore(
         if (account.isSubscribedFoldersOnly != value) {
             updateValue { it.copy(isSubscribedFoldersOnly = value) }
             requestFollowUpAction(FollowUpAction.REFRESH_FOLDER_LIST)
+        }
+    }
+    private fun updateDemoView(value: Boolean) {
+        if (account.demoView != value) {
+            updateValue { it.copy(demoView = value) }
+        }
+    }
+    private fun updateDebugView(value: Boolean) {
+        if (account.debugView != value) {
+            updateValue { it.copy(debugView = value) }
         }
     }
 }

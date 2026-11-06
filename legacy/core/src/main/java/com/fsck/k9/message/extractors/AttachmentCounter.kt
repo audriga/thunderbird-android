@@ -13,6 +13,7 @@ class AttachmentCounter {
             message,
             null,
             attachmentParts,
+            null,
         )
 
         return attachmentParts.size

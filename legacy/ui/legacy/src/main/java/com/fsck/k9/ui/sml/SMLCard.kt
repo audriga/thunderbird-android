@@ -53,7 +53,7 @@ import com.fsck.k9.view.SMLWebViewClientExtensions
 import com.fsck.k9.view.SMLWebViewClientExtensions.Companion.sendDataRequest
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil3.CoilImage
-import okhttp3.internal.toImmutableMap
+import kotlinx.collections.immutable.toImmutableMap
 import org.json.JSONArray
 import org.json.JSONObject
 

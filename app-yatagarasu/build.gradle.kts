@@ -3,14 +3,14 @@ import java.util.Date
 plugins {
     id(ThunderbirdPlugins.App.androidCompose)
     alias(libs.plugins.dependency.guard)
-    id("thunderbird.app.version.info")
-    id("thunderbird.quality.badging")
+    alias(libs.plugins.tb.app.badging)
+    alias(libs.plugins.tb.app.versioning)
+    alias(libs.plugins.tb.baselineprofile.consumer.app)
 }
 
-val testCoverageEnabled: Boolean by extra
-if (testCoverageEnabled) {
-    apply(plugin = "jacoco")
-}
+val testCoverageEnabled = providers
+    .gradleProperty("testCoverageEnabled")
+    .isPresent
 
 android {
     namespace = "com.audriga.yatagarasu.android"
@@ -22,7 +22,7 @@ android {
         versionCode = 3
         versionName = "0.3"
 
-        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Thunderbird for Android\"")
+        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Yatagarasu for Android\"")
     }
 
     androidResources {
@@ -31,6 +31,7 @@ android {
             "ar",
             "be",
             "bg",
+            "br",
             "ca",
             "co",
             "cs",
@@ -49,6 +50,7 @@ android {
             "fr",
             "fy",
             "ga",
+            "gd",
             "gl",
             "hr",
             "hu",
@@ -68,11 +70,12 @@ android {
             "pt-rPT",
             "ro",
             "ru",
-            "sl",
             "sk",
+            "sl",
             "sq",
             "sr",
             "sv",
+            "ta-rIN",
             "tr",
             "uk",
             "vi",
@@ -82,7 +85,10 @@ android {
     }
 
     signingConfigs {
-//        val useUploadKey = properties.getOrDefault("tb.useUploadKey", "true") == "true"
+//        val useUploadKey = providers.gradleProperty("tb.useUploadKey")
+//            .map(String::toBoolean)
+//            .orElse(true)
+//            .get()
 
 //        createSigningConfig(project, SigningType.TB_RELEASE, isUpload = useUploadKey)
 //        createSigningConfig(project, SigningType.TB_BETA, isUpload = useUploadKey)
@@ -91,10 +97,17 @@ android {
     }
 
     buildTypes {
+        val minify = providers.gradleProperty("minify")
+            .map(String::toBoolean)
+            .orElse(true)
+
         debug {
             applicationIdSuffix = ".debug"
             val buildTime = Date()
             versionNameSuffix = "-SNAPSHOT $buildTime"
+
+            enableUnitTestCoverage = testCoverageEnabled
+            enableAndroidTestCoverage = testCoverageEnabled
 
             isMinifyEnabled = false
             isShrinkResources = false
@@ -112,7 +125,7 @@ android {
             isDebuggable = false
 
             proguardFiles(
-                getDefaultProguardFile("proguard-android.txt"),
+                getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
 
@@ -120,19 +133,21 @@ android {
         }
 
         create("beta") {
+            initWith(getByName("release"))
+
             signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
 
             applicationIdSuffix = ".beta"
-            versionNameSuffix = "b1"
+            versionNameSuffix = "b0"
 
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = minify.get()
+            isShrinkResources = minify.get()
             isDebuggable = false
 
             matchingFallbacks += listOf("release")
 
             proguardFiles(
-                getDefaultProguardFile("proguard-android.txt"),
+                getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
 
@@ -140,19 +155,21 @@ android {
         }
 
         create("daily") {
+            initWith(getByName("release"))
+
             signingConfig = signingConfigs.getByType(SigningType.YG_RELEASE)
 
             applicationIdSuffix = ".daily"
             versionNameSuffix = "a1"
 
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = minify.get()
+            isShrinkResources = minify.get()
             isDebuggable = false
 
             matchingFallbacks += listOf("release")
 
             proguardFiles(
-                getDefaultProguardFile("proguard-android.txt"),
+                getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
 
@@ -209,14 +226,14 @@ androidComponents {
 
 // Initialize placeholders for the product flavor and build type combinations needed for dependency declarations.
 // They are required to avoid "Unresolved configuration" errors.
-val fullDebugImplementation by configurations.creating
-val fullDailyImplementation by configurations.creating
-val fullBetaImplementation by configurations.creating
-val fullReleaseImplementation by configurations.creating
+val fullDebugImplementation = configurations.create("fullDebugImplementation")
+val fullDailyImplementation = configurations.create("fullDailyImplementation")
+val fullBetaImplementation = configurations.create("fullBetaImplementation")
+val fullReleaseImplementation = configurations.create("fullReleaseImplementation")
 
 dependencies {
     implementation(projects.appCommon)
-    implementation(projects.core.ui.compose.theme2.yatagarasu)
+    implementation(projects.core.ui.compose.common)
     implementation(projects.core.ui.legacy.theme2.yatagarasu)
     implementation(projects.feature.launcher)
 
@@ -226,7 +243,9 @@ dependencies {
     implementation(projects.core.featureflag)
 
     implementation(projects.feature.account.settings.impl)
-    implementation(projects.feature.mail.message.list)
+    implementation(projects.feature.mail.message.list.api)
+    implementation(projects.feature.mail.message.list.internal)
+    implementation(projects.feature.mail.message.reader.api)
 
     implementation(projects.feature.widget.messageList)
     implementation(projects.feature.widget.messageListGlance)
@@ -252,7 +271,9 @@ dependencies {
 
     implementation(projects.feature.autodiscovery.api)
     debugImplementation(projects.backend.demo)
+    "dailyImplementation"(projects.backend.demo)
     debugImplementation(projects.feature.autodiscovery.demo)
+    "dailyImplementation"(projects.feature.autodiscovery.demo)
 
     "fossImplementation"(projects.feature.funding.link)
 
@@ -268,14 +289,19 @@ dependencies {
     implementation(libs.androidx.javascript.engine)
 
     // TODO remove once OAuth ids have been moved from TBD to TBA
-    "betaImplementation"(libs.appauth)
     releaseImplementation(libs.appauth)
 
     // Required for DependencyInjectionTest
     testImplementation(projects.feature.account.api)
     testImplementation(projects.feature.account.common)
+    testImplementation(projects.feature.thundermail.internal.common)
     testImplementation(projects.plugins.openpgpApiLib.openpgpApi)
+    testImplementation(projects.feature.changelog.internal)
+
     testImplementation(libs.appauth)
+
+    // todo?
+//    baselineProfile(projects.appYatagarasu.benchmarks)
 }
 
 dependencyGuard {
@@ -297,4 +323,9 @@ tasks.register("printConfigurations") {
             }
         }
     }
+}
+
+codeCoverage {
+    branchCoverage = 0
+    lineCoverage = 25
 }

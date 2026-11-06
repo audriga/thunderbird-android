@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "app.k9mail.core.ui.legacy.theme2.audriga"
+    namespace = "app.k9mail.core.ui.legacy.theme2.yatagarasu"
 }
 
 dependencies {

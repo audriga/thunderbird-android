@@ -37,7 +37,7 @@ interface MessageListFragmentBridgeContract {
     val isShowAccountIndicator: Boolean
     fun isSearchViewCollapsed(): Boolean
     fun expandSearchView()
-    fun onCompose()
+    fun onCompose(sml: Boolean = false)
     fun onCycleSort()
     fun collapseSearchView()
     fun onReverseSort()
@@ -59,7 +59,7 @@ interface MessageListFragmentBridgeContract {
         fun showThread(accountId: AccountId, threadRootId: Long)
         fun openMessage(messageReference: MessageReference)
         fun setMessageListTitle(title: String, subtitle: String? = null)
-        fun onCompose(accountId: AccountId?)
+        fun onCompose(accountId: AccountId?, sml: Boolean = false)
         fun startSearch(query: String, accountId: AccountId?, folderId: Long?): Boolean
         fun startSupportActionMode(callback: ActionMode.Callback): ActionMode?
         fun goBack()

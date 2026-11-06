@@ -282,11 +282,11 @@ public class MessageViewInfoExtractor {
                messageData = SMLMessageView.getMessageData(textString, rawHTML, parseableParts, parseableAttachments,
                         shouldTryToDerive, mailExtractorContext);
             } catch (JSONException | MessagingException | IOException | ParserException e) {
-                Log.e(e, "Error while trying to parse/ extract structured data");
+//                Log.e(e, "Error while trying to parse/ extract structured data");
                 messageData = null;
             }
             String smlHtml = SMLMessageView.renderMarkupInMessageHTML(textString, rawHTML, sanitizedHtml,
-                messageData, javaScriptIsolateLazy
+                messageData, javaScriptIsolateLazy, mailExtractorContext
             );
             return new ViewableExtractedText(textString, smlHtml, messageData);
         } catch (Exception e) {

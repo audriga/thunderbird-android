@@ -1,5 +1,7 @@
 package com.fsck.k9.view
 
+//import net.thunderbird.core.preference.GeneralSettings
+//import net.thunderbird.core.preference.PreferenceManager
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
@@ -29,14 +31,11 @@ import app.k9mail.legacy.message.controller.MessageReference
 import com.audriga.h2lj.model.StructuredSyntax
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
 import com.fsck.k9.CoreResourceProvider
-import com.fsck.k9.Preferences
 import com.fsck.k9.activity.MessageCompose
 import com.fsck.k9.activity.compose.SMLMessageComposeUtil
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.mail.Address
-import net.thunderbird.core.logging.Logger
-import net.thunderbird.core.logging.legacy.Log
 import com.fsck.k9.mail.internet.Headers.contentType
 import com.fsck.k9.mail.internet.MimeBodyPart
 import com.fsck.k9.mail.internet.MimeMessage
@@ -62,7 +61,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.Date
 import java.util.Locale
-import kotlin.getValue
 import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.model.Calendar
 import net.fortuna.ical4j.model.ComponentContainer
@@ -88,12 +86,13 @@ import net.fortuna.ical4j.model.property.Summary
 import net.fortuna.ical4j.model.property.Uid
 import net.fortuna.ical4j.model.property.Url
 import net.fortuna.ical4j.util.Uris
-import net.thunderbird.core.android.account.LegacyAccount
+import net.thunderbird.components.core.logging.Logger
+import net.thunderbird.core.android.account.LegacyAccountManager
 import net.thunderbird.core.common.exception.MessagingException
-//import net.thunderbird.core.preference.GeneralSettings
 import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.feature.account.AccountId
+import net.thunderbird.legacy.logging.Log
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-//import net.thunderbird.core.preference.PreferenceManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Request.Builder
@@ -106,6 +105,8 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+
+private const val TAG = "SMLWebViewClientExtensions"
 
 class SMLWebViewClientExtensions(
     private val clipboardManager: ClipboardManager,
@@ -324,7 +325,7 @@ class SMLWebViewClientExtensions(
             try {
                 jsonObject = JSONObject(decodedJsonText)
             } catch (e: JSONException) {
-                logger.error(throwable = e, message = { "Error parsing decoded json" })
+                logger.error(TAG, throwable = e, message = { "Error parsing decoded json" })
                 continue
             }
 
@@ -415,7 +416,7 @@ class SMLWebViewClientExtensions(
             try {
                 jsonLds = JsonLdDeserializer.deserialize(jsonSrc)
             } catch (e: JSONException) {
-                logger.error(throwable = e, message = { "Error parsing reload response"})
+                logger.error(TAG, throwable = e, message = { "Error parsing reload response"})
                 showToast(context, "Could not parse response")
                 return
             }
@@ -448,7 +449,7 @@ class SMLWebViewClientExtensions(
         val (jsonSrc: String?, okErr: String?) = sendDataRequest(
             actionData,
             target,
-            if (action == "close") "PUT" else "PATCH"
+            if (action == "close") "PUT" else "PATCH",
         )
 
         val jsonLds: List<JSONObject>
@@ -456,7 +457,7 @@ class SMLWebViewClientExtensions(
             try {
                 jsonLds = JsonLdDeserializer.deserialize(jsonSrc)
             } catch (e: JSONException) {
-                logger.error(throwable = e, message = { "Error parsing patch response"})
+                logger.error(TAG, throwable = e, message = { "Error parsing patch response"})
                 showToast(context, "Could not parse response")
                 return
             }
@@ -548,6 +549,7 @@ class SMLWebViewClientExtensions(
                 return super.onRenderProcessGone(view, detail)
             }
 
+            @SuppressLint("ThreadConstraint")
             override fun shouldOverrideUrlLoading(webView: WebView, request: WebResourceRequest): Boolean {
 
                 val errorMessage = "onOverride " + request.url
@@ -612,7 +614,7 @@ class SMLWebViewClientExtensions(
 
         fun shareAsSmlMail(context: Context, messageReference: MessageReference?, text: String) {
             val i = Intent(context, MessageCompose::class.java)
-            i.putExtra(MessageCompose.EXTRA_ACCOUNT, messageReference?.accountUuid)
+            i.putExtra(MessageCompose.EXTRA_ACCOUNT, messageReference?.accountId?.value)
             i.putExtra(SMLMessageComposeUtil.IS_SML, true)
             i.setAction(MessageCompose.ACTION_COMPOSE)
             i.putExtra(SMLMessageComposeUtil.SML_PAYLOAD, text)
@@ -749,9 +751,9 @@ class SMLWebViewClientExtensions(
             context: Context,
         ) {
             val cal = calendarFromJsonLd(json)
-            val account: LegacyAccount? = account(messageReference)
-            if (account != null && action != null) {
-                imipInteract(cal, action, account, generalSettingsManager, context)
+            val accountId = account(messageReference)
+            if (accountId != null && action != null) {
+                imipInteract(cal, action, accountId, generalSettingsManager, context)
             }
         }
 
@@ -762,10 +764,13 @@ class SMLWebViewClientExtensions(
         private fun imipInteract(
             cal: Calendar?,
             action: IMIPAction,
-            account: LegacyAccount,
+            accountId: AccountId,
             generalSettingsManager: GeneralSettingsManager,
             context: Context,
         ) {
+            val accountManager: LegacyAccountManager = DI.get(LegacyAccountManager::class.java)
+            val account = accountManager.findById(accountId) ?: return
+
             // TODO: Add to calendar via intent, and on return send email.
             //                val attendees = cal?.componentList?.get<VEvent>()?.map { it.attendees }?.flatten()
             val event = cal?.componentList?.all?.filterIsInstance<VEvent>()?.firstOrNull()
@@ -776,7 +781,7 @@ class SMLWebViewClientExtensions(
                 val organizerEmail = organizer?.calAddress?.schemeSpecificPart
                 if (!organizerEmail.isNullOrEmpty()) {
                     // todo: can't send email if organizer email is null or empty. Show some sort of error?
-                    val userAttendee = findAndUpdateAccountEmailInAttendees(event, account, action.partStat)
+                    val userAttendee = findAndUpdateAccountEmailInAttendees(event, action.partStat, account.email)
                     if (action != IMIPAction.Decline) {
                         val calTextToSave = cal.toString()
                         viewTextAsFile(context, calTextToSave, "ical", "text/calendar")
@@ -805,7 +810,7 @@ class SMLWebViewClientExtensions(
                     dedicatedJsonMultipart.setEncoding("8bit")
                     val subject = action.verb + ": " + (summary ?: "")
                     messageBuilder
-                        .setPlainText("${account.displayName} has ${action.verb.lowercase(Locale.getDefault())} your invitation")
+                        .setPlainText("${account.senderName} has ${action.verb.lowercase(Locale.getDefault())} your invitation")
                         .setSubject(subject)
                         .setSentDate(Date())
                         .setHideTimeZone(generalSettingsManager.getConfig().privacy.isHideTimeZone)
@@ -818,16 +823,16 @@ class SMLWebViewClientExtensions(
                         object : Callback {
                             override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
                                 val messagingController = DI.get(MessagingController::class.java)
-                                messagingController.sendMessage(account, message, subject, null)
+                                messagingController.sendMessage(accountId, message, subject, null)
                                 showToast(context, action.verb)
                             }
 
                             override fun onMessageBuildCancel() {
-                                Log.e("Cancelled sending message")
+                                Log.e(TAG, "Cancelled sending message")
                             }
 
                             override fun onMessageBuildException(me: MessagingException?) {
-                                Log.e(me, "Error sending message")
+                                Log.e(TAG, me, "Error sending message")
                                 Toast.makeText(
                                     context,
                                     context.getString(R.string.send_failed_reason, me?.localizedMessage ?: ""),
@@ -889,10 +894,10 @@ class SMLWebViewClientExtensions(
                     if (originalIcal != null) {
                         return originalIcal
                     } else {
-                        Log.e("Json had originalVEvent property, but parsing failed")
+                        Log.e(TAG, "Json had originalVEvent property, but parsing failed")
                     }
                 } catch (e: Exception) {
-                    Log.e(e, "Could not parse original VEvent")
+                    Log.e(TAG, e, "Could not parse original VEvent")
                 }
             }
             val event = vEventFromJsonLd(json)
@@ -940,7 +945,7 @@ class SMLWebViewClientExtensions(
                     } catch (
                         e: DateTimeParseException,
                     ) {
-                        Log.e("Error parsing start date: %s", e)
+                        Log.e(TAG, "Error parsing start date: %s", e)
                     }
                 }
             }
@@ -958,7 +963,7 @@ class SMLWebViewClientExtensions(
                     } catch (
                         e: DateTimeParseException,
                     ) {
-                        Log.e("Error parsing end date: %s", e)
+                        Log.e(TAG, "Error parsing end date: %s", e)
                     }
                 }
             }
@@ -989,11 +994,11 @@ class SMLWebViewClientExtensions(
             return event
         }
 
-        private fun findAndUpdateAccountEmailInAttendees(event: VEvent, account: LegacyAccount, partStat: String): Attendee? {
+        private fun findAndUpdateAccountEmailInAttendees(event: VEvent, partStat: String, email: String): Attendee? {
             // the user currently interacting with this mail as an attendee of the event
             var userAttendee: Attendee? = null
             for (attendee in event.attendees) {
-                if (attendee.calAddress.schemeSpecificPart == account.email) {
+                if (attendee.calAddress.schemeSpecificPart == email) {
                     attendee.replace<Property>(PartStat(partStat))
                     attendee.remove<Property>(Rsvp(true))
 
@@ -1041,16 +1046,8 @@ class SMLWebViewClientExtensions(
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
 
-        private fun account(messageReference: MessageReference?): LegacyAccount? {
-            val accountUuid = messageReference?.accountUuid
-            val account: LegacyAccount?
-            if (accountUuid != null) {
-                val preferences = Preferences.getPreferences()
-                account = preferences.getAccount(accountUuid)
-            } else {
-                account = null
-            }
-            return account
+        private fun account(messageReference: MessageReference?): AccountId? {
+           return messageReference?.accountId
         }
 
         fun downloadPage(httpUri: Uri): Pair<String?, String?> {
@@ -1063,12 +1060,12 @@ class SMLWebViewClientExtensions(
                 client.newCall(request).execute().use { response ->
                     if (response.body != null) {
                         pageSrc = response.body!!.string()
-                        Log.d("Got response from %s:\n%s", httpUri, pageSrc)
+                        Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
                     }
                 }
             } catch (e: java.lang.Exception) {
                 okErr = e.message
-                Log.d(e, "Couldn't get: %s", httpUri)
+                Log.d(TAG, e, "Couldn't get: %s", httpUri)
             }
             return Pair(pageSrc, okErr)
         }
@@ -1101,7 +1098,7 @@ class SMLWebViewClientExtensions(
                 }
             } catch (e: java.lang.Exception) {
                 okErr = e.message
-                Log.d(e, "Couldn't get: %s", target)
+                Log.d(TAG, e, "Couldn't get: %s", target)
             }
             return Pair(jsonSrc, okErr)
         }
@@ -1117,7 +1114,9 @@ class SMLWebViewClientExtensions(
                 val smlPayload = SmlMessageUtil.getApproveDenyPayload(requestAction)
                 if (smlPayload != null) {
                     val mc = DI.get(MessagingController::class.java)
-                    val account: LegacyAccount? = account(messageReference)
+                    val accountId = account(messageReference)
+                    val accountManager: LegacyAccountManager = DI.get(LegacyAccountManager::class.java)
+                    val account = accountId?.let { accountManager.findById(it) }
                     if (account != null) {
                         val builder = SmlMessageUtil.createSMLMessageBuilder(
                             listOf(smlPayload),
@@ -1130,7 +1129,7 @@ class SMLWebViewClientExtensions(
                         builder.buildAsync(
                             object : Callback {
                                 override fun onMessageBuildSuccess(message: MimeMessage?, isDraft: Boolean) {
-                                    mc.sendMessage(account, message, requestAction, null)
+                                    mc.sendMessage(accountId, message, requestAction, null)
                                     Toast.makeText(context, "Sent $requestAction", Toast.LENGTH_SHORT)
                                         .show()
                                     //todo show success when done
@@ -1186,7 +1185,7 @@ class SMLWebViewClientExtensions(
             try {
                 context.startActivity(intent)
             } catch (e: ActivityNotFoundException) {
-                Log.d(e, "Couldn't open URL: %s", uri)
+//                Log.d(e, "Couldn't open URL: %s", uri)
                 Toast.makeText(context, R.string.error_activity_not_found, Toast.LENGTH_LONG).show()
             }
         }
@@ -1194,15 +1193,18 @@ class SMLWebViewClientExtensions(
             context: Context,
             action: String,
             actionOption: Any?,
-            messageReference: MessageReference?
+            messageReference: MessageReference?,
         ): JSONObject? {
-            val account: LegacyAccount? = account(messageReference)
-            if (account == null) {
+            val accountId =  account(messageReference)
+            if (accountId == null) {
                 showToast(context, "Cannot get account information (needed to vote)")
                 return null
             }
 
-            val name = account.identities.firstOrNull()?.name ?: account.displayName
+            val accountManager: LegacyAccountManager = DI.get(LegacyAccountManager::class.java)
+            val account = accountManager.findById(accountId)
+            val name = account?.identities?.firstOrNull()?.name ?: account?.name
+            val email = account?.identities?.firstOrNull()?.email ?: account?.email
             val actionData = JSONObject().apply {
                 put("@context", "https://schema.org")
                 put("@type", if (action == "submit") "ChooseAction" else "UpdateAction")
@@ -1212,7 +1214,7 @@ class SMLWebViewClientExtensions(
                     JSONObject().apply {
                         put("@type", "Person")
                         put("name", name)
-                        put("email", account.email)
+                        put("email", email)
                     },
                 )
                 if (action == "submit") put("actionOption", actionOption)

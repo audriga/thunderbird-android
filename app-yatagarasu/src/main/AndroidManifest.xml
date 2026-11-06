@@ -7,7 +7,7 @@
 
     <uses-sdk tools:overrideLibrary="androidx.javascriptengine"/>
     <application
-        android:name="com.audriga.yatagarasu.android.YatagarasuApp"
+        android:name=".YatagarasuApp"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.Yatagarasu.Startup"
@@ -66,7 +66,7 @@
                         `com.audriga.yatagarasu.android.widget.provider.UnreadWidgetProvider`
         -->
         <receiver
-            android:name="com.audriga.yatagarasu.android.widget.provider.UnreadWidgetProvider"
+            android:name=".widget.provider.UnreadWidgetProvider"
             android:label="@string/unread_widget_label"
             android:enabled="@bool/home_screen_widgets_enabled"
             android:exported="false"
