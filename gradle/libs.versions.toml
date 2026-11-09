@@ -318,8 +318,8 @@ kxml2 = { module = "com.github.cketti:kxml2-extracted-from-android", version.ref
 landscapist-coil = { module = "com.github.skydoves:landscapist-coil3", version.ref = "landscapist" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
-#maplibre-compose = { module = "org.maplibre.compose:maplibre-compose", version = "0.20.0" }
-#maplibre-compose-runtime-vulkan-android = { module = "org.maplibre.compose:maplibre-compose-runtime-vulkan-android", version.ref = "maplibreComposeRuntimeVulkanAndroid" }
+maplibre-compose = { module = "org.maplibre.compose:maplibre-compose", version = "0.20.0" }
+maplibre-compose-runtime-vulkan-android = { module = "org.maplibre.compose:maplibre-compose-runtime-vulkan-android", version.ref = "maplibreComposeRuntimeVulkanAndroid" }
 mime4j-core = { module = "org.apache.james:apache-mime4j-core", version.ref = "mime4j" }
 mime4j-dom = { module = "org.apache.james:apache-mime4j-dom", version.ref = "mime4j" }
 minidns-hla = { module = "org.minidns:minidns-hla", version.ref = "minidns" }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,6 +19,12 @@ import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.mailstore.MessageViewInfo
 import org.json.JSONObject
+import org.maplibre.compose.camera.CameraPosition
+import org.maplibre.compose.layers.SymbolLayer
+import org.maplibre.compose.map.MaplibreMap
+import org.maplibre.compose.map.rememberMapState
+import org.maplibre.compose.style.BaseStyle
+import org.maplibre.spatialk.geojson.Position
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,17 +47,7 @@ fun SMLCards(
         listOfNotNull(*structuredDataList.toTypedArray(), extracted, *itiExtractedList.toTypedArray()).distinct()
     }
     if (jsonLds.isNotEmpty()) {
-        if (jsonLds.size == 1) {
-            SMLCard(
-                initialJsonObject = jsonLds.first(),
-                clipboardManager = clipboardManager,
-                messageReference = messageReference,
-                context = context,
-                modifier = modifier,
-                onReload = onReload,
-            )
-
-        } else {
+        Column {
             BoxWithConstraints {
                 HorizontalMultiBrowseCarousel(
                     state = rememberCarouselState { jsonLds.count() },
@@ -60,12 +57,10 @@ fun SMLCards(
                         .padding(top = 16.dp, bottom = 16.dp),
                     preferredItemWidth = maxHeight.times(0.8f),
                     itemSpacing = 8.dp,
-                    contentPadding = PaddingValues(horizontal = 16.dp)
-                ) {
-                        i ->
-                    val jsonObject = jsonLds[i]
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                ) { i: Int ->
                     SMLCard(
-                        initialJsonObject = jsonObject,
+                        initialJsonObject = jsonLds[i],
                         clipboardManager = clipboardManager,
                         messageReference = messageReference,
                         context = context,
@@ -74,12 +69,29 @@ fun SMLCards(
                     )
                 }
             }
+
+
+                val baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty")
+                val mapState = rememberMapState(
+                    baseStyle = baseStyle,
+                    initialCameraPosition = CameraPosition(center = Position(50.07, 8.24)),
+                ) {
+//                    SymbolLayer(id = "station-markers", source = baseStyle., iconImage = image("marker"))
+                }
+                BoxWithConstraints {
+                    MaplibreMap(
+                        modifier = Modifier.heightIn(minHeight, maxWidth), // Make it square for now
+                        state = mapState,
+                    ) {
+                    }
+                }
+
         }
     }
 }
 
 fun cardsExist(
-    messageViewInfo: MessageViewInfo
+    messageViewInfo: MessageViewInfo,
 ): Boolean {
     val structuredDataList = messageViewInfo.messageData?.structuredData.orEmpty()
     val extracted = messageViewInfo.messageData?.extracted

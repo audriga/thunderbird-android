@@ -76,6 +76,8 @@ dependencies {
         exclude(group = "io.ktor")
         exclude(group = "org.jetbrains.skiko")
     }
+    implementation(libs.maplibre.compose)
+    runtimeOnly(libs.maplibre.compose.runtime.vulkan.android)
 
     implementation(libs.commons.io)
     implementation(libs.androidx.core.ktx)
