@@ -17,10 +17,12 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.fsck.k9.ui.R
 import org.json.JSONArray
 
+private val DEFAULT_ICON_SIZE = 48.dp
 private const val ICON_MAPPING_ASSET = "osm.json"
 private val CAMEL_CASE_BOUNDARY = Regex("(?<=[a-z0-9])(?=[A-Z])")
 
@@ -93,25 +95,41 @@ private class GlyphPainter(
 }
 
 /**
+ * Scales [delegate] to [intrinsicSize], so that vector icons (24dp by default) match the glyph icons in size.
+ */
+private class SizedPainter(
+    private val delegate: Painter,
+    override val intrinsicSize: Size,
+) : Painter() {
+    override fun DrawScope.onDraw() {
+        with(delegate) { draw(size) }
+    }
+}
+
+/**
  * Returns a painter for the given schema.org type, using the osm.json mapping and falling back to [getIconForType].
  *
+ * [size] is the intrinsic size of the painter; for map markers it determines the rendered image size.
  * The result is remembered per codepoint, so recompositions don't create (and re-register) new images.
  */
 @Composable
-internal fun rememberSchemaIconPainter(schemaType: String): Painter {
+internal fun rememberSchemaIconPainter(schemaType: String, size: Dp = DEFAULT_ICON_SIZE): Painter {
     val context = LocalContext.current
     val codepoint = remember(schemaType) { SchemaIconCodepoints.forType(context, schemaType) }
-    val fallbackPainter = rememberVectorPainter(getIconForType(schemaType))
+    val iconSizePx = with(LocalDensity.current) { size.toPx() }
+    val iconSize = Size(iconSizePx, iconSizePx)
 
-    if (codepoint == null) return fallbackPainter
+    if (codepoint == null) {
+        val vectorPainter = rememberVectorPainter(getIconForType(schemaType))
+        return remember(vectorPainter, iconSizePx) { SizedPainter(vectorPainter, iconSize) }
+    }
 
     val textMeasurer = rememberTextMeasurer()
-    val iconSizePx = with(LocalDensity.current) { 48.dp.toPx() }
     return remember(codepoint, textMeasurer, iconSizePx) {
         GlyphPainter(
             glyph = String(Character.toChars(codepoint)),
             textMeasurer = textMeasurer,
-            intrinsicSize = Size(iconSizePx, iconSizePx),
+            intrinsicSize = iconSize,
         )
     }
 }

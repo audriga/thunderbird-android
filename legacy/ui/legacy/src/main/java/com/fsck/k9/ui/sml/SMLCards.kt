@@ -8,14 +8,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -132,46 +137,63 @@ fun SMLCards(
             val hasGeos = hasGeosVar
 
             if (hasGeos) {
-                val boundingBox = BoundingBox(
-                    west = westLong,
-                    south = southLat,
-                    east = eastLong,
-                    north = northLat,
-                )
-                val midLong = (westLong + eastLong) / 2.0
-                val midLat = (southLat + northLat) / 2.0
-                val baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty")
-                val mapState = rememberMapState(
-                    baseStyle = baseStyle,
-                    initialCameraPosition = CameraPosition(center = Position(midLong, midLat)),
+                var showMap: Boolean by remember { mutableStateOf(false) }
+                Button(
+                    onClick = {
+                        showMap = !showMap
+                    },
+                    modifier = modifier.padding(16.dp)
                 ) {
-                    for ((i, markers) in markersPerMarkup.withIndex()) {
-                        for (marker in markers) {
-                            MarkerLayers(marker) {
-                                animationScope.launch {
-                                    carouselState.animateScrollToItem(i)
+                    Text(if (!showMap) "Show Map" else "Hide Map")
+                }
+                if (showMap) {
+                    val boundingBox = BoundingBox(
+                        west = westLong,
+                        south = southLat,
+                        east = eastLong,
+                        north = northLat,
+                    )
+                    val midLong = (westLong + eastLong) / 2.0
+                    val midLat = (southLat + northLat) / 2.0
+                    val baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty")
+                    val mapState = rememberMapState(
+                        baseStyle = baseStyle,
+                        initialCameraPosition = CameraPosition(center = Position(midLong, midLat)),
+                    ) {
+                        for ((i, markers) in markersPerMarkup.withIndex()) {
+                            for (marker in markers) {
+                                MarkerLayers(marker) {
+                                    animationScope.launch {
+                                        carouselState.animateScrollToItem(i)
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                BoxWithConstraints {
-                    MaplibreMap(
-                        modifier = Modifier.heightIn(minHeight, maxWidth), // Make it square for now
-                        state = mapState,
-                    ) {
-                        include(MapOverlay.Default)
-                        // Can render (simple?) composables on a given map position
+                    BoxWithConstraints {
+                        MaplibreMap(
+                            modifier = Modifier.heightIn(minHeight, maxWidth), // Make it square for now
+                            state = mapState,
+                        ) {
+                            include(MapOverlay.Default)
+                            // Can render (simple?) composables on a given map position
+                        }
+                    }
+                    LaunchedEffect(mapState) {
+                        mapState.animateCameraToBounds(
+                            boundingBox = boundingBox,
+                            fit = CameraFit(
+                                fitPadding = DpPadding(
+                                    left = 32.dp,
+                                    top = 32.dp,
+                                    right = 32.dp,
+                                    bottom = 32.dp
+                                )
+                            )
+                        )
                     }
                 }
-                LaunchedEffect(mapState) {
-                    mapState.animateCameraToBounds(
-                        boundingBox = boundingBox,
-                        fit = CameraFit(fitPadding = DpPadding(left = 32.dp, top = 32.dp, right =  32.dp, bottom = 32.dp))
-                    )
-                }
             }
-
         }
     }
 }

@@ -2,6 +2,7 @@ package com.fsck.k9.ui.sml
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.dp
 import java.util.UUID
 import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.interaction.ClickResult
@@ -12,6 +13,9 @@ import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.spatialk.geojson.Feature
 import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Position
+
+/** Size of the icons drawn on the map. */
+private val MARKER_ICON_SIZE = 24.dp
 
 @Composable
 internal fun MarkerLayers(
@@ -26,7 +30,7 @@ internal fun MarkerLayers(
     SymbolLayer(
         id = id,
         source = source,
-        iconImage = image(rememberSchemaIconPainter(marker.schemaType)),
+        iconImage = image(rememberSchemaIconPainter(marker.schemaType, MARKER_ICON_SIZE)),
         onClick = {
             onSelect()
             ClickResult.Consume
