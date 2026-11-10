@@ -9,6 +9,7 @@ import com.fsck.k9.mail.internet.MimeBodyPart
 import com.fsck.k9.mail.internet.TextBody
 import com.fsck.k9.message.TextBodyBuilder.HTML_AND_BODY_END
 import com.fsck.k9.message.TextBodyBuilder.HTML_AND_BODY_START
+import com.github.mustachejava.MustacheException
 import java.io.IOException
 import java.util.Date
 import net.thunderbird.core.android.account.SmlVariant
@@ -77,6 +78,8 @@ abstract class SmlMessageUtil {
                         hetcResult = hetcRenderer.renderPreview(json)
                     } catch (_: IOException) {
                     } catch (_: JSONException) {
+                    } catch (e: MustacheException) {
+                        // todo log
                     }
                     if (hetcResult != null) {
                         renderedEmailHTMLs.add(hetcResult)
