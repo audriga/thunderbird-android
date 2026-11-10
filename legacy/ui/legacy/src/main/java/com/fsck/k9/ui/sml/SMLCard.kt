@@ -17,10 +17,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.BakeryDining
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Flight
+import androidx.compose.material.icons.filled.Icecream
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Poll
+import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.RestaurantMenu
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.Button
@@ -538,7 +551,7 @@ fun imageFromNestedJson(image: Any?): String? {
 /**
  * Map schema.org @type to an icon
  */
-private fun getIconForType(schemaType: String): ImageVector {
+internal fun getIconForType(schemaType: String): ImageVector {
     return when {
         schemaType.contains("NewsArticle", ignoreCase = true) ->
             Icons.Filled.Info
@@ -548,6 +561,30 @@ private fun getIconForType(schemaType: String): ImageVector {
             Icons.Filled.Store
         schemaType.contains("Person", ignoreCase = true) ->
             Icons.Filled.Person
+        schemaType.contains("Place", ignoreCase = true) ->
+            Icons.Filled.Place
+        schemaType.contains("MusicRecording", ignoreCase = true) ->
+            Icons.Filled.MusicNote
+        schemaType.contains("MusicGroup", ignoreCase = true) ->
+            Icons.AutoMirrored.Filled.QueueMusic
+        schemaType.contains("MusicAlbum", ignoreCase = true) ->
+            Icons.Filled.Album
+        schemaType.contains("Flight", ignoreCase = true) ->
+            Icons.Filled.Flight
+        schemaType.contains("Order", ignoreCase = true) ->
+            Icons.Filled.ShoppingBag
+        schemaType.contains("Invoice", ignoreCase = true) ->
+            Icons.Filled.Receipt
+        schemaType.contains("Parcel", ignoreCase = true) ->
+            Icons.Filled.LocalShipping
+        schemaType.contains("Bakery", ignoreCase = true) ->
+            Icons.Filled.BakeryDining
+        schemaType.contains("Cafe", ignoreCase = true) ->
+            Icons.Filled.LocalCafe
+        schemaType.contains("IceCream", ignoreCase = true) ->
+            Icons.Filled.Icecream
+        schemaType.contains("SimplePoll", ignoreCase = true) ->
+            Icons.Filled.Poll
         schemaType.contains("Product", ignoreCase = true) ->
             Icons.Filled.ShoppingCart
         schemaType.contains("Recipe", ignoreCase = true) ->

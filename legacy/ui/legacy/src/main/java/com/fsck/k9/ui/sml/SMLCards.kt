@@ -8,51 +8,40 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material.icons.filled.Coffee
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.RestaurantMenu
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import app.k9mail.core.ui.legacy.designsystem.atom.icon.Icons
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.mailstore.MessageViewInfo
+import com.fsck.k9.sml.SMLUtil.findAllRecursive
+import kotlinx.coroutines.launch
 import net.thunderbird.components.ui.bolt.resources.Res
 import net.thunderbird.components.ui.bolt.resources.bolt_yatagarasu_logo
 import net.thunderbird.components.ui.bolt.theme.BoltTheme.colors
 import org.jetbrains.compose.resources.painterResource
 import org.json.JSONObject
+import org.maplibre.compose.camera.CameraFit
 import org.maplibre.compose.camera.CameraPosition
-import org.maplibre.compose.expressions.dsl.image
-import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.rememberMapState
 import org.maplibre.compose.overlay.MapOverlay
 import org.maplibre.compose.overlay.include
-import org.maplibre.compose.sources.GeoJsonData
-import org.maplibre.compose.sources.GeoJsonSource
-import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
-import org.maplibre.spatialk.geojson.Feature
-import org.maplibre.spatialk.geojson.Point
+import org.maplibre.compose.util.DpPadding
+import org.maplibre.spatialk.geojson.BoundingBox
 import org.maplibre.spatialk.geojson.Position
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,10 +65,12 @@ fun SMLCards(
         listOfNotNull(*structuredDataList.toTypedArray(), extracted, *itiExtractedList.toTypedArray()).distinct()
     }
     if (jsonLds.isNotEmpty()) {
+        val carouselState = rememberCarouselState { jsonLds.count() }
+        val animationScope = rememberCoroutineScope()
         Column {
             BoxWithConstraints {
                 HorizontalMultiBrowseCarousel(
-                    state = rememberCarouselState { jsonLds.count() },
+                    state = carouselState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
@@ -100,24 +91,70 @@ fun SMLCards(
             }
 
 
-            val a = androidx.compose.material.icons.Icons.Filled.RestaurantMenu
-            val source = GeoJsonSource(
-                id = "marker",
-                data = GeoJsonData.Features(Feature(geometry = Point(Position(8.24, 50.07)), properties = null))
-            )
+            val markersPerMarkup: Array<MutableList<MapMarker>> = Array(jsonLds.size) { mutableListOf() }
+            // BoundingBox is bound by northeastern corner and southwestern corner
+            // Bigger number in latitude is more north
+            // Bigger number in longitude is more east
+            // northeast is max,max southwest is min,min
+            var northLat = 0.0
+            var eastLong = 0.0
+            var southLat = 0.0
+            var westLong = 0.0
+            var hasGeosVar = false
+            for ((i, jsonObject) in jsonLds.withIndex()) {
+                val geos: MutableList<Any?> = findAllRecursive(jsonObject, "geo")
+                for (geo in geos) {
+                    if (geo is JSONObject) {
+                        val latitude = geo.opt("latitude")?.toString()?.toDoubleOrNull()
+                        val longitude = geo.opt("longitude")?.toString()?.toDoubleOrNull()
+                        if (latitude != null && longitude != null) {
+                            if (hasGeosVar) {
+                              // calculate new BoundingBox coordinates
+                                northLat = maxOf(northLat, latitude)
+                                eastLong = maxOf(eastLong, longitude)
+                                southLat = minOf(southLat, latitude)
+                                westLong = minOf(westLong, longitude)
+                            } else {
+                                // reached first geo, initialize BoundingBox coordinates with this one
+                                northLat = latitude
+                                eastLong = longitude
+                                southLat = latitude
+                                westLong = longitude
+                            }
+                            hasGeosVar = true
+                            val schemaType = jsonObject.optString("@type", "")
+                            val icon = getIconForType(schemaType)
+                            markersPerMarkup[i].add(MapMarker(icon = icon, latitude = latitude, longitude = longitude))
+                        }
+                    }
 
+                }
+            }
+            val hasGeos = hasGeosVar
+
+            if (hasGeos) {
+                val boundingBox = BoundingBox(
+                    west = westLong,
+                    south = southLat,
+                    east = eastLong,
+                    north = northLat,
+                )
+                val midLong = (westLong + eastLong) / 2.0
+                val midLat = (southLat + northLat) / 2.0
                 val baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty")
                 val mapState = rememberMapState(
                     baseStyle = baseStyle,
-                    initialCameraPosition = CameraPosition(center = Position(50.07, 8.24)),
+                    initialCameraPosition = CameraPosition(center = Position(midLong, midLat)),
                 ) {
-//                    SymbolLayer(id = "station-markers", source = baseStyle., iconImage = image("marker"))
-                    SymbolLayer(
-                        id = "marker",
-                        source = source,
-                        iconImage = image(rememberVectorPainter(a))
-//                        iconImage = image(rememberMarkerPainter())
-                    )
+                    for ((i, markers) in markersPerMarkup.withIndex()) {
+                        for (marker in markers) {
+                            MarkerLayers(marker) {
+                                animationScope.launch {
+                                    carouselState.animateScrollToItem(i)
+                                }
+                            }
+                        }
+                    }
                 }
                 BoxWithConstraints {
                     MaplibreMap(
@@ -128,6 +165,13 @@ fun SMLCards(
                         // Can render (simple?) composables on a given map position
                     }
                 }
+                LaunchedEffect(mapState) {
+                    mapState.animateCameraToBounds(
+                        boundingBox = boundingBox,
+                        fit = CameraFit(fitPadding = DpPadding(left = 32.dp, top = 32.dp, right =  32.dp, bottom = 32.dp))
+                    )
+                }
+            }
 
         }
     }
