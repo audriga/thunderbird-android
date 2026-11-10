@@ -123,8 +123,7 @@ fun SMLCards(
                             }
                             hasGeosVar = true
                             val schemaType = jsonObject.optString("@type", "")
-                            val icon = getIconForType(schemaType)
-                            markersPerMarkup[i].add(MapMarker(icon = icon, latitude = latitude, longitude = longitude))
+                            markersPerMarkup[i].add(MapMarker(schemaType = schemaType, latitude = latitude, longitude = longitude))
                         }
                     }
 

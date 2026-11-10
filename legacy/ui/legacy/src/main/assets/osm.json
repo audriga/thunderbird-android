@@ -1,0 +1,1281 @@
+[
+  {
+    "schemaorg": "airport",
+    "label": {
+      "en": "Airport",
+      "de": "Flughafen"
+    },
+    "material_icon": "0xe4c9",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "aeroway",
+          "value": "aerodrome"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "amusement_park",
+    "label": {
+      "en": "Amusement Park",
+      "de": "Vergnügungspark"
+    },
+    "material_icon": "0xe0b4",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "tourism",
+          "value": "theme_park"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "apartment",
+    "label": {
+      "en": "Apartment",
+      "de": "Wohnung"
+    },
+    "material_icon": "0xe089",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "tourism",
+          "value": "apartment"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "apartment_complex",
+    "label": {
+      "en": "Apartment Complex",
+      "de": "Wohnkomplex"
+    },
+    "material_icon": "0xe089",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "tourism",
+          "value": "apartments"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "art_gallery",
+    "label": {
+      "en": "Art Gallery",
+      "de": "Kunstgalerie"
+    },
+    "material_icon": "0xe46b",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "art"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "auto_rental",
+    "label": {
+      "en": "Auto Rental",
+      "de": "Autovermietung"
+    },
+    "material_icon": "0xe1d7",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "car_rental"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "bakery",
+    "label": {
+      "en": "Bakery",
+      "de": "Bäckerei"
+    },
+    "material_icon": "0xe0c9",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "bakery"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "bank_or_credit_union",
+    "label": {
+      "en": "Bank Or Credit Union",
+      "de": "Bank Or Credit Union"
+    },
+    "material_icon": "0xe040",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "bank"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "bar_or_pub",
+    "label": {
+      "en": "Bar Or Pub",
+      "de": "Bar Or Pub"
+    },
+    "material_icon": "0xe38c",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "bar"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "bed_and_breakfast",
+    "label": {
+      "en": "Bed And Breakfast",
+      "de": "Übernachtung mit Frühstück"
+    },
+    "material_icon": "0xe322",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "tourism",
+          "value": "guest_house"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "boat_terminal",
+    "label": {
+      "en": "Boat Terminal",
+      "de": "Bootsterminal"
+    },
+    "material_icon": "0xe1d3",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "tourism",
+          "value": "ferry_terminal"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "brewery",
+    "label": {
+      "en": "Brewery",
+      "de": "Brauerei"
+    },
+    "material_icon": "0xe5e4",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "craft",
+          "value": "brewery"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "bus_stop",
+    "label": {
+      "en": "Bus Stop",
+      "de": "Bushaltestelle"
+    },
+    "material_icon": "0xe1d5",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "bus_stop"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "cafe_or_coffee_shop",
+    "label": {
+      "en": "Coffee",
+      "de": "Kaffee"
+    },
+    "material_icon": "0xe38d",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "cafe"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "campground",
+    "label": {
+      "en": "Campground",
+      "de": "Campingplatz"
+    },
+    "material_icon": "0xe4c9",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "tourism",
+          "value": "camp_site"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "church",
+    "label": {
+      "en": "Church",
+      "de": "Kirche"
+    },
+    "material_icon": "0xf04cd",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "church"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "clothing_store",
+    "label": {
+      "en": "Clothing Store",
+      "de": "Bekleidungsgeschäft"
+    },
+    "material_icon": "0xe15d",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "clothes"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "college_or_university",
+    "label": {
+      "en": "College Or University",
+      "de": "Hochschule oder Universität"
+    },
+    "material_icon": "0xe559",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "university"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "day_spa",
+    "label": {
+      "en": "Day Spa",
+      "de": "Tages-Spa"
+    },
+    "material_icon": "0xe5d8",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "spa"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "defence_establishment",
+    "label": {
+      "en": "Defence Establishment",
+      "de": "Verteidigungseinrichtung"
+    },
+    "material_icon": "0xf050e",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "tourism",
+          "value": "zoo"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "defence_establishment",
+    "label": {
+      "en": "Defence Establishment",
+      "de": "Verteidigungseinrichtung"
+    },
+    "material_icon": "0xe3c5",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "military",
+          "value": "yes"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "dentist",
+    "label": {
+      "en": "Dentist",
+      "de": "Zahnarzt"
+    },
+    "material_icon": "0xe3d8",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "dentist"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "department_store",
+    "label": {
+      "en": "Department Store",
+      "de": "Kaufhaus"
+    },
+    "material_icon": "0xe60a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "department_store"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "distillery",
+    "label": {
+      "en": "Distillery",
+      "de": "Brennerei"
+    },
+    "material_icon": "0xe60a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "craft",
+          "value": "distillery"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "dry_cleaning_or_laundry",
+    "label": {
+      "en": "Dry Cleaning Or Laundry",
+      "de": "Reinigung Oder Wäscherei"
+    },
+    "material_icon": "0xe398",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "dry_cleaning"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "electrician",
+    "label": {
+      "en": "Electrician",
+      "de": "Elektriker"
+    },
+    "material_icon": "0xe23e",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "craft",
+          "value": "electrician"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "event_venue",
+    "label": {
+      "en": "Event Venue",
+      "de": "Veranstaltungsort"
+    },
+    "material_icon": "0xe23e",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "events_venue"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "exercise_gym",
+    "label": {
+      "en": "Exercise Gym",
+      "de": "Fitnessstudio"
+    },
+    "material_icon": "0xe28d",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "leisure",
+          "value": "fitness_centre"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "fast_food_restaurant",
+    "label": {
+      "en": "Fast Food",
+      "de": "Fast Food"
+    },
+    "material_icon": "0xe25a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "fast_food"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "fire_station",
+    "label": {
+      "en": "Fire Station",
+      "de": "Feuerwache"
+    },
+    "material_icon": "0xe532",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "fire_station"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "gas_station",
+    "label": {
+      "en": "Gas Station",
+      "de": "Tankstelle"
+    },
+    "material_icon": "0xe532",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "fuel"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "food_establishment",
+    "label": {
+      "en": "Food Establishment",
+      "de": "Lebensmittel Einrichtung"
+    },
+    "material_icon": "0xe532",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "food"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "garden_store",
+    "label": {
+      "en": "Garden Store",
+      "de": "Gartengeschäft"
+    },
+    "material_icon": "0xe395",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "garden_centre"
+        }
+      ]
+    }
+  },
+   {
+    "schemaorg": "gas_station",
+    "label": {
+      "en": "Gas Station",
+      "de": "Tankstelle"
+    },
+    "material_icon": "0xe395",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "fuel"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "grocery_store",
+    "label": {
+      "en": "Grocery Store",
+      "de": "Lebensmittelgeschäft"
+    },
+    "material_icon": "0xe395",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "supermarket"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "hindu_temple",
+    "label": {
+      "en": "Hindu Temple",
+      "de": "Hindu-Tempel"
+    },
+    "material_icon": "0xe396",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "building",
+          "value": "temple"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "hobby_shop",
+    "label": {
+      "en": "Hobby Shop",
+      "de": "Hobbygeschäft"
+    },
+    "material_icon": "0xe672",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "hobby"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "hospital",
+    "label": {
+      "en": "Hospital",
+      "de": "Krankenhaus"
+    },
+    "material_icon": "0xe396",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "hospital"
+        }
+      ]
+    }
+  },
+    {
+    "schemaorg": "hvac_business",
+    "label": {
+      "en": "HVAC Business",
+      "de": "HVAC-Geschäft"
+    },
+    "material_icon": "0xe396",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "hvac"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "ice_cream_shop",
+    "label": {
+      "en": "Ice Cream",
+      "de": "Eis"
+    },
+    "material_icon": "0xe331",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "ice_cream"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "internet_cafe",
+    "label": {
+      "en": "internet Cafe",
+      "de": "Internetcafé"
+    },
+    "material_icon": "0xe396",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "internet_cafe"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "landmarks_or_historical_buildings",
+    "label": {
+      "en": "Land Marks Or Historical Buildings",
+      "de": "Landmark oder historische Gebäude"
+    },
+    "material_icon": "0xe365",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "historic"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "library",
+    "label": {
+      "en": "Library",
+      "de": "Bibliothek"
+    },
+    "material_icon": "0xe377",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "library"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "locksmith",
+    "label": {
+      "en": "Locksmith",
+      "de": "Schlosser"
+    },
+    "material_icon": "0xe377",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "locksmith"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "medical_business",
+    "label": {
+      "en": "Medical Business",
+      "de": "Medizinisches Geschäft"
+    },
+    "material_icon": "0xe305",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "medical"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "medical_cause",
+    "label": {
+      "en": "Medical Cause",
+      "de": "Medizinische Ursache"
+    },
+    "material_icon": "0xe305",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "medical_supply"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "medical_clinic",
+    "label": {
+      "en": "Medical Clinic",
+      "de": "Medizinische Klinik"
+    },
+    "material_icon": "0xe305",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "healthcare",
+          "value": "clinic"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "mens_clothing_store",
+    "label": {
+      "en": "Mens Clothing Store",
+      "de": "Herrenbekleidungsgeschäft"
+    },
+    "material_icon": "0xe3c5",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "clothes",
+          "value": "men"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "movie_theater",
+    "label": {
+      "en": "Movie Theater",
+      "de": "Kino"
+    },
+    "material_icon": "0xe40d",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "cinema"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "museum",
+    "label": {
+      "en": "Museum",
+      "de": "Museum"
+    },
+    "material_icon": "0xe414",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "tourism",
+          "value": "museum"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "music_store",
+    "label": {
+      "en": "Music Store",
+      "de": "Musikgeschäft"
+    },
+    "material_icon": "0xe076",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "music"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "music_venue",
+    "label": {
+      "en": "Music Venue",
+      "de": "Musikveranstaltungsort"
+    },
+    "material_icon": "0xe417",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "music_venue"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "night_club",
+    "label": {
+      "en": "Night Club",
+      "de": "Nachtclub"
+    },
+    "material_icon": "0xe42d",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "nightclub"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "optician",
+    "label": {
+      "en": "Optician",
+      "de": "Optiker"
+    },
+    "material_icon": "0xe6bd",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "optician"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "police_station",
+    "label": {
+      "en": "Police Station",
+      "de": "Polizeistation"
+    },
+    "material_icon": "0xe3a2",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "police"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "photograph",
+    "label": {
+      "en": "Photograph",
+      "de": "Foto"
+    },
+    "material_icon": "0xe160",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "photo_studio"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "public_swimming_pool",
+    "label": {
+      "en": "Public Swimming Pool",
+      "de": "Schwimmbad"
+    },
+    "material_icon": "0xe4dc",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "public_bath"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "performing_arts_theater",
+    "label": {
+      "en": "Performing Arts Theater",
+      "de": "Theater"
+    },
+    "material_icon": "0xe654",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "theatre"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "plumber",
+    "label": {
+      "en": "Plumber",
+      "de": "Klempner"
+    },
+    "material_icon": "0xe160",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "plumber"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "preschool",
+    "label": {
+      "en": "Preschool",
+      "de": "Vorschule"
+    },
+    "material_icon": "0xe160",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "prep_school"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "real_estate_agent",
+    "label": {
+      "en": "Real Estate Agent",
+      "de": "Immobilienmakler"
+    },
+    "material_icon": "0xe39a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "office",
+          "value": "estate_agent"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "recycling_center",
+    "label": {
+      "en": "Recycling Center",
+      "de": "Recyclingzentrum"
+    },
+    "material_icon": "0xe39a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "recycling_type",
+          "value": "centre"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "reservoir",
+    "label": {
+      "en": "Reservoir",
+      "de": "Reservoir"
+    },
+    "material_icon": "0xe39a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "water",
+          "value": "reservoir"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "resort",
+    "label": {
+      "en": "Resort",
+      "de": "Resort"
+    },
+    "material_icon": "0xe39a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "leisure",
+          "value": "resort"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "restaurant",
+    "label": {
+      "en": "Restaurant",
+      "de": "Restaurant"
+    },
+    "material_icon": "0xe532",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "restaurant"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "river_body_of_water",
+    "label": {
+      "en": "River Body Of Water",
+      "de": "Flussgewässer"
+    },
+    "material_icon": "0xe39a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "waterway",
+          "value": "river"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "sea_body_of_water",
+    "label": {
+      "en": "Sea Body Of Water",
+      "de": "Meeresgewässer"
+    },
+    "material_icon": "0xe39a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "water",
+          "value": "lake"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "self_storage",
+    "label": {
+      "en": "Self Storage",
+      "de": "Selbstlagerung"
+    },
+    "material_icon": "0xe396",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "self_storage"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "shopping_center",
+    "label": {
+      "en": "Shopping Center",
+      "de": "Einkaufszentrum"
+    },
+    "material_icon": "0xe39a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "shopping_centre"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "ski_resort",
+    "label": {
+      "en": "Ski Resort",
+      "de": "Skigebiet"
+    },
+    "material_icon": "0xe39a",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "sport",
+          "value": "skiing"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "sporting_goods_store",
+    "label": {
+      "en": "Sporting Goods Store",
+      "de": "Sportgeschäft"
+    },
+    "material_icon": "0xe5e3",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "sports"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "sports_activity_location",
+    "label": {
+      "en": "Sports Activity Location",
+      "de": "Sportaktivitätsort"
+    },
+    "material_icon": "0xe5f2",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "leisure",
+          "value": "sports_centre"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "stadium_or_arena",
+    "label": {
+      "en": "Stadium Or Arena",
+      "de": "Stadion oder Arena"
+    },
+    "material_icon": "0xf0572",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "leisure",
+          "value": "stadium"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "subway_station",
+    "label": {
+      "en": "Subway Station",
+      "de": "U-Bahnstation"
+    },
+    "material_icon": "0xe61b",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "station",
+          "value": "subway"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "table",
+    "label": {
+      "en": "Table",
+      "de": "Tisch"
+    },
+    "material_icon": "0xe396",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "table"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "tire_shop",
+    "label": {
+      "en": "Tire Shop",
+      "de": "Reifengeschäft"
+    },
+    "material_icon": "0xe160",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "tyres"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "taxi_stand",
+    "label": {
+      "en": "Taxi Stand",
+      "de": "Taxistand"
+    },
+    "material_icon": "0xe3a7",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "taxi"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "tennis_complex",
+    "label": {
+      "en": "Tennis Complex",
+      "de": "Tennisanlage"
+    },
+    "material_icon": "0xe5f3",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "sport",
+          "value": "tennis"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "veterinary_care",
+    "label": {
+      "en": "Veterinary Care",
+      "de": "Tierarztpraxis"
+    },
+    "material_icon": "0xe4a1",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "amenity",
+          "value": "veterinary"
+        }
+      ]
+    }
+  },
+  {
+    "schemaorg": "winery",
+    "label": {
+      "en": "Winery",
+      "de": "Weingut"
+    },
+    "material_icon": "0xe6f1",
+    "overpass_filter": {
+      "tags": [
+        {
+          "key": "shop",
+          "value": "wine"
+        }
+      ]
+    }
+  }
+]

@@ -170,7 +170,7 @@ private fun SimplePollCard(
                 } else {
                     // Placeholder icon based on @type
                     Icon(
-                        imageVector = getIconForType(schemaType),
+                        painter = rememberSchemaIconPainter(schemaType),
                         contentDescription = schemaType,
                         modifier = Modifier
                             .size(56.dp)
@@ -377,7 +377,7 @@ private fun SimpleCard(
                 } else {
                     // Placeholder icon based on @type
                     Icon(
-                        imageVector = getIconForType(schemaType),
+                        painter = rememberSchemaIconPainter(schemaType),
                         contentDescription = schemaType,
                         modifier = Modifier
                             .size(56.dp)
