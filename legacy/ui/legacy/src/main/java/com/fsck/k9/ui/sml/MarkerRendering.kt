@@ -57,7 +57,7 @@ internal fun MarkerLayers(
         id = "marker-$id",
         source = source,
         iconImage = image(rememberSchemaIconPainter(marker.schemaType, MARKER_ICON_SIZE)),
-//        iconAllowOverlap = const(true),
+        iconAllowOverlap = const(true),
         onClick = {
             onSelect()
             ClickResult.Consume

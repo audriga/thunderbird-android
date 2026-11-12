@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Icecream
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
@@ -40,11 +41,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -134,7 +139,7 @@ private fun SimplePollCard(
     imageUrl: String?,
     jsonObject: JSONObject,
     jsonObjectState: MutableState<JSONObject>,
-    actionButtons: MutableList<ActionButton?>,
+    actionButtons: MutableList<ActionButton>,
     context: Context,
     messageReference: MessageReference?,
     modifier: Modifier,
@@ -345,7 +350,7 @@ private fun SimpleCard(
     title: String,
     description: String,
     imageUrl: String?,
-    actionButtons: MutableList<ActionButton?>,
+    actionButtons: MutableList<ActionButton>,
     modifier: Modifier,
 ) {
     Card(
@@ -420,19 +425,40 @@ private fun SimpleCard(
 
 @Composable
 private fun ActionButtons(
-    actionButtons: MutableList<ActionButton?>,
+    actionButtons: MutableList<ActionButton>,
 ) {
     if (actionButtons.isNotEmpty()) {
+        var dropdownExpanded by remember { mutableStateOf(false) }
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
         ) {
             items(actionButtons.size) { index ->
-                StructuredDataActionButton(
-                    actionButton = actionButtons[index]!!,
-                    modifier = Modifier.padding(end = 8.dp),
-                )
+                val actionButton = actionButtons[index]
+                if (!actionButton.hideInOverflow) {
+                    StructuredDataActionButton(
+                        actionButton = actionButton,
+                        modifier = Modifier.padding(end = 7.dp),
+                    )
+                }
+            }
+            item {
+                IconButton(onClick = {dropdownExpanded = !dropdownExpanded}) {
+                    Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "More options")
+                }
+                DropdownMenu(
+                    expanded = dropdownExpanded,
+                    onDismissRequest = { dropdownExpanded = false}
+                ) {
+                    actionButtons.filter { actionButton -> actionButton.hideInOverflow }.forEach {
+                        DropdownMenuItem(
+                            text = { if (it.label != null) Text(it.label) },
+                            leadingIcon = { if(it.icon != null) Icon(imageVector =  it.icon, contentDescription = null)},
+                            onClick = it.onClick,
+                        )
+                    }
+                }
             }
         }
     }
@@ -443,7 +469,7 @@ private fun StructuredDataActionButton(
     actionButton: ActionButton,
     modifier: Modifier = Modifier,
 ) {
-    Button(
+    OutlinedButton(
         onClick = actionButton.onClick,
         modifier = modifier,
     ) {

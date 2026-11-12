@@ -48,8 +48,8 @@ class ActionButtonUtil(
      * @param jsonObject the cards schema
      * @return the button descriptions
      */
-    fun getButtons(jsonObject: JSONObject): MutableList<ActionButton?> {
-        val buttons: MutableList<ActionButton?> = ArrayList()
+    fun getButtons(jsonObject: JSONObject): MutableList<ActionButton> {
+        val buttons: MutableList<ActionButton> = ArrayList()
         val type = jsonObject.optString("@type")
         val potentialActions = jsonObject.opt("potentialAction")
         if (potentialActions != null) {
@@ -95,14 +95,14 @@ class ActionButtonUtil(
                 for (phone in telephone) {
                     // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                     if (phone is String) {
-                        buttons.add(ActionButton(null, Icons.Outlined.Phone, {invokeUri("tel:$phone".toUri())}))
+                        buttons.add(ActionButton(null, Icons.Outlined.Phone) { invokeUri("tel:$phone".toUri()) })
                     }
                 }
                 val phones: MutableList<Any?> = findAllRecursive(jsonObject, "phone")
                 for (phone in phones) {
                     // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                     if (phone is String) {
-                        buttons.add(ActionButton(null, Icons.Outlined.Phone,{invokeUri("tel:$phone".toUri())}))
+                        buttons.add(ActionButton(null, Icons.Outlined.Phone) { invokeUri("tel:$phone".toUri()) })
                     }
                 }
             } catch (e: JSONException) {
@@ -114,7 +114,7 @@ class ActionButtonUtil(
                 for (email in mails) {
                     // todo: we might at some point if value is a JSONObject or JSONArray, still return it/ all of its values
                     if (email is String) {
-                        buttons.add(ActionButton(null, Icons.Outlined.Mail, { invokeUri("mailto:$email".toUri())}))
+                        buttons.add(ActionButton(null, Icons.Outlined.Mail) { invokeUri("mailto:$email".toUri()) })
                     }
                 }
             } catch (e: JSONException) {
@@ -127,8 +127,17 @@ class ActionButtonUtil(
             val geos: MutableList<Any?> = findAllRecursive(jsonObject, "geo")
             for (geo in geos) {
                 if (geo is JSONObject) {
-                    val latitude = geo.opt("latitude")
-                    val longitude = geo.opt("longitude")
+                    var latitude = geo.opt("latitude")
+                    var longitude = geo.opt("longitude")
+                    val geoMidpoint = geo.optJSONObject("geoMidpoint")
+                    if (geoMidpoint != null) {
+                        if (latitude == null) {
+                            latitude = geoMidpoint.opt("latitude")
+                        }
+                        if (longitude  == null) {
+                            longitude = geoMidpoint.opt("longitude")
+                        }
+                    }
                     // don't care if lat/ long is int, double or string, all of them should play nicely with string concatenation.
                     // likelyhood of being a JSONObject, or something unexpected is very low I would say
                     if (latitude != null && longitude != null) {
@@ -137,13 +146,13 @@ class ActionButtonUtil(
                             ActionButton(
                                 null,
                                 Icons.AutoMirrored.Outlined.AssistantDirection,
-                                {invokeUri("google.navigation:q=$latitude,$longitude".toUri())},
-                            ),
+                            ) { invokeUri("google.navigation:q=$latitude,$longitude".toUri()) },
                         )
                         buttons.add(ActionButton(
                             null,
-                            Icons.Outlined.Map,
-                            {invokeUri("geo:$latitude,$longitude".toUri())}))
+                            Icons.Outlined.Map
+                        ) { invokeUri("geo:$latitude,$longitude".toUri()) }
+                        )
                     }
                 }
             }
@@ -184,7 +193,13 @@ class ActionButtonUtil(
         if (mediaContentUrl.isNullOrEmpty()) {
             return null
         }
-        return ActionButton(null, icon,{ SMLWebViewClientExtensions.playMedia(context, mediaType, mediaContentUrl.toUri())})
+        return ActionButton(null, icon) {
+            SMLWebViewClientExtensions.playMedia(
+                context,
+                mediaType,
+                mediaContentUrl.toUri()
+            )
+        }
     }
 
     private fun getMediaContentUrl(jsonObject: JSONObject, mediaType: String?): String? {
@@ -234,16 +249,21 @@ class ActionButtonUtil(
             while (urlHtmlMatcher.find()) {
                 val url = urlHtmlMatcher.group()
                 if (url.contains("meet.google.com")) {
-                    return ActionButton(null, Icons.Filled.Videocam, {invokeUri(url.toUri())})
+                    return ActionButton(null, Icons.Filled.Videocam) { invokeUri(url.toUri()) }
                 }
             }
         }
         return null
     }
 
-    fun getEventButtonDescs(jsonObject: JSONObject): MutableList<ActionButton?> {
+    fun getEventButtonDescs(jsonObject: JSONObject): MutableList<ActionButton> {
         val iTIPMethod = jsonObject.optString("iTIPMethod")
-        val shareEventAsCalendar = ActionButton(null, Icons.Outlined.Event, { SMLWebViewClientExtensions.shareAsCal(context, jsonObject)})
+        val shareEventAsCalendar = ActionButton(null, Icons.Outlined.Event) {
+            SMLWebViewClientExtensions.shareAsCal(
+                context,
+                jsonObject
+            )
+        }
         return if (iTIPMethod.isEmpty()) {
             mutableListOf(shareEventAsCalendar)
         } else if (iTIPMethod.lowercase() == "request") {
@@ -253,11 +273,35 @@ class ActionButtonUtil(
         }
     }
 
-    private fun getIMITActionButtons(json: JSONObject): MutableList<ActionButton?> {
-        val imipActionButtons: MutableList<ActionButton?> = ArrayList(3)
-        imipActionButtons.add(ActionButton("Accept", null,{ SMLWebViewClientExtensions.imipInteract(json, SMLWebViewClientExtensions.Companion.IMIPAction.Accept, messageReference, generalSettingsManager, context)}))
-        imipActionButtons.add(ActionButton("Decline", null, { SMLWebViewClientExtensions.imipInteract(json, SMLWebViewClientExtensions.Companion.IMIPAction.Accept, messageReference, generalSettingsManager, context)}))
-        imipActionButtons.add(ActionButton("Tentative", null,{ SMLWebViewClientExtensions.imipInteract(json, SMLWebViewClientExtensions.Companion.IMIPAction.Accept, messageReference, generalSettingsManager, context)}))
+    private fun getIMITActionButtons(json: JSONObject): MutableList<ActionButton> {
+        val imipActionButtons: MutableList<ActionButton> = ArrayList(3)
+        imipActionButtons.add(ActionButton("Accept") {
+            SMLWebViewClientExtensions.imipInteract(
+                json,
+                SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
+                messageReference,
+                generalSettingsManager,
+                context
+            )
+        })
+        imipActionButtons.add(ActionButton("Decline") {
+            SMLWebViewClientExtensions.imipInteract(
+                json,
+                SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
+                messageReference,
+                generalSettingsManager,
+                context
+            )
+        })
+        imipActionButtons.add(ActionButton("Tentative") {
+            SMLWebViewClientExtensions.imipInteract(
+                json,
+                SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
+                messageReference,
+                generalSettingsManager,
+                context
+            )
+        })
         return imipActionButtons
     }
 
@@ -265,14 +309,14 @@ class ActionButtonUtil(
         val url = jsonObject.opt("url")
         var webUrlButtonDesc: ActionButton? = null
         if (url != null) {
-            webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link, {invokeUri(url.toString().toUri())})
+            webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(url.toString().toUri()) }
         }
         return webUrlButtonDesc
     }
 
     fun getReloadButtonDesc(liveUri: String): ActionButton {
         // todo refresh action
-        return ActionButton(null, Icons.Outlined.Replay, {
+        return ActionButton(null, Icons.Outlined.Replay) {
             val (jsonSrc: String?, okErr: String?) = SMLWebViewClientExtensions.downloadPage(liveUri.toUri())
             if (okErr != null) {
                 showToast(context, "Http error ($okErr)") // todo use string resources
@@ -282,29 +326,33 @@ class ActionButtonUtil(
                 val jsonObject = JSONObject(jsonSrc)
                 onReload(jsonObject)
             }
-        })
+        }
     }
 
     fun getShareAsMailButtonDesc(jsonObject: JSONObject): ActionButton {
         val jsonText = jsonObject.toString()
-        return ActionButton(null, Icons.AutoMirrored.Outlined.ForwardToInbox, { SMLWebViewClientExtensions.shareAsSmlMail(context, messageReference, jsonText)})
+        return ActionButton(
+            label = "Share as mail",
+            icon = Icons.AutoMirrored.Outlined.ForwardToInbox,
+            hideInOverflow = true,
+        ) { SMLWebViewClientExtensions.shareAsSmlMail(context, messageReference, jsonText) }
     }
 
     fun getShareAsFileButtonDesc(jsonObject: JSONObject, fallbackFileName: String): ActionButton {
         val jsonBytes: ByteArray = jsonObject.toString().toByteArray(StandardCharsets.UTF_8)
-        val encodedJson = Base64.encodeToString(jsonBytes, Base64.NO_WRAP + Base64.URL_SAFE)
         val fileName = jsonObject.optString("name", fallbackFileName) + ".json"
         return ActionButton(
-            null, Icons.Outlined.Share,
-            {
-                SMLWebViewClientExtensions.shareAsFile(context, fileName, jsonBytes)
-            },
-        )
+            label = "Share as file",
+            icon = Icons.Outlined.Share,
+            hideInOverflow = true,
+        ) {
+            SMLWebViewClientExtensions.shareAsFile(context, fileName, jsonBytes)
+        }
     }
 
     private fun handleExistingPotentialAction(
         potentialAction: JSONObject,
-        buttons: MutableList<ActionButton?>,
+        buttons: MutableList<ActionButton>,
         mainSchemaType: String?,
     ) {
         when (val actionType = potentialAction.optString("@type")) {
@@ -315,13 +363,12 @@ class ActionButtonUtil(
                     buttons.add(
                         ActionButton(
                             label = name, icon = Icons.Outlined.ContentPaste,
-                            onClick = {
-                                clipboardManager.setText(
-                                    description,
-                                    description
-                                ) // todo maybe set a summary text for the clipboard babel
-                            },
-                        ),
+                        ) {
+                            clipboardManager.setText(
+                                description,
+                                description
+                            ) // todo maybe set a summary text for the clipboard babel
+                        },
                     )
                 }
             }
@@ -331,7 +378,7 @@ class ActionButtonUtil(
                 val target = potentialAction.optString("target")
                 if (target.isNotEmpty()) {
                     val uri = Uri.parse(target)
-                    buttons.add(ActionButton(label = name, onClick =  { invokeUri(uri) }))
+                    buttons.add(ActionButton(label = name) { invokeUri(uri) })
                 }
             }
 
@@ -340,7 +387,7 @@ class ActionButtonUtil(
                 val target = potentialAction.optString("target")
                 if (target.isNotEmpty()) {
                     val uri = Uri.parse(target)
-                    buttons.add(ActionButton(label = name, onClick = { invokeUri(uri) }))
+                    buttons.add(ActionButton(label = name) { invokeUri(uri) })
                 }
             }
 
@@ -484,6 +531,7 @@ class ActionButtonUtil(
 class ActionButton(
     val label: String?,
     val icon: ImageVector? = null,
+    val hideInOverflow: Boolean = false,
     val onClick: () -> Unit,
 ){
 }
