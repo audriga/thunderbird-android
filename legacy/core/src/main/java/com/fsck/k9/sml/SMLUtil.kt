@@ -420,12 +420,39 @@ object SMLUtil {
         return (startDate.isNotEmpty()) || (endDate.isNotEmpty())
     }
 
+    fun findAllLocations(jsonObject: JSONObject, perLocation: ((latitude: Double, longitude: Double) -> Unit)) {
+        val geos: MutableList<Any?> = findAllRecursive(jsonObject, "geo")
+        for (geo in geos) {
+            if (geo is JSONObject) {
+                var latitude = geo.opt("latitude")?.toString()?.toDoubleOrNull()
+                var longitude = geo.opt("longitude")?.toString()?.toDoubleOrNull()
+                val geoMidpoint = geo.optJSONObject("geoMidpoint")
+                if (geoMidpoint != null) {
+                    if (latitude == null) {
+                        latitude = geoMidpoint.opt("latitude")?.toString()?.toDoubleOrNull()
+                    }
+                    if (longitude  == null) {
+                        longitude = geoMidpoint.opt("longitude")?.toString()?.toDoubleOrNull()
+                    }
+                }
+                // don't care if lat/ long is int, double or string, all of them should play nicely with string concatenation.
+                // likelyhood of being a JSONObject, or something unexpected is very low I would say
+                if (latitude != null && longitude != null) {
+                    perLocation(
+                        latitude,
+                        longitude,
+                    )
+                }
+            }
+        }
+    }
+
     @JvmOverloads
     @Throws(JSONException::class)
     fun findAllRecursive(
         json: JSONObject,
         searchKey: String?,
-        excluded: MutableList<String?> = mutableListOf()
+        excluded: MutableList<String?> = mutableListOf(),
     ): MutableList<Any?> {
         val collectedResults: MutableList<Any?> = ArrayList()
         val it = json.keys()

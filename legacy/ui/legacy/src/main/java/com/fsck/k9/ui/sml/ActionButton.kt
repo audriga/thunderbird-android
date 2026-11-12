@@ -2,7 +2,6 @@ package com.fsck.k9.ui.sml
 
 import android.content.Context
 import android.net.Uri
-import android.util.Base64
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.material.icons.Icons
@@ -29,6 +28,8 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.net.toUri
+import com.fsck.k9.sml.SMLUtil.findAllLocations
+import com.fsck.k9.sml.SMLUtil.findAllRecursive
 import net.thunderbird.components.core.logging.Logger
 import net.thunderbird.core.preference.GeneralSettingsManager
 import org.koin.core.component.KoinComponent
@@ -124,37 +125,20 @@ class ActionButtonUtil(
 
         // try to get Place/ Map
         try {
-            val geos: MutableList<Any?> = findAllRecursive(jsonObject, "geo")
-            for (geo in geos) {
-                if (geo is JSONObject) {
-                    var latitude = geo.opt("latitude")
-                    var longitude = geo.opt("longitude")
-                    val geoMidpoint = geo.optJSONObject("geoMidpoint")
-                    if (geoMidpoint != null) {
-                        if (latitude == null) {
-                            latitude = geoMidpoint.opt("latitude")
-                        }
-                        if (longitude  == null) {
-                            longitude = geoMidpoint.opt("longitude")
-                        }
-                    }
-                    // don't care if lat/ long is int, double or string, all of them should play nicely with string concatenation.
-                    // likelyhood of being a JSONObject, or something unexpected is very low I would say
-                    if (latitude != null && longitude != null) {
-                        // todo the geo uris are hardcoded at the moment
-                        buttons.add(
-                            ActionButton(
-                                null,
-                                Icons.AutoMirrored.Outlined.AssistantDirection,
-                            ) { invokeUri("google.navigation:q=$latitude,$longitude".toUri()) },
-                        )
-                        buttons.add(ActionButton(
-                            null,
-                            Icons.Outlined.Map
-                        ) { invokeUri("geo:$latitude,$longitude".toUri()) }
-                        )
-                    }
-                }
+            findAllLocations(jsonObject) { latitude, longitude ->
+                // todo the geo uris are hardcoded at the moment
+                buttons.add(
+                    ActionButton(
+                        null,
+                        Icons.AutoMirrored.Outlined.AssistantDirection,
+                    ) { invokeUri("google.navigation:q=$latitude,$longitude".toUri()) },
+                )
+                buttons.add(ActionButton(
+                    null,
+                    Icons.Outlined.Map
+                ) { invokeUri("geo:$latitude,$longitude".toUri()) }
+                )
+
             }
         } catch (e: JSONException) {
             logger.error(TAG,e, { "Error trying to add geo button descriptions" })
@@ -490,38 +474,6 @@ class ActionButtonUtil(
         return (startDate.isNotEmpty()) || (endDate.isNotEmpty())
     }
 
-    @JvmOverloads
-    @Throws(JSONException::class)
-    fun findAllRecursive(
-        json: JSONObject,
-        searchKey: String?,
-        excluded: MutableList<String?> = mutableListOf(),
-    ): MutableList<Any?> {
-        val collectedResults: MutableList<Any?> = ArrayList()
-        val it = json.keys()
-        while (it.hasNext()) {
-            val key = it.next()
-            if (excluded.contains(key)) {
-                continue
-            }
-            val value = json.get(key)
-            if (key == searchKey) {
-                collectedResults.add(value)
-            } else if (value is JSONObject) {
-                val ret = findAllRecursive(value, searchKey, excluded)
-                collectedResults.addAll(ret)
-            } else if (value is JSONArray) {
-                for (i in 0..<value.length()) {
-                    val element = value.get(i)
-                    if (element is JSONObject) {
-                        val ret = findAllRecursive(element, searchKey, excluded)
-                        collectedResults.addAll(ret)
-                    }
-                }
-            }
-        }
-        return collectedResults
-    }
 
     private fun showToast(context: Context, message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.mailstore.MessageViewInfo
+import com.fsck.k9.sml.SMLUtil.findAllLocations
 import com.fsck.k9.sml.SMLUtil.findAllRecursive
 import kotlinx.coroutines.launch
 import net.thunderbird.components.ui.bolt.resources.Res
@@ -107,31 +108,29 @@ fun SMLCards(
             var westLong = 0.0
             var hasGeosVar = false
             for ((i, jsonObject) in jsonLds.withIndex()) {
-                val geos: MutableList<Any?> = findAllRecursive(jsonObject, "geo")
-                for (geo in geos) {
-                    if (geo is JSONObject) {
-                        val latitude = geo.opt("latitude")?.toString()?.toDoubleOrNull()
-                        val longitude = geo.opt("longitude")?.toString()?.toDoubleOrNull()
-                        if (latitude != null && longitude != null) {
-                            if (hasGeosVar) {
-                              // calculate new BoundingBox coordinates
-                                northLat = maxOf(northLat, latitude)
-                                eastLong = maxOf(eastLong, longitude)
-                                southLat = minOf(southLat, latitude)
-                                westLong = minOf(westLong, longitude)
-                            } else {
-                                // reached first geo, initialize BoundingBox coordinates with this one
-                                northLat = latitude
-                                eastLong = longitude
-                                southLat = latitude
-                                westLong = longitude
-                            }
-                            hasGeosVar = true
-                            val schemaType = jsonObject.optString("@type", "")
-                            markersPerMarkup[i].add(MapMarker(schemaType = schemaType, latitude = latitude, longitude = longitude))
-                        }
+                findAllLocations(jsonObject) { latitude, longitude ->
+                    if (hasGeosVar) {
+                        // calculate new BoundingBox coordinates
+                        northLat = maxOf(northLat, latitude)
+                        eastLong = maxOf(eastLong, longitude)
+                        southLat = minOf(southLat, latitude)
+                        westLong = minOf(westLong, longitude)
+                    } else {
+                        // reached first geo, initialize BoundingBox coordinates with this one
+                        northLat = latitude
+                        eastLong = longitude
+                        southLat = latitude
+                        westLong = longitude
                     }
-
+                    hasGeosVar = true
+                    val schemaType = jsonObject.optString("@type", "")
+                    markersPerMarkup[i].add(
+                        MapMarker(
+                            schemaType = schemaType,
+                            latitude = latitude,
+                            longitude = longitude,
+                        ),
+                    )
                 }
             }
             val hasGeos = hasGeosVar
