@@ -47,7 +47,6 @@ import com.fsck.k9.mailstore.AttachmentViewInfo
 import com.fsck.k9.mailstore.MessageViewInfo
 import com.fsck.k9.message.html.DisplayHtml
 import com.fsck.k9.ui.R
-import com.fsck.k9.ui.sml.SMLCard
 import com.fsck.k9.ui.sml.SMLCards
 import com.fsck.k9.ui.sml.cardsExist
 import com.fsck.k9.view.MessageWebView

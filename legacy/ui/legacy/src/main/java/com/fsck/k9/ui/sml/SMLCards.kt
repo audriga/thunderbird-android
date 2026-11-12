@@ -32,7 +32,6 @@ import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.mailstore.MessageViewInfo
 import com.fsck.k9.sml.SMLUtil.findAllLocations
-import com.fsck.k9.sml.SMLUtil.findAllRecursive
 import kotlinx.coroutines.launch
 import net.thunderbird.components.ui.bolt.resources.Res
 import net.thunderbird.components.ui.bolt.resources.bolt_yatagarasu_logo
@@ -58,6 +57,7 @@ fun SMLCards(
     context: Context,
     clipboardManager: ClipboardManager,
     modifier: Modifier = Modifier,
+    interactive: Boolean = true,
     onReload: ((JSONObject) -> Unit)? = null,
 ) {
     val structuredDataList = messageViewInfo.messageData?.structuredData.orEmpty()

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -31,13 +30,11 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Poll
-import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -63,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -126,9 +124,99 @@ fun SMLCard(
         ).getButtons(jsonObject)
     if (schemaType.equals("SimplePoll")) {
         SimplePollCard(schemaType, title, imageUrl, jsonObject, jsonObjectState, actionButtons, context, messageReference, modifier, onReload)
+    } else if (schemaType.equals("FlightReservation")) {
+        FlightReservationCard(jsonObject, modifier, actionButtons)
     } else {
 //        actionButtons.add(ActionButton("Story", null, {webstoryUrl = "https://www.spiegel.de/stories/66361/index.amp.html"}))
         SimpleCard(schemaType, title, description, imageUrl, actionButtons, modifier)
+    }
+}
+
+@Composable
+private fun FlightReservationCard(
+    jsonObject: JSONObject,
+    modifier: Modifier,
+    actionButtons: MutableList<ActionButton>,
+) {
+    val reservationFor = jsonObject.optJSONObject("reservationFor")
+    val departureAirport = reservationFor?.optJSONObject("departureAirport")
+    val arrivalAirport = reservationFor?.optJSONObject("arrivalAirport")
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    val iata = departureAirport?.optString("iataCode")
+                    val name = departureAirport?.optString("name")
+                    val departureTime = reservationFor?.opt("departureTime")
+                    if (iata != null) {
+                        Text(iata, textAlign = TextAlign.Center)
+                    }
+                    if (name != null) {
+                        Text(name, textAlign = TextAlign.Center)
+                    }
+                    if (departureTime != null) {;
+                        val departureTimeText: String = departureTime as? String
+                            ?: if (departureTime is JSONObject) {
+                                val timeValue = departureTime.optString("@value")
+                                timeValue ?: ""
+                            } else {
+                                ""
+                            }
+                        Text(departureTimeText, textAlign = TextAlign.Center)
+                    }
+                }
+                Column(
+                    modifier = Modifier.padding(8.dp),
+                ) {
+                    val iata = reservationFor?.optJSONObject("airline")?.optString("iataCode")
+                    val flightNr = reservationFor?.optString("flightNumber")
+                    if (iata != null || flightNr != null) {
+                        Text("${iata ?: ""} ${flightNr ?: ""}", textAlign = TextAlign.Center)
+                    }
+                    Icon(
+                        imageVector = Icons.Filled.Flight, contentDescription = null,
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    val iata = arrivalAirport?.optString("iataCode")
+                    val name = arrivalAirport?.optString("name")
+                    val arrivalTime = reservationFor?.opt("arrivalTime")
+                    if (iata != null) {
+                        Text(iata, textAlign = TextAlign.Center)
+                    }
+                    if (name != null) {
+                        Text(name, textAlign = TextAlign.Center)
+                    }
+                    if (arrivalTime != null) {
+                        val departureTimeText: String = arrivalTime as? String
+                            ?: if (arrivalTime is JSONObject) {
+                                val timeValue = arrivalTime.optString("@value")
+                                timeValue ?: ""
+                            } else {
+                                ""
+                            }
+                        Text(departureTimeText, textAlign = TextAlign.Center)
+                    }
+
+                }
+            }
+            ActionButtons(
+                actionButtons = actionButtons,
+            )
+        }
     }
 }
 
