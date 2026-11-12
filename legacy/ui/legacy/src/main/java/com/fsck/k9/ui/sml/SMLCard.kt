@@ -91,13 +91,16 @@ import org.json.JSONObject
 @Composable
 fun SMLCard(
     initialJsonObject: JSONObject,
-    clipboardManager: ClipboardManager,
+    clipboardManager: ClipboardManager?,
     messageReference: MessageReference?,
-    context: Context,
+    context: Context?,
     modifier: Modifier = Modifier,
     interactive: Boolean = true,
     onReload: ((JSONObject) -> Unit)? = null,
 ) {
+    if (interactive && context == null) {
+       // todo log warning
+    }
     // todo simplify by using `by` instead of `=`, see https://stackoverflow.com/questions/69326413/whats-difference-between-remember-and-by-remember
     val jsonObjectState = remember { mutableStateOf(initialJsonObject) }
     val jsonObject = jsonObjectState.value
@@ -177,7 +180,7 @@ private fun FlightReservationCard(
                     if (name != null) {
                         Text(name, textAlign = TextAlign.Center)
                     }
-                    if (departureTime != null) {;
+                    if (departureTime != null) {
                         val departureTimeText: String = departureTime as? String
                             ?: if (departureTime is JSONObject) {
                                 val timeValue = departureTime.optString("@value")
@@ -243,7 +246,7 @@ private fun SimplePollCard(
     jsonObject: JSONObject,
     jsonObjectState: MutableState<JSONObject>,
     actionButtons: MutableList<ActionButton>,
-    context: Context,
+    context: Context?,
     messageReference: MessageReference?,
     modifier: Modifier,
     interactive: Boolean,
@@ -370,35 +373,37 @@ private fun SimplePollCard(
                                 ActionButton(
                                     "Submit", null,
                                 ) {
-                                    val chosenOptions = JSONArray()
-                                    for (j in 0..<optionsLenght) {
-                                        if (checkedBoxes[j]) {
-                                            chosenOptions.put(optionNames[j])
+                                    if (context != null) {
+                                        val chosenOptions = JSONArray()
+                                        for (j in 0..<optionsLenght) {
+                                            if (checkedBoxes[j]) {
+                                                chosenOptions.put(optionNames[j])
+                                            }
                                         }
-                                    }
 
-                                    val actionData = SMLWebViewClientExtensions.createPollActionData(
-                                        context,
-                                        "submit",
-                                        chosenOptions,
-                                        messageReference,
-                                    ) ?: return@ActionButton
-                                    val (jsonSrc: String?, okErr: String?) = sendDataRequest(
-                                        actionData,
-                                        targetUri.toString(),
-                                        "POST"
-                                    )
-                                    if (okErr != null) {
-                                        Toast.makeText(context, "Http error ($okErr)", Toast.LENGTH_SHORT)
-                                            .show() // todo use string resources
-                                    } else if (jsonSrc == null) {
-                                        Toast.makeText(context, "Got no content", Toast.LENGTH_SHORT)
-                                            .show() // todo use string resources
-                                    } else {
-                                        // todo handle invalid json or json err response from server
-                                        val newJsonObject = JSONObject(jsonSrc)
-                                        jsonObjectState.value = newJsonObject
-                                        onReload?.invoke(newJsonObject)
+                                        val actionData = SMLWebViewClientExtensions.createPollActionData(
+                                            context,
+                                            "submit",
+                                            chosenOptions,
+                                            messageReference,
+                                        ) ?: return@ActionButton
+                                        val (jsonSrc: String?, okErr: String?) = sendDataRequest(
+                                            actionData,
+                                            targetUri.toString(),
+                                            "POST"
+                                        )
+                                        if (okErr != null) {
+                                            Toast.makeText(context, "Http error ($okErr)", Toast.LENGTH_SHORT)
+                                                .show() // todo use string resources
+                                        } else if (jsonSrc == null) {
+                                            Toast.makeText(context, "Got no content", Toast.LENGTH_SHORT)
+                                                .show() // todo use string resources
+                                        } else {
+                                            // todo handle invalid json or json err response from server
+                                            val newJsonObject = JSONObject(jsonSrc)
+                                            jsonObjectState.value = newJsonObject
+                                            onReload?.invoke(newJsonObject)
+                                        }
                                     }
                                 },
                             )

@@ -1,5 +1,6 @@
 package com.fsck.k9.activity;
 
+import androidx.compose.ui.platform.ComposeView;
 import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentsChangedListener;
 import com.fsck.k9.activity.compose.SMLMessageComposeUtil;
 import com.fsck.k9.message.MessageBuilder.Callback;
@@ -314,7 +315,7 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
     private EditText signatureView;
     private MessageWebView signatureHtmlPreview;
     private EditText messageContentView;
-    private MessageWebView messageContentViewSML;
+    private ComposeView messageContentViewSML;
     private MaterialSwitch smlModeSwitch;
     private LinearLayout attachmentsView;
     private  SMLMessageComposeUtil smlMessageComposeUtil;

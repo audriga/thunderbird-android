@@ -38,9 +38,9 @@ import org.koin.core.component.inject
 private const val TAG = "ActionButtonUtil"
 class ActionButtonUtil(
     private val onReload: ((JSONObject) -> Unit),
-    private val clipboardManager: ClipboardManager,
+    private val clipboardManager: ClipboardManager?,
     private val messageReference: MessageReference?,
-    private val context: Context,
+    private val context: Context?, // Most actions won't be able to do anything without context. But it may still be desirable to pass a null context if interaction is not necessary.
 ): KoinComponent {
     private val generalSettingsManager: GeneralSettingsManager by inject()
     private val logger: Logger by inject()
@@ -178,11 +178,13 @@ class ActionButtonUtil(
             return null
         }
         return ActionButton(null, icon) {
-            SMLWebViewClientExtensions.playMedia(
-                context,
-                mediaType,
-                mediaContentUrl.toUri()
-            )
+            if (context != null) {
+                SMLWebViewClientExtensions.playMedia(
+                    context,
+                    mediaType,
+                    mediaContentUrl.toUri()
+                )
+            }
         }
     }
 
@@ -243,10 +245,12 @@ class ActionButtonUtil(
     fun getEventButtonDescs(jsonObject: JSONObject): MutableList<ActionButton> {
         val iTIPMethod = jsonObject.optString("iTIPMethod")
         val shareEventAsCalendar = ActionButton(null, Icons.Outlined.Event) {
-            SMLWebViewClientExtensions.shareAsCal(
-                context,
-                jsonObject
-            )
+            context?.let {
+                SMLWebViewClientExtensions.shareAsCal(
+                    it,
+                    jsonObject
+                )
+            }
         }
         return if (iTIPMethod.isEmpty()) {
             mutableListOf(shareEventAsCalendar)
@@ -260,31 +264,37 @@ class ActionButtonUtil(
     private fun getIMITActionButtons(json: JSONObject): MutableList<ActionButton> {
         val imipActionButtons: MutableList<ActionButton> = ArrayList(3)
         imipActionButtons.add(ActionButton("Accept") {
-            SMLWebViewClientExtensions.imipInteract(
-                json,
-                SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
-                messageReference,
-                generalSettingsManager,
-                context
-            )
+            if (context != null) {
+                SMLWebViewClientExtensions.imipInteract(
+                    json,
+                    SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
+                    messageReference,
+                    generalSettingsManager,
+                    context
+                )
+            }
         })
         imipActionButtons.add(ActionButton("Decline") {
-            SMLWebViewClientExtensions.imipInteract(
-                json,
-                SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
-                messageReference,
-                generalSettingsManager,
-                context
-            )
+            if (context != null) {
+                SMLWebViewClientExtensions.imipInteract(
+                    json,
+                    SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
+                    messageReference,
+                    generalSettingsManager,
+                    context
+                )
+            }
         })
         imipActionButtons.add(ActionButton("Tentative") {
-            SMLWebViewClientExtensions.imipInteract(
-                json,
-                SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
-                messageReference,
-                generalSettingsManager,
-                context
-            )
+            if (context != null) {
+                SMLWebViewClientExtensions.imipInteract(
+                    json,
+                    SMLWebViewClientExtensions.Companion.IMIPAction.Accept,
+                    messageReference,
+                    generalSettingsManager,
+                    context
+                )
+            }
         })
         return imipActionButtons
     }
@@ -303,9 +313,13 @@ class ActionButtonUtil(
         return ActionButton(null, Icons.Outlined.Replay) {
             val (jsonSrc: String?, okErr: String?) = SMLWebViewClientExtensions.downloadPage(liveUri.toUri())
             if (okErr != null) {
-                showToast(context, "Http error ($okErr)") // todo use string resources
+                if (context != null) {
+                    showToast(context, "Http error ($okErr)")
+                } // todo use string resources
             } else if (jsonSrc == null) {
-                showToast(context, "Got no content") // todo use string resources
+                if (context != null) {
+                    showToast(context, "Got no content")
+                } // todo use string resources
             } else {
                 val jsonObject = JSONObject(jsonSrc)
                 onReload(jsonObject)
@@ -319,7 +333,11 @@ class ActionButtonUtil(
             label = "Share as mail",
             icon = Icons.AutoMirrored.Outlined.ForwardToInbox,
             hideInOverflow = true,
-        ) { SMLWebViewClientExtensions.shareAsSmlMail(context, messageReference, jsonText) }
+        ) {
+            if (context != null) {
+                SMLWebViewClientExtensions.shareAsSmlMail(context, messageReference, jsonText)
+            }
+        }
     }
 
     fun getShareAsFileButtonDesc(jsonObject: JSONObject, fallbackFileName: String): ActionButton {
@@ -330,7 +348,9 @@ class ActionButtonUtil(
             icon = Icons.Outlined.Share,
             hideInOverflow = true,
         ) {
-            SMLWebViewClientExtensions.shareAsFile(context, fileName, jsonBytes)
+            if (context != null) {
+                SMLWebViewClientExtensions.shareAsFile(context, fileName, jsonBytes)
+            }
         }
     }
 
@@ -348,7 +368,7 @@ class ActionButtonUtil(
                         ActionButton(
                             label = name, icon = Icons.Outlined.ContentPaste,
                         ) {
-                            clipboardManager.setText(
+                            clipboardManager?.setText(
                                 description,
                                 description
                             ) // todo maybe set a summary text for the clipboard babel
@@ -399,10 +419,12 @@ class ActionButtonUtil(
     }
 
     private fun invokeUri(uri: Uri) {
-        if (MailTo.isMailTo(uri)) {
-            SMLWebViewClientExtensions.mailTo(context, uri, messageReference)
-        } else {
-            SMLWebViewClientExtensions.openUrl(context, uri)
+        if (context != null) {
+            if (MailTo.isMailTo(uri)) {
+                SMLWebViewClientExtensions.mailTo(context, uri, messageReference)
+            } else {
+                SMLWebViewClientExtensions.openUrl(context, uri)
+            }
         }
     }
 // todo polls

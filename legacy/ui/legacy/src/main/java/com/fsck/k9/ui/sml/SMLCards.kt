@@ -70,6 +70,28 @@ fun SMLCards(
     val jsonLds: List<JSONObject> = remember {
         listOfNotNull(*structuredDataList.toTypedArray(), extracted, *itiExtractedList.toTypedArray()).distinct()
     }
+    SMLCards(
+        jsonLds = jsonLds,
+        interactive = interactive,
+        modifier = modifier,
+        clipboardManager = clipboardManager,
+        messageReference = messageReference,
+        context = context,
+        onReload = onReload
+    )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun SMLCards(
+    jsonLds: List<JSONObject>,
+    interactive: Boolean,
+    modifier: Modifier = Modifier,
+    clipboardManager: ClipboardManager?,
+    messageReference: MessageReference?,
+    context: Context?,
+    onReload: ((JSONObject) -> Unit)?,
+) {
     if (jsonLds.isNotEmpty()) {
         val carouselState = rememberCarouselState { jsonLds.count() }
         val animationScope = rememberCoroutineScope()
@@ -142,7 +164,7 @@ fun SMLCards(
                         onClick = {
                             showMap = !showMap
                         },
-                        modifier = modifier.padding(16.dp)
+                        modifier = modifier.padding(16.dp),
                     ) {
                         Text(if (!showMap) "Show Map" else "Hide Map")
                     }
@@ -188,9 +210,9 @@ fun SMLCards(
                                         left = 32.dp,
                                         top = 32.dp,
                                         right = 32.dp,
-                                        bottom = 32.dp
-                                    )
-                                )
+                                        bottom = 32.dp,
+                                    ),
+                                ),
                             )
                         }
                     }

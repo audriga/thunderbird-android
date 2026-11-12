@@ -7,12 +7,12 @@ import android.text.TextWatcher
 import android.util.Patterns
 import android.view.View
 import android.widget.EditText
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.ComposeView
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
 import com.fsck.k9.activity.misc.Attachment
 import com.fsck.k9.helper.MimeTypeUtil
-import com.fsck.k9.sml.SMLUtil.css
-import com.fsck.k9.sml.SMLUtil.getButtons
-import com.fsck.k9.view.MessageWebView
+import com.fsck.k9.ui.sml.SMLCards
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.BufferedReader
 import java.io.File
@@ -24,6 +24,7 @@ import kotlin.Boolean
 import kotlin.CharSequence
 import kotlin.Int
 import kotlin.also
+import kotlin.collections.toTypedArray
 import org.audriga.hetc.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONException
@@ -34,11 +35,11 @@ class SMLMessageComposeUtil(
     private val subjectView: EditText, private val attachmentPresenter: AttachmentPresenter,
     private val messageContentView: EditText,
 //    private String smlHTMLEmail = null;
-    private val messageContentViewSML: MessageWebView, private val smlModeSwitch: MaterialSwitch
+    private val messageContentViewSML: ComposeView, private val smlModeSwitch: MaterialSwitch
 ) {
     // SML
     //    private String smlJsonLd = null;
-    var smlPayload: MutableList<JSONObject>? = null
+    var smlPayload: List<JSONObject>? = null
         private set
 
     init {
@@ -77,15 +78,13 @@ class SMLMessageComposeUtil(
             val payload = intent.getStringExtra(SML_PAYLOAD)
             if (payload != null) {
                 smlPayload = JsonLdDeserializer.deserialize(payload)
-                val ld2hResult: Ld2hResult = Companion.ld2hRenderSmlPayload(smlPayload!!)
-                displayLd2hResultAndUpdateSubject(ld2hResult)
+                val types = prepareSmlPayload(smlPayload!!)
+                displayCardsAndUpdateSubject(smlPayload!!, types)
             } else {
-                messageContentView.setVisibility(View.GONE)
-                if (subjectView.getText().length == 0) {
+                messageContentView.visibility = View.GONE
+                if (subjectView.getText().isEmpty()) {
                     subjectView.setText("SML Mail")
                 }
-                messageContentViewSML.setVisibility(View.VISIBLE)
-                messageContentViewSML.displayHtmlContentWithInlineAttachments("<b>Testing</b>", null, null)
             }
         }
     }
@@ -102,26 +101,35 @@ class SMLMessageComposeUtil(
         try {
             val ld2hRenderer = MustacheRenderer()
             data = ld2hRenderer.filterRenderable(data)
-        } catch (ignored: IOException) {
+        } catch (_: IOException) {
         }
-        if (!data.isEmpty()) {
-            if (smlPayload == null) {
-                smlPayload = data
+        if (data.isNotEmpty()) {
+            smlPayload = if (smlPayload == null) {
+                data
             } else {
-                smlPayload!!.addAll(data)
+                listOf(*(smlPayload as List<JSONObject>).toTypedArray(), *data.toTypedArray())
             }
-            val ld2hResult: Ld2hResult = Companion.ld2hRenderSmlPayload(smlPayload!!)
-            displayLd2hResultAndUpdateSubject(ld2hResult)
+            val types = prepareSmlPayload(smlPayload!!)
+            displayCardsAndUpdateSubject(smlPayload!!, types)
+
         }
         // else: No structured data found, todo: treat link as normal?
     }
 
-    fun displayLd2hResult(ld2hRenderResult: String) {
-        val htmlDisplay: String = addHeadToLd2hResult(ld2hRenderResult)
-        messageContentView.setVisibility(View.GONE)
-        messageContentViewSML.setVisibility(View.VISIBLE)
-        messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null)
-        smlModeSwitch.setVisibility(View.VISIBLE)
+//    fun displayLd2hResult(ld2hRenderResult: String) {
+//        val htmlDisplay: String = addHeadToLd2hResult(ld2hRenderResult)
+//        messageContentView.setVisibility(View.GONE)
+//        messageContentViewSML.setVisibility(View.VISIBLE)
+//        messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null)
+//        smlModeSwitch.setVisibility(View.VISIBLE)
+//        smlModeSwitch.setChecked(true)
+//    }
+
+    fun displaySmlCards(content: @Composable () -> Unit) {
+        messageContentView.visibility = View.GONE
+        messageContentViewSML.visibility = View.VISIBLE
+        messageContentViewSML.setContent(content)
+        smlModeSwitch.visibility = View.VISIBLE
         smlModeSwitch.setChecked(true)
     }
 
@@ -138,10 +146,7 @@ class SMLMessageComposeUtil(
                 attachment.contentType, "application/json+ld"
             )
         ) {
-            val filename = attachment.fileName
-            if (filename == null) {
-                return false
-            }
+            val filename = attachment.fileName ?: return false
             val fl = File(filename)
             try {
                 BufferedReader(InputStreamReader(FileInputStream(fl))).use { reader ->
@@ -153,19 +158,21 @@ class SMLMessageComposeUtil(
                     val ret = sb.toString()
                     // todo: popup to ask if they want to share as schema, or as attachment
                     val deserialized = JsonLdDeserializer.deserialize(ret)
-                    val jsonLds: MutableList<JSONObject> = ArrayList<JSONObject>(deserialized.size)
+                    val jsonLds: MutableList<JSONObject> = ArrayList(deserialized.size)
                     for (jsonObject in deserialized) {
                         if (isJsonLd(jsonObject)) {
                             jsonLds.add(jsonObject)
                         }
                     }
-                    if (!jsonLds.isEmpty()) {
-                        if (smlPayload == null) {
-                            smlPayload = ArrayList<JSONObject>(deserialized.size)
+                    if (jsonLds.isNotEmpty()) {
+                        smlPayload = if (smlPayload == null) {
+                            jsonLds
+                        } else {
+                            // Instead of smlPayload.addAll create a new smlPayload list instance.
+                            listOf(*(smlPayload as List<JSONObject>).toTypedArray(), *jsonLds.toTypedArray())
                         }
-                        smlPayload!!.addAll(jsonLds)
-                        val ld2hResult: Ld2hResult = Companion.ld2hRenderSmlPayload(smlPayload!!)
-                        val hadResult = displayLd2hResultAndUpdateSubject(ld2hResult)
+                        val types = prepareSmlPayload(smlPayload!!)
+                        val hadResult = displayCardsAndUpdateSubject(smlPayload!!, types)
                         if (hadResult) {
                             attachmentPresenter.onClickRemoveAttachment(attachment.uri)
                             // todo: This function is called in updateAttachmentView, and after that function returns, the
@@ -175,18 +182,26 @@ class SMLMessageComposeUtil(
                         }
                     }
                 }
-            } catch (ignored: IOException) {
+            } catch (_: IOException) {
             }
         }
         return false
     }
 
-    private fun displayLd2hResultAndUpdateSubject(ld2hResult: Ld2hResult): Boolean {
-        if (ld2hResult.renderedDisplayHTMLs.isNotEmpty()) {
-            val joinedDisplayHTMLRenderResults = ld2hResult.renderedDisplayHTMLs.joinToString("\n")
-            displayLd2hResult(joinedDisplayHTMLRenderResults)
+    private fun displayCardsAndUpdateSubject(smlPayload: List<JSONObject>, types: List<String>): Boolean {
+        if (types.isNotEmpty()) {
+            displaySmlCards {
+                SMLCards(
+                    jsonLds = smlPayload,
+                    interactive = false,
+                    clipboardManager = null,
+                    messageReference = null,
+                    context = null,
+                    onReload = null
+                )
+            }
             if (subjectView.getText().isEmpty() || subjectView.getText().toString().startsWith("Check out this ")) {
-                val subject = "Check out this " + ld2hResult.types.joinToString(", ")
+                val subject = "Check out this " + types.joinToString(", ")
                 subjectView.setText(subject)
             }
             return true
@@ -194,10 +209,9 @@ class SMLMessageComposeUtil(
         return false
     }
 
-    internal class Ld2hResult(val renderedDisplayHTMLs: ArrayList<kotlin.String?>, val types: ArrayList<kotlin.String?>)
     companion object {
-        const val IS_SML: kotlin.String = "isSML"
-        const val SML_PAYLOAD: kotlin.String = "sml_payload"
+        const val IS_SML: String = "isSML"
+        const val SML_PAYLOAD: String = "sml_payload"
 
         fun isJsonLd(jsonObject: JSONObject): Boolean {
             try {
@@ -208,14 +222,10 @@ class SMLMessageComposeUtil(
                     return false
                 }
                 val type = jsonObject.getString("@type")
-                return !type.isEmpty()
-            } catch (ignored: JSONException) {
+                return type.isNotEmpty()
+            } catch (_: JSONException) {
                 return false
             }
-        }
-
-        private fun addHeadToLd2hResult(ld2hRenderResult: kotlin.String): kotlin.String {
-            return css() + ld2hRenderResult
         }
 
         /**
@@ -224,15 +234,8 @@ class SMLMessageComposeUtil(
          * @param smlPayload schema to render. This is modified if inline is necessary and possible.
          * @return the resulting HTMLs of the LD2H render, together with the schema types.
          */
-        private fun ld2hRenderSmlPayload(smlPayload: MutableList<JSONObject>): Ld2hResult {
-            var ld2hRenderer: MustacheRenderer? = null
-            try {
-                ld2hRenderer = MustacheRenderer()
-            } catch (e: IOException) {
-                //throw new RuntimeException(e);
-            }
-            val renderedDisplayHTMLs = ArrayList<kotlin.String?>(smlPayload.size)
-            val types = ArrayList<kotlin.String?>(smlPayload.size)
+        private fun prepareSmlPayload(smlPayload: List<JSONObject>): List<String> {
+            val types = ArrayList<String>(smlPayload.size)
             for (jsonObject in smlPayload) {
                 // For freshly downloaded schema, the image has already been inlined.
                 // But inlineImages is smart enough to detect the already inlined image.
@@ -242,18 +245,8 @@ class SMLMessageComposeUtil(
                 StructuredDataExtractionUtils.inlineImages(jsonObject)
                 val type = jsonObject.optString("@type")
                 types.add(type)
-                var ld2hRenderResult: kotlin.String? = null
-                try {
-                    val buttons = getButtons(jsonObject)
-                    ld2hRenderResult = if (ld2hRenderer != null) ld2hRenderer.render(jsonObject, buttons) else null
-                } catch (e: IOException) {
-                    // todo handle
-                }
-                if (ld2hRenderResult != null) {
-                    renderedDisplayHTMLs.add(ld2hRenderResult)
-                }
             }
-            return Ld2hResult(renderedDisplayHTMLs, types)
+            return types
         }
     }
 }
