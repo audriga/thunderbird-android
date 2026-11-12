@@ -161,8 +161,9 @@ fun SMLCards(
                         initialCameraPosition = CameraPosition(center = Position(midLong, midLat)),
                     ) {
                         for ((i, markers) in markersPerMarkup.withIndex()) {
+                            val highlight = carouselState.currentItem == i
                             for (marker in markers) {
-                                MarkerLayers(marker) {
+                                MarkerLayers(marker, highlight) {
                                     animationScope.launch {
                                         carouselState.animateScrollToItem(i)
                                     }
