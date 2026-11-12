@@ -91,106 +91,108 @@ fun SMLCards(
                         messageReference = messageReference,
                         context = context,
                         modifier = modifier,
+                        interactive = interactive,
                         onReload = onReload,
                     )
                 }
             }
 
-
-            val markersPerMarkup: Array<MutableList<MapMarker>> = Array(jsonLds.size) { mutableListOf() }
-            // BoundingBox is bound by northeastern corner and southwestern corner
-            // Bigger number in latitude is more north
-            // Bigger number in longitude is more east
-            // northeast is max,max southwest is min,min
-            var northLat = 0.0
-            var eastLong = 0.0
-            var southLat = 0.0
-            var westLong = 0.0
-            var hasGeosVar = false
-            for ((i, jsonObject) in jsonLds.withIndex()) {
-                findAllLocations(jsonObject) { latitude, longitude ->
-                    if (hasGeosVar) {
-                        // calculate new BoundingBox coordinates
-                        northLat = maxOf(northLat, latitude)
-                        eastLong = maxOf(eastLong, longitude)
-                        southLat = minOf(southLat, latitude)
-                        westLong = minOf(westLong, longitude)
-                    } else {
-                        // reached first geo, initialize BoundingBox coordinates with this one
-                        northLat = latitude
-                        eastLong = longitude
-                        southLat = latitude
-                        westLong = longitude
+            if (interactive) {
+                val markersPerMarkup: Array<MutableList<MapMarker>> = Array(jsonLds.size) { mutableListOf() }
+                // BoundingBox is bound by northeastern corner and southwestern corner
+                // Bigger number in latitude is more north
+                // Bigger number in longitude is more east
+                // northeast is max,max southwest is min,min
+                var northLat = 0.0
+                var eastLong = 0.0
+                var southLat = 0.0
+                var westLong = 0.0
+                var hasGeosVar = false
+                for ((i, jsonObject) in jsonLds.withIndex()) {
+                    findAllLocations(jsonObject) { latitude, longitude ->
+                        if (hasGeosVar) {
+                            // calculate new BoundingBox coordinates
+                            northLat = maxOf(northLat, latitude)
+                            eastLong = maxOf(eastLong, longitude)
+                            southLat = minOf(southLat, latitude)
+                            westLong = minOf(westLong, longitude)
+                        } else {
+                            // reached first geo, initialize BoundingBox coordinates with this one
+                            northLat = latitude
+                            eastLong = longitude
+                            southLat = latitude
+                            westLong = longitude
+                        }
+                        hasGeosVar = true
+                        val schemaType = jsonObject.optString("@type", "")
+                        markersPerMarkup[i].add(
+                            MapMarker(
+                                schemaType = schemaType,
+                                latitude = latitude,
+                                longitude = longitude,
+                            ),
+                        )
                     }
-                    hasGeosVar = true
-                    val schemaType = jsonObject.optString("@type", "")
-                    markersPerMarkup[i].add(
-                        MapMarker(
-                            schemaType = schemaType,
-                            latitude = latitude,
-                            longitude = longitude,
-                        ),
-                    )
                 }
-            }
-            val hasGeos = hasGeosVar
+                val hasGeos = hasGeosVar
 
-            if (hasGeos) {
-                var showMap: Boolean by remember { mutableStateOf(false) }
-                Button(
-                    onClick = {
-                        showMap = !showMap
-                    },
-                    modifier = modifier.padding(16.dp)
-                ) {
-                    Text(if (!showMap) "Show Map" else "Hide Map")
-                }
-                if (showMap) {
-                    val boundingBox = BoundingBox(
-                        west = westLong,
-                        south = southLat,
-                        east = eastLong,
-                        north = northLat,
-                    )
-                    val midLong = (westLong + eastLong) / 2.0
-                    val midLat = (southLat + northLat) / 2.0
-                    val baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty")
-                    val mapState = rememberMapState(
-                        baseStyle = baseStyle,
-                        initialCameraPosition = CameraPosition(center = Position(midLong, midLat)),
+                if (hasGeos) {
+                    var showMap: Boolean by remember { mutableStateOf(false) }
+                    Button(
+                        onClick = {
+                            showMap = !showMap
+                        },
+                        modifier = modifier.padding(16.dp)
                     ) {
-                        for ((i, markers) in markersPerMarkup.withIndex()) {
-                            val highlight = carouselState.currentItem == i
-                            for (marker in markers) {
-                                MarkerLayers(marker, highlight) {
-                                    animationScope.launch {
-                                        carouselState.animateScrollToItem(i)
+                        Text(if (!showMap) "Show Map" else "Hide Map")
+                    }
+                    if (showMap) {
+                        val boundingBox = BoundingBox(
+                            west = westLong,
+                            south = southLat,
+                            east = eastLong,
+                            north = northLat,
+                        )
+                        val midLong = (westLong + eastLong) / 2.0
+                        val midLat = (southLat + northLat) / 2.0
+                        val baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty")
+                        val mapState = rememberMapState(
+                            baseStyle = baseStyle,
+                            initialCameraPosition = CameraPosition(center = Position(midLong, midLat)),
+                        ) {
+                            for ((i, markers) in markersPerMarkup.withIndex()) {
+                                val highlight = carouselState.currentItem == i
+                                for (marker in markers) {
+                                    MarkerLayers(marker, highlight) {
+                                        animationScope.launch {
+                                            carouselState.animateScrollToItem(i)
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    BoxWithConstraints {
-                        MaplibreMap(
-                            modifier = Modifier.heightIn(minHeight, maxWidth), // Make it square for now
-                            state = mapState,
-                        ) {
-                            include(MapOverlay.Default)
-                            // Can render (simple?) composables on a given map position
+                        BoxWithConstraints {
+                            MaplibreMap(
+                                modifier = Modifier.heightIn(minHeight, maxWidth), // Make it square for now
+                                state = mapState,
+                            ) {
+                                include(MapOverlay.Default)
+                                // Can render (simple?) composables on a given map position
+                            }
                         }
-                    }
-                    LaunchedEffect(mapState) {
-                        mapState.animateCameraToBounds(
-                            boundingBox = boundingBox,
-                            fit = CameraFit(
-                                fitPadding = DpPadding(
-                                    left = 32.dp,
-                                    top = 32.dp,
-                                    right = 32.dp,
-                                    bottom = 32.dp
+                        LaunchedEffect(mapState) {
+                            mapState.animateCameraToBounds(
+                                boundingBox = boundingBox,
+                                fit = CameraFit(
+                                    fitPadding = DpPadding(
+                                        left = 32.dp,
+                                        top = 32.dp,
+                                        right = 32.dp,
+                                        bottom = 32.dp
+                                    )
                                 )
                             )
-                        )
+                        }
                     }
                 }
             }

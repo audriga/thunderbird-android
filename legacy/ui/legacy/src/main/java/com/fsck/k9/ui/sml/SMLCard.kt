@@ -95,6 +95,7 @@ fun SMLCard(
     messageReference: MessageReference?,
     context: Context,
     modifier: Modifier = Modifier,
+    interactive: Boolean = true,
     onReload: ((JSONObject) -> Unit)? = null,
 ) {
     // todo simplify by using `by` instead of `=`, see https://stackoverflow.com/questions/69326413/whats-difference-between-remember-and-by-remember
@@ -123,12 +124,24 @@ fun SMLCard(
         context = context,
         ).getButtons(jsonObject)
     if (schemaType.equals("SimplePoll")) {
-        SimplePollCard(schemaType, title, imageUrl, jsonObject, jsonObjectState, actionButtons, context, messageReference, modifier, onReload)
+        SimplePollCard(
+            schemaType,
+            title,
+            imageUrl,
+            jsonObject,
+            jsonObjectState,
+            actionButtons,
+            context,
+            messageReference,
+            modifier,
+            interactive,
+            onReload
+        )
     } else if (schemaType.equals("FlightReservation")) {
-        FlightReservationCard(jsonObject, modifier, actionButtons)
+        FlightReservationCard(jsonObject, modifier, actionButtons, interactive)
     } else {
 //        actionButtons.add(ActionButton("Story", null, {webstoryUrl = "https://www.spiegel.de/stories/66361/index.amp.html"}))
-        SimpleCard(schemaType, title, description, imageUrl, actionButtons, modifier)
+        SimpleCard(schemaType, title, description, imageUrl, actionButtons, modifier, interactive)
     }
 }
 
@@ -137,6 +150,7 @@ private fun FlightReservationCard(
     jsonObject: JSONObject,
     modifier: Modifier,
     actionButtons: MutableList<ActionButton>,
+    interactive: Boolean
 ) {
     val reservationFor = jsonObject.optJSONObject("reservationFor")
     val departureAirport = reservationFor?.optJSONObject("departureAirport")
@@ -215,6 +229,7 @@ private fun FlightReservationCard(
             }
             ActionButtons(
                 actionButtons = actionButtons,
+                interactive = interactive,
             )
         }
     }
@@ -231,6 +246,7 @@ private fun SimplePollCard(
     context: Context,
     messageReference: MessageReference?,
     modifier: Modifier,
+    interactive: Boolean,
     onReload: ((JSONObject) -> Unit)?,
 ) {
     Card(
@@ -392,7 +408,7 @@ private fun SimplePollCard(
             }
 
             // Action buttons
-            ActionButtons(actionButtons = actionButtons)
+            ActionButtons(actionButtons = actionButtons, interactive = interactive)
         }
     }
 }
@@ -440,6 +456,7 @@ private fun SimpleCard(
     imageUrl: String?,
     actionButtons: MutableList<ActionButton>,
     modifier: Modifier,
+    interactive: Boolean,
 ) {
     Card(
         modifier = modifier
@@ -506,6 +523,7 @@ private fun SimpleCard(
             // Action buttons
             ActionButtons(
                 actionButtons = actionButtons,
+                interactive = interactive,
             )
         }
     }
@@ -514,6 +532,7 @@ private fun SimpleCard(
 @Composable
 private fun ActionButtons(
     actionButtons: MutableList<ActionButton>,
+    interactive: Boolean
 ) {
     if (actionButtons.isNotEmpty()) {
         var dropdownExpanded by remember { mutableStateOf(false) }
@@ -528,23 +547,26 @@ private fun ActionButtons(
                     StructuredDataActionButton(
                         actionButton = actionButton,
                         modifier = Modifier.padding(end = 7.dp),
+                        interactive = interactive,
                     )
                 }
             }
-            item {
-                IconButton(onClick = {dropdownExpanded = !dropdownExpanded}) {
-                    Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "More options")
-                }
-                DropdownMenu(
-                    expanded = dropdownExpanded,
-                    onDismissRequest = { dropdownExpanded = false}
-                ) {
-                    actionButtons.filter { actionButton -> actionButton.hideInOverflow }.forEach {
-                        DropdownMenuItem(
-                            text = { if (it.label != null) Text(it.label) },
-                            leadingIcon = { if(it.icon != null) Icon(imageVector =  it.icon, contentDescription = null)},
-                            onClick = it.onClick,
-                        )
+            if (interactive) {
+                item {
+                    IconButton(onClick = {dropdownExpanded = !dropdownExpanded}) {
+                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "More options")
+                    }
+                    DropdownMenu(
+                        expanded = dropdownExpanded,
+                        onDismissRequest = { dropdownExpanded = false}
+                    ) {
+                        actionButtons.filter { actionButton -> actionButton.hideInOverflow }.forEach {
+                            DropdownMenuItem(
+                                text = { if (it.label != null) Text(it.label) },
+                                leadingIcon = { if(it.icon != null) Icon(imageVector =  it.icon, contentDescription = null)},
+                                onClick = it.onClick,
+                            )
+                        }
                     }
                 }
             }
@@ -556,12 +578,13 @@ private fun ActionButtons(
 private fun StructuredDataActionButton(
     actionButton: ActionButton,
     modifier: Modifier = Modifier,
+    interactive: Boolean,
 ) {
     OutlinedButton(
         onClick = actionButton.onClick,
+        enabled = interactive,
         modifier = modifier,
     ) {
-        // todo just icon if label is null
         if (actionButton.icon != null) Icon(imageVector = actionButton.icon, contentDescription = null)
         if (actionButton.label != null ) Text(actionButton.label, style = MaterialTheme.typography.labelSmall)
     }
