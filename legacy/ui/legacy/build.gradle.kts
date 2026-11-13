@@ -90,6 +90,8 @@ dependencies {
 
     implementation(libs.okhttp)
 
+    // SML Dependencies.
+    // TODO: Check which ones are still needed.
     implementation(libs.mustache)
     implementation(libs.jackson)
     implementation(libs.ical4jserializer)
@@ -97,6 +99,7 @@ dependencies {
     implementation(files("../../../libs/hetc.jar"))
     implementation(files("../../../libs/ld2h.jar"))
     implementation(files("../../../libs/kitinerary-android.aar"))
+    implementation(files("../../../libs/osm-schema-org-java-0.1.0-SNAPSHOT.jar"))
 //    implementation(libs.maplibre.compose)
 //    runtimeOnly(libs.maplibre.compose.runtime.vulkan.android)
     //implementation(libs.http4k.core)

@@ -9,7 +9,9 @@ import android.view.View
 import android.widget.EditText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.net.toUri
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
+import com.audriga.osmschemaorg.ConvertOsmToSchema
 import com.fsck.k9.activity.misc.Attachment
 import com.fsck.k9.helper.MimeTypeUtil
 import com.fsck.k9.ui.sml.SMLCards
@@ -19,12 +21,18 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStreamReader
+import java.lang.Exception
 import java.util.Locale
 import kotlin.Boolean
 import kotlin.CharSequence
 import kotlin.Int
 import kotlin.also
 import kotlin.collections.toTypedArray
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.audriga.hetc.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONException
@@ -96,7 +104,8 @@ class SMLMessageComposeUtil(
         }
     }
 
-    fun enrichSharedUrlToSml(url: String?) {
+    fun enrichSharedUrlToSml(url: String) {
+        enrichSharedOsmPoi(url)
         var data = StructuredDataExtractionUtils.downloadParseAndRefineStructuredData(url, true, true)
         try {
             val ld2hRenderer = MustacheRenderer()
@@ -104,16 +113,45 @@ class SMLMessageComposeUtil(
         } catch (_: IOException) {
         }
         if (data.isNotEmpty()) {
-            smlPayload = if (smlPayload == null) {
-                data
-            } else {
-                listOf(*(smlPayload as List<JSONObject>).toTypedArray(), *data.toTypedArray())
-            }
+            updatePayload(data)
             val types = prepareSmlPayload(smlPayload!!)
             displayCardsAndUpdateSubject(smlPayload!!, types)
 
         }
         // else: No structured data found, todo: treat link as normal?
+    }
+
+    private fun enrichSharedOsmPoi(url: String) {
+        if (url.toUri().authority?.contains("api.openstreetmap.org") == true) {
+            val client = OkHttpClient()
+            var pageSrc: String? = null
+            var contentType: MediaType? = null;
+    //            var okErr: String? = null
+            try {
+                val request: Request = Request.Builder()
+                    .url(url).build()
+                client.newCall(request).execute().use { response ->
+                    response.body.contentType()
+                    pageSrc = response.body.string()
+                    contentType = response.body.contentType()
+    //                    Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
+                }
+            } catch (e: Exception) {
+    //                okErr = e.message
+    //                Log.d(TAG, e, "Couldn't get: %s", httpUri)
+            }
+            if (contentType?.type.equals("application") && contentType?.subtype.equals("json") && pageSrc != null) {
+                val osmJson = Json.parseToJsonElement(pageSrc)
+                if (osmJson is JsonObject) {
+                    try {
+                        val osmSchema = ConvertOsmToSchema.convertOsmToJsonLd(osmJson as Map<*, *>, null)
+                        updatePayload(listOf(JSONObject(osmSchema)))
+                    } catch (e: IllegalStateException) {
+                        val a = e
+                    }
+                }
+            }
+        }
     }
 
 //    fun displayLd2hResult(ld2hRenderResult: String) {
@@ -165,12 +203,7 @@ class SMLMessageComposeUtil(
                         }
                     }
                     if (jsonLds.isNotEmpty()) {
-                        smlPayload = if (smlPayload == null) {
-                            jsonLds
-                        } else {
-                            // Instead of smlPayload.addAll create a new smlPayload list instance.
-                            listOf(*(smlPayload as List<JSONObject>).toTypedArray(), *jsonLds.toTypedArray())
-                        }
+                        updatePayload(jsonLds)
                         val types = prepareSmlPayload(smlPayload!!)
                         val hadResult = displayCardsAndUpdateSubject(smlPayload!!, types)
                         if (hadResult) {
@@ -186,6 +219,18 @@ class SMLMessageComposeUtil(
             }
         }
         return false
+    }
+
+    /**
+     * Updates the current payload to contain the new jsonLds
+     */
+    private fun updatePayload(jsonLds: List<JSONObject>) {
+        smlPayload = if (smlPayload == null) {
+            jsonLds
+        } else {
+            // Instead of smlPayload.addAll create a new smlPayload list instance.
+            listOf(*(smlPayload as List<JSONObject>).toTypedArray(), *jsonLds.toTypedArray())
+        }
     }
 
     private fun displayCardsAndUpdateSubject(smlPayload: List<JSONObject>, types: List<String>): Boolean {
