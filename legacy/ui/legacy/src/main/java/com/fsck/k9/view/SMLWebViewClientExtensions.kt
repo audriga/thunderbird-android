@@ -715,6 +715,7 @@ class SMLWebViewClientExtensions(
             val bm = generatBarcodeImage(data, BarcodeFormat.QR_CODE, 450, 450)
             val v = ImageView(context)
             v.setImageBitmap(bm)
+            v.setPadding(/* left = */ 0, /* top = */ 48, /* right = */ 0, /* bottom = */ 0)
             val dialogAlert = MaterialAlertDialogBuilder(context)
                 .setView(v)
                 //.setTitle("title")
