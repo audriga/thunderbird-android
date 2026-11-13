@@ -1036,7 +1036,7 @@ class SMLWebViewClientExtensions(
             }
 
             //        val shareIntent = Intent.createChooser(sendIntent, "Share SML")
-            startActivity(context, sendIntent, null)
+            context.startActivity(sendIntent, null)
         }
 
         private fun showToast(context: Context, message: String) {
@@ -1058,10 +1058,8 @@ class SMLWebViewClientExtensions(
                 val request: Request = Builder()
                     .url(httpUri.toString()).build()
                 client.newCall(request).execute().use { response ->
-                    if (response.body != null) {
-                        pageSrc = response.body!!.string()
-                        Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
-                    }
+                    pageSrc = response.body.string()
+                    Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
                 }
             } catch (e: java.lang.Exception) {
                 okErr = e.message
