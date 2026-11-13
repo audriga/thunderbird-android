@@ -707,9 +707,12 @@ public abstract class SMLMessageView {
                 // Should not render all jsonLds at the top of the message, if we are in our "newsletter with a dozen recipes" case
                 String inlineModifiedHtml = addInlineButtonsToHtmlForEmbeddedStructuredData(rawHtml, messageData.structuredData);
                 if (inlineModifiedHtml != null) {
+                    // still showing newsletter
                     displayHtml = SMLUtil.css() + inlineModifiedHtml;
                 } else {
-                    displayHtml = renderDataOrExtractedAndAddToHTML(messageData.structuredData, messageData.extracted, sanitizedHtml, debugView);
+                    displayHtml = sanitizedHtml;
+                    //Not showing ld2hj card anymore
+//                    displayHtml = renderDataOrExtractedAndAddToHTML(messageData.structuredData, messageData.extracted, sanitizedHtml, debugView);
                 }
 
 
