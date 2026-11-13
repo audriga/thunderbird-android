@@ -687,7 +687,32 @@ class SMLWebViewClientExtensions(
             } catch (_: NullPointerException) {}
             val bcbp =
                 "M1TEST/HIDDEN E8OQ6FU FRARLGLH 4010 012C004D0001 35C>2180WM6012BLH 2922023642241060 LH *30600000K09"
-            val bm = generateQRCodeImage(data ?: bcbp)
+            val bm = generatBarcodeImage(data ?: bcbp, BarcodeFormat.PDF_417, 600, 400)
+            val v = ImageView(context)
+            v.setImageBitmap(bm)
+            val dialogAlert = MaterialAlertDialogBuilder(context)
+                .setView(v)
+                //.setTitle("title")
+                //.setMessage("msg: " + s)
+                .setPositiveButton("Close", null)
+                .setCancelable(false)
+                .create()
+                .apply {
+                    setCanceledOnTouchOutside(false)
+                    show()
+                }
+
+            // Make Fullscreen
+            // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
+            dialogAlert.window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+        fun openQRCode(context: Context, tokenUri: Uri) {
+            // todo check if scheme is "qrCode"
+            val data = tokenUri.schemeSpecificPart
+            val bm = generatBarcodeImage(data, BarcodeFormat.QR_CODE, 450, 450)
             val v = ImageView(context)
             v.setImageBitmap(bm)
             val dialogAlert = MaterialAlertDialogBuilder(context)
@@ -710,9 +735,11 @@ class SMLWebViewClientExtensions(
             )
         }
 
-        private fun generateQRCodeImage(barcodeText: String): Bitmap {
+        private fun generatBarcodeImage(
+            barcodeText: String, barcodeFormat: BarcodeFormat, width: Int, height: Int
+        ): Bitmap {
             val barcodeWriter = MultiFormatWriter()
-            val bitMatrix: BitMatrix = barcodeWriter.encode(barcodeText, BarcodeFormat.PDF_417, 600, 400)
+            val bitMatrix: BitMatrix = barcodeWriter.encode(barcodeText, barcodeFormat, width, height)
 
             // Needs java.awt.image.BufferedImage
 //        MatrixToImageWriter.toBufferedImage(bitMatrix)

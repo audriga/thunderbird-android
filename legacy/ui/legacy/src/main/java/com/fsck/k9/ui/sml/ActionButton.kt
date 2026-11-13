@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -123,6 +124,17 @@ class ActionButtonUtil(
             }
         }
 
+        // get all qr codes to display
+        val ticketTokens: MutableList<Any?> = findAllRecursive(jsonObject, "ticketToken")
+        for (ticketToken in ticketTokens) {
+            if (ticketToken is String) {
+                buttons.add(ActionButton(null, Icons.Outlined.QrCode) {
+                    if (context != null) {
+                        SMLWebViewClientExtensions.openQRCode(context, ticketToken.toUri())
+                    }
+                })
+            }
+        }
         // try to get Place/ Map
         try {
             findAllLocations(jsonObject) { latitude, longitude ->
