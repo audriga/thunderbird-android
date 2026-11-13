@@ -79,9 +79,7 @@ class ActionButtonUtil(
             buttons.add(videoButtonDesc)
         }
         val webUrlButtonDesc = getWebUrlButtonDesc(jsonObject)
-        if (webUrlButtonDesc != null) {
-            buttons.add(webUrlButtonDesc)
-        }
+        buttons.addAll(webUrlButtonDesc)
         if (shouldMakeSharableAsFile(type)) {
             val shareAsFileButtonDesc = getShareAsFileButtonDesc(jsonObject, type)
             buttons.add(shareAsFileButtonDesc)
@@ -315,9 +313,9 @@ class ActionButtonUtil(
         return imipActionButtons
     }
 
-    fun getWebUrlButtonDesc(jsonObject: JSONObject): ActionButton? {
+    fun getWebUrlButtonDesc(jsonObject: JSONObject): List<ActionButton> {
         val url = jsonObject.opt("url")
-        var webUrlButtonDesc: ActionButton? = null
+        var webUrlButtonDesc: ActionButton?
         if (url != null) {
             val uri = url.toString().toUri()
             val authority = uri.authority
@@ -356,14 +354,24 @@ class ActionButtonUtil(
                             ?.optJSONObject("apple")
                             ?.optString("value")
                         val newUrl = "https://music.apple.com/artist/$appleArtistId".toUri()
-                        webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(newUrl) }
+                        val appleButton = ActionButton("Play on AppleMusic", Icons.Outlined.PlayCircle) { invokeUri(newUrl) }
+                        val spotifyButton = ActionButton("Play on Spotify", Icons.Outlined.PlayCircle) { invokeUri(uri) }
+//                        val mainButton = ActionButton(
+//                            label = null,
+//                            icon = Icons.Outlined.PlayCircle,
+//                            nested = NestedButton(listOf(appleButton, spotifyButton)),
+//                            hideInOverflow = false
+//                        ) { invokeUri(newUrl) }
+//                        return listOf(mainButton)
+                        return listOf(appleButton, spotifyButton)
                     } catch (e: JSONException){}
                 }
             } else {
                 webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(uri) }
+                return listOf(webUrlButtonDesc)
             }
         }
-        return webUrlButtonDesc
+        return listOf()
     }
 
     fun downloadUrl(url: String): Triple<String?, MediaType?, String?> {
@@ -588,6 +596,12 @@ class ActionButton(
     val label: String?,
     val icon: ImageVector? = null,
     val hideInOverflow: Boolean = false,
+    val nested: NestedButton? = null,
     val onClick: () -> Unit,
 ){
 }
+
+class NestedButton(
+    val actionButtons: List<ActionButton>,
+    val sameLevel: Boolean = false,
+)
