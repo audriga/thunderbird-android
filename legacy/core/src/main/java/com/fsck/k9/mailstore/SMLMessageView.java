@@ -1,6 +1,7 @@
 package com.fsck.k9.mailstore;
 
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +17,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.util.Base64;
 import android.util.Patterns;
 
@@ -339,17 +342,24 @@ public abstract class SMLMessageView {
         return MessageExtractor.getTextFromPart(part);
     }
 
-    public static void getStructuredDataFromAttachments(@Nullable HashMap<AttachmentViewInfo, String> parseableAttachments,
-        List<StructuredData> data) throws MessagingException, IOException, ParserException {
+    public static void getStructuredDataFromAttachments(
+        @Nullable HashMap<AttachmentViewInfo, String> parseableAttachments,
+        List<StructuredData> data,
+        Map<@NotNull String, @NotNull String> headerMap,
+        String contextDate
+        ) throws MessagingException, IOException, ParserException {
         if (parseableAttachments != null) {
 
             for (Entry<AttachmentViewInfo, String> parseableAttachment : parseableAttachments.entrySet()) {
                 String ext = parseableAttachment.getValue();
                 AttachmentViewInfo attachment = parseableAttachment.getKey();
+                Part part = attachment.part;
+                if (part == null) {
+                    continue;
+                }
                 switch (ext) {
                     case "ics": {
                         //attachment.isContentAvailable();
-                        Part part = attachment.part;
                         // Check if ics is IMIP:
                         String contentTypeHeader = part.getContentType();
                         String itipMethod = MimeUtility.getHeaderParameter(contentTypeHeader, "method");
@@ -441,10 +451,30 @@ public abstract class SMLMessageView {
                             }
                         }
                         data.addAll(eventJsons);
+                        break;
                     }
                     case "vcard": {
                     }
                     case "pkpass": {
+                        Body body = part.getBody();
+                        byte[] bytes;
+                        if (VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
+                            InputStream is = MimeUtility.decodeBody(body);
+                            bytes = is.readAllBytes();
+                        } else {
+                            // todo this approach probably encodes the attachment
+                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+                            body.writeTo(bos);
+                            bytes = bos.toByteArray();
+                        }
+                        JSONArray kitiExtract = new Kitinerary.Extractor().addData(bytes, attachment.getFilename(), attachment.mimeType, headerMap)
+                            .setContextDate(contextDate)
+                            .setPostprocessing(true)
+                            .extract();
+
+                    }
+                    case "pdf": {
                     }
                 }
             }
@@ -644,7 +674,7 @@ public abstract class SMLMessageView {
             data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.MICRODATA);
         }
 
-        getStructuredDataFromAttachments(parseableAttachments, data);
+        getStructuredDataFromAttachments(parseableAttachments, data, headerMap, contextDate);
 
         getStructuredDataFromParseableParts(parseableParts, data);
         return new MessageData(unwrapStructuredData(data),extracted, kitiExtract);
