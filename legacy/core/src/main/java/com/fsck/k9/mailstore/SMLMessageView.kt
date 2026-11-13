@@ -1,7 +1,5 @@
 package com.fsck.k9.mailstore
 
-import android.os.Build
-import android.os.Build.VERSION_CODES
 import android.util.Base64
 import android.util.Patterns
 import androidx.javascriptengine.JavaScriptIsolate
@@ -21,29 +19,12 @@ import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mail.internet.Viewable
 import com.fsck.k9.sml.SMLUtil.css
 import com.fsck.k9.sml.SMLUtil.getButtons
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
-import kotlin.Boolean
-import kotlin.ByteArray
-import kotlin.Exception
-import kotlin.Lazy
-import kotlin.Throwable
-import kotlin.Throws
-import kotlin.run
-import kotlin.text.StringBuilder
-import kotlin.text.contains
-import kotlin.text.isEmpty
-import kotlin.text.lastIndexOf
-import kotlin.text.lowercase
-import kotlin.text.split
-import kotlin.text.substring
-import kotlin.text.toByteArray
-import kotlin.text.toRegex
 import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.data.ParserException
 import net.fortuna.ical4j.model.Calendar
@@ -77,7 +58,7 @@ object SMLMessageView {
         for (url in urls) {
             // Substring to remove https:// prefix
             encodedUrls.add(
-                Base64.encodeToString(url.toByteArray(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE)
+                Base64.encodeToString(url.toByteArray(StandardCharsets.UTF_8), Base64.NO_WRAP + Base64.URL_SAFE),
             )
         }
 
@@ -92,7 +73,7 @@ object SMLMessageView {
     @Throws(IOException::class)
     fun renderDataOrExtractedAndAddToHTML(
         unwrappedStructuredData: MutableList<JSONObject>, extracted: JSONObject?,
-        sanitizedHtml: String, debugView: Boolean
+        sanitizedHtml: String, debugView: Boolean,
     ): String {
         val renderer = MustacheRenderer()
         val renderedHTMLs = ArrayList<String?>()
@@ -148,8 +129,8 @@ object SMLMessageView {
         return css() + result + "<br><b>ACTUAL HTML MAIL BELOW</b><br>" + sanitizedHtml
     }
 
-    private fun unwrapStructuredData(data: MutableList<StructuredData>): MutableList<JSONObject?> {
-        val jsonObjects: MutableList<JSONObject?> = ArrayList<JSONObject?>()
+    private fun unwrapStructuredData(data: MutableList<StructuredData>): MutableList<JSONObject> {
+        val jsonObjects: MutableList<JSONObject> = ArrayList()
         for (structuredData in data) {
             val jsonObject = structuredData.json
             jsonObjects.add(jsonObject)
@@ -165,7 +146,7 @@ object SMLMessageView {
             "NewsMediaOrganization",
             "WebSite",
             "BreadcrumbList",
-            "WebPage"
+            "WebPage",
         ) else null
 
         val filteredJsonLds: MutableList<JSONObject> = ArrayList<JSONObject>()
@@ -187,7 +168,7 @@ object SMLMessageView {
     private fun renderTabbedWithButtons(
         filteredJsonLds: MutableList<JSONObject>,
         renderer: MustacheRenderer,
-        debugView: Boolean
+        debugView: Boolean,
     ): String? {
         if (filteredJsonLds.isEmpty()) {
             // this shouldn't happen since this method should only be called if data has at least one element. But
@@ -213,7 +194,7 @@ object SMLMessageView {
     @Throws(IOException::class)
     private fun renderWithButtons(
         jsonObject: JSONObject, renderer: MustacheRenderer,
-        renderedHTMLs: ArrayList<String?>, debugView: Boolean
+        renderedHTMLs: ArrayList<String?>, debugView: Boolean,
     ) {
         val showSourceButton = getShowSourceButton(jsonObject, debugView)
         val buttons = getButtons(jsonObject)
@@ -249,7 +230,7 @@ object SMLMessageView {
     private fun getShowSourceButton(prettyJson: String): String {
         val encodedFullUrl = Base64.encodeToString(
             prettyJson.toByteArray(StandardCharsets.UTF_8),
-            Base64.NO_WRAP + Base64.URL_SAFE
+            Base64.NO_WRAP + Base64.URL_SAFE,
         )
         val jsonSourceUrl = "xshowsource://" + encodedFullUrl
         return "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" +
@@ -301,14 +282,14 @@ object SMLMessageView {
                             accountId: AccountId?,
                             message: Message?,
                             part: Part?,
-                            reason: String?
+                            reason: String?,
                         ) {
 //                        Timber.e("Loading Part failed: %s", reason);
                             resultRef.set(part)
                             latch.countDown()
                             //                        super.loadAttachmentFailed(account, message, part, reason);
                         }
-                    }
+                    },
                 )
                 try {
                     latch.await()
@@ -358,19 +339,15 @@ object SMLMessageView {
 
     @Throws(MessagingException::class, IOException::class, ParserException::class)
     fun getStructuredDataFromAttachments(
-        parseableAttachments: HashMap<AttachmentViewInfo?, String?>?,
-        data: MutableList<StructuredData>,
+        parseableAttachments: HashMap<AttachmentViewInfo, String>?,
         headerMap: Map<String, String>?,
-        contextDate: String?
-    ) {
+        contextDate: String?,
+    ): Pair<List<JSONObject>, List<JSONObject>> {
+        val extracted: MutableList<JSONObject> = mutableListOf()
+        val kitiAllExtracted: MutableList<JSONObject> = mutableListOf()
         if (parseableAttachments != null) {
-            for (parseableAttachment in parseableAttachments.entries) {
-                val ext: String = parseableAttachment.value!!
-                val attachment: AttachmentViewInfo = parseableAttachment.key!!
-                val part = attachment.part
-                if (part == null) {
-                    continue
-                }
+            for ((attachment, ext) in parseableAttachments) {
+                val part = attachment.part ?: continue
                 when (ext) {
                     "ics" -> {
                         //attachment.isContentAvailable();
@@ -396,13 +373,12 @@ object SMLMessageView {
                             cal = cbuilder.build(`is`)
                             icalText = cal.toString()
                         } catch (_: Throwable) {
-                            return
+                            continue
                         }
                         //                        System.out.println(cal.getUid());
-                        val eventJsons: MutableList<StructuredData> = ArrayList<StructuredData>()
-                        for (c in cal.getComponents<CalendarComponent?>()) {
-                            if (c is VEvent) {
-                                val event = c
+                        val eventJsons: MutableList<StructuredData> = ArrayList()
+                        for (event in cal.getComponents<CalendarComponent?>()) {
+                            if (event is VEvent) {
 
                                 //                                List<Attendee> attendees = event.getAttendees();
 //                                Optional<Organizer> organizer = event.getOrganizer();
@@ -415,7 +391,7 @@ object SMLMessageView {
                                 val module = SimpleModule()
                                 module.addSerializer<VEvent?>(
                                     VEvent::class.java,
-                                    EventJsonLdSerializer(VEvent::class.java)
+                                    EventJsonLdSerializer(VEvent::class.java),
                                 )
                                 //                            module.addSerializer(VCard.class, new PersonJsonLdSerializer(VCard.class));
 //                            module.addSerializer(VCard.class, new OrganizationJsonLdSerializer(VCard.class));
@@ -428,7 +404,7 @@ object SMLMessageView {
                                 for (sd in structuredDatas) {
                                     try {
                                         sd.json.put("iTIPMethod", itipMethod)
-                                        if (itipMethod != null && !itipMethod.isEmpty()) {
+                                        if (itipMethod != null && itipMethod.isNotEmpty()) {
                                             sd.json.put("originalICal", icalText)
                                         }
                                         //                                        List<String> attendeesText = new ArrayList<>(attendees.size());
@@ -467,65 +443,35 @@ object SMLMessageView {
                                 eventJsons.addAll(structuredDatas)
                             }
                         }
-                        data.addAll(eventJsons)
+                        extracted.addAll(unwrapStructuredData(eventJsons))
                     }
 
-                    "vcard" -> {
-                        run {}
-                        run {
-                            val body = part.getBody()
-                            val bytes: ByteArray?
-                            if (Build.VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
-                                val `is` = MimeUtility.decodeBody(body)
-                                bytes = `is`.readAllBytes()
-                            } else {
-                                // todo this approach probably encodes the attachment
-                                val bos = ByteArrayOutputStream()
-
-                                body.writeTo(bos)
-                                bytes = bos.toByteArray()
+                    "vcard", "pkpass", "pdf" -> {
+                        val body = part.getBody()
+                        val bodyInputStream = MimeUtility.decodeBody(body)
+                        val bytes = bodyInputStream.readBytes()
+                        val itiExtracted =
+                            Extractor().addData(bytes, attachment.filename, attachment.mimeType, headerMap)
+                                .setContextDate(contextDate)
+                                .setPostprocessing(true)
+                                .extract()
+                        for (i in 0..<itiExtracted.length()) {
+                            val jsonObject: JSONObject? = itiExtracted.optJSONObject(i)
+                            if (jsonObject != null) {
+                                kitiAllExtracted.add(jsonObject)
                             }
-                            val kitiExtract =
-                                Extractor().addData(bytes, attachment.filename, attachment.mimeType, headerMap)
-                                    .setContextDate(contextDate)
-                                    .setPostprocessing(true)
-                                    .extract()
                         }
-                        run {}
                     }
-
-                    "pkpass" -> {
-                        run {
-                            val body = part.getBody()
-                            val bytes: ByteArray?
-                            if (Build.VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
-                                val `is` = MimeUtility.decodeBody(body)
-                                bytes = `is`.readAllBytes()
-                            } else {
-                                val bos = ByteArrayOutputStream()
-
-                                body.writeTo(bos)
-                                bytes = bos.toByteArray()
-                            }
-                            val kitiExtract =
-                                Extractor().addData(bytes, attachment.filename, attachment.mimeType, headerMap)
-                                    .setContextDate(contextDate)
-                                    .setPostprocessing(true)
-                                    .extract()
-                        }
-                        run {}
-                    }
-
-                    "pdf" -> {}
                 }
             }
         }
+        return Pair(extracted, kitiAllExtracted)
     }
 
     @Throws(JSONException::class)
     fun maybeTryExtract(
         shouldTryToDerive: TryToDerive?, textString: String,
-        htmlString: String
+        htmlString: String,
     ): JSONObject? {
         val extracted: JSONObject?
         if (shouldTryToDerive != null) {
@@ -558,7 +504,7 @@ object SMLMessageView {
                                 JSONObject()
                                     .put("@type", "CopyToClipboardAction") // 📋
                                     .put("name", code)
-                                    .put("description", code)
+                                    .put("description", code),
                             )
                     }
                 }
@@ -656,7 +602,7 @@ object SMLMessageView {
                         val fullUrl = url + afterUrl
                         val encodedFullUrl = Base64.encodeToString(
                             fullUrl.toByteArray(StandardCharsets.UTF_8),
-                            Base64.NO_WRAP + Base64.URL_SAFE
+                            Base64.NO_WRAP + Base64.URL_SAFE,
                         )
                         val loadCardUrl = "xloadcards://" + encodedFullUrl
                         if (originaHTMLIndex >= end) {
@@ -688,11 +634,12 @@ object SMLMessageView {
         return builder.toString()
     }
 
+    @JvmStatic
     @Throws(JSONException::class, MessagingException::class, IOException::class, ParserException::class)
     fun getMessageData(
         text: String, rawHtml: String, parseableParts: ArrayList<Part>?,
-        parseableAttachments: HashMap<AttachmentViewInfo?, String?>?, shouldTryToDerive: TryToDerive?,
-        mailExtractorContext: MailExtractorContext?
+        parseableAttachments: HashMap<AttachmentViewInfo, String>?, shouldTryToDerive: TryToDerive?,
+        mailExtractorContext: MailExtractorContext?,
     ): MessageData {
         val extracted = maybeTryExtract(shouldTryToDerive, text, rawHtml)
 
@@ -705,32 +652,35 @@ object SMLMessageView {
             headerMap = null
             contextDate = null
         }
-        var kitiExtract: JSONArray?
-        try {
-            kitiExtract = Extractor()
+        val kitiExtractArr: JSONArray = try {
+            Extractor()
                 .addText(text, "text/plain", headerMap)
                 .addText(rawHtml, "text/html", headerMap)
                 .setContextDate(contextDate)
                 .setPostprocessing(true)
                 .extract()
         } catch (_: Throwable) {
-            kitiExtract = JSONArray()
+            JSONArray()
         }
+        val kitiExtract = kitiExtractArr.toJSONObjectList()
+
         var data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.JSON_LD)
         if (data.isEmpty()) {
             data = StructuredDataExtractionUtils.parseStructuredDataPart(rawHtml, StructuredSyntax.MICRODATA)
         }
 
-        getStructuredDataFromAttachments(parseableAttachments, data, headerMap, contextDate)
-
         getStructuredDataFromParseableParts(parseableParts, data)
-        return MessageData(unwrapStructuredData(data), extracted, kitiExtract)
+
+        val (attachmentExtracted, attachmentKitiExtracted) = getStructuredDataFromAttachments(parseableAttachments, headerMap, contextDate)
+
+        return MessageData(unwrapStructuredData(data), listOfNotNull(extracted, *attachmentExtracted.toTypedArray()), listOf(*kitiExtract.toTypedArray(), *attachmentKitiExtracted.toTypedArray()))
     }
 
+    @JvmStatic
     fun renderMarkupInMessageHTML(
         text: String, rawHtml: String, sanitizedHtml: String,
         messageData: MessageData?, javaScriptIsolateLazy: Lazy<JavaScriptIsolate?>?,
-        mailExtractorContext: MailExtractorContext
+        mailExtractorContext: MailExtractorContext,
     ): String {
         if (messageData == null) return sanitizedHtml
 
@@ -768,17 +718,19 @@ object SMLMessageView {
 
         var displayHtml: String?
         try {
-            if (messageData.structuredData.isEmpty() && messageData.extracted == null) {
+            if (messageData.structuredData.isEmpty() && messageData.extracted.isEmpty()) {
                 if (demoView) {
 //                if (account != null && account.getDemoView()) {
                     val urls = tryExtractAllWhitelistedUrls(text, sanitizedHtml)
-                    if (!urls.isEmpty()) {
-                        displayHtml = addExtractedUrlButtons(urls, sanitizedHtml)
+                    displayHtml = if (urls.isNotEmpty()) {
+                        addExtractedUrlButtons(urls, sanitizedHtml)
                     } else {
-                        displayHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml
+                       sanitizedHtml
+//                        "<b>NO STRUCTURED DATA FOUND</b><br>$sanitizedHtml"
                     }
                 } else {
-                    displayHtml = "<b>NO STRUCTURED DATA FOUND</b><br>" + sanitizedHtml
+                    displayHtml = sanitizedHtml
+//                    displayHtml = "<b>NO STRUCTURED DATA FOUND</b><br>$sanitizedHtml"
                 }
             } else {
                 // Should not render all jsonLds at the top of the message, if we are in our "newsletter with a dozen recipes" case
@@ -809,7 +761,7 @@ object SMLMessageView {
      */
     private fun addInlineButtonsToHtmlForEmbeddedStructuredData(
         rawHtml: String,
-        data: MutableList<JSONObject>
+        data: MutableList<JSONObject>,
     ): String? {
         // Mail contains some structured data. This might be our "newsletter with data-id" case too.
         val idToJsonLd: MutableMap<String?, JSONObject?> = HashMap<String?, JSONObject?>(data.size)
@@ -832,7 +784,7 @@ object SMLMessageView {
                             val encodedJsonLd =
                                 Base64.encodeToString(
                                     jsonObject.toString().toByteArray(StandardCharsets.UTF_8),
-                                    Base64.NO_WRAP + Base64.URL_SAFE
+                                    Base64.NO_WRAP + Base64.URL_SAFE,
                                 )
                             val popupCardUrl = "xpopupcard://" + encodedJsonLd
                             val button =
@@ -853,8 +805,9 @@ object SMLMessageView {
         return null
     }
 
+    @JvmStatic
     fun getParseableAttachments(
-        attachmentInfos: MutableList<AttachmentViewInfo>, mc: MessagingController
+        attachmentInfos: MutableList<AttachmentViewInfo>, mc: MessagingController,
     ): HashMap<AttachmentViewInfo?, String?> {
         val parseableAttachments = HashMap<AttachmentViewInfo?, String?>()
         for (attachmentViewInfo in attachmentInfos) {
@@ -876,18 +829,18 @@ object SMLMessageView {
                                 override fun loadAttachmentFinished(
                                     accountId: AccountId?,
                                     message: Message?,
-                                    part: Part?
+                                    part: Part?,
                                 ) {
                                     attachmentViewInfo.setContentAvailable()
                                 }
 
                                 override fun loadAttachmentFailed(
                                     accountId: AccountId?, message: Message?, part: Part?,
-                                    reason: String?
+                                    reason: String?,
                                 ) {
                                     super.loadAttachmentFailed(accountId, message, part, reason)
                                 }
-                            }
+                            },
                         )
                     }
                     // todo: Wait until all attachments have loaded(?)

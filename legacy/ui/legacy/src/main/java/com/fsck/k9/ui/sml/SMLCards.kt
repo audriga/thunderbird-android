@@ -61,14 +61,14 @@ fun SMLCards(
     onReload: ((JSONObject) -> Unit)? = null,
 ) {
     val structuredDataList = messageViewInfo.messageData?.structuredData.orEmpty()
-    val extracted = messageViewInfo.messageData?.extracted
+    val extracted = messageViewInfo.messageData?.extracted.orEmpty()
     val itiExtractedList = messageViewInfo.messageData?.itiExtracted.orEmpty()
     // jsonld intentionally included by the sender vs jsonld derived (extracted) from non-json email text/html
     // might at some point be handled differently (e.g. user setting to only show cards for jsonld intentinally included by the sender)
     // Note that itiExtracted also includes jsonLd deliberately put into the mail if said jsonLd was a reservation of some kind.
     // For this reason duplicates are removed.
     val jsonLds: List<JSONObject> = remember {
-        listOfNotNull(*structuredDataList.toTypedArray(), extracted, *itiExtractedList.toTypedArray()).distinct()
+        listOfNotNull(*structuredDataList.toTypedArray(), *extracted.toTypedArray(), *itiExtractedList.toTypedArray()).distinct()
     }
     SMLCards(
         jsonLds = jsonLds,
