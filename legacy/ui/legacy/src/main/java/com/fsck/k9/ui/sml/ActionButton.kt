@@ -31,8 +31,12 @@ import org.json.JSONObject
 import androidx.core.net.toUri
 import com.fsck.k9.sml.SMLUtil.findAllLocations
 import com.fsck.k9.sml.SMLUtil.findAllRecursive
+import java.lang.Exception
 import net.thunderbird.components.core.logging.Logger
 import net.thunderbird.core.preference.GeneralSettingsManager
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -315,9 +319,75 @@ class ActionButtonUtil(
         val url = jsonObject.opt("url")
         var webUrlButtonDesc: ActionButton? = null
         if (url != null) {
-            webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(url.toString().toUri()) }
+            val uri = url.toString().toUri()
+            val authority = uri.authority
+            val pathSegments = uri.pathSegments
+            // authority = open.spotify.com
+            if (authority != null && authority.contains("spotify.com")
+                && pathSegments.size >= 2 && pathSegments.first().equals("artist")) {
+                val spotifyArtistId = pathSegments[1]
+                val query =
+                    """SELECT ?item ?apple ?spotify ?amazon ?discogs ?allmusic ?deezer ?tidal ?soundcloud ?genius ?musicbrainz WHERE {
+  ?item wdt:P1902 ?spotify .
+  FILTER(?spotify = "$spotifyArtistId")
+
+  OPTIONAL { ?item wdt:P2850 ?apple . }
+  OPTIONAL { ?item wdt:P1902 ?spotify . }
+  OPTIONAL { ?item wdt:P6276 ?amazon . }
+  OPTIONAL { ?item wdt:P1953 ?discogs . }
+  OPTIONAL { ?item wdt:P1728 ?allmusic . }
+  OPTIONAL { ?item wdt:P2722 ?deezer . }
+  OPTIONAL { ?item wdt:P3687 ?tidal . }
+  OPTIONAL { ?item wdt:P3040 ?soundcloud . }
+  OPTIONAL { ?item wdt:P2373 ?genius . }
+  OPTIONAL { ?item wdt:P434 ?musicbrainz . }
+}"""
+                // todo will this potentially be called multiple times on recomposition?
+                val wikidataUri =
+                    "https://query.wikidata.org/sparql".toUri().buildUpon().appendQueryParameter("query", query).build()
+                val (pageSrc, contentType, _) = downloadUrl(wikidataUri.toString())
+                if (contentType?.type.equals("application") && contentType?.subtype?.contains("json") == true && pageSrc != null) {
+                    try {
+                        val wikidataResponseJson = JSONObject(pageSrc)
+                        val appleArtistId = wikidataResponseJson
+                            .optJSONObject("results")
+                            ?.optJSONArray("bindings")
+                            ?.optJSONObject(0)
+                            ?.optJSONObject("apple")
+                            ?.optString("value")
+                        val newUrl = "https://music.apple.com/artist/$appleArtistId".toUri()
+                        webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(newUrl) }
+                    } catch (e: JSONException){}
+                }
+            } else {
+                webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(uri) }
+            }
         }
         return webUrlButtonDesc
+    }
+
+    fun downloadUrl(url: String): Triple<String?, MediaType?, String?> {
+        val client = OkHttpClient()
+        var pageSrc: String? = null
+        var contentType: MediaType? = null;
+        var okErr: String? = null
+        try {
+            val request: Request = Request.Builder()
+                .url(url)
+                .header("User-Agent", "Yatagarasu for Android") // todo user agent from MUA?
+                .addHeader("Accept", "application/json")
+                .build()
+            client.newCall(request).execute().use { response ->
+                response.body.contentType()
+                pageSrc = response.body.string()
+                contentType = response.body.contentType()
+                //                    Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
+            }
+        } catch (e: Exception) {
+            okErr = e.message
+            //                Log.d(TAG, e, "Couldn't get: %s", httpUri)
+        }
+        return Triple(pageSrc, contentType, okErr)
     }
 
     fun getReloadButtonDesc(liveUri: String): ActionButton {

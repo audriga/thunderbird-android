@@ -123,23 +123,7 @@ class SMLMessageComposeUtil(
 
     private fun enrichSharedOsmPoi(url: String) {
         if (url.toUri().authority?.contains("api.openstreetmap.org") == true) {
-            val client = OkHttpClient()
-            var pageSrc: String? = null
-            var contentType: MediaType? = null;
-    //            var okErr: String? = null
-            try {
-                val request: Request = Request.Builder()
-                    .url(url).build()
-                client.newCall(request).execute().use { response ->
-                    response.body.contentType()
-                    pageSrc = response.body.string()
-                    contentType = response.body.contentType()
-    //                    Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
-                }
-            } catch (e: Exception) {
-    //                okErr = e.message
-    //                Log.d(TAG, e, "Couldn't get: %s", httpUri)
-            }
+            val (pageSrc: String?, contentType: MediaType?, _: String?) = downloadUrl(url)
             if (contentType?.type.equals("application") && contentType?.subtype.equals("json") && pageSrc != null) {
                 val osmJson = Json.parseToJsonElement(pageSrc)
                 if (osmJson is JsonObject) {
@@ -294,4 +278,26 @@ class SMLMessageComposeUtil(
             return types
         }
     }
+}
+// todo unify this with download function in SMLWebViewExtension and move to some different class
+private fun downloadUrl(url: String): Triple<String?, MediaType?, String?> {
+    val client = OkHttpClient()
+    var pageSrc: String? = null
+    var contentType: MediaType? = null;
+    var okErr: String? = null
+    try {
+        val request: Request = Request.Builder()
+            .url(url)
+            .build()
+        client.newCall(request).execute().use { response ->
+            response.body.contentType()
+            pageSrc = response.body.string()
+            contentType = response.body.contentType()
+            //                    Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
+        }
+    } catch (e: Exception) {
+        okErr = e.message
+        //                Log.d(TAG, e, "Couldn't get: %s", httpUri)
+    }
+    return Triple(pageSrc, contentType, okErr)
 }
