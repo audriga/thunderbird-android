@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -40,15 +41,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -64,6 +62,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
@@ -108,7 +108,7 @@ fun SMLCard(
 //    var showDetailsSheet by remember { mutableStateOf(false) }
 
     webstoryUrl?.let {
-        WebStoryBottomSheet(
+        WebStoryDialog(
             url = it,
             onDismiss = { webstoryUrl = null }
         )
@@ -143,7 +143,7 @@ fun SMLCard(
     } else if (schemaType.equals("FlightReservation")) {
         FlightReservationCard(jsonObject, modifier, actionButtons, interactive)
     } else {
-//        actionButtons.add(ActionButton("Story", null, {webstoryUrl = "https://www.spiegel.de/stories/66361/index.amp.html"}))
+//        actionButtons.add(ActionButton(label= "Story", onClick = {webstoryUrl = "https://cdn.prod.www.spiegel.de/stories/66361/index.amp.html"}))
         SimpleCard(schemaType, title, description, imageUrl, actionButtons, modifier, interactive)
     }
 }
@@ -735,19 +735,20 @@ internal fun getIconForType(schemaType: String): ImageVector {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WebStoryBottomSheet(
+fun WebStoryDialog(
     url: String,
     onDismiss: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
-
-    ModalBottomSheet(
+    Dialog(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        )
     ) {
-        SimpleWebView(url)
+        // The dialog window is full screen, so the WebView gets a definite size
+        SimpleWebView(url, Modifier.fillMaxSize())
     }
 }
 
@@ -759,40 +760,22 @@ fun SimpleWebView(
     modifier: Modifier = Modifier
 ) {
     AndroidView(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         factory = { context ->
-            val customWebViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
-//                    TimeUnit.SECONDS.sleep(5)
-//                    view!!.loadUrl(initialUrl)
-                }
-            }
+            val customWebViewClient = object : WebViewClient() {}
             WebView(context).apply {
+                // Without explicit MATCH_PARENT params Compose measures the WebView with AT_MOST, which
+                // puts it in wrap-content mode: the page's viewport height becomes 0 and AMP stories collapse
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                )
                 webViewClient = customWebViewClient
                 settings.javaScriptEnabled = true
-                val html = """
-                            <html>
-                            <head>
-                                    @media (prefers-color-scheme: dark) {
-                                        body {
-                                            background-color: #212121;
-                                            color: #ffffff;
-                                        }
-                                        select {
-                                            border-color: #BB86FC;
-                                            background: #212121;
-                                            color: #ffffff;
-                                        }
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                            <a href="$initialUrl"">click me</a>
-                            </html>
-                        """.trimIndent()
-                loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
-//                loadUrl(initialUrl)
+                settings.domStorageEnabled = true
+                settings.javaScriptCanOpenWindowsAutomatically = true
+                settings.mediaPlaybackRequiresUserGesture = false
+                loadUrl(initialUrl)
             }
         }
     )
