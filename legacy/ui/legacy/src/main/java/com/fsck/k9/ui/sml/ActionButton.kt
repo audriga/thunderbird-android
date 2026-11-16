@@ -318,60 +318,69 @@ class ActionButtonUtil(
         var webUrlButtonDesc: ActionButton?
         if (url != null) {
             val uri = url.toString().toUri()
-            val authority = uri.authority
-            val pathSegments = uri.pathSegments
-            // authority = open.spotify.com
-            if (authority != null && authority.contains("spotify.com")
-                && pathSegments.size >= 2 && pathSegments.first().equals("artist")) {
-                val spotifyArtistId = pathSegments[1]
-                val query =
-                    """SELECT ?item ?apple ?spotify ?amazon ?discogs ?allmusic ?deezer ?tidal ?soundcloud ?genius ?musicbrainz WHERE {
-  ?item wdt:P1902 ?spotify .
-  FILTER(?spotify = "$spotifyArtistId")
-
-  OPTIONAL { ?item wdt:P2850 ?apple . }
-  OPTIONAL { ?item wdt:P1902 ?spotify . }
-  OPTIONAL { ?item wdt:P6276 ?amazon . }
-  OPTIONAL { ?item wdt:P1953 ?discogs . }
-  OPTIONAL { ?item wdt:P1728 ?allmusic . }
-  OPTIONAL { ?item wdt:P2722 ?deezer . }
-  OPTIONAL { ?item wdt:P3687 ?tidal . }
-  OPTIONAL { ?item wdt:P3040 ?soundcloud . }
-  OPTIONAL { ?item wdt:P2373 ?genius . }
-  OPTIONAL { ?item wdt:P434 ?musicbrainz . }
-}"""
-                // todo will this potentially be called multiple times on recomposition?
-                val wikidataUri =
-                    "https://query.wikidata.org/sparql".toUri().buildUpon().appendQueryParameter("query", query).build()
-                val (pageSrc, contentType, _) = downloadUrl(wikidataUri.toString())
-                if (contentType?.type.equals("application") && contentType?.subtype?.contains("json") == true && pageSrc != null) {
-                    try {
-                        val wikidataResponseJson = JSONObject(pageSrc)
-                        val appleArtistId = wikidataResponseJson
-                            .optJSONObject("results")
-                            ?.optJSONArray("bindings")
-                            ?.optJSONObject(0)
-                            ?.optJSONObject("apple")
-                            ?.optString("value")
-                        val newUrl = "https://music.apple.com/artist/$appleArtistId".toUri()
-                        val appleButton = ActionButton("Play on AppleMusic", Icons.Outlined.PlayCircle) { invokeUri(newUrl) }
-                        val spotifyButton = ActionButton("Play on Spotify", Icons.Outlined.PlayCircle) { invokeUri(uri) }
-//                        val mainButton = ActionButton(
-//                            label = null,
-//                            icon = Icons.Outlined.PlayCircle,
-//                            nested = NestedButton(listOf(appleButton, spotifyButton)),
-//                            hideInOverflow = false
-//                        ) { invokeUri(newUrl) }
-//                        return listOf(mainButton)
-                        return listOf(appleButton, spotifyButton)
-                    } catch (e: JSONException){}
-                }
-            } else {
-                webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(uri) }
-                return listOf(webUrlButtonDesc)
-            }
+            // returns the music buttons if they are not null
+            getMusicButtons(uri)?.let { return it }
+            webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(uri) }
+            return listOf(webUrlButtonDesc)
         }
         return listOf()
+    }
+
+    private fun getMusicButtons(uri: Uri): List<ActionButton>? {
+        val authority = uri.authority
+        val pathSegments = uri.pathSegments
+        // authority = open.spotify.com
+        var ret: List<ActionButton>? = null
+        if (authority != null && authority.contains("spotify.com")
+            && pathSegments.size >= 2 && pathSegments.first().equals("artist")
+        ) {
+            val spotifyArtistId = pathSegments[1]
+            val query =
+                """SELECT ?item ?apple ?spotify ?amazon ?discogs ?allmusic ?deezer ?tidal ?soundcloud ?genius ?musicbrainz WHERE {
+      ?item wdt:P1902 ?spotify .
+      FILTER(?spotify = "$spotifyArtistId")
+
+      OPTIONAL { ?item wdt:P2850 ?apple . }
+      OPTIONAL { ?item wdt:P1902 ?spotify . }
+      OPTIONAL { ?item wdt:P6276 ?amazon . }
+      OPTIONAL { ?item wdt:P1953 ?discogs . }
+      OPTIONAL { ?item wdt:P1728 ?allmusic . }
+      OPTIONAL { ?item wdt:P2722 ?deezer . }
+      OPTIONAL { ?item wdt:P3687 ?tidal . }
+      OPTIONAL { ?item wdt:P3040 ?soundcloud . }
+      OPTIONAL { ?item wdt:P2373 ?genius . }
+      OPTIONAL { ?item wdt:P434 ?musicbrainz . }
+    }"""
+            // todo will this potentially be called multiple times on recomposition?
+            val wikidataUri =
+                "https://query.wikidata.org/sparql".toUri().buildUpon().appendQueryParameter("query", query).build()
+            val (pageSrc, contentType, _) = downloadUrl(wikidataUri.toString())
+            if (contentType?.type.equals("application") && contentType?.subtype?.contains("json") == true && pageSrc != null) {
+                try {
+                    val wikidataResponseJson = JSONObject(pageSrc)
+                    val appleArtistId = wikidataResponseJson
+                        .optJSONObject("results")
+                        ?.optJSONArray("bindings")
+                        ?.optJSONObject(0)
+                        ?.optJSONObject("apple")
+                        ?.optString("value")
+                    val newUrl = "https://music.apple.com/artist/$appleArtistId".toUri()
+                    val appleButton =
+                        ActionButton("Play on AppleMusic", Icons.Outlined.PlayCircle) { invokeUri(newUrl) }
+                    val spotifyButton = ActionButton("Play on Spotify", Icons.Outlined.PlayCircle) { invokeUri(uri) }
+    //                        val mainButton = ActionButton(
+    //                            label = null,
+    //                            icon = Icons.Outlined.PlayCircle,
+    //                            nested = NestedButton(listOf(appleButton, spotifyButton)),
+    //                            hideInOverflow = false
+    //                        ) { invokeUri(newUrl) }
+    //                        return listOf(mainButton)
+                    ret = listOf(appleButton, spotifyButton)
+                } catch (e: JSONException) {
+                }
+            }
+        }
+        return ret
     }
 
     fun downloadUrl(url: String): Triple<String?, MediaType?, String?> {
