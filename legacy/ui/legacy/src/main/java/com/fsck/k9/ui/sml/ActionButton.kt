@@ -60,12 +60,12 @@ class ActionButtonUtil(
         val potentialActions = jsonObject.opt("potentialAction")
         if (potentialActions != null) {
             if (potentialActions is JSONObject) {
-                handleExistingPotentialAction(potentialActions, buttons, type)
+                handleExistingPotentialAction(potentialActions, buttons)
             } else if (potentialActions is JSONArray) {
                 for (i in 0..<potentialActions.length()) {
                     val potentialAction = potentialActions.opt(i)
                     if (potentialAction is JSONObject) {
-                        handleExistingPotentialAction(potentialAction, buttons, type)
+                        handleExistingPotentialAction(potentialAction, buttons)
                     }
                 }
             }
@@ -110,7 +110,7 @@ class ActionButtonUtil(
                     }
                 }
             } catch (e: JSONException) {
-                logger.error(TAG, e, {"Error trying to add phone button descriptions"})
+                logger.error(TAG, e) { "Error trying to add phone button descriptions" }
             }
             // try to get mail
             try {
@@ -122,7 +122,7 @@ class ActionButtonUtil(
                     }
                 }
             } catch (e: JSONException) {
-                logger.error(TAG, e, {"Error trying to add phone button descriptions"})
+                logger.error(TAG, e) { "Error trying to add phone button descriptions" }
             }
         }
 
@@ -155,7 +155,7 @@ class ActionButtonUtil(
 
             }
         } catch (e: JSONException) {
-            logger.error(TAG,e, { "Error trying to add geo button descriptions" })
+            logger.error(TAG,e) { "Error trying to add geo button descriptions" }
         }
         if (shouldMakeSharableAsMail(type)) {
             val shareAsMailButtonDesc = getShareAsMailButtonDesc(jsonObject)
@@ -213,7 +213,7 @@ class ActionButtonUtil(
                             return getPotentiallyNestedMediaContentUrl(mediaElement, mediaType)
                         }
                     } catch (e: JSONException) {
-                        logger.error(TAG,e, { "Error while iteration over audio or video jsonld element" })
+                        logger.error(TAG,e) { "Error while iteration over audio or video jsonld element" }
                     }
                 }
             } else if (media is JSONObject) {
@@ -377,6 +377,7 @@ class ActionButtonUtil(
     //                        return listOf(mainButton)
                     ret = listOf(appleButton, spotifyButton)
                 } catch (e: JSONException) {
+                    logger.error(TAG, e) { "Error trying to parse wikidata response for music buttons" }
                 }
             }
         }
@@ -386,7 +387,7 @@ class ActionButtonUtil(
     fun downloadUrl(url: String): Triple<String?, MediaType?, String?> {
         val client = OkHttpClient()
         var pageSrc: String? = null
-        var contentType: MediaType? = null;
+        var contentType: MediaType? = null
         var okErr: String? = null
         try {
             val request: Request = Request.Builder()
@@ -456,9 +457,8 @@ class ActionButtonUtil(
     private fun handleExistingPotentialAction(
         potentialAction: JSONObject,
         buttons: MutableList<ActionButton>,
-        mainSchemaType: String?,
     ) {
-        when (val actionType = potentialAction.optString("@type")) {
+        when (potentialAction.optString("@type")) {
             "CopyToClipboardAction" -> {
                 val name = potentialAction.optString("name", "Copy to clipboard ")
                 val description = potentialAction.optString("description")
@@ -493,27 +493,6 @@ class ActionButtonUtil(
                     buttons.add(ActionButton(label = name) { invokeUri(uri) })
                 }
             }
-
-            // todo polls
-//            "ChooseAction", "UpdateAction" -> {
-//                if (isPoll(mainSchemaType)) {
-//                    val target = potentialAction.opt("target")
-//                    if (target is JSONArray) {
-//                        var i = 0
-//                        while (i < target.length()) {
-//                            var targetMember: Any? = null
-//                            try {
-//                                targetMember = target.get(i)
-//                            } catch (_: JSONException) {
-//                            }
-//                            addPollButtonFromSingleTarget(potentialAction, actionType, targetMember, buttons)
-//                            i++
-//                        }
-//                    } else {
-//                        addPollButtonFromSingleTarget(potentialAction, actionType, target, buttons)
-//                    }
-//                }
-//            }
         }
     }
 
@@ -607,8 +586,7 @@ class ActionButton(
     val hideInOverflow: Boolean = false,
     val nested: NestedButton? = null,
     val onClick: () -> Unit,
-){
-}
+)
 
 class NestedButton(
     val actionButtons: List<ActionButton>,
