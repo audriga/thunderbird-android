@@ -12,6 +12,8 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
 import com.audriga.osmschemaorg.ConvertOsmToSchema
+import com.audriga.osmschemaorg.OsmConversionException
+import com.fasterxml.jackson.core.JsonParseException
 import com.fsck.k9.activity.misc.Attachment
 import com.fsck.k9.helper.MimeTypeUtil
 import com.fsck.k9.ui.sml.SMLCards
@@ -135,6 +137,8 @@ class SMLMessageComposeUtil(
                         val osmSchema = ConvertOsmToSchema.convertOsmToJsonLd(osmJson as Map<*, *>, null)
                         updatePayload(listOf(JSONObject(osmSchema)))
                     } catch (e: IllegalStateException) {
+                        val a = e
+                    } catch (e: OsmConversionException) {
                         val a = e
                     }
                 }
