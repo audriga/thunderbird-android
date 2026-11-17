@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.SlowMotionVideo
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.net.toUri
@@ -316,15 +317,18 @@ class ActionButtonUtil(
 
     fun getWebUrlButtonDesc(jsonObject: JSONObject): List<ActionButton> {
         val url = jsonObject.opt("url")
-        var webUrlButtonDesc: ActionButton?
         if (url != null) {
             val uri = url.toString().toUri()
             // returns the music buttons if they are not null
             getMusicButtons(uri)?.let { return it }
-            if (uri.lastPathSegment?.contains("amp") == true && context != null) {
-                webstoryUrlState?.value = uri.toString()
+            if (uri.lastPathSegment?.contains("amp") == true) {
+                val webStoryButton = ActionButton(
+                    label = "Story",
+                    icon = Icons.Outlined.SlowMotionVideo,
+                ) { webstoryUrlState?.value = uri.toString() }
+                return listOf(webStoryButton)
             }
-            webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(uri) }
+            val webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(uri) }
             return listOf(webUrlButtonDesc)
         }
         return listOf()
@@ -586,11 +590,11 @@ class ActionButton(
     val label: String?,
     val icon: ImageVector? = null,
     val hideInOverflow: Boolean = false,
-    val nested: NestedButton? = null,
+//    val nested: NestedButton? = null,
     val onClick: () -> Unit,
 )
 
-class NestedButton(
-    val actionButtons: List<ActionButton>,
-    val sameLevel: Boolean = false,
-)
+//class NestedButton(
+//    val actionButtons: List<ActionButton>,
+//    val sameLevel: Boolean = false)
+
