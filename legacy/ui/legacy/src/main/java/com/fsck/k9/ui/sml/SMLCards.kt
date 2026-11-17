@@ -33,6 +33,7 @@ import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.mailstore.MessageViewInfo
 import com.fsck.k9.sml.SMLUtil.findAllLocations
 import kotlinx.coroutines.launch
+import net.thunderbird.components.core.logging.Logger
 import net.thunderbird.components.ui.bolt.resources.Res
 import net.thunderbird.components.ui.bolt.resources.bolt_yatagarasu_logo
 import net.thunderbird.components.ui.bolt.theme.BoltTheme.colors
@@ -59,6 +60,7 @@ fun SMLCards(
     modifier: Modifier = Modifier,
     interactive: Boolean = true,
     onReload: ((JSONObject) -> Unit)? = null,
+    logger: Logger,
 ) {
     val structuredDataList = messageViewInfo.messageData?.structuredData.orEmpty()
     val extracted = messageViewInfo.messageData?.extracted.orEmpty()
@@ -77,7 +79,8 @@ fun SMLCards(
         clipboardManager = clipboardManager,
         messageReference = messageReference,
         context = context,
-        onReload = onReload
+        onReload = onReload,
+        logger = logger,
     )
 }
 
@@ -91,6 +94,7 @@ fun SMLCards(
     messageReference: MessageReference?,
     context: Context?,
     onReload: ((JSONObject) -> Unit)?,
+    logger: Logger
 ) {
     if (jsonLds.isNotEmpty()) {
         val carouselState = rememberCarouselState { jsonLds.count() }
@@ -115,6 +119,7 @@ fun SMLCards(
                         modifier = modifier,
                         interactive = interactive,
                         onReload = onReload,
+                        logger = logger,
                     )
                 }
             }

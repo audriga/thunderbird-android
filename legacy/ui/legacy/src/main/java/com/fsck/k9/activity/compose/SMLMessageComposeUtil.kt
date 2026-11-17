@@ -30,6 +30,7 @@ import kotlin.also
 import kotlin.collections.toTypedArray
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import net.thunderbird.components.core.logging.Logger
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -37,14 +38,17 @@ import org.audriga.hetc.JsonLdDeserializer
 import org.audriga.ld2h.MustacheRenderer
 import org.json.JSONException
 import org.json.JSONObject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-//import android.os.Bundle;
 class SMLMessageComposeUtil(
     private val subjectView: EditText, private val attachmentPresenter: AttachmentPresenter,
     private val messageContentView: EditText,
 //    private String smlHTMLEmail = null;
     private val messageContentViewSML: ComposeView, private val smlModeSwitch: MaterialSwitch
-) {
+): KoinComponent {
+    private val logger: Logger by inject()
+
     // SML
     //    private String smlJsonLd = null;
     var smlPayload: List<JSONObject>? = null
@@ -138,14 +142,6 @@ class SMLMessageComposeUtil(
         }
     }
 
-//    fun displayLd2hResult(ld2hRenderResult: String) {
-//        val htmlDisplay: String = addHeadToLd2hResult(ld2hRenderResult)
-//        messageContentView.setVisibility(View.GONE)
-//        messageContentViewSML.setVisibility(View.VISIBLE)
-//        messageContentViewSML.displayHtmlContentWithInlineAttachments(htmlDisplay, null, null)
-//        smlModeSwitch.setVisibility(View.VISIBLE)
-//        smlModeSwitch.setChecked(true)
-//    }
 
     fun displaySmlCards(content: @Composable () -> Unit) {
         messageContentView.visibility = View.GONE
@@ -155,14 +151,6 @@ class SMLMessageComposeUtil(
         smlModeSwitch.setChecked(true)
     }
 
-    //    public void setSmlCards(Function2<? super Composer, ? super Integer, Unit> content) {
-    //        messageContentView.setVisibility(View.GONE);
-    //        messageContentViewSML.setVisibility(View.VISIBLE);
-    //        messageContentViewSML.setContent(content);
-    //        messageContentViewSML.setVisibility(View.VISIBLE);
-    //        smlModeSwitch.setVisibility(View.VISIBLE);
-    //        smlModeSwitch.setChecked(true);
-    //    }
     fun handleJsonLdAttachment(attachment: Attachment): Boolean {
         if (MimeTypeUtil.isSameMimeType(attachment.contentType, "application/json") || MimeTypeUtil.isSameMimeType(
                 attachment.contentType, "application/json+ld"
@@ -226,7 +214,8 @@ class SMLMessageComposeUtil(
                     clipboardManager = null,
                     messageReference = null,
                     context = null,
-                    onReload = null
+                    onReload = null,
+                    logger = logger,
                 )
             }
             if (subjectView.getText().isEmpty() || subjectView.getText().toString().startsWith("Check out this ")) {
@@ -293,11 +282,9 @@ private fun downloadUrl(url: String): Triple<String?, MediaType?, String?> {
             response.body.contentType()
             pageSrc = response.body.string()
             contentType = response.body.contentType()
-            //                    Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
         }
     } catch (e: Exception) {
         okErr = e.message
-        //                Log.d(TAG, e, "Couldn't get: %s", httpUri)
     }
     return Triple(pageSrc, contentType, okErr)
 }

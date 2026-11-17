@@ -54,7 +54,7 @@ object SMLMessageView {
     }
 
     fun addExtractedUrlButtons(urls: MutableList<String>, htmlString: String): String {
-        val encodedUrls: MutableList<String?> = ArrayList<String?>(urls.size)
+        val encodedUrls: MutableList<String?> = ArrayList(urls.size)
         for (url in urls) {
             // Substring to remove https:// prefix
             encodedUrls.add(
@@ -81,10 +81,10 @@ object SMLMessageView {
         val renderFilteredJsonLds = renderer.filterRenderable(typeFilteredJsonLds)
         if (renderFilteredJsonLds.isEmpty()) {
             if (extracted == null) {
-                return "<b>NO RENDERABLE STRUCTURED DATA FOUND</b><br>" + sanitizedHtml
+                return "<b>NO RENDERABLE STRUCTURED DATA FOUND</b><br>$sanitizedHtml"
             }
         } else if (renderFilteredJsonLds.size == 1) {
-            val jsonObject = renderFilteredJsonLds.get(0)
+            val jsonObject = renderFilteredJsonLds[0]
             renderWithButtons(jsonObject, renderer, renderedHTMLs, debugView)
         } else {
             val tabbedCardHTML = renderTabbedWithButtons(renderFilteredJsonLds, renderer, debugView)
@@ -149,7 +149,7 @@ object SMLMessageView {
             "WebPage",
         ) else null
 
-        val filteredJsonLds: MutableList<JSONObject> = ArrayList<JSONObject>()
+        val filteredJsonLds: MutableList<JSONObject> = ArrayList()
         for (jsonObject in jsonObjects) {
             val type = jsonObject.optString("@type")
             if (typesToSkip != null && typesToSkip.contains(type)) {
@@ -177,7 +177,7 @@ object SMLMessageView {
         }
         val jsonLds = JSONArray()
         val buttonLists: MutableList<MutableList<ButtonDescription?>?> =
-            ArrayList<MutableList<ButtonDescription?>?>(filteredJsonLds.size)
+            ArrayList(filteredJsonLds.size)
         for (jsonObject in filteredJsonLds) {
             val buttons = getButtons(jsonObject)
             buttonLists.add(buttons)
@@ -232,7 +232,7 @@ object SMLMessageView {
             prettyJson.toByteArray(StandardCharsets.UTF_8),
             Base64.NO_WRAP + Base64.URL_SAFE,
         )
-        val jsonSourceUrl = "xshowsource://" + encodedFullUrl
+        val jsonSourceUrl = "xshowsource://$encodedFullUrl"
         return "<button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-ripple-upgraded\" onclick=\"window.open('" +
             jsonSourceUrl +
             "', '_blank');\"><span class=\"mdc-button__ripple\"></span><i class=\"material-icons mdc-button__icon\" aria-hidden=\"true\">data_object</i>Show source</span></button>"
@@ -263,7 +263,7 @@ object SMLMessageView {
             if (part is LocalBodyPart) {
                 val message = part.message
                 val accountId = message.accountId
-                val mc = get<MessagingController>(MessagingController::class.java)
+                val mc = get(MessagingController::class.java)
 
                 // It would probably be a bit cleaner to use a CompletableFuture but that is only available at API level 24
                 val latch = CountDownLatch(1)
@@ -473,11 +473,10 @@ object SMLMessageView {
         shouldTryToDerive: TryToDerive?, textString: String,
         htmlString: String,
     ): JSONObject? {
-        val extracted: JSONObject?
-        if (shouldTryToDerive != null) {
-            extracted = tryExtract(shouldTryToDerive, textString, htmlString)
+        val extracted: JSONObject? = if (shouldTryToDerive != null) {
+            tryExtract(shouldTryToDerive, textString, htmlString)
         } else {
-            extracted = null
+            null
         }
         return extracted
     }
@@ -498,7 +497,7 @@ object SMLMessageView {
                         return JSONObject()
                             .put("@context", "https://schema.org")
                             .put("@type", "EmailMessage")
-                            .put("description", "Confirmation code: " + code)
+                            .put("description", "Confirmation code: $code")
                             .put(
                                 "potentialAction",
                                 JSONObject()
@@ -541,7 +540,7 @@ object SMLMessageView {
     fun tryExtractAllWhitelistedUrls(text: String, html: String): MutableList<String> {
         val whiteListedUrls: MutableList<String> = mutableListOf("www.spiegel.de", "cooking.nytimes.com", "nl.nytimes.com/f/cooking")
         val urlPlaintextMatcher = Patterns.WEB_URL.matcher(text)
-        val urls: MutableList<String> = ArrayList<String>()
+        val urls: MutableList<String> = ArrayList()
         while (urlPlaintextMatcher.find()) {
             val url = urlPlaintextMatcher.group()
             for (whiteListedUrl in whiteListedUrls) {
@@ -604,7 +603,7 @@ object SMLMessageView {
                             fullUrl.toByteArray(StandardCharsets.UTF_8),
                             Base64.NO_WRAP + Base64.URL_SAFE,
                         )
-                        val loadCardUrl = "xloadcards://" + encodedFullUrl
+                        val loadCardUrl = "xloadcards://$encodedFullUrl"
                         if (originaHTMLIndex >= end) {
                             //todo something went wrong with the matching
                             return html
@@ -622,7 +621,7 @@ object SMLMessageView {
                         }
                         builder.append(html.substring(end, insertPosition))
                         val button =
-                            "<a href=\"" + loadCardUrl + "\"><span class=\"material-icons\">web_asset</span></a>"
+                            "<a href=\"$loadCardUrl\"><span class=\"material-icons\">web_asset</span></a>"
                         //                      button += "<a href=\"" + loadCardUrl + "\"><span class=\"material-symbols-outlined\">web_asset</span></a>";
                         builder.append(button)
                         originaHTMLIndex = insertPosition
@@ -737,13 +736,13 @@ object SMLMessageView {
 
                 val inlineModifiedHtml =
                     addInlineButtonsToHtmlForEmbeddedStructuredData(rawHtml, messageData.structuredData)
-                if (inlineModifiedHtml != null) {
+                displayHtml = if (inlineModifiedHtml != null) {
                     // still showing newsletter
-                    displayHtml = css() + inlineModifiedHtml
+                    css() + inlineModifiedHtml
                 } else {
-                    displayHtml = sanitizedHtml
+                    sanitizedHtml
                     //Not showing ld2hj card anymore
-//                    displayHtml = renderDataOrExtractedAndAddToHTML(messageData.structuredData, messageData.extracted, sanitizedHtml, debugView);
+            //                    displayHtml = renderDataOrExtractedAndAddToHTML(messageData.structuredData, messageData.extracted, sanitizedHtml, debugView);
                 }
             }
         } catch (_: Exception) {
@@ -764,42 +763,42 @@ object SMLMessageView {
         data: MutableList<JSONObject>,
     ): String? {
         // Mail contains some structured data. This might be our "newsletter with data-id" case too.
-        val idToJsonLd: MutableMap<String?, JSONObject?> = HashMap<String?, JSONObject?>(data.size)
+        val idToJsonLd: MutableMap<String?, JSONObject?> = HashMap(data.size)
         for (structuredDatum in data) {
             val id = structuredDatum.optString("@id")
-            if (!id.isEmpty()) {
-                idToJsonLd.put(id, structuredDatum)
+            if (id.isNotEmpty()) {
+                idToJsonLd[id] = structuredDatum
             }
         }
         var didModifyHtml = false
-        if (!idToJsonLd.isEmpty()) {
+        if (idToJsonLd.isNotEmpty()) {
             val doc = Jsoup.parse(rawHtml)
             val linksWithId = doc.select("a[href][data-id]")
-            if (!linksWithId.isEmpty()) {
+            if (linksWithId.isNotEmpty()) {
                 for (linkElement in linksWithId) {
                     val dataId = linkElement.attr("data-id")
                     if (idToJsonLd.containsKey(dataId)) {
-                        val jsonObject = idToJsonLd.get(dataId)
+                        val jsonObject = idToJsonLd[dataId]
                         if (jsonObject != null) {
                             val encodedJsonLd =
                                 Base64.encodeToString(
                                     jsonObject.toString().toByteArray(StandardCharsets.UTF_8),
                                     Base64.NO_WRAP + Base64.URL_SAFE,
                                 )
-                            val popupCardUrl = "xpopupcard://" + encodedJsonLd
+                            val popupCardUrl = "xpopupcard://$encodedJsonLd"
                             val button =
-                                "<a href=\"" + popupCardUrl + "\"><span class=\"material-icons\">web_asset</span></a>"
+                                "<a href=\"$popupCardUrl\"><span class=\"material-icons\">web_asset</span></a>"
                             linkElement.after(button)
                             didModifyHtml = true
                         }
                     }
                 }
             }
-            if (didModifyHtml) {
+            return if (didModifyHtml) {
                 // todo this is based on the rawHtml.. Should we run this through the sanitizer somehow?
-                return doc.outerHtml()
+                doc.outerHtml()
             } else {
-                return null
+                null
             }
         }
         return null
@@ -815,7 +814,7 @@ object SMLMessageView {
             if (filename != null && filename.lastIndexOf('.') != -1) {
                 val extension = filename.substring(filename.lastIndexOf('.') + 1).lowercase()
                 val extensionsOfParseable =
-                    ArrayList<String?>(mutableListOf<String?>("pkpass", "vcard", "ics"))
+                    ArrayList(mutableListOf<String?>("pkpass", "vcard", "ics"))
                 if (extensionsOfParseable.contains(extension)) {
                     if (!attachmentViewInfo.isContentAvailable) {
                         val localPart = attachmentViewInfo.part as LocalPart?
@@ -844,7 +843,7 @@ object SMLMessageView {
                         )
                     }
                     // todo: Wait until all attachments have loaded(?)
-                    parseableAttachments.put(attachmentViewInfo, extension)
+                    parseableAttachments[attachmentViewInfo] = extension
                 }
             }
         }

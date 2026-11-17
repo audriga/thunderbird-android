@@ -19,24 +19,24 @@ import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.core.net.toUri
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.helper.ClipboardManager
 import com.fsck.k9.helper.MailTo
-import com.fsck.k9.view.SMLWebViewClientExtensions
-import java.nio.charset.StandardCharsets
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
-import androidx.core.net.toUri
 import com.fsck.k9.sml.SMLUtil.findAllLocations
 import com.fsck.k9.sml.SMLUtil.findAllRecursive
-import java.lang.Exception
+import com.fsck.k9.view.SMLWebViewClientExtensions
+import java.nio.charset.StandardCharsets
 import net.thunderbird.components.core.logging.Logger
 import net.thunderbird.core.preference.GeneralSettingsManager
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -45,6 +45,7 @@ class ActionButtonUtil(
     private val onReload: ((JSONObject) -> Unit),
     private val clipboardManager: ClipboardManager?,
     private val messageReference: MessageReference?,
+    private val webstoryUrlState: MutableState<String?>? = null,
     private val context: Context?, // Most actions won't be able to do anything without context. But it may still be desirable to pass a null context if interaction is not necessary.
 ): KoinComponent {
     private val generalSettingsManager: GeneralSettingsManager by inject()
@@ -320,6 +321,9 @@ class ActionButtonUtil(
             val uri = url.toString().toUri()
             // returns the music buttons if they are not null
             getMusicButtons(uri)?.let { return it }
+            if (uri.lastPathSegment?.contains("amp") == true && context != null) {
+                webstoryUrlState?.value = uri.toString()
+            }
             webUrlButtonDesc = ActionButton(null, Icons.Outlined.Link) { invokeUri(uri) }
             return listOf(webUrlButtonDesc)
         }
@@ -399,11 +403,9 @@ class ActionButtonUtil(
                 response.body.contentType()
                 pageSrc = response.body.string()
                 contentType = response.body.contentType()
-                //                    Log.d(TAG, "Got response from %s:\n%s", httpUri, pageSrc)
             }
         } catch (e: Exception) {
             okErr = e.message
-            //                Log.d(TAG, e, "Couldn't get: %s", httpUri)
         }
         return Triple(pageSrc, contentType, okErr)
     }

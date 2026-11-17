@@ -72,9 +72,12 @@ import com.fsck.k9.view.SMLWebViewClientExtensions.Companion.sendDataRequest
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil3.CoilImage
 import kotlinx.collections.immutable.toImmutableMap
+import net.thunderbird.components.core.logging.Logger
 import org.json.JSONArray
 import org.json.JSONObject
 
+
+private const val TAG = "SMLCard"
 /**
  * Card component for displaying schema.org structured data (JSON-LD) in the message view.
  *
@@ -97,20 +100,20 @@ fun SMLCard(
     modifier: Modifier = Modifier,
     interactive: Boolean = true,
     onReload: ((JSONObject) -> Unit)? = null,
+    logger: Logger
 ) {
     if (interactive && context == null) {
-       // todo log warning
+       logger.warn(TAG) { "Interactive card, but no context given. Most interactions will not work" }
     }
-    // todo simplify by using `by` instead of `=`, see https://stackoverflow.com/questions/69326413/whats-difference-between-remember-and-by-remember
+    // can be simplified by using `by` instead of `=`, see https://stackoverflow.com/questions/69326413/whats-difference-between-remember-and-by-remember
     val jsonObjectState = remember { mutableStateOf(initialJsonObject) }
     val jsonObject = jsonObjectState.value
-    var webstoryUrl: String? by remember { mutableStateOf(null)}
-//    var showDetailsSheet by remember { mutableStateOf(false) }
+    val webstoryUrlState: MutableState<String?> = remember { mutableStateOf(null)}
 
-    webstoryUrl?.let {
+    webstoryUrlState.value?.let {
         WebStoryDialog(
             url = it,
-            onDismiss = { webstoryUrl = null }
+            onDismiss = { webstoryUrlState.value = null }
         )
     }
     val schemaType = jsonObject.optString("@type", "")
@@ -124,6 +127,7 @@ fun SMLCard(
                 },
         clipboardManager =  clipboardManager,
         messageReference = messageReference,
+        webstoryUrlState = webstoryUrlState,
         context = context,
         ).getButtons(jsonObject)
     if (schemaType.equals("SimplePoll")) {
@@ -431,6 +435,7 @@ private fun getVotesPerOption(votes: JSONArray, totalVotes: Int): Map<String, In
     return votesPerOption.toImmutableMap()
 }
 
+@SuppressLint("ObsoleteSdkInt") // want to keep code for earlier sdk versions around in case we have to decrease minsdk again
 private fun countVote(vote: JSONObject, votesPerOption: MutableMap<String, Int>) {
     val actionOption = vote.opt("actionOption")
     if (actionOption is JSONArray) {

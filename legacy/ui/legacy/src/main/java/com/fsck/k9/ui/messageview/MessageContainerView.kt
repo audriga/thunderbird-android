@@ -53,6 +53,7 @@ import com.fsck.k9.view.MessageWebView
 import com.fsck.k9.view.MessageWebView.OnPageFinishedListener
 import com.fsck.k9.view.WebViewConfigProvider
 import com.google.android.material.textview.MaterialTextView
+import net.thunderbird.components.core.logging.Logger
 import net.thunderbird.core.android.contact.ContactIntentHelper
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
 import net.thunderbird.core.ui.contract.mvi.observeWithoutEffect
@@ -75,6 +76,8 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
     private val linkTextHandler: LinkTextHandler by inject()
     private val featureThemeProvider: FeatureThemeProvider by inject()
     private val attachmentViewInfoMapper: AttachmentViewInfoMapper<Part> by inject()
+
+    private val logger: Logger by inject()
 
     private lateinit var layoutInflater: LayoutInflater
 
@@ -477,6 +480,7 @@ class MessageContainerView(context: Context, attrs: AttributeSet?) :
                     messageReference = messageReference,
                     context = context,
                     clipboardManager = clipboardManager,
+                    logger = logger,
                 )
             }
         }
