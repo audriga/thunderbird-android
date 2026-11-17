@@ -712,7 +712,23 @@ class SMLWebViewClientExtensions(
         fun openQRCode(context: Context, tokenUri: Uri) {
             // todo check if scheme is "qrCode"
             val data = tokenUri.schemeSpecificPart
-            val bm = generatBarcodeImage(data, BarcodeFormat.QR_CODE, 450, 450)
+
+            val width = 512
+            val (barcodeFormat: BarcodeFormat, height: Int) = when (tokenUri.scheme) {
+                "qrCode", "qrcode" -> Pair(BarcodeFormat.QR_CODE, width)
+                "aztecCode", "azteccode", "aztec" -> Pair(BarcodeFormat.AZTEC, width)
+                "barcode128" -> Pair(BarcodeFormat.CODE_128, width / 6)
+                "datamatrix" -> Pair(BarcodeFormat.DATA_MATRIX, width)
+                "pdf417" -> Pair(BarcodeFormat.PDF_417, width / 4)
+                "code39" -> Pair(BarcodeFormat.CODE_39, width / 6)
+                "ean13" -> Pair(BarcodeFormat.EAN_13, width / 6)
+                "itf" -> Pair(BarcodeFormat.ITF, width / 6)
+                "codabar" -> Pair(BarcodeFormat.CODABAR, width / 6)
+                else -> {
+                    Pair(BarcodeFormat.QR_CODE, width)
+                }
+            }
+            val bm = generatBarcodeImage(data, barcodeFormat, width, height)
             val v = ImageView(context)
             v.setImageBitmap(bm)
             v.setPadding(/* left = */ 0, /* top = */ 48, /* right = */ 0, /* bottom = */ 0)
@@ -727,11 +743,8 @@ class SMLWebViewClientExtensions(
                     setCanceledOnTouchOutside(false)
                     show()
                 }
-
-            // Make Fullscreen
-            // https://stackoverflow.com/questions/2306503/how-to-make-an-alert-dialog-fill-90-of-screen-size
             dialogAlert.window?.setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             )
         }
