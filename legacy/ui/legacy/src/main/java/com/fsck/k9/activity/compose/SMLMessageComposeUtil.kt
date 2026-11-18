@@ -13,7 +13,6 @@ import androidx.core.net.toUri
 import com.audriga.h2lj.parser.StructuredDataExtractionUtils
 import com.audriga.osmschemaorg.ConvertOsmToSchema
 import com.audriga.osmschemaorg.OsmConversionException
-import com.fasterxml.jackson.core.JsonParseException
 import com.fsck.k9.activity.misc.Attachment
 import com.fsck.k9.helper.MimeTypeUtil
 import com.fsck.k9.ui.sml.SMLCards
@@ -43,6 +42,8 @@ import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+
+private const val TAG = "SMLMessageComposeUtil"
 class SMLMessageComposeUtil(
     private val subjectView: EditText, private val attachmentPresenter: AttachmentPresenter,
     private val messageContentView: EditText,
@@ -119,14 +120,10 @@ class SMLMessageComposeUtil(
         } catch (_: IOException) {
         }
         if (data.isNotEmpty()) {
-            updatePayload(data)
-            val types = prepareSmlPayload(smlPayload!!)
-            displayCardsAndUpdateSubject(smlPayload!!, types)
-
+            updateAndDisplayPayload(data)
         }
         // else: No structured data found, todo: treat link as normal?
     }
-
     private fun enrichSharedOsmPoi(url: String) {
         if (url.toUri().authority?.contains("api.openstreetmap.org") == true) {
             val (pageSrc: String?, contentType: MediaType?, _: String?) = downloadUrl(url)
@@ -135,11 +132,12 @@ class SMLMessageComposeUtil(
                 if (osmJson is JsonObject) {
                     try {
                         val osmSchema = ConvertOsmToSchema.convertOsmToJsonLd(osmJson as Map<*, *>, null)
-                        updatePayload(listOf(JSONObject(osmSchema)))
+                        val osmSchemaJson = JSONObject(osmSchema)
+                        updateAndDisplayPayload(listOf(osmSchemaJson))
                     } catch (e: IllegalStateException) {
-                        val a = e
+                        logger.error(TAG, e) { "OSM conversion failed" }
                     } catch (e: OsmConversionException) {
-                        val a = e
+                        logger.error(TAG, e) { "OSM conversion failed" }
                     }
                 }
             }
@@ -179,9 +177,7 @@ class SMLMessageComposeUtil(
                         }
                     }
                     if (jsonLds.isNotEmpty()) {
-                        updatePayload(jsonLds)
-                        val types = prepareSmlPayload(smlPayload!!)
-                        val hadResult = displayCardsAndUpdateSubject(smlPayload!!, types)
+                        val hadResult = updateAndDisplayPayload(jsonLds)
                         if (hadResult) {
                             attachmentPresenter.onClickRemoveAttachment(attachment.uri)
                             // todo: This function is called in updateAttachmentView, and after that function returns, the
@@ -195,6 +191,13 @@ class SMLMessageComposeUtil(
             }
         }
         return false
+    }
+
+    private fun updateAndDisplayPayload(jsonLds: List<JSONObject>): Boolean {
+        updatePayload(jsonLds)
+        val types = prepareSmlPayload(smlPayload!!)
+        val hadResult = displayCardsAndUpdateSubject(smlPayload!!, types)
+        return hadResult
     }
 
     /**
