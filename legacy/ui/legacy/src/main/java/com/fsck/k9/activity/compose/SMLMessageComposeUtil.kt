@@ -22,15 +22,24 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStreamReader
-import java.lang.Exception
 import java.util.Locale
-import kotlin.Boolean
-import kotlin.CharSequence
-import kotlin.Int
-import kotlin.also
-import kotlin.collections.toTypedArray
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.serializer
 import net.thunderbird.components.core.logging.Logger
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -42,13 +51,12 @@ import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-
 private const val TAG = "SMLMessageComposeUtil"
 class SMLMessageComposeUtil(
     private val subjectView: EditText, private val attachmentPresenter: AttachmentPresenter,
     private val messageContentView: EditText,
 //    private String smlHTMLEmail = null;
-    private val messageContentViewSML: ComposeView, private val smlModeSwitch: MaterialSwitch
+    private val messageContentViewSML: ComposeView, private val smlModeSwitch: MaterialSwitch,
 ): KoinComponent {
     private val logger: Logger by inject()
 
@@ -83,7 +91,7 @@ class SMLMessageComposeUtil(
                         enrichTextToSmlIfUrl(insertedText)
                     }
                 }
-            }
+            },
         )
     }
 
@@ -128,10 +136,10 @@ class SMLMessageComposeUtil(
         if (url.toUri().authority?.contains("api.openstreetmap.org") == true) {
             val (pageSrc: String?, contentType: MediaType?, _: String?) = downloadUrl(url)
             if (contentType?.type.equals("application") && contentType?.subtype.equals("json") && pageSrc != null) {
-                val osmJson = Json.parseToJsonElement(pageSrc)
-                if (osmJson is JsonObject) {
+                try {
+                    val osmJson = Json.decodeFromString(KotlinxGenericMapSerializer, pageSrc)
                     try {
-                        val osmSchema = ConvertOsmToSchema.convertOsmToJsonLd(osmJson as Map<*, *>, null)
+                        val osmSchema = ConvertOsmToSchema.convertOsmToJsonLd(osmJson, null)
                         val osmSchemaJson = JSONObject(osmSchema)
                         updateAndDisplayPayload(listOf(osmSchemaJson))
                     } catch (e: IllegalStateException) {
@@ -139,7 +147,7 @@ class SMLMessageComposeUtil(
                     } catch (e: OsmConversionException) {
                         logger.error(TAG, e) { "OSM conversion failed" }
                     }
-                }
+                } catch (_: SerializationException) {} catch (_: IllegalArgumentException) {}
             }
         }
     }
@@ -155,7 +163,7 @@ class SMLMessageComposeUtil(
 
     fun handleJsonLdAttachment(attachment: Attachment): Boolean {
         if (MimeTypeUtil.isSameMimeType(attachment.contentType, "application/json") || MimeTypeUtil.isSameMimeType(
-                attachment.contentType, "application/json+ld"
+                attachment.contentType, "application/json+ld",
             )
         ) {
             val filename = attachment.fileName ?: return false
@@ -294,4 +302,59 @@ private fun downloadUrl(url: String): Triple<String?, MediaType?, String?> {
         okErr = e.message
     }
     return Triple(pageSrc, contentType, okErr)
+}
+
+object KotlinxGenericMapSerializer : KSerializer<Map<String, Any?>> {
+
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("GenericMap")
+
+    override fun serialize(encoder: Encoder, value: Map<String, Any?>) {
+        val jsonObject = JsonObject(value.mapValues { it.value.toJsonElement()})
+        val jsonObjectSerializer = encoder.serializersModule.serializer<JsonObject>()
+        jsonObjectSerializer.serialize(encoder, jsonObject)
+    }
+
+    override fun deserialize(decoder: Decoder): Map<String, Any?> {
+        val jsonDecoder = decoder as? JsonDecoder ?: throw SerializationException("Can only deserialize Json content to generic Map")
+        val root = jsonDecoder.decodeJsonElement()
+        return if (root is JsonObject) root.toMap() else throw SerializationException("Cannot deserialize Json content to generic Map")
+    }
+
+    private fun Any?.toJsonElement(): JsonElement = when(this) {
+        null -> JsonNull
+        is String -> JsonPrimitive(this)
+        is Number -> JsonPrimitive(this)
+        is Boolean -> JsonPrimitive(this)
+        is Map<*, *> -> toJsonObject()
+        is Iterable<*> -> toJsonArray()
+        else -> throw SerializationException("Cannot serialize value type $this")
+    }
+
+    private fun Map<*,*>.toJsonObject(): JsonObject = JsonObject(this.entries.associate { it.key.toString() to it.value.toJsonElement() })
+
+    private fun Iterable<*>.toJsonArray(): JsonArray = JsonArray(this.map { it.toJsonElement() })
+
+    private fun JsonElement.toAnyNullableValue(): Any? = when (this) {
+        is JsonPrimitive -> toScalarOrNull()
+        is JsonObject -> toMap()
+        is JsonArray -> toList()
+    }
+
+    private fun JsonObject.toMap(): Map<String, Any?> = entries.associate {
+        when (val jsonElement = it.value) {
+            is JsonPrimitive -> it.key to jsonElement.toScalarOrNull()
+            is JsonObject -> it.key to jsonElement.toMap()
+            is JsonArray -> it.key to jsonElement.toAnyNullableValueList()
+        }
+    }
+
+    private fun JsonPrimitive.toScalarOrNull(): Any? = when {
+        this is JsonNull -> null
+        this.isString -> this.content
+        else -> listOfNotNull(booleanOrNull, longOrNull, doubleOrNull).firstOrNull()
+    }
+
+    private fun JsonArray.toAnyNullableValueList(): List<Any?> = this.map {
+        it.toAnyNullableValue()
+    }
 }
