@@ -133,25 +133,47 @@ class SMLMessageComposeUtil(
         // else: No structured data found, todo: treat link as normal?
     }
     private fun enrichSharedOsmPoi(url: String) {
-        if (url.toUri().authority?.contains("api.openstreetmap.org") == true) {
-            val (pageSrc: String?, contentType: MediaType?, _: String?) = downloadUrl(url)
-            if (contentType?.type.equals("application") && contentType?.subtype.equals("json") && pageSrc != null) {
-                try {
-                    val osmJson = Json.decodeFromString(KotlinxGenericMapSerializer, pageSrc)
-                    try {
-                        val osmSchema = ConvertOsmToSchema.convertOsmToJsonLd(osmJson, null)
-                        val osmSchemaJson = JSONObject(osmSchema)
-                        updateAndDisplayPayload(listOf(osmSchemaJson))
-                    } catch (e: IllegalStateException) {
-                        logger.error(TAG, e) { "OSM conversion failed" }
-                    } catch (e: OsmConversionException) {
-                        logger.error(TAG, e) { "OSM conversion failed" }
-                    }
-                } catch (_: SerializationException) {} catch (_: IllegalArgumentException) {}
+        val uri = url.toUri()
+        val authority = uri.authority ?: return
+        if (authority.contains("api.openstreetmap.org")) {
+            enrichSharedOsmFromApi(url)
+        } else if (authority.contains("openstreetmap.org")) {
+            val pathSegments = uri.pathSegments
+            if (pathSegments.size == 2) {
+                // todo this isn't very nice
+                val osmElementType = pathSegments.first() // node/ way/ relation
+                val osmElementId = pathSegments.last()
+                if ("node".equals(osmElementType)) {
+                    enrichSharedOsmFromApi("https://api.openstreetmap.org/api/0.6/$osmElementType/$osmElementId.json")
+                } else {
+                    enrichSharedOsmFromApi("https://api.openstreetmap.org/api/0.6/$osmElementType/$osmElementId/full.json")
+                }
             }
         }
     }
 
+    /**
+     * @param url assumed to be an api.openstreetmap.org/.../full.json url
+     */
+    private fun enrichSharedOsmFromApi(url: String) {
+        val (pageSrc: String?, contentType: MediaType?, _: String?) = downloadUrl(url)
+        if (contentType?.type.equals("application") && contentType?.subtype.equals("json") && pageSrc != null) {
+            try {
+                val osmJson = Json.decodeFromString(KotlinxGenericMapSerializer, pageSrc)
+                try {
+                    val osmSchema = ConvertOsmToSchema.convertOsmToJsonLd(osmJson, null)
+                    val osmSchemaJson = JSONObject(osmSchema)
+                    updateAndDisplayPayload(listOf(osmSchemaJson))
+                } catch (e: IllegalStateException) {
+                    logger.error(TAG, e) { "OSM conversion failed" }
+                } catch (e: OsmConversionException) {
+                    logger.error(TAG, e) { "OSM conversion failed" }
+                }
+            } catch (_: SerializationException) {
+            } catch (_: IllegalArgumentException) {
+            }
+        }
+    }
 
     fun displaySmlCards(content: @Composable () -> Unit) {
         messageContentView.visibility = View.GONE
@@ -304,6 +326,7 @@ private fun downloadUrl(url: String): Triple<String?, MediaType?, String?> {
     return Triple(pageSrc, contentType, okErr)
 }
 
+// KontlinxGenericMapSerializer taken from https://www.baeldung.com/kotlin/parse-json-without-data-class
 object KotlinxGenericMapSerializer : KSerializer<Map<String, Any?>> {
 
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("GenericMap")
