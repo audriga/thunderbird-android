@@ -97,7 +97,20 @@ fun SMLCards(
     logger: Logger
 ) {
     if (jsonLds.isNotEmpty()) {
-        val carouselState = rememberCarouselState { jsonLds.count() }
+        val unwrappedJsonLds = mutableListOf<JSONObject>()
+        for (jsonLd in jsonLds) {
+            val itemListElements = jsonLd.optJSONArray("itemListElement")
+            if (itemListElements == null) {
+                unwrappedJsonLds.add(jsonLd)
+            } else {
+                for (i in 0..<itemListElements.length()) {
+                    itemListElements.optJSONObject(i)?.let {
+                        unwrappedJsonLds.add(it)
+                    }
+                }
+            }
+        }
+        val carouselState = rememberCarouselState { unwrappedJsonLds.count() }
         val animationScope = rememberCoroutineScope()
         Column {
             BoxWithConstraints {
@@ -112,7 +125,7 @@ fun SMLCards(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                 ) { i: Int ->
                     SMLCard(
-                        initialJsonObject = jsonLds[i],
+                        initialJsonObject = unwrappedJsonLds[i],
                         clipboardManager = clipboardManager,
                         messageReference = messageReference,
                         context = context,
@@ -125,7 +138,7 @@ fun SMLCards(
             }
 
             if (interactive) {
-                val markersPerMarkup: Array<MutableList<MapMarker>> = Array(jsonLds.size) { mutableListOf() }
+                val markersPerMarkup: Array<MutableList<MapMarker>> = Array(unwrappedJsonLds.size) { mutableListOf() }
                 // BoundingBox is bound by northeastern corner and southwestern corner
                 // Bigger number in latitude is more north
                 // Bigger number in longitude is more east
@@ -135,7 +148,7 @@ fun SMLCards(
                 var southLat = 0.0
                 var westLong = 0.0
                 var hasGeosVar = false
-                for ((i, jsonObject) in jsonLds.withIndex()) {
+                for ((i, jsonObject) in unwrappedJsonLds.withIndex()) {
                     findAllLocations(jsonObject) { latitude, longitude ->
                         if (hasGeosVar) {
                             // calculate new BoundingBox coordinates
